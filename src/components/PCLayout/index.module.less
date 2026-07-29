@@ -14,12 +14,14 @@
   left: 0;
   right: 0;
   z-index: 100;
+  height: 64PX;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
 }
 
 .headerLeft {
@@ -267,8 +269,8 @@
 
 /* Sider */
 .sider {
-  margin-top: 64px;
-  height: calc(100vh - 64px);
+  margin-top: 64PX;
+  height: calc(100vh - 64PX);
   position: fixed;
   left: 0;
   overflow: auto;
@@ -930,15 +932,29 @@
 
 /* Content */
 .content {
-  margin-top: 64px;
+  margin-top: 64PX;
   margin-left: 200px;
   padding: 0;
   background: #f5f5f5;
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - 64PX);
   transition: margin-left 0.2s ease;
   display: flex;
   flex-direction: column;
   position: relative;
+}
+
+/* 币种详情：Content 锁死视口；白卡片高度恒定 = 视口 - 顶栏 - 底栏占位 - 内边距 */
+.contentDetail {
+  --pc-detail-header: 64PX;
+  --pc-detail-footer-gap: 52PX;
+  --pc-detail-pad: 12PX;
+  height: calc(100vh - var(--pc-detail-header)) !important;
+  max-height: calc(100vh - var(--pc-detail-header)) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
 }
 
 .homeContent {
@@ -963,22 +979,38 @@
   min-height: calc(100vh - 64px);
 }
 
-/* 币种详情：可滚动；图表区单独限高，不占满整屏 */
+/* 币种详情：主内容 + 底部占位（与固定横幅错开） */
 .contentWrapperDetail {
-  min-height: calc(100vh - 64px);
-  height: auto;
-  overflow: visible;
+  flex: 1 1 auto;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .contentMainDetail {
-  min-height: calc(100vh - 64px);
-  height: auto;
-  max-height: none;
-  padding: 12PX;
-  padding-bottom: 52PX;
-  box-sizing: border-box;
-  overflow-x: hidden;
-  overflow-y: auto;
+  /* padding 交给绝对定位的 pcContentLayout，避免 absolute 子项忽略父级 padding */
+  position: relative !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  display: block !important;
+}
+
+/* 固定公告横幅高度 40PX + 额外间隙，防止内容贴底 */
+.detailFooterSpacer {
+  flex: 0 0 52PX;
+  height: 52PX;
+  min-height: 52PX;
+  max-height: 52PX;
+  width: 100%;
+  pointer-events: none;
 }
 
 /* 帮助中心：内容在右侧 Content 区域内铺满并可滚动 */
@@ -1168,14 +1200,27 @@
   }
 
   .contentWrapperDetail {
-    min-height: calc(100vh - 56px);
-    height: auto;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
   }
 
   .contentMainDetail {
-    min-height: calc(100vh - 56px);
-    padding: 8PX;
-    padding-bottom: 48PX;
+    position: relative !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: block !important;
+  }
+
+  .detailFooterSpacer {
+    flex-basis: 48PX;
+    height: 48PX;
+    min-height: 48PX;
+    max-height: 48PX;
   }
 
   .contentWrapperHelp {

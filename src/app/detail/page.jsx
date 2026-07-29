@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -73,6 +73,12 @@ export default function DetailPage() {
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
   const fromTgAlert = searchParams.get('from') === 'tg_alert';
   const { t } = useTranslation();
+
+  const headerFieldLabel = (key) => {
+    if (!key) return '';
+    if (key === 'marketCap') return t('detail.marketCap');
+    return t(`detail.header.${key}`);
+  };
   // 高度调试：在 URL 加 ?debugHeight=1 时启用，避免污染日志
   const debugHeight = searchParams.get('debugHeight') === '1';
   const [isPC, setIsPC] = useState(() =>
@@ -87,6 +93,18 @@ export default function DetailPage() {
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
+
+  // PC 详情：进入时复位滚动，避免底部留白需手动滚回
+  useEffect(() => {
+    if (!isPC) return;
+    try {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      const main = document.querySelector('[class*="contentMainDetail"]');
+      if (main) main.scrollTop = 0;
+    } catch (_) {}
+  }, [isPC, symbol]);
 
   // TG Mini App 深链：带币种进入详情后自动弹出告警配置弹窗（仅移动端）
   useEffect(() => {
@@ -184,7 +202,7 @@ export default function DetailPage() {
   const initialLoadTimeoutRef = useRef(null); // 首次加载超时定时器
   const [activeTab, setActiveTab] = useState('chart');
   const [activeKlineTab, setActiveKlineTab] = useState('hour');
-  const [chartType, setChartType] = useState('line'); // 图表类型：line | kline
+  const [chartType, setChartType] = useState('kline'); // 图表类型：line | kline
   const [isFavorite, setIsFavorite] = useState(fromFavorite);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [infoExpanded, setInfoExpanded] = useState(false);
@@ -204,18 +222,19 @@ export default function DetailPage() {
   const rightCommunityMountedRef = useRef(false);
   const [pcAiChatOpen, setPcAiChatOpen] = useState(false);
   const [pcAiAutoSend, setPcAiAutoSend] = useState({ text: '', token: '' });
-  /** PC：右侧工作区（行情条/ROI/市场/社区）展开；默认收起，点击右侧竖条 << >> 切换 */
-  const [pcRightPanelOpen, setPcRightPanelOpen] = useState(false);
-  /** PC：社区卡片总高度 = 左侧栏（ROI + 市场 + 间距）高度，底边与市场列对齐（ResizeObserver） */
-  const [pcCommunityCardHeightPx, setPcCommunityCardHeightPx] = useState(null);
+  /** PC：右侧工作区已并入图表右侧栏（大单侦测 + 社区） */
   const needLoop = useRef(true);
   const chartRef = useRef(null);
   const marketRef = useRef(null);
   const roiRef = useRef(null);
   const mobileRootRef = useRef(null);
   const pcContentLayoutRef = useRef(null);
-  const pcRightPanelLeftRef = useRef(null);
   const pcOrderBookSectionRef = useRef(null);
+  const pcMarketHeadScrollRef = useRef(null);
+  const pcMarketBodyScrollRef = useRef(null);
+  const pcMarketScrollSyncingRef = useRef(false);
+  /** 用户刚切换自选后的本地覆盖，防止 WS/轮询用过期 false 冲掉 */
+  const favoriteLocalRef = useRef(null);
   const wsRef = useRef(null);
   const currentKlineChannelRef = useRef(null); // 当前K线订阅频道ID
   const isWsAuthenticatedRef = useRef(false); // WebSocket认证状态
@@ -467,62 +486,108 @@ export default function DetailPage() {
     checkStatus();
   }, [symbol, t, mySubscription]);
 
-  // 高度调试打印：观察 height/min-height 是否真正生效
+  // PC 详情高度调试：默认打印；URL 加 ?debugHeight=1 时额外打完整链路
   useEffect(() => {
-    if (!debugHeight) return;
+    if (!isPC) return;
 
     const dumpEl = (name, el) => {
-      if (!el) return;
+      if (!el) {
+        console.log('[PCDetail][height]', name, null);
+        return null;
+      }
       const rect = el.getBoundingClientRect();
       const cs = window.getComputedStyle(el);
-      // scrollHeight/offsetHeight 有助于判断内容是否溢出导致高度“看起来不对”
-      console.log('[DetailPage][heightDebug]', name, {
-        rectHeight: rect.height,
-        rectWidth: rect.width,
-        offsetHeight: el.offsetHeight,
+      const info = {
+        name,
+        top: Math.round(rect.top),
+        bottom: Math.round(rect.bottom),
+        height: Math.round(rect.height),
         clientHeight: el.clientHeight,
         scrollHeight: el.scrollHeight,
-        computedHeight: cs.height,
-        computedMinHeight: cs.minHeight,
-        display: cs.display,
-        flex: cs.flex,
-        position: cs.position,
+        clipped: el.scrollHeight > el.clientHeight + 1,
         overflow: cs.overflow,
-      });
+        overflowY: cs.overflowY,
+        heightCss: cs.height,
+        minHeightCss: cs.minHeight,
+        maxHeightCss: cs.maxHeight,
+        flex: cs.flex,
+        display: cs.display,
+      };
+      console.log('[PCDetail][height]', info);
+      return info;
     };
 
     const logOnce = (phase) => {
-      console.log('[DetailPage][heightDebug] ----', phase, '----', {
-        isPC,
-        innerWidth: window.innerWidth,
-        innerHeight: window.innerHeight,
-        devicePixelRatio: window.devicePixelRatio,
+      const vh = window.innerHeight;
+      const headerH = 64;
+      const spacerH = 52;
+      const padY = 24; // contentMainDetail padding 12*2
+      const expectedShell = vh - headerH;
+      const expectedCard = expectedShell - spacerH - padY;
+
+      const footer = document.querySelector('[class*="footerNotice"]');
+      const spacer = document.querySelector('[class*="detailFooterSpacer"]');
+      const contentDetail = document.querySelector('[class*="contentDetail"]');
+      const contentMainDetail = document.querySelector('[class*="contentMainDetail"]');
+      const layout = pcContentLayoutRef.current;
+      const colLeft = layout?.querySelector(`[class*="pcContentColLeft"]`);
+      const orderHalf = layout?.querySelector(`[class*="pcOrderHalf"]`);
+      const communityHalf = layout?.querySelector(`[class*="pcCommunityHalf"]`);
+      const marketSide = layout?.querySelector(`[class*="pcRoiSideMarket"]`);
+
+      const footerRect = footer?.getBoundingClientRect();
+      const cardRect = colLeft?.getBoundingClientRect();
+
+      console.log('[PCDetail][height] =====', phase, '=====', {
+        symbol,
+        vh,
+        expectedShell,
+        expectedCard,
+        formula: '100vh - 64(header) - 52(spacer) - 24(padding)',
+        gapCardToFooter: footerRect && cardRect
+          ? Math.round(footerRect.top - cardRect.bottom)
+          : null,
+        gapCardToViewportBottom: cardRect
+          ? Math.round(vh - cardRect.bottom)
+          : null,
+        overflowPastMain: layout && contentMainDetail
+          ? Math.round(
+              layout.getBoundingClientRect().bottom -
+                contentMainDetail.getBoundingClientRect().bottom
+            )
+          : null,
+        layoutShouldFitInMain:
+          layout && contentMainDetail
+            ? layout.getBoundingClientRect().bottom <=
+              contentMainDetail.getBoundingClientRect().bottom + 1
+            : null,
       });
 
-      if (pcContentLayoutRef.current) {
-        dumpEl('pcContentLayout', pcContentLayoutRef.current);
-        const p1 = pcContentLayoutRef.current.parentElement;
-        const p2 = p1?.parentElement;
-        dumpEl('pcContentLayout_parent(p1)', p1);
-        dumpEl('pcContentLayout_grandparent(p2)', p2);
-        dumpEl('pcColLeft', pcContentLayoutRef.current.querySelector(`.${styles.pcContentColLeft}`));
-        dumpEl('pcColRight', pcContentLayoutRef.current.querySelector(`.${styles.pcContentColRight}`));
-      }
+      dumpEl('contentDetail', contentDetail);
+      dumpEl('contentMainDetail', contentMainDetail);
+      dumpEl('detailFooterSpacer', spacer);
+      dumpEl('pcContentLayout', layout);
+      dumpEl('pcContentColLeft(白卡片)', colLeft);
+      dumpEl('pcRoiSideMarket', marketSide);
+      dumpEl('pcOrderHalf', orderHalf);
+      dumpEl('pcCommunityHalf', communityHalf);
+      dumpEl('footerNotice', footer);
+      dumpEl('marketRef', marketRef.current);
+      dumpEl('roiRef', roiRef.current);
+      dumpEl('orderBookRef', pcOrderBookSectionRef.current);
 
-      if (mobileRootRef.current) {
-        dumpEl('mobileRoot(.container)', mobileRootRef.current);
-      }
+      // 方便控制台手动复测：window.__dumpPcDetailHeight()
+      window.__dumpPcDetailHeight = () => logOnce('manual');
 
-      dumpEl('chartSection', chartRef.current);
-      dumpEl('marketSection', marketRef.current);
-      dumpEl('roiSection', roiRef.current);
+      if (debugHeight) {
+        dumpEl('contentMain_parent', contentMainDetail?.parentElement);
+        dumpEl('contentDetail_parent', contentDetail?.parentElement);
+      }
     };
 
-    // 首次渲染后先打印一次，再在布局稳定后打印一次
     logOnce('mount');
-    const t1 = window.setTimeout(() => logOnce('after-layout-300ms'), 300);
-    const t2 = window.setTimeout(() => logOnce('after-layout-900ms'), 900);
-
+    const t1 = window.setTimeout(() => logOnce('after-300ms'), 300);
+    const t2 = window.setTimeout(() => logOnce('after-900ms'), 900);
     const onResize = () => logOnce('resize');
     window.addEventListener('resize', onResize);
 
@@ -531,7 +596,7 @@ export default function DetailPage() {
       window.clearTimeout(t2);
       window.removeEventListener('resize', onResize);
     };
-  }, [debugHeight, isPC, chartRef, marketRef, roiRef]);
+  }, [isPC, symbol, debugHeight]);
 
   // 倒计时检查过期
   useEffect(() => {
@@ -668,10 +733,10 @@ export default function DetailPage() {
   
   
   // 获取币种信息
-  const fetchCoinInfo = async () => {
+  const fetchCoinInfo = async ({ silent = false } = {}) => {
     if (!symbol) return;
     
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const response = await request({
         url: Interface.coin_info,
@@ -686,34 +751,42 @@ export default function DetailPage() {
         if (!favorite && symbol) {
           favorite = await checkIsInWatchlist(symbol);
         }
+        if (favoriteLocalRef.current !== null) {
+          if (favorite === favoriteLocalRef.current) {
+            favoriteLocalRef.current = null;
+          } else {
+            favorite = favoriteLocalRef.current;
+          }
+        }
         setIsFavorite(favorite);
-        setCoinInfo({
+        setCoinInfo((prev) => ({
+          ...(silent && prev ? prev : {}),
           ...coinData,
-          isSelfSelected: coinData.isSelfSelected ?? favorite,
-        });
+          isSelfSelected: favorite,
+        }));
         
-        // 设置详细信息
+        // 设置详细信息（存 key，文案在渲染时按当前语言翻译）
         const headerInfoLeft = [
-          { name: t('detail.header.high24h'), value: coinData.high_24h != null ? `$${coinData.high_24h}` : coinData.high_24h },
-          { name: t('detail.header.low24h'), value: coinData.low_24h != null ? `$${coinData.low_24h}` : coinData.low_24h },
-          { name: t('detail.header.fdv'), value: coinData.fullyDilutedValuation },
-          { name: t('detail.header.marketCapChange24h'), value: coinData.marketCapChange_24h },
-          { name: t('detail.header.marketCapChangePercent24h'), value: coinData.marketCapChangePercentage_24h },
-          { name: t('detail.header.athDate'), value: coinData.athDate },
-          { name: t('detail.header.atlDate'), value: coinData.atlDate }
+          { key: 'high24h', value: coinData.high_24h != null ? `$${coinData.high_24h}` : coinData.high_24h },
+          { key: 'low24h', value: coinData.low_24h != null ? `$${coinData.low_24h}` : coinData.low_24h },
+          { key: 'fdv', value: coinData.fullyDilutedValuation },
+          { key: 'marketCapChange24h', value: coinData.marketCapChange_24h },
+          { key: 'marketCapChangePercent24h', value: coinData.marketCapChangePercentage_24h },
+          { key: 'athDate', value: coinData.athDate },
+          { key: 'atlDate', value: coinData.atlDate },
         ];
-        
+
         const headerInfoRight = [
-          { name: t('detail.header.totalSupply'), value: coinData.totalSupply },
-          { name: t('detail.marketCap'), value: coinData.marketCap },
-          { name: t('detail.header.totalVolume24h'), value: coinData.totalVolume },
-          { name: t('detail.header.circulatingSupply'), value: coinData.circulatingSupply },
-          { name: t('detail.header.ath'), value: coinData.ath },
-          { name: t('detail.header.athChangePercent'), value: coinData.athChangePercentage },
-          { name: t('detail.header.atl'), value: coinData.atl },
-          { name: t('detail.header.atlChangePercent'), value: coinData.atlChangePercentage }
+          { key: 'totalSupply', value: coinData.totalSupply },
+          { key: 'marketCap', value: coinData.marketCap },
+          { key: 'totalVolume24h', value: coinData.totalVolume },
+          { key: 'circulatingSupply', value: coinData.circulatingSupply },
+          { key: 'ath', value: coinData.ath },
+          { key: 'athChangePercent', value: coinData.athChangePercentage },
+          { key: 'atl', value: coinData.atl },
+          { key: 'atlChangePercent', value: coinData.atlChangePercentage },
         ];
-        
+
         setCoinInfoLeft(headerInfoLeft);
         setCoinInfoRight(headerInfoRight);
       }
@@ -750,12 +823,16 @@ export default function DetailPage() {
   };
 
   const generateMockOrderBook = (iconUrl) => {
-    const genSide = () => {
-      const baseValue = 10e9 + Math.random() * 4e9;
+    const mid = Number(coinInfo?.currentPrice) || Number(coinInfo?.price) || 0.07;
+    const genSide = (side) => {
       return Array.from({ length: 40 }).map((_, idx) => {
-        const decay = 1 - idx * 0.1;
-        const value = baseValue * decay * (0.9 + Math.random() * 0.2);
+        const step = mid * 0.0012 * (idx + 1);
+        const price = side === 'bid' ? mid - step : mid + step;
+        const quantity = (0.8 + Math.random() * 2.4) * (1 + idx * 0.15);
+        const value = price * quantity;
         return {
+          price,
+          quantity,
           value,
           logo: iconUrl || null,
         };
@@ -763,8 +840,8 @@ export default function DetailPage() {
     };
 
     return {
-      bids: genSide(),
-      asks: genSide(),
+      bids: genSide('bid'),
+      asks: genSide('ask'),
     };
   };
   
@@ -832,7 +909,7 @@ export default function DetailPage() {
   };
 
   // 获取K线数据（仅在WebSocket失败时使用）
-  const fetchKlineData = async () => {
+  const fetchKlineData = async ({ silent = false } = {}) => {
     if (!symbol) return;
     
     // 只有在允许使用HTTP降级时才执行
@@ -840,7 +917,7 @@ export default function DetailPage() {
       return;
     }
     
-    setKlineLoading(true);
+    if (!silent) setKlineLoading(true);
     
     try {
       // 并行获取四个时间维度的K线数据
@@ -894,10 +971,10 @@ export default function DetailPage() {
   };
   
   // 获取市场数据
-  const fetchMarketData = async () => {
+  const fetchMarketData = async ({ silent = false } = {}) => {
     if (!symbol) return;
     
-    setMarketLoading(true);
+    if (!silent) setMarketLoading(true);
     try {
       const response = await request({
         url: Interface.COIN_MARKET,
@@ -914,12 +991,12 @@ export default function DetailPage() {
           usd: item.usd
         }));
         setMarketData(processedData);
-      } else {
+      } else if (!silent) {
         setMarketData([]);
       }
     } catch (error) {
       console.error('获取市场数据失败:', error);
-      setMarketData([]);
+      if (!silent) setMarketData([]);
     } finally {
       setMarketLoading(false);
     }
@@ -948,8 +1025,8 @@ export default function DetailPage() {
       const s = String(priceRaw).trim();
       return s.startsWith('$') ? s : `$${s}`;
     };
-    const loadHotCoins = async () => {
-      if (alive) setRightHotTickerLoading(true);
+    const loadHotCoins = async ({ silent = false } = {}) => {
+      if (alive && !silent) setRightHotTickerLoading(true);
       try {
         const res = await request({
           url: Interface.find_coin,
@@ -988,14 +1065,14 @@ export default function DetailPage() {
         setRightHotTicker(mapped);
       } catch (_) {
         if (!alive) return;
-        setRightHotTicker([]);
+        if (!silent) setRightHotTicker([]);
       } finally {
         if (!alive) return;
         setRightHotTickerLoading(false);
       }
     };
-    loadHotCoins();
-    const timer = setInterval(loadHotCoins, 30000);
+    loadHotCoins({ silent: false });
+    const timer = setInterval(() => loadHotCoins({ silent: true }), 30000);
     return () => {
       alive = false;
       clearInterval(timer);
@@ -1121,29 +1198,10 @@ export default function DetailPage() {
     ]
   );
 
-  useLayoutEffect(() => {
-    if (!isPC) {
-      setPcCommunityCardHeightPx(null);
-      return;
-    }
-    const el = pcRightPanelLeftRef.current;
-    if (!el) return;
-
-    const update = () => {
-      const h = el.getBoundingClientRect().height;
-      if (h > 0) setPcCommunityCardHeightPx(Math.round(h));
-    };
-
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [isPC, marketLoading, roiLoading, symbol, Array.isArray(marketData) ? marketData.length : 0]);
-
   // 获取投资回报率（ROI）数据
-  const fetchROIData = async () => {
+  const fetchROIData = async ({ silent = false } = {}) => {
     if (!symbol) return;
-    setRoiLoading(true);
+    if (!silent) setRoiLoading(true);
     try {
       const response = await request({
         url: Interface.RETURN_INVESTMENT,
@@ -1212,39 +1270,50 @@ export default function DetailPage() {
     });
   };
 
-  // 添加/移除自选
+  // 添加/移除自选：先乐观更新 UI，再请求校验，失败则回滚
   const toggleFavorite = async () => {
     if (favoriteLoading) return;
 
     const curFavorite = Boolean(isFavorite || coinInfo?.isSelfSelected || fromFavorite);
+    const next = !curFavorite;
 
+    favoriteLocalRef.current = next;
+    setIsFavorite(next);
+    setCoinInfo((prev) => (prev ? { ...prev, isSelfSelected: next } : prev));
     setFavoriteLoading(true);
+
     try {
       const response = await request({
         url: curFavorite ? Interface.CANCEL_OWN : Interface.ADD_OWN,
         method: 'GET',
         data: { coin: symbol }
       });
-      
-      if (response?.code === 0) {
-        if (!curFavorite) {
-          try {
-            await completeTask('ADD_WATCHLIST');
-          } catch (e) {
-            console.error('上报 ADD_WATCHLIST 失败', e);
-          }
-        }
 
-        const next = !curFavorite;
-        setIsFavorite(next);
-        setCoinInfo((prev) => (prev ? { ...prev, isSelfSelected: next } : prev));
+      if (response?.code === 0) {
         Toast.show({
           content: curFavorite ? '已移除自选' : '已添加自选',
           position: 'bottom',
         });
+        if (!curFavorite) {
+          completeTask('ADD_WATCHLIST').catch((e) => {
+            console.error('上报 ADD_WATCHLIST 失败', e);
+          });
+        }
+        return;
       }
+
+      favoriteLocalRef.current = curFavorite;
+      setIsFavorite(curFavorite);
+      setCoinInfo((prev) => (prev ? { ...prev, isSelfSelected: curFavorite } : prev));
+      Toast.show({
+        content: response?.msg || response?.message || '操作失败，请重试',
+        position: 'bottom',
+      });
     } catch (error) {
       console.error('操作自选失败:', error);
+      favoriteLocalRef.current = curFavorite;
+      setIsFavorite(curFavorite);
+      setCoinInfo((prev) => (prev ? { ...prev, isSelfSelected: curFavorite } : prev));
       Toast.show({
         content: '操作失败，请重试',
         position: 'bottom',
@@ -1370,11 +1439,11 @@ ${coinInfo.name || symbol} (${symbol})
   const startHttpFallback = () => {
     useHttpFallbackRef.current = true;
     
-    // 立即获取一次数据
-    fetchCoinInfo();
-    fetchKlineData();
-    fetchMarketData();
-    fetchROIData();
+    // 立即获取一次数据（已有数据则静默刷新，避免整页闪 loading）
+    fetchCoinInfo({ silent: true });
+    fetchKlineData({ silent: true });
+    fetchMarketData({ silent: true });
+    fetchROIData({ silent: true });
     
     // 设置轮询
     if (pollingTimerRef.current) {
@@ -1382,10 +1451,10 @@ ${coinInfo.name || symbol} (${symbol})
     }
     pollingTimerRef.current = setInterval(() => {
       if (needLoop.current && useHttpFallbackRef.current) {
-        fetchCoinInfo();
-        fetchKlineData();
-        fetchMarketData();
-        fetchROIData();
+        fetchCoinInfo({ silent: true });
+        fetchKlineData({ silent: true });
+        fetchMarketData({ silent: true });
+        fetchROIData({ silent: true });
       }
     }, LOOPTIME);
   };
@@ -1534,27 +1603,43 @@ ${coinInfo.name || symbol} (${symbol})
           };
         });
         
-        // 同时更新详细信息区域
+        // 同时更新详细信息区域（按稳定 key 匹配，避免语言切换后匹配失败）
         if (tickerData.high_24h !== undefined && tickerData.high_24h !== null) {
-          setCoinInfoLeft(prev => prev.map(item => 
-            item.name === '24H最高价' ? { ...item, value: tickerData.high_24h } : item
-          ));
+          setCoinInfoLeft((prev) =>
+            prev.map((item) =>
+              item.key === 'high24h' ? { ...item, value: `$${tickerData.high_24h}` } : item
+            )
+          );
         }
-        
+
         if (tickerData.low_24h !== undefined && tickerData.low_24h !== null) {
-          setCoinInfoLeft(prev => prev.map(item => 
-            item.name === '24H最低价' ? { ...item, value: tickerData.low_24h } : item
-          ));
+          setCoinInfoLeft((prev) =>
+            prev.map((item) =>
+              item.key === 'low24h' ? { ...item, value: `$${tickerData.low_24h}` } : item
+            )
+          );
         }
-        
+
         if (tickerData.totalVolume !== undefined && tickerData.totalVolume !== null) {
-          setCoinInfoRight(prev => prev.map(item => 
-            item.name === '24H成交额' ? { ...item, value: tickerData.totalVolume } : item
-          ));
+          setCoinInfoRight((prev) =>
+            prev.map((item) =>
+              item.key === 'totalVolume24h' ? { ...item, value: tickerData.totalVolume } : item
+            )
+          );
         } else if (tickerData.volume !== undefined && tickerData.volume !== null) {
-          setCoinInfoRight(prev => prev.map(item => 
-            item.name === '24H成交额' ? { ...item, value: tickerData.volume } : item
-          ));
+          setCoinInfoRight((prev) =>
+            prev.map((item) =>
+              item.key === 'totalVolume24h' ? { ...item, value: tickerData.volume } : item
+            )
+          );
+        }
+
+        if (tickerData.marketCap !== undefined && tickerData.marketCap !== null) {
+          setCoinInfoRight((prev) =>
+            prev.map((item) =>
+              item.key === 'marketCap' ? { ...item, value: tickerData.marketCap } : item
+            )
+          );
         }
       }
     });
@@ -1798,68 +1883,78 @@ ${coinInfo.name || symbol} (${symbol})
           atlDate: headerData.atlDate ?? prevInfo.atlDate,
           atlChangePercentage: headerData.atlChangePercentage ?? prevInfo.atlChangePercentage,
           
-          // 自选状态
-          isSelfSelected: headerData.isSelfSelected !== undefined ? headerData.isSelfSelected : prevInfo.isSelfSelected,
+          // 自选状态：行情推送常带回过期的 false，勿覆盖本地已添加状态
+          isSelfSelected:
+            headerData.isSelfSelected === true
+              ? true
+              : (prevInfo.isSelfSelected ?? false),
         };
         
         return updatedInfo;
       });
 
-      if (headerData.isSelfSelected !== undefined) {
-        setIsFavorite(Boolean(headerData.isSelfSelected));
+      if (headerData.isSelfSelected === true) {
+        setIsFavorite(true);
+        favoriteLocalRef.current = null;
       }
       
-      // 更新详细信息（左侧）- 使用显式检查避免假值被忽略
-      setCoinInfoLeft(prev => prev.map(item => {
-        if (item.name === '24H最高价' && headerData.high_24h !== undefined && headerData.high_24h !== null) {
-          return { ...item, value: headerData.high_24h };
-        }
-        if (item.name === '24H最低价' && headerData.low_24h !== undefined && headerData.low_24h !== null) {
-          return { ...item, value: headerData.low_24h };
-        }
-        if (item.name === '稀释市值' && headerData.fullyDilutedValuation !== undefined && headerData.fullyDilutedValuation !== null) {
-          return { ...item, value: headerData.fullyDilutedValuation };
-        }
-        if (item.name === '24H市值变化' && headerData.marketCapChange_24h !== undefined && headerData.marketCapChange_24h !== null) {
-          return { ...item, value: headerData.marketCapChange_24h };
-        }
-        if (item.name === '24H市值变化百分比' && headerData.marketCapChangePercentage_24h !== undefined && headerData.marketCapChangePercentage_24h !== null) {
-          return { ...item, value: headerData.marketCapChangePercentage_24h };
-        }
-        if (item.name === '历史最高价时间' && headerData.athDate !== undefined && headerData.athDate !== null) {
-          return { ...item, value: headerData.athDate };
-        }
-        if (item.name === '历史最低价时间' && headerData.atlDate !== undefined && headerData.atlDate !== null) {
-          return { ...item, value: headerData.atlDate };
-        }
-        return item;
-      }));
-      
-      // 更新详细信息（右侧）- 使用显式检查避免假值被忽略
-      setCoinInfoRight(prev => prev.map(item => {
-        if (item.name === '24H成交额' && headerData.totalVolume !== undefined && headerData.totalVolume !== null) {
-          return { ...item, value: headerData.totalVolume };
-        }
-        if (item.name === '总供应量' && headerData.totalSupply !== undefined && headerData.totalSupply !== null) {
-          return { ...item, value: headerData.totalSupply };
-        }
-        if (item.name === '流通供应量' && headerData.circulatingSupply !== undefined && headerData.circulatingSupply !== null) {
-          return { ...item, value: headerData.circulatingSupply };
-        }
-        if (item.name === '历史最高价' && headerData.ath !== undefined && headerData.ath !== null) {
-          return { ...item, value: headerData.ath };
-        }
-        if (item.name === '历史最高价百分比' && headerData.athChangePercentage !== undefined && headerData.athChangePercentage !== null) {
-          return { ...item, value: headerData.athChangePercentage };
-        }
-        if (item.name === '历史最低价' && headerData.atl !== undefined && headerData.atl !== null) {
-          return { ...item, value: headerData.atl };
-        }
-        if (item.name === '历史最低价百分比' && headerData.atlChangePercentage !== undefined && headerData.atlChangePercentage !== null) {
-          return { ...item, value: headerData.atlChangePercentage };
-        }
-        return item;
-      }));
+      // 更新详细信息（按 key 匹配，避免依赖中文文案）
+      setCoinInfoLeft((prev) =>
+        prev.map((item) => {
+          if (item.key === 'high24h' && headerData.high_24h !== undefined && headerData.high_24h !== null) {
+            return { ...item, value: `$${headerData.high_24h}` };
+          }
+          if (item.key === 'low24h' && headerData.low_24h !== undefined && headerData.low_24h !== null) {
+            return { ...item, value: `$${headerData.low_24h}` };
+          }
+          if (item.key === 'fdv' && headerData.fullyDilutedValuation !== undefined && headerData.fullyDilutedValuation !== null) {
+            return { ...item, value: headerData.fullyDilutedValuation };
+          }
+          if (item.key === 'marketCapChange24h' && headerData.marketCapChange_24h !== undefined && headerData.marketCapChange_24h !== null) {
+            return { ...item, value: headerData.marketCapChange_24h };
+          }
+          if (item.key === 'marketCapChangePercent24h' && headerData.marketCapChangePercentage_24h !== undefined && headerData.marketCapChangePercentage_24h !== null) {
+            return { ...item, value: headerData.marketCapChangePercentage_24h };
+          }
+          if (item.key === 'athDate' && headerData.athDate !== undefined && headerData.athDate !== null) {
+            return { ...item, value: headerData.athDate };
+          }
+          if (item.key === 'atlDate' && headerData.atlDate !== undefined && headerData.atlDate !== null) {
+            return { ...item, value: headerData.atlDate };
+          }
+          return item;
+        })
+      );
+
+      setCoinInfoRight((prev) =>
+        prev.map((item) => {
+          if (item.key === 'totalVolume24h' && headerData.totalVolume !== undefined && headerData.totalVolume !== null) {
+            return { ...item, value: headerData.totalVolume };
+          }
+          if (item.key === 'totalSupply' && headerData.totalSupply !== undefined && headerData.totalSupply !== null) {
+            return { ...item, value: headerData.totalSupply };
+          }
+          if (item.key === 'marketCap' && headerData.marketCap !== undefined && headerData.marketCap !== null) {
+            return { ...item, value: headerData.marketCap };
+          }
+          if (item.key === 'circulatingSupply' && headerData.circulatingSupply !== undefined && headerData.circulatingSupply !== null) {
+            return { ...item, value: headerData.circulatingSupply };
+          }
+          if (item.key === 'ath' && headerData.ath !== undefined && headerData.ath !== null) {
+            return { ...item, value: headerData.ath };
+          }
+          if (item.key === 'athChangePercent' && headerData.athChangePercentage !== undefined && headerData.athChangePercentage !== null) {
+            return { ...item, value: headerData.athChangePercentage };
+          }
+          if (item.key === 'atl' && headerData.atl !== undefined && headerData.atl !== null) {
+            return { ...item, value: headerData.atl };
+          }
+          if (item.key === 'atlChangePercent' && headerData.atlChangePercentage !== undefined && headerData.atlChangePercentage !== null) {
+            return { ...item, value: headerData.atlChangePercentage };
+          }
+          return item;
+        })
+      );
       
       // 5. 更新市场数据（如果存在）
       if (exchangesPriceData && Array.isArray(exchangesPriceData) && exchangesPriceData.length > 0) {
@@ -1904,19 +1999,17 @@ ${coinInfo.name || symbol} (${symbol})
         return;
       }
 
-      // 统一映射为 OrderBook 组件需要的格式：[{ value }]
-      // 默认 value 使用成交额：deal_price * deal_quantity
-      // 若字段缺失则回退为 deal_quantity
+      // 统一映射为业内订单簿格式：[{ price, quantity, value }]
       const mapSide = (arr) =>
         arr.map((x) => {
-          const price = toNumber(x?.deal_price);
-          const qty = toNumber(x?.deal_quantity);
+          const price = toNumber(x?.deal_price ?? x?.price);
+          const qty = toNumber(x?.deal_quantity ?? x?.quantity ?? x?.qty ?? x?.size);
           const notional = price !== null && qty !== null ? price * qty : null;
-          // 后端字段可能不止 deal_price*deal_quantity，这里做多字段兜底
           const fallbackDealValue = toNumber(x?.deal_value ?? x?.deal_amount ?? x?.notional ?? x?.amount);
           return {
+            price: price ?? 0,
+            quantity: qty ?? 0,
             value: notional ?? fallbackDealValue ?? qty ?? 0,
-            // 图标：优先使用 WS 下发的 logo
             logo: x?.logo || null,
           };
         });
@@ -2140,16 +2233,16 @@ ${coinInfo.name || symbol} (${symbol})
           <div className={styles.headerInfo}>
             <div className={styles.left}>
               {coinInfoLeft.slice(0, 2).map((info, index) => (
-                <div key={index} className={styles.headerInfoItem}>
-                  <div className={styles.name}>{info.name}</div>
+                <div key={info.key || index} className={styles.headerInfoItem}>
+                  <div className={styles.name}>{headerFieldLabel(info.key)}</div>
                   <div className={styles.value}>{info.value || '--'}</div>
                 </div>
               ))}
             </div>
             <div className={styles.right}>
               {coinInfoRight.slice(0, 2).map((info, index) => (
-                <div key={index} className={styles.headerInfoItem}>
-                  <div className={styles.name}>{info.name}</div>
+                <div key={info.key || index} className={styles.headerInfoItem}>
+                  <div className={styles.name}>{headerFieldLabel(info.key)}</div>
                   <div className={styles.value}>{info.value || '--'}</div>
                 </div>
               ))}
@@ -2162,16 +2255,16 @@ ${coinInfo.name || symbol} (${symbol})
           <div className={styles.headerInfo}>
             <div className={styles.left}>
               {coinInfoLeft.slice(2).map((info, index) => (
-                <div key={index} className={styles.headerInfoItem}>
-                  <div className={styles.name}>{info.name}</div>
+                <div key={info.key || index} className={styles.headerInfoItem}>
+                  <div className={styles.name}>{headerFieldLabel(info.key)}</div>
                   <div className={styles.value}>{info.value || '--'}</div>
                 </div>
               ))}
             </div>
             <div className={styles.right}>
               {coinInfoRight.slice(2).map((info, index) => (
-                <div key={index} className={styles.headerInfoItem}>
-                  <div className={styles.name}>{info.name}</div>
+                <div key={info.key || index} className={styles.headerInfoItem}>
+                  <div className={styles.name}>{headerFieldLabel(info.key)}</div>
                   <div className={styles.value}>{info.value || '--'}</div>
                 </div>
               ))}
@@ -2194,9 +2287,9 @@ ${coinInfo.name || symbol} (${symbol})
     );
   };
 
-  // 跳转到会员购买
+  // 跳转到会员购买：PC 进订阅页，移动端进充值页
   const handleBuyMembership = () => {
-    router.push('/vip-recharge');
+    router.push(isPC ? '/subscribe' : '/vip-recharge');
   };
 
   const renderOrderBook = () => {
@@ -2213,6 +2306,8 @@ ${coinInfo.name || symbol} (${symbol})
       <OrderBook 
         bids={orderBook.bids} 
         asks={orderBook.asks}
+        midPrice={coinInfo?.currentPrice}
+        priceTrend={String(coinInfo?.priceChange_24h ?? '').includes('-') ? 'down' : 'up'}
         endTime={unlockEndTime}
         tag={orderBookTag}
         showMask={!isBigOrderUnlocked}
@@ -2244,7 +2339,11 @@ ${coinInfo.name || symbol} (${symbol})
           title={isPC ? undefined : t('detail.tabs.roi')}
           customTitle={isPC ? roiTitleEl : undefined}
           isPC={isPC}
-          className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightRoiCard}` : ''}
+          className={
+            isPC
+              ? `${styles.pcRightPanelCard} ${styles.pcRightRoiCard} ${styles.pcRoiSideCard}`
+              : ''
+          }
           marginBottom={isPC ? '0' : undefined}
         >
           {isPC ? (
@@ -2276,7 +2375,11 @@ ${coinInfo.name || symbol} (${symbol})
         title={isPC ? undefined : t('detail.tabs.roi')}
         customTitle={isPC ? roiTitleEl : undefined}
         isPC={isPC}
-        className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightRoiCard}` : ''}
+        className={
+          isPC
+            ? `${styles.pcRightPanelCard} ${styles.pcRightRoiCard} ${styles.pcRoiSideCard}`
+            : ''
+        }
         marginBottom={isPC ? '0' : undefined}
       >
         <div className={styles.roiBox}>
@@ -2353,13 +2456,17 @@ ${coinInfo.name || symbol} (${symbol})
         </div>
       ) : null;
 
+    const cardClassName = isPC
+      ? `${styles.pcRightPanelCard} ${styles.pcRightMarketCard} ${styles.pcMarketSideCard}`
+      : '';
+
     if (marketLoading) {
       return (
         <MoziCard
           title={isPC ? undefined : t('detail.tabs.market')}
           customTitle={marketTitlePc}
           isPC={isPC}
-          className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightMarketCard}` : ''}
+          className={cardClassName}
           marginBottom={isPC ? '0' : undefined}
         >
           {isPC ? (
@@ -2380,7 +2487,7 @@ ${coinInfo.name || symbol} (${symbol})
           customTitle={marketTitlePc}
           sumNum={0}
           isPC={isPC}
-          className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightMarketCard}` : ''}
+          className={cardClassName}
           marginBottom={isPC ? '0' : undefined}
         >
           <div className={styles.emptyInfo}>{t('detail.empty.market')}</div>
@@ -2388,24 +2495,104 @@ ${coinInfo.name || symbol} (${symbol})
       );
     }
 
+    const syncMarketScroll = (source) => (event) => {
+      if (pcMarketScrollSyncingRef.current) return;
+      pcMarketScrollSyncingRef.current = true;
+      const left = event.currentTarget.scrollLeft;
+      const target =
+        source === 'head' ? pcMarketBodyScrollRef.current : pcMarketHeadScrollRef.current;
+      if (target && target.scrollLeft !== left) {
+        target.scrollLeft = left;
+      }
+      window.requestAnimationFrame(() => {
+        pcMarketScrollSyncingRef.current = false;
+      });
+    };
+
+    const marketHeaders = [
+      t('detail.market.exchange'),
+      t('detail.market.lastPrice'),
+      t('detail.market.change24h'),
+      t('detail.market.volume24h'),
+      t('detail.market.amount24h'),
+    ];
+
+    if (isPC) {
+      return (
+        <MoziCard
+          customTitle={marketTitlePc}
+          sumNum={marketData.length}
+          isPC
+          className={cardClassName}
+          marginBottom="0"
+        >
+          <div className={styles.pcMarketTable}>
+            {/* 表头单独横滑：滚动条固定出现在列标题下方 */}
+            <div
+              ref={pcMarketHeadScrollRef}
+              className={styles.pcMarketHeadScroll}
+              onScroll={syncMarketScroll('head')}
+            >
+              <div className={styles.pcMarketInner}>
+                <div className={styles.pcMarketHeadRow}>
+                  {marketHeaders.map((label, idx) => (
+                    <div
+                      key={`h-${idx}`}
+                      className={`${styles.pcMarketCell} ${idx === 0 ? styles.pcMarketCellLeft : styles.pcMarketCellRight} ${styles[`pcMarketCol${idx + 1}`]}`}
+                    >
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div
+              ref={pcMarketBodyScrollRef}
+              className={styles.pcMarketBodyScroll}
+              onScroll={syncMarketScroll('body')}
+            >
+              <div className={styles.pcMarketInner}>
+                {marketData.map((row, rowIdx) => (
+                  <div key={`r-${rowIdx}`} className={styles.pcMarketBodyRow}>
+                    <div className={`${styles.pcMarketCell} ${styles.pcMarketCellLeft} ${styles.pcMarketCol1}`}>
+                      {row.title}
+                    </div>
+                    <div className={`${styles.pcMarketCell} ${styles.pcMarketCellRight} ${styles.pcMarketCol2}`}>
+                      {row.last}
+                    </div>
+                    <div className={`${styles.pcMarketCell} ${styles.pcMarketCellRight} ${styles.pcMarketCol3}`}>
+                      {row.price24h}
+                    </div>
+                    <div className={`${styles.pcMarketCell} ${styles.pcMarketCellRight} ${styles.pcMarketCol4}`}>
+                      {row.vol}
+                    </div>
+                    <div className={`${styles.pcMarketCell} ${styles.pcMarketCellRight} ${styles.pcMarketCol5}`}>
+                      {row.usd}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </MoziCard>
+      );
+    }
+
     return (
       <MoziCard
-        title={isPC ? undefined : t('detail.tabs.market')}
-        customTitle={marketTitlePc}
+        title={t('detail.tabs.market')}
         sumNum={marketData.length}
-        isPC={isPC}
-        className={isPC ? `${styles.pcRightPanelCard} ${styles.pcRightMarketCard}` : ''}
-        marginBottom={isPC ? '0' : undefined}
+        isPC={false}
+        marginBottom={undefined}
       >
         <MoziGrid
           length={5}
-          colName={[t('detail.market.exchange'), t('detail.market.lastPrice'), t('detail.market.change24h'), t('detail.market.volume24h'), t('detail.market.amount24h')]}
+          colName={marketHeaders}
           gridContent={marketData}
           gridTitleBgColor="transparent"
-          columnWidths={isPC ? ['22%', '17%', '17%', '22%', '22%'] : ['25%', '22%', '20%', '20%', '22%']}
-          isPC={isPC}
-          rowPadding={isPC ? '12PX 0' : null}
-          className={isPC ? styles.pcRightMarketGrid : ''}
+          columnWidths={['25%', '22%', '20%', '20%', '22%']}
+          isPC={false}
         />
       </MoziCard>
     );
@@ -2495,6 +2682,146 @@ ${coinInfo.name || symbol} (${symbol})
 
   const communityFeedItems = rightCommunityPosts;
 
+  const renderPcCommunityPanel = () => (
+    <div className={`${styles.pcRightPanelCard} ${styles.pcCommunityFeedCard} ${styles.pcCommunitySideCard}`}>
+      <div className={styles.pcCommunityHeader}>
+        <div className={styles.pcCommunityTitleLeft}>
+          <span className={styles.pcRoiTitleDot} aria-hidden />
+          <span>{t('detail.actions.community')}</span>
+        </div>
+        <button
+          type="button"
+          className={styles.pcCommunityMore}
+          onClick={jump2Community}
+        >
+          {t('common.viewMore')} {'→'}
+        </button>
+      </div>
+      <div className={styles.pcCommunityList} onScroll={handlePcCommunityScroll}>
+        {rightCommunityLoading ? (
+          <div className={`${styles.pcCommunityEmpty} ${styles.pcCommunityEmptyLoading}`}>
+            <Loading tip={t('common.loading')} size={20} />
+          </div>
+        ) : communityFeedItems.length === 0 ? (
+          <div className={styles.pcCommunityEmpty}>
+            {t('detail.empty.community', { defaultValue: '暂无社区动态' })}
+          </div>
+        ) : (
+          <>
+            {communityFeedItems.map((item, idx) => {
+              const text = String(item?.content || item?.text || item?.title || '');
+              const firstTag = Array.isArray(item?.tags) && item.tags.length > 0
+                ? item.tags[0]?.name
+                : '';
+              const fromSymbol = String(
+                item?.symbol || item?.coin || firstTag || communitySymbol
+              ).toUpperCase();
+              const topic = item?.category || '行情分析';
+              const content = String(item?.content || item?.title || text);
+              const userName =
+                item?.nickName || item?.nickname || item?.userName || item?.username || '墨子交易员';
+              const likes = Number(item?.likeCnt ?? item?.likeCount ?? item?.likes ?? 0);
+              const createdAt = item?.createdAt || item?.createTime || item?.created_at || '';
+              const avatarUrl = item?.avatar || '';
+              const timeText = createdAt
+                ? (() => {
+                    const d = new Date(createdAt);
+                    if (Number.isNaN(d.getTime())) return '12:54:11';
+                    const hh = String(d.getHours()).padStart(2, '0');
+                    const mm = String(d.getMinutes()).padStart(2, '0');
+                    const ss = String(d.getSeconds()).padStart(2, '0');
+                    return `${hh}:${mm}:${ss}`;
+                  })()
+                : '12:54:11';
+
+              return (
+                <div key={idx} className={styles.pcCommunityItem}>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={userName} className={styles.pcCommunityAvatar} />
+                  ) : (
+                    <div className={styles.pcCommunityAvatar} />
+                  )}
+                  <div className={styles.pcCommunityBody}>
+                    <div className={styles.pcCommunityTop}>
+                      <div className={styles.pcCommunityHeaderRow}>
+                        <div className={styles.pcCommunityUserBlock}>
+                          <div className={styles.pcCommunityUserRow}>
+                            <span className={styles.pcCommunityUserName}>
+                              {userName}
+                            </span>
+                            <span className={styles.pcCommunityBadge}>发现好币</span>
+                          </div>
+                          <div className={styles.pcCommunitySubTitle}>
+                            @{fromSymbol}-{topic}
+                          </div>
+                        </div>
+                        <span className={styles.pcCommunityEllipsis} aria-hidden>
+                          ...
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className={styles.pcCommunityContent}>
+                      <div className={styles.pcCommunityMainText}>{content}</div>
+
+                      <div className={styles.pcCommunityTagRow}>
+                        <button
+                          type="button"
+                          className={`${styles.pcCommunityTag} ${styles.pcCommunityTagOrange}`}
+                        >
+                          #行情论
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.pcCommunityTag} ${styles.pcCommunityTagBlue}`}
+                        >
+                          @{fromSymbol}
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.pcCommunityTag} ${styles.pcCommunityTagUsdt}`}
+                        >
+                          @USDT
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={styles.pcCommunityBottom}>
+                      <div className={styles.pcCommunityFooterLeft}>
+                        <div className={styles.pcCommunityAction}>
+                          <img
+                            src={likeNoActiveIcon}
+                            className={styles.pcCommunityActionIcon}
+                            alt="like"
+                          />
+                          <span>{Number.isFinite(likes) ? likes : 0}</span>
+                        </div>
+                        <div className={styles.pcCommunityAction}>
+                          <img
+                            src={shareIcon}
+                            className={`${styles.pcCommunityActionIcon} ${styles.pcCommunityShareIcon}`}
+                            alt="share"
+                          />
+                          <span>分享</span>
+                        </div>
+                      </div>
+                      <div className={styles.pcCommunityTime}>{timeText}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {rightCommunityLoadingMore ? (
+              <div className={`${styles.pcCommunityEmpty} ${styles.pcCommunityEmptyLoading}`}>
+                <Loading tip={t('common.loading')} size={20} />
+              </div>
+            ) : null}
+          </>
+        )}
+      </div>
+    </div>
+  );
+
   const displayIsFavorite = useMemo(
     () => Boolean(isFavorite || coinInfo?.isSelfSelected || fromFavorite),
     [isFavorite, coinInfo?.isSelfSelected, fromFavorite]
@@ -2505,7 +2832,7 @@ ${coinInfo.name || symbol} (${symbol})
       <>
       <div
         ref={pcContentLayoutRef}
-        className={`${styles.pcContentLayout} ${pcRightPanelOpen ? styles.pcRightOpen : styles.pcRightCollapsed}`}
+        className={`${styles.pcContentLayout} ${styles.pcContentLayoutFull}`}
       >
           <aside className={styles.pcContentColLeft}>
             <PCCoinDetail
@@ -2525,237 +2852,64 @@ ${coinInfo.name || symbol} (${symbol})
               onShare={shareToTelegram}
               onTradingRadar={handleTradingRadar}
               showBarrage={false}
+              sideLeft={
+                <div className={styles.pcRoiSideWrap}>
+                  <div className={styles.pcRoiSideMarquee}>
+                    <PCRightTopMarquee
+                      items={rightTopMarqueeItems}
+                      loading={rightHotTickerLoading}
+                    />
+                  </div>
+                  <div ref={roiRef} className={styles.pcRoiSideRoi}>
+                    {renderROI()}
+                  </div>
+                  <div ref={marketRef} className={styles.pcRoiSideMarket}>
+                    {renderMarket()}
+                  </div>
+                </div>
+              }
               statColumns={[
                 // 左侧列：24H 最高价 / 24H 最低价
-                coinInfoLeft.slice(0, 2).map((x) => ({ label: x.name, value: x.value })),
+                coinInfoLeft.slice(0, 2).map((x) => ({
+                  label: headerFieldLabel(x.key),
+                  value: x.value,
+                })),
                 // 中间列：上方流通市值，下方 24H 成交额
                 [
                   coinInfoRight[1] && {
-                    label: coinInfoRight[1].name,
+                    label: headerFieldLabel(coinInfoRight[1].key),
                     value: coinInfoRight[1].value,
                   },
                   coinInfoRight[2] && {
-                    label: coinInfoRight[2].name,
+                    label: headerFieldLabel(coinInfoRight[2].key),
                     value: coinInfoRight[2].value,
                   },
                 ].filter(Boolean),
                 // 右侧列：总供应量
                 coinInfoRight[0]
-                  ? [{ label: coinInfoRight[0].name, value: coinInfoRight[0].value }]
+                  ? [{ label: headerFieldLabel(coinInfoRight[0].key), value: coinInfoRight[0].value }]
                   : [],
               ]}
               loading={loading}
             >
               {renderKline()}
-              {showOrderBook && (
-                <div ref={pcOrderBookSectionRef} className={styles.orderBookSection}>
-                  {renderOrderBook()}
+              {showOrderBook ? (
+                <div className={styles.pcOrderCommunityCol}>
+                  <div ref={pcOrderBookSectionRef} className={`${styles.orderBookSection} ${styles.pcOrderHalf}`}>
+                    {renderOrderBook()}
+                  </div>
+                  <div className={styles.pcCommunityHalf}>
+                    {renderPcCommunityPanel()}
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.pcOrderCommunityCol}>
+                  <div className={styles.pcCommunityHalfFull}>
+                    {renderPcCommunityPanel()}
+                  </div>
                 </div>
               )}
             </PCCoinDetail>
-          </aside>
-          <aside
-            className={styles.pcWorkspace}
-            aria-label={t('detail.moreInfo', { defaultValue: '更多资讯' })}
-          >
-            {/* 更多资讯左侧竖条：展开时在内容左侧，收起时整块只留竖条 */}
-            <div className={styles.pcRightRail}>
-              <button
-                type="button"
-                className={styles.pcRightRailToggle}
-                onClick={() => setPcRightPanelOpen((v) => !v)}
-                aria-expanded={pcRightPanelOpen}
-                aria-label={
-                  pcRightPanelOpen
-                    ? t('detail.collapseMoreInfo', { defaultValue: '收起更多资讯' })
-                    : t('detail.expandMoreInfo', { defaultValue: '展开更多资讯' })
-                }
-                title={
-                  pcRightPanelOpen
-                    ? t('detail.collapseMoreInfo', { defaultValue: '收起更多资讯' })
-                    : t('detail.expandMoreInfo', { defaultValue: '展开更多资讯' })
-                }
-              >
-                <span className={styles.pcRightRailChevron} aria-hidden>
-                  {pcRightPanelOpen ? '«' : '»'}
-                </span>
-              </button>
-              {!pcRightPanelOpen ? (
-                <button
-                  type="button"
-                  className={styles.pcRightRailLabel}
-                  onClick={() => setPcRightPanelOpen(true)}
-                >
-                  {t('detail.moreInfo', { defaultValue: '更多资讯' })}
-                </button>
-              ) : null}
-            </div>
-
-            <div
-              className={styles.pcWorkspaceBody}
-              aria-hidden={!pcRightPanelOpen}
-            >
-            <div className={styles.pcRightTopMarqueeWrap}>
-              <PCRightTopMarquee items={rightTopMarqueeItems} loading={rightHotTickerLoading} />
-            </div>
-            <div className={styles.pcRightPanelContainer}>
-              <div className={styles.pcRightPanelGrid}>
-                <div ref={pcRightPanelLeftRef} className={styles.pcRightPanelLeft}>
-                  {renderROI()}
-                  {renderMarket()}
-                </div>
-                <div className={styles.pcRightPanelRight}>
-                  <div
-                    className={`${styles.pcRightPanelCard} ${styles.pcCommunityFeedCard}`}
-                    style={
-                      isPC && pcCommunityCardHeightPx != null && pcCommunityCardHeightPx > 0
-                        ? {
-                            height: `${pcCommunityCardHeightPx}px`,
-                            minHeight: `${pcCommunityCardHeightPx}px`,
-                          }
-                        : undefined
-                    }
-                  >
-                    <div className={styles.pcCommunityHeader}>
-                      <div className={styles.pcCommunityTitleLeft}>
-                        <span className={styles.pcRoiTitleDot} aria-hidden />
-                        <span>{t('detail.actions.community')}</span>
-                      </div>
-                      <button
-                        type="button"
-                        className={styles.pcCommunityMore}
-                        onClick={jump2Community}
-                      >
-                        查看更多 {'→'}
-                      </button>
-                    </div>
-                    <div className={styles.pcCommunityList} onScroll={handlePcCommunityScroll}>
-                      {rightCommunityLoading ? (
-                        <div className={`${styles.pcCommunityEmpty} ${styles.pcCommunityEmptyLoading}`}>
-                          <Loading tip={t('common.loading')} size={20} />
-                        </div>
-                      ) : communityFeedItems.length === 0 ? (
-                        <div className={styles.pcCommunityEmpty}>
-                          {t('detail.empty.community', { defaultValue: '暂无社区动态' })}
-                        </div>
-                      ) : (
-                        <>
-                          {communityFeedItems.map((item, idx) => {
-                        const text = String(item?.content || item?.text || item?.title || '');
-                        const firstTag = Array.isArray(item?.tags) && item.tags.length > 0
-                          ? item.tags[0]?.name
-                          : '';
-                        const fromSymbol = String(
-                          item?.symbol || item?.coin || firstTag || communitySymbol
-                        ).toUpperCase();
-                        const topic = item?.category || '行情分析';
-                        const content = String(item?.content || item?.title || text);
-                        const userName =
-                          item?.nickName || item?.nickname || item?.userName || item?.username || '墨子交易员';
-                        const likes = Number(item?.likeCnt ?? item?.likeCount ?? item?.likes ?? 0);
-                        const createdAt = item?.createdAt || item?.createTime || item?.created_at || '';
-                        const avatarUrl = item?.avatar || '';
-                        const timeText = createdAt
-                          ? (() => {
-                              const d = new Date(createdAt);
-                              if (Number.isNaN(d.getTime())) return '12:54:11';
-                              const hh = String(d.getHours()).padStart(2, '0');
-                              const mm = String(d.getMinutes()).padStart(2, '0');
-                              const ss = String(d.getSeconds()).padStart(2, '0');
-                              return `${hh}:${mm}:${ss}`;
-                            })()
-                          : '12:54:11';
-
-                        return (
-                          <div key={idx} className={styles.pcCommunityItem}>
-                            {avatarUrl ? (
-                              <img src={avatarUrl} alt={userName} className={styles.pcCommunityAvatar} />
-                            ) : (
-                              <div className={styles.pcCommunityAvatar} />
-                            )}
-                            <div className={styles.pcCommunityBody}>
-                              <div className={styles.pcCommunityTop}>
-                                <div className={styles.pcCommunityHeaderRow}>
-                                  <div className={styles.pcCommunityUserBlock}>
-                                    <div className={styles.pcCommunityUserRow}>
-                                      <span className={styles.pcCommunityUserName}>
-                                        {userName}
-                                      </span>
-                                      <span className={styles.pcCommunityBadge}>发现好币</span>
-                                    </div>
-                                    <div className={styles.pcCommunitySubTitle}>
-                                      @{fromSymbol}-{topic}
-                                    </div>
-                                  </div>
-                                  <span className={styles.pcCommunityEllipsis} aria-hidden>
-                                    ...
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className={styles.pcCommunityContent}>
-                                <div className={styles.pcCommunityMainText}>{content}</div>
-
-                                <div className={styles.pcCommunityTagRow}>
-                                  <button
-                                    type="button"
-                                    className={`${styles.pcCommunityTag} ${styles.pcCommunityTagOrange}`}
-                                  >
-                                    #行情论
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={`${styles.pcCommunityTag} ${styles.pcCommunityTagBlue}`}
-                                  >
-                                    @{fromSymbol}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={`${styles.pcCommunityTag} ${styles.pcCommunityTagUsdt}`}
-                                  >
-                                    @USDT
-                                  </button>
-                                </div>
-                              </div>
-
-                              <div className={styles.pcCommunityBottom}>
-                                <div className={styles.pcCommunityFooterLeft}>
-                                  <div className={styles.pcCommunityAction}>
-                                    <img
-                                      src={likeNoActiveIcon}
-                                      className={styles.pcCommunityActionIcon}
-                                      alt="like"
-                                    />
-                                    <span>{Number.isFinite(likes) ? likes : 0}</span>
-                                  </div>
-                                  <div className={styles.pcCommunityAction}>
-                                    <img
-                                      src={shareIcon}
-                                      className={`${styles.pcCommunityActionIcon} ${styles.pcCommunityShareIcon}`}
-                                      alt="share"
-                                    />
-                                    <span>分享</span>
-                                  </div>
-                                </div>
-                                <div className={styles.pcCommunityTime}>{timeText}</div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                          {rightCommunityLoadingMore ? (
-                            <div className={`${styles.pcCommunityEmpty} ${styles.pcCommunityEmptyLoading}`}>
-                              <Loading tip={t('common.loading')} size={20} />
-                            </div>
-                          ) : null}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            </div>
           </aside>
         </div>
         {oneClickAlarmModalEl}

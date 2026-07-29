@@ -110,28 +110,81 @@
 .chart {
   width: 100%;
   max-width: 360px;
-  height: calc(100% - 34px);
+  height: calc(100% - 100px);
+}
+
+.indicatorStack {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+  flex-shrink: 0;
 }
 
 .navigatorRow {
   width: 100%;
-  max-width: 360px;
-  height: 28px;
-  margin-top: 6px;
+  height: 44px;
   display: flex;
-  align-items: center;
+  align-items: stretch;
+}
+
+.navigatorChartWrap {
+  position: relative;
+  width: 92%;
+  height: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
 }
 
 .navigatorChart {
-  width: 92%;
-  height: 28px;
-  border-radius: 6px;
-  background: rgba(238, 243, 250, 0.7);
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  height: 100%;
+  border-radius: 0;
+  background: transparent;
+}
+
+.macdLegend {
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  font-size: 10px;
+  line-height: 1.2;
+  color: #8E8E8E;
+}
+
+.macdLegendTitle {
+  color: #8E8E8E;
+}
+
+.macdLegendHist {
+  color: #26A69A;
+  font-variant-numeric: tabular-nums;
+}
+
+.macdLegendDif {
+  color: #2962FF;
+  font-variant-numeric: tabular-nums;
+}
+
+.macdLegendDea {
+  color: #FF6D00;
+  font-variant-numeric: tabular-nums;
 }
 
 .navigatorAction {
   width: 8%;
-  height: 28px;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -196,14 +249,14 @@
 .chartSkeletonMain {
   width: 100%;
   max-width: 360px;
-  height: calc(100% - 34px);
+  height: calc(100% - 100px);
 }
 
 .chartSkeletonNavigator {
   width: 100%;
   max-width: 360px;
-  height: 28px;
-  margin-top: 6px;
+  height: 92px;
+  margin-top: 4px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -229,21 +282,42 @@
 
   .chart {
     max-width: none;
-    height: calc(100% - 48PX);
+    height: calc(100% - 140PX);
+    /* 避免价轴顶部刻度贴边被父级 overflow 裁切 */
+    overflow: visible;
   }
 
-  .navigatorChart {
-    height: 38PX;
+  .chartContainer {
+    overflow: visible;
+  }
+
+  .indicatorStack {
+    max-width: none;
+    gap: 6PX;
+    margin-top: 6PX;
+  }
+
+  .navigatorChartWrap {
+    width: 100%;
   }
 
   .navigatorRow {
     max-width: none;
-    height: 38PX;
-    margin-top: 8PX;
+    height: 64PX;
+    margin-top: 0;
   }
 
   .navigatorAction {
-    height: 38PX;
+    width: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .macdLegend {
+    top: 2PX;
+    left: 8PX;
+    gap: 8PX;
+    font-size: 11PX;
   }
 
   .landscapeBtn {
@@ -313,8 +387,8 @@
   justify-content: space-between;
   gap: 12PX;
   width: 100%;
-  padding: 5PX 10PX;
-  min-height: 36PX;
+  padding: 4PX 2PX 4PX 10PX;
+  min-height: 32PX;
   box-sizing: border-box;
   border-radius: 12PX;
   margin-bottom: 6PX;
@@ -359,39 +433,59 @@
 .pcChartTypeRow {
   display: flex;
   align-items: center;
-  gap: 8PX;
+  gap: 2PX;
   flex-shrink: 0;
+  margin-left: auto;
   background: rgba(244, 244, 245, 1);
-  padding: 4PX;
+  padding: 3PX;
   border-radius: 20PX;
 }
 
 .pcChartTypeBtn {
-  width: 35PX;
   height: 28PX;
-  border-radius: 45%;
+  min-width: 0;
+  border-radius: 12PX;
   border: none;
   background: transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  gap: 4PX;
+  padding: 0 10PX;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s ease, box-shadow 0.15s ease;
+  color: #8c8c8c;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 
   .chartTypeIcon {
     width: 14PX;
     height: 14PX;
     display: block;
+    flex-shrink: 0;
     color: currentColor;
   }
 }
 
+.pcChartTypeLabel {
+  font-size: 12PX;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .pcChartTypeBtnActive {
-  background: #11b787;
-  box-shadow: 0 2PX 6PX rgba(17, 183, 135, 0.35);
-  padding: 5PX 10PX;
+  background: #fff;
+  color: #11b787;
+  font-weight: 600;
+  box-shadow:
+    0 1PX 2PX rgba(0, 0, 0, 0.06),
+    0 1PX 3PX rgba(0, 0, 0, 0.04);
+}
+
+.pcChartTypeBtnActive .chartTypeIcon {
+  color: #11b787;
+  opacity: 1;
 }
 
 .pcChartTypeBtn:not(.pcChartTypeBtnActive) .chartTypeIcon {
@@ -419,16 +513,21 @@
 
   .pcToolbar {
     gap: 10PX;
-    padding: 4PX 8PX;
-    min-height: 32PX;
+    padding: 3PX 2PX 3PX 8PX;
+    min-height: 28PX;
     border-radius: 10PX;
     margin-bottom: 8PX;
   }
 
-  .pcPeriodRow,
-  .pcChartTypeRow {
+  .pcPeriodRow {
     padding: 3PX;
     border-radius: 18PX;
+  }
+
+  .pcChartTypeRow {
+    padding: 2PX;
+    border-radius: 18PX;
+    gap: 2PX;
   }
 
   .pcPeriodBtn {
@@ -437,22 +536,24 @@
     border-radius: 10PX;
   }
 
-  .pcChartTypeRow {
-    gap: 6PX;
-  }
-
   .pcChartTypeBtn {
-    width: 32PX;
     height: 26PX;
+    padding: 0 8PX;
+    border-radius: 10PX;
+    gap: 3PX;
   }
 
   .pcChartTypeBtn .chartTypeIcon {
-    width: 13PX;
-    height: 13PX;
+    width: 12PX;
+    height: 12PX;
+  }
+
+  .pcChartTypeLabel {
+    font-size: 11PX;
   }
 
   .pcChartTypeBtnActive {
-    padding: 4PX 8PX;
+    padding: 0 8PX;
   }
 }
 
@@ -478,16 +579,21 @@
 
   .pcToolbar {
     gap: 8PX;
-    padding: 3PX 6PX;
-    min-height: 28PX;
+    padding: 2PX 2PX 2PX 6PX;
+    min-height: 26PX;
     border-radius: 8PX;
     margin-bottom: 6PX;
   }
 
-  .pcPeriodRow,
+  .pcPeriodRow {
+    padding: 2PX;
+    border-radius: 16PX;
+  }
+
   .pcChartTypeRow {
     padding: 2PX;
     border-radius: 16PX;
+    gap: 2PX;
   }
 
   .pcPeriodBtn {
@@ -496,22 +602,24 @@
     border-radius: 9PX;
   }
 
-  .pcChartTypeRow {
-    gap: 4PX;
-  }
-
   .pcChartTypeBtn {
-    width: 28PX;
     height: 24PX;
+    padding: 0 8PX;
+    border-radius: 9PX;
+    gap: 3PX;
   }
 
   .pcChartTypeBtn .chartTypeIcon {
-    width: 12PX;
-    height: 12PX;
+    width: 11PX;
+    height: 11PX;
+  }
+
+  .pcChartTypeLabel {
+    font-size: 10PX;
   }
 
   .pcChartTypeBtnActive {
-    padding: 3PX 7PX;
+    padding: 0 8PX;
   }
 }
 
@@ -536,16 +644,21 @@
 
   .pcToolbar {
     gap: 6PX;
-    padding: 2PX 4PX;
-    min-height: 24PX;
+    padding: 2PX 2PX 2PX 4PX;
+    min-height: 22PX;
     border-radius: 7PX;
     margin-bottom: 4PX;
   }
 
-  .pcPeriodRow,
-  .pcChartTypeRow {
+  .pcPeriodRow {
     padding: 2PX;
     border-radius: 14PX;
+  }
+
+  .pcChartTypeRow {
+    padding: 1PX;
+    border-radius: 14PX;
+    gap: 2PX;
   }
 
   .pcPeriodBtn {
@@ -554,13 +667,11 @@
     border-radius: 8PX;
   }
 
-  .pcChartTypeRow {
-    gap: 3PX;
-  }
-
   .pcChartTypeBtn {
-    width: 24PX;
-    height: 20PX;
+    height: 22PX;
+    padding: 0 6PX;
+    border-radius: 8PX;
+    gap: 2PX;
   }
 
   .pcChartTypeBtn .chartTypeIcon {
@@ -568,8 +679,12 @@
     height: 10PX;
   }
 
+  .pcChartTypeLabel {
+    font-size: 9PX;
+  }
+
   .pcChartTypeBtnActive {
-    padding: 2PX 6PX;
+    padding: 0 6PX;
   }
 }
 

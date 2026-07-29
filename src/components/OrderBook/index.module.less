@@ -1,11 +1,16 @@
 .container {
   width: 100%;
+  height: 100%;
+  min-height: 0;
   background: #fff;
   border-radius:0px 0px 12px 12px;
   padding: 12px;
   position: relative;
   z-index: 1;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .containerMasked {
@@ -17,9 +22,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10PX;
+  margin-bottom: 6PX;
   flex-wrap: wrap;
   gap: 8px;
+  flex: 0 0 auto;
 }
 
 .titleSection {
@@ -108,6 +114,23 @@
   text-transform: lowercase;
   color: #333;
   margin: 0 1px;
+}
+
+/* 倒计时 + Top5 同一行 */
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 0 6px 0;
+  margin-bottom: 4px;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.metaRowSpacer {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .legend {
@@ -231,128 +254,206 @@
 }
 
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  position: relative;
-}
-
-.listTop5 {
-  gap: 30px;
-
-  .row {
-    min-height: 28px;
-    grid-template-columns: 20px 1fr 20px;
-  }
-
-  .barTrack {
-    height: 24px;
-  }
-
-  .icon,
-  .iconPlaceholder {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-.listTop10 {
-  gap: 1px;
-
-  .row {
-    min-height: 28px;
-    grid-template-columns: 20px 1fr 20px;
-  }
-
-  .barTrack {
-    height: 24px;
-  }
-
-  .icon,
-  .iconPlaceholder {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-.list::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 68px;
-  right: 68px;
-  background-image: repeating-linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0.12) 0,
-    rgba(0, 0, 0, 0.12) 1px,
-    transparent 1px,
-    transparent 32px
-  );
-  -webkit-mask-image: repeating-linear-gradient(to bottom, #000 0, #000 2px, transparent 2px, transparent 8px);
-  mask-image: repeating-linear-gradient(to bottom, #000 0, #000 2px, transparent 2px, transparent 8px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.listEmpty::before {
   display: none;
 }
 
-.row {
-  position: relative;
-  display: grid;
-  grid-template-columns: 16px 1fr 16px;
-  align-items: center;
-  column-gap: 6px;
-  z-index: 1;
+/* 业内标准订单簿：卖盘 / 中间价 / 买盘 */
+.book {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.iconCell {
-  display: flex;
-  align-items: center;
+.bookEmpty {
   justify-content: center;
 }
 
-.side {
-  display: flex;
-  align-items: center;
+.bookHead {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 22px;
   gap: 4px;
-  min-width: 0;
+  padding: 0 0 6px;
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 1.2;
+  color: #8b95a1;
+  font-weight: 500;
 }
 
-.rightSide {
+/* 盘口内容区：超出高度时内部滚动，表头固定 */
+.bookBodyScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.bookBodyScroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bookBodyScroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.7);
+  border-radius: 3px;
+}
+
+.bookBodyScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.asks,
+.bids {
+  flex: 0 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.asks {
   justify-content: flex-end;
 }
 
-.icon {
-  width: 16px;
-  height: 16px;
+.bids {
+  justify-content: flex-start;
+}
+
+.bookRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 22px;
+  gap: 4px;
+  align-items: center;
+  min-height: 24px;
+  height: 24px;
+  padding: 0 2px;
+  box-sizing: border-box;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Chakra Petch', 'DIN Alternate', 'Roboto Mono', ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.2;
+  z-index: 1;
+  flex: 0 0 auto;
+}
+
+.depthBar {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  right: 0;
+  border-radius: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: width 0.2s ease-out;
+}
+
+.askDepth {
+  background: rgba(240, 74, 74, 0.14);
+}
+
+.bidDepth {
+  background: rgba(17, 183, 135, 0.14);
+}
+
+.colPrice,
+.colAmount,
+.colExchange {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.colPrice {
+  text-align: left;
+  font-weight: 600;
+}
+
+.colAmount {
+  text-align: right;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.colExchange {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.exchangeIcon {
+  width: 18px;
+  height: 18px;
   border-radius: 999px;
   background: #fff;
   object-fit: contain;
   flex-shrink: 0;
+  display: block;
 }
 
-.iconPlaceholder {
-  width: 16px;
-  height: 16px;
+.exchangeIconPlaceholder {
+  width: 18px;
+  height: 18px;
   border-radius: 999px;
   background: #f3f4f6;
   flex-shrink: 0;
+  display: block;
 }
 
-.value {
-  font-size: 13px;
+.askPriceText {
+  color: #f04a4a;
+}
+
+.bidPriceText {
+  color: #11b787;
+}
+
+.midRow {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 8px 2px;
+  border-top: 1px solid #eef1f4;
+  border-bottom: 1px solid #eef1f4;
+  margin: 2px 0;
+}
+
+.midPrice {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Chakra Petch', 'DIN Alternate', 'Roboto Mono', ui-monospace, monospace;
+  line-height: 1.15;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.midUp {
+  color: #11b787;
+}
+
+.midDown {
+  color: #f04a4a;
+}
+
+.midArrow {
+  font-size: 10px;
   line-height: 1;
-  padding: 4px 6px;
-  border-radius: 4px;
-  background: #f4f6f8;
-  color: #111;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.midSub {
+  font-size: 11px;
+  color: #9aa3af;
   font-weight: 500;
 }
 
@@ -370,97 +471,6 @@
   }
 }
 
-.bidValue {
-  color: #094533;
-  background: rgba(249, 251, 250, 0.74);
-  border: 1px solid #e2e5e3;
-  border-radius: 3PX;
-  box-shadow: 0px 0px 4PX rgba(0, 0, 0, 0.15);
-}
-
-.askValue {
-  color: #610300;
-  background: rgba(249, 251, 250, 0.74);
-  border: 1px solid #e2e5e3;
-  border-radius: 3PX;
-  box-shadow: 0px 0px 4PX rgba(0, 0, 0, 0.15);
-}
-
-.barCell {
-  width: 100%;
-  position: relative;
-}
-
-.barBg {
-  position: relative;
-  width: 100%;
-  height: 24px;
-  border-radius: 3PX 3PX 3PX 3PX;
-  overflow: visible;
-}
-
-.barTrack {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 12px;
-  border-radius: 3PX;
-  overflow: hidden;
-  z-index: 1;
-}
-
-.bidPrice {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  min-width: 46PX;
-  text-align: center;
-}
-
-.askPrice {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  min-width: 46PX;
-  text-align: center;
-}
-
-.midLine {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.bidBar {
-  position: absolute;
-  right: 50%;
-  top: 0;
-  bottom: 0;
-  background:#11B787;
-  border-radius: 3PX 0 0 3PX;
-  box-shadow: 0px 0px 5px 0px rgba(255, 255, 255, 0.3) inset,
-    0px 0px 10px 4px rgba(0, 255, 170, 1) inset;
-}
-
-.askBar {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  background: #F04A4A;
-  border-radius: 0 3PX 3PX 0;
-  box-shadow: 0px 0px 5px 0px rgba(216, 31, 31, 1) inset;
-}
-
 .empty {
   width: 100%;
   padding: 12px;
@@ -470,7 +480,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* 给空状态留出高度，确保文案显示在订单薄区域中间 */
   min-height: 160px;
   box-sizing: border-box;
 }
@@ -718,7 +727,7 @@
 /* PC 端：按移动端比例，用大写 PX 固定物理字号，避免 px→vw 放大 */
 @media (min-width: 1024px) {
   .container {
-    border-radius: 12PX;
+    border-radius: 0;
     padding: 8PX 12PX 10PX;
   }
 
@@ -747,31 +756,37 @@
   }
 
   .countdownLabel {
-    font-size: 18PX;
+    font-size: 11PX;
     line-height: 1.15;
     letter-spacing: 0.02em;
   }
 
   .countdownNumbers {
-    gap: 6PX;
+    gap: 2PX;
   }
 
   .countdownCircle {
-    width: 110PX;
-    height: 76PX;
-    font-size: 48PX;
+    width: 22PX;
+    height: 22PX;
+    font-size: 11PX;
     line-height: 1;
   }
 
   .countdownValue {
-    transform: translate(-1PX, 1PX);
+    transform: translate(-0.5PX, 0.5PX);
   }
 
   .countdownText {
-    font-size: 18PX;
+    font-size: 11PX;
     line-height: 1.15;
     letter-spacing: 0.02em;
-    margin: 0 8PX 0 2PX;
+    margin: 0 2PX 0 1PX;
+  }
+
+  .metaRow {
+    padding: 0 0 2PX 0;
+    margin-bottom: 4PX;
+    gap: 8PX;
   }
 
   .legend {
@@ -793,7 +808,7 @@
   }
 
   .dropdownText {
-    font-size: 14PX;
+    font-size: 12PX;
   }
 
   .dropdownArrow {
@@ -825,64 +840,49 @@
     height: 6PX;
   }
 
-  .value {
-    font-size: 13PX;
-    padding: 4PX 6PX;
+  .bookHead {
+    font-size: 12PX;
+    padding: 0 0 6PX;
+    gap: 4PX;
+    grid-template-columns: 1.1fr 1fr 22PX;
   }
 
-  .list {
-    gap: 8PX;
+  .bookBodyScroll {
+    min-height: 0;
   }
 
-  .row {
-    column-gap: 6PX;
-    grid-template-columns: 22PX 1fr 22PX;
-  }
-
-  .icon,
-  .iconPlaceholder {
-    width: 22PX;
-    height: 22PX;
-  }
-
-  .barBg {
+  .bookRow {
+    min-height: 24PX;
     height: 24PX;
+    font-size: 13PX;
+    gap: 4PX;
+    padding: 0 2PX;
+    grid-template-columns: 1.1fr 1fr 22PX;
   }
 
-  .barTrack {
-    height: 12PX;
+  .exchangeIcon,
+  .exchangeIconPlaceholder {
+    width: 16PX;
+    height: 16PX;
   }
 
-  /* 兼容 Top 5 / Top 10 布局里对 icon 尺寸的专用覆盖 */
-  .listTop5 {
-    gap: 30PX;
-
-    .row {
-      min-height: 28PX;
-      grid-template-columns: 22PX 1fr 22PX;
-    }
-
-    .barTrack {
-      height: 12PX;
-    }
-
-    .icon,
-    .iconPlaceholder {
-      width: 22PX;
-      height: 22PX;
-    }
+  .midRow {
+    gap: 8PX;
+    padding: 6PX 2PX;
+    margin: 2PX 0;
+    flex: 0 0 auto;
   }
 
-  .listTop10 {
-    .row {
-      grid-template-columns: 22PX 1fr 22PX;
-    }
+  .midPrice {
+    font-size: 16PX;
+  }
 
-    .icon,
-    .iconPlaceholder {
-      width: 22PX;
-      height: 22PX;
-    }
+  .midArrow {
+    font-size: 10PX;
+  }
+
+  .midSub {
+    font-size: 12PX;
   }
 
   /* 锁定态遮罩：全局小写 px 会被转成 vw，PC 宽屏会异常放大；在此处用固定 PX 覆盖 */
@@ -892,14 +892,15 @@
   }
 
   .maskOverlay {
-    border-radius: 12PX;
+    border-radius: 0;
     align-items: stretch;
     justify-content: stretch;
   }
 
   .maskCard {
-    border-radius: 12PX;
-    min-height: 260PX;
+    border-radius: 0;
+    min-height: 0;
+    height: 100%;
     /* PC：避免背景图自带渐变 + 头部渐变叠加产生色差 */
     background-image: none;
     background-color: rgba(245, 235, 214, 1);
@@ -912,8 +913,8 @@
     width: 100%;
     box-sizing: border-box;
     position: relative;
-    border-top-left-radius: 12PX;
-    border-top-right-radius: 12PX;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
     background: linear-gradient(
       90deg,
       rgba(241, 210, 156, 0.95) 0%,
@@ -1013,7 +1014,7 @@
   .maskButton {
     width: 100%;
     max-width: 220PX;
-    margin: 30PX auto 0;
+    margin: 16PX auto 0;
     padding: 8PX 16PX;
     min-height: 36PX;
     font-size: 13PX;
@@ -1023,7 +1024,7 @@
   .membershipButton {
     width: 100%;
     max-width: 220PX;
-    margin: 10PX auto 0;
+    margin: 8PX auto 0;
     padding: 8PX 16PX;
     min-height: 36PX;
     font-size: 13PX;

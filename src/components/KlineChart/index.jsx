@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createChart } from 'lightweight-charts';
 import { TabBar } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,40 @@ import { Loading } from '../Loading';
 import { Skeleton } from '../Skeleton';
 import { LandscapeIcon } from '../Icons';
 import styles from './index.module.less';
+
+/** TradingView-style MACD line + 4-color histogram */
+const MACD_STYLE = {
+  dif: '#2962FF',
+  dea: '#FF6D00',
+  histPosUp: '#26A69A',
+  histPosDown: '#00897B',
+  histNegDown: '#EF5350',
+  histNegUp: '#B71C1C',
+};
+
+/** 通达信 SKDJ(9,3)：K / D / J */
+const SKDJ_STYLE = {
+  k: '#2962FF',
+  d: '#FF6D00',
+  j: '#E91E63',
+};
+
+const getMacdHistColor = (value, prevValue) => {
+  const prev = Number.isFinite(prevValue) ? prevValue : 0;
+  if (value >= 0) {
+    return value >= prev ? MACD_STYLE.histPosUp : MACD_STYLE.histPosDown;
+  }
+  return value <= prev ? MACD_STYLE.histNegDown : MACD_STYLE.histNegUp;
+};
+
+const formatMacdLegendValue = (value) => {
+  if (!Number.isFinite(value)) return '--';
+  const abs = Math.abs(value);
+  if (abs >= 1000) {
+    return value.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+  }
+  return value.toFixed(2);
+};
 
 const formatAxisPrice = (price, compact) => {
   if (!Number.isFinite(price)) return '--';
@@ -142,13 +176,20 @@ const KlineChart = ({
   const { t, i18n } = useTranslation();
   const chartRef = useRef(null);
   const navigatorRef = useRef(null);
+  const skdjRef = useRef(null);
   const chartInstance = useRef(null);
   const navigatorChartInstance = useRef(null);
+  const skdjChartInstance = useRef(null);
   const seriesInstance = useRef(null);
   const navigatorMacdSeries = useRef({
     histogram: null,
     dif: null,
     dea: null,
+  });
+  const skdjSeriesRef = useRef({
+    k: null,
+    d: null,
+    j: null,
   });
   const mainSeriesTypeRef = useRef(null);
   const maSeriesInstances = useRef([]);
@@ -157,6 +198,8 @@ const KlineChart = ({
   const prevActiveKeyRef = useRef(activeKey);
   const userInteractedRef = useRef(false);
   const programmaticRangeUpdateRef = useRef(false);
+  const [macdLegend, setMacdLegend] = useState({ hist: null, dif: null, dea: null });
+  const [skdjLegend, setSkdjLegend] = useState({ k: null, d: null, j: null });
   const debugTag = '[KlineChartDebug]';
   const debugEnabled =
     process.env.NODE_ENV !== 'production' &&
@@ -278,18 +321,76 @@ const KlineChart = ({
       const time = points[i].time;
       const difVal = dif[i];
       const deaVal = dea[i];
-      const macdVal = (difVal - deaVal) * 2;
+      // TradingView: histogram = MACD - Signal（不做 *2）
+      const macdVal = difVal - deaVal;
+      const prevHist = i > 0 ? dif[i - 1] - dea[i - 1] : macdVal;
 
       difData.push({ time, value: difVal });
       deaData.push({ time, value: deaVal });
       histogramData.push({
         time,
         value: macdVal,
-        color: macdVal >= 0 ? 'rgba(17, 183, 135, 0.75)' : 'rgba(250, 95, 95, 0.75)',
+        color: getMacdHistColor(macdVal, prevHist),
       });
     }
 
     return { difData, deaData, histogramData };
+  };
+
+  // 通达信 SMA(X, N, 1)：Y = (X + (N-1)*Y') / N
+  const calcSmaWeight1 = (values, period) => {
+    const result = [];
+    let prev = values.length > 0 ? values[0] : 0;
+    for (let i = 0; i < values.length; i += 1) {
+      const x = values[i];
+      if (i === 0 || !Number.isFinite(prev)) {
+        prev = x;
+      } else {
+        prev = (x + (period - 1) * prev) / period;
+      }
+      result.push(prev);
+    }
+    return result;
+  };
+
+  // SKDJ(N=9, M=3)：RSV → K → D → J=3K-2D
+  const calcSKDJ = (points, n = 9, m = 3) => {
+    const kData = [];
+    const dData = [];
+    const jData = [];
+    if (!Array.isArray(points) || points.length === 0) {
+      return { kData, dData, jData };
+    }
+
+    const rsv = points.map((p, i) => {
+      const from = Math.max(0, i - n + 1);
+      let llv = Number(points[from]?.low ?? 0);
+      let hhv = Number(points[from]?.high ?? 0);
+      for (let j = from; j <= i; j += 1) {
+        const low = Number(points[j]?.low ?? 0);
+        const high = Number(points[j]?.high ?? 0);
+        if (low < llv) llv = low;
+        if (high > hhv) hhv = high;
+      }
+      const range = hhv - llv;
+      const close = Number(p?.close ?? 0);
+      if (range === 0) return 50;
+      return ((close - llv) / range) * 100;
+    });
+
+    const kVals = calcSmaWeight1(rsv, m);
+    const dVals = calcSmaWeight1(kVals, m);
+
+    for (let i = 0; i < points.length; i += 1) {
+      const time = points[i].time;
+      const k = kVals[i];
+      const d = dVals[i];
+      kData.push({ time, value: k });
+      dData.push({ time, value: d });
+      jData.push({ time, value: 3 * k - 2 * d });
+    }
+
+    return { kData, dData, jData };
   };
 
   const clearMainSeries = (chart) => {
@@ -305,10 +406,61 @@ const KlineChart = ({
   };
 
   const syncNavigatorRange = (range) => {
-    if (!range || !navigatorChartInstance.current) return;
-    navigatorChartInstance.current.timeScale().setVisibleLogicalRange({
-      from: range.from,
-      to: range.to,
+    if (!range) return;
+    [navigatorChartInstance.current, skdjChartInstance.current].filter(Boolean).forEach((c) => {
+      c.timeScale().setVisibleLogicalRange({
+        from: range.from,
+        to: range.to,
+      });
+    });
+  };
+
+  const createIndicatorChart = (container) => {
+    if (!container) return null;
+    return createChart(container, {
+      autoSize: true,
+      attributionLogo: false,
+      layout: {
+        background: { color: 'transparent' },
+        textColor: '#8E8E8E',
+        fontFamily: 'inherit',
+        fontSize: isPC ? 11 : 9,
+      },
+      grid: {
+        vertLines: { visible: true, color: 'rgba(142, 142, 142, 0.08)', style: 2 },
+        horzLines: { visible: true, color: 'rgba(142, 142, 142, 0.1)', style: 2 },
+      },
+      rightPriceScale: {
+        visible: false,
+        borderVisible: false,
+      },
+      leftPriceScale: { visible: false, borderVisible: false },
+      timeScale: {
+        visible: false,
+        borderVisible: false,
+        barSpacing: isPC ? 7 : 5.2,
+        minBarSpacing: isPC ? 4 : 2.8,
+      },
+      crosshair: {
+        mode: 1,
+        vertLine: {
+          color: 'rgba(142, 142, 142, 0.45)',
+          width: 1,
+          style: 3,
+          labelVisible: false,
+        },
+        horzLine: {
+          color: 'rgba(142, 142, 142, 0.35)',
+          width: 1,
+          style: 3,
+          labelVisible: false,
+        },
+      },
+      handleScroll: false,
+      handleScale: false,
+      localization: {
+        priceFormatter: (price) => formatAxisPrice(price, !isPC),
+      },
     });
   };
 
@@ -333,7 +485,7 @@ const KlineChart = ({
         background: { color: 'transparent' },
         textColor: '#8E8E8E',
         fontFamily: 'inherit',
-        fontSize: isPC ? 12 : 10,
+        fontSize: isPC ? 14 : 10,
       },
       grid: {
         vertLines: {
@@ -348,17 +500,20 @@ const KlineChart = ({
         },
       },
       rightPriceScale: {
-        visible: false,
-        borderVisible: false,
-      },
-      leftPriceScale: {
         visible: true,
         borderVisible: false,
-        minimumWidth: isPC ? 48 : 20,
+        // 角落刻度只有完整可见时才绘制，避免顶/底半截数字
+        entireTextOnly: true,
+        minimumWidth: isPC ? 56 : 40,
         scaleMargins: {
-          top: 0.08,
-          bottom: 0.02,
+          // 库默认 top≈0.2；过小会导致最高价刻度贴顶被 canvas 裁切
+          top: isPC ? 0.16 : 0.12,
+          bottom: isPC ? 0.08 : 0.06,
         },
+      },
+      leftPriceScale: {
+        visible: false,
+        borderVisible: false,
       },
       timeScale: {
         borderVisible: false,
@@ -409,49 +564,67 @@ const KlineChart = ({
 
     const handleResize = () => {
       chartInstance.current?.resize();
+      navigatorChartInstance.current?.resize();
+      skdjChartInstance.current?.resize();
     };
     window.addEventListener('resize', handleResize);
 
     if (navigatorRef.current && !navigatorChartInstance.current) {
-      const navChart = createChart(navigatorRef.current, {
-        autoSize: true,
-        attributionLogo: false,
-        layout: {
-          background: { color: 'transparent' },
-          textColor: '#A0A0A0',
-          fontFamily: 'inherit',
-        },
-        grid: { vertLines: { visible: false }, horzLines: { visible: false } },
-        rightPriceScale: { visible: false, borderVisible: false },
-        leftPriceScale: { visible: false, borderVisible: false },
-        timeScale: { visible: false, borderVisible: false },
-        crosshair: {
-          vertLine: { visible: false },
-          horzLine: { visible: false },
-        },
-        handleScroll: false,
-        handleScale: false,
-      });
+      const navChart = createIndicatorChart(navigatorRef.current);
       navigatorChartInstance.current = navChart;
       navigatorMacdSeries.current.histogram = navChart.addHistogramSeries({
         priceLineVisible: false,
         lastValueVisible: false,
+        priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+        base: 0,
       });
       navigatorMacdSeries.current.dif = navChart.addLineSeries({
-        color: '#F5A623',
+        color: MACD_STYLE.dif,
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
         crosshairMarkerVisible: false,
+        priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
       });
       navigatorMacdSeries.current.dea = navChart.addLineSeries({
-        color: '#4A90E2',
+        color: MACD_STYLE.dea,
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
         crosshairMarkerVisible: false,
+        priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
       });
       removeAttribution(navigatorRef.current);
+    }
+
+    if (skdjRef.current && !skdjChartInstance.current) {
+      const skdjChart = createIndicatorChart(skdjRef.current);
+      skdjChartInstance.current = skdjChart;
+      skdjSeriesRef.current.k = skdjChart.addLineSeries({
+        color: SKDJ_STYLE.k,
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+      });
+      skdjSeriesRef.current.d = skdjChart.addLineSeries({
+        color: SKDJ_STYLE.d,
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+      });
+      skdjSeriesRef.current.j = skdjChart.addLineSeries({
+        color: SKDJ_STYLE.j,
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+      });
+      removeAttribution(skdjRef.current);
     }
 
     const watchAttribution = (container) => {
@@ -462,12 +635,15 @@ const KlineChart = ({
     };
     watchAttribution(chartRef.current);
     watchAttribution(navigatorRef.current);
+    watchAttribution(skdjRef.current);
 
     const parentEl = chartRef.current?.parentElement;
     const ro =
       parentEl &&
       new ResizeObserver(() => {
         chartInstance.current?.resize();
+        navigatorChartInstance.current?.resize();
+        skdjChartInstance.current?.resize();
       });
     if (parentEl && ro) ro.observe(parentEl);
 
@@ -482,8 +658,13 @@ const KlineChart = ({
         navigatorChartInstance.current.remove();
         navigatorChartInstance.current = null;
       }
+      if (skdjChartInstance.current) {
+        skdjChartInstance.current.remove();
+        skdjChartInstance.current = null;
+      }
       seriesInstance.current = null;
       navigatorMacdSeries.current = { histogram: null, dif: null, dea: null };
+      skdjSeriesRef.current = { k: null, d: null, j: null };
       maSeriesInstances.current = [];
       attributionObservers.current.forEach((observer) => observer.disconnect());
       attributionObservers.current = [];
@@ -530,7 +711,7 @@ const KlineChart = ({
 
     chart.applyOptions({
       layout: {
-        fontSize: isPC ? 12 : 10,
+        fontSize: isPC ? 14 : 10,
       },
       localization: {
         priceFormatter: (price) => formatAxisPrice(price, !isPC),
@@ -557,16 +738,19 @@ const KlineChart = ({
           formatShortDateLabel(tickLabelMap.get(Number(time)), activeKey, i18n.language),
       },
       leftPriceScale: {
-        minimumWidth: isPC ? 48 : 20,
-        scaleMargins: {
-          top: 0.08,
-          bottom: 0.02,
-        },
+        visible: false,
+        borderVisible: false,
       },
       rightPriceScale: {
+        visible: true,
+        borderVisible: false,
+        // 角落刻度只有完整可见时才绘制，避免顶/底半截数字
+        entireTextOnly: true,
+        minimumWidth: isPC ? 56 : 40,
         scaleMargins: {
-          top: 0.08,
-          bottom: 0.02,
+          // 库默认 top≈0.2；过小会导致最高价刻度贴顶被 canvas 裁切
+          top: isPC ? 0.16 : 0.12,
+          bottom: isPC ? 0.08 : 0.06,
         },
       },
     });
@@ -584,6 +768,7 @@ const KlineChart = ({
           bottomColor: 'rgba(17, 183, 135, 0)',
           priceLineVisible: false,
           lastValueVisible: false,
+          priceScaleId: 'right',
         });
         seriesInstance.current = lineSeries;
       } else {
@@ -596,6 +781,7 @@ const KlineChart = ({
           wickDownColor: '#FA5F5F',
           priceLineVisible: false,
           lastValueVisible: false,
+          priceScaleId: 'right',
         });
         seriesInstance.current = candleSeries;
 
@@ -613,11 +799,15 @@ const KlineChart = ({
             priceLineVisible: false,
             lastValueVisible: false,
             crosshairMarkerVisible: false,
+            priceScaleId: 'right',
           })
         );
       }
       mainSeriesTypeRef.current = chartType;
     }
+
+    seriesInstance.current?.applyOptions({ priceScaleId: 'right' });
+    maSeriesInstances.current.forEach((s) => s.applyOptions({ priceScaleId: 'right' }));
 
     if (chartType === 'line') {
       seriesInstance.current?.setData(lineData);
@@ -635,10 +825,53 @@ const KlineChart = ({
       navigatorMacdSeries.current.dea
     ) {
       const { difData, deaData, histogramData } = calcMACD(candleData);
+      const lastIdx = histogramData.length - 1;
+      const lastHistColor =
+        lastIdx >= 0 ? histogramData[lastIdx].color : MACD_STYLE.histPosUp;
+      navigatorMacdSeries.current.histogram.applyOptions({ color: lastHistColor, lastValueVisible: false });
       navigatorMacdSeries.current.histogram.setData(histogramData);
+      navigatorMacdSeries.current.dif.applyOptions({ lastValueVisible: false });
       navigatorMacdSeries.current.dif.setData(difData);
+      navigatorMacdSeries.current.dea.applyOptions({ lastValueVisible: false });
       navigatorMacdSeries.current.dea.setData(deaData);
+      if (lastIdx >= 0) {
+        setMacdLegend({
+          hist: histogramData[lastIdx]?.value,
+          dif: difData[lastIdx]?.value,
+          dea: deaData[lastIdx]?.value,
+        });
+      }
     }
+
+    if (skdjSeriesRef.current.k && skdjSeriesRef.current.d && skdjSeriesRef.current.j) {
+      const { kData, dData, jData } = calcSKDJ(candleData);
+      skdjSeriesRef.current.k.applyOptions({ lastValueVisible: false });
+      skdjSeriesRef.current.d.applyOptions({ lastValueVisible: false });
+      skdjSeriesRef.current.j.applyOptions({ lastValueVisible: false });
+      skdjSeriesRef.current.k.setData(kData);
+      skdjSeriesRef.current.d.setData(dData);
+      skdjSeriesRef.current.j.setData(jData);
+      const lastIdx = kData.length - 1;
+      if (lastIdx >= 0) {
+        setSkdjLegend({
+          k: kData[lastIdx]?.value,
+          d: dData[lastIdx]?.value,
+          j: jData[lastIdx]?.value,
+        });
+      }
+    }
+
+    const barSpacingOpts = {
+      timeScale: {
+        barSpacing: isPC ? 7 : 5.2,
+        minBarSpacing: isPC ? 4 : 2.8,
+      },
+      rightPriceScale: {
+        visible: false,
+      },
+    };
+    navigatorChartInstance.current?.applyOptions(barSpacingOpts);
+    skdjChartInstance.current?.applyOptions(barSpacingOpts);
 
     const dataLen = chartType === 'line' ? lineData.length : candleData.length;
     if (dataLen > 0) {
@@ -696,9 +929,10 @@ const KlineChart = ({
       type="button"
       className={`${styles.pcChartTypeBtn} ${chartType === 'line' ? styles.pcChartTypeBtnActive : ''}`}
       onClick={() => onChartTypeChange('line')}
-      aria-label="line"
+      aria-label={t('chart.line')}
     >
       <LineTypeIcon className={styles.chartTypeIcon} />
+      <span className={styles.pcChartTypeLabel}>{t('chart.line')}</span>
     </button>
   ) : null;
 
@@ -707,9 +941,10 @@ const KlineChart = ({
       type="button"
       className={`${styles.pcChartTypeBtn} ${chartType === 'kline' ? styles.pcChartTypeBtnActive : ''}`}
       onClick={() => onChartTypeChange('kline')}
-      aria-label="kline"
+      aria-label={t('chart.kline')}
     >
       <KlineTypeIcon className={styles.chartTypeIcon} />
+      <span className={styles.pcChartTypeLabel}>{t('chart.kline')}</span>
     </button>
   ) : null;
 
@@ -782,8 +1017,8 @@ const KlineChart = ({
             </div>
             {onChartTypeChange ? (
               <div className={styles.pcChartTypeRow}>
-                {chartTypeLineBtn}
                 {chartTypeKlineBtn}
+                {chartTypeLineBtn}
               </div>
             ) : null}
           </div>
@@ -793,16 +1028,16 @@ const KlineChart = ({
           {onChartTypeChange && (
             <div className={styles.chartTypeTabs}>
               <div
-                className={`${styles.chartTypeBtn} ${chartType === 'line' ? styles.active : ''}`}
-                onClick={() => onChartTypeChange('line')}
-              >
-                <LineTypeIcon className={styles.chartTypeIcon} />
-              </div>
-              <div
                 className={`${styles.chartTypeBtn} ${chartType === 'kline' ? styles.active : ''}`}
                 onClick={() => onChartTypeChange('kline')}
               >
                 <KlineTypeIcon className={styles.chartTypeIcon} />
+              </div>
+              <div
+                className={`${styles.chartTypeBtn} ${chartType === 'line' ? styles.active : ''}`}
+                onClick={() => onChartTypeChange('line')}
+              >
+                <LineTypeIcon className={styles.chartTypeIcon} />
               </div>
             </div>
           )}
@@ -835,20 +1070,59 @@ const KlineChart = ({
           )
         )}
         <div ref={chartRef} className={styles.chart} style={{ opacity: (loading || !data) ? 0 : 1 }}></div>
-        <div className={styles.navigatorRow} style={{ opacity: (loading || !data) ? 0 : 1 }}>
-          <div className={styles.navigatorAction}>
-            {showLandscapeBtn && onLandscapeClick ? (
-              <button
-                type="button"
-                className={styles.navigatorZoomBtn}
-                onClick={onLandscapeClick}
-                aria-label="expand chart"
-              >
-                <LandscapeIcon size={14} color="#8E8E8E" />
-              </button>
-            ) : null}
+        <div className={styles.indicatorStack} style={{ opacity: (loading || !data) ? 0 : 1 }}>
+          <div className={styles.navigatorRow}>
+            <div className={styles.navigatorAction}>
+              {showLandscapeBtn && onLandscapeClick ? (
+                <button
+                  type="button"
+                  className={styles.navigatorZoomBtn}
+                  onClick={onLandscapeClick}
+                  aria-label="expand chart"
+                >
+                  <LandscapeIcon size={14} color="#8E8E8E" />
+                </button>
+              ) : null}
+            </div>
+            <div className={styles.navigatorChartWrap}>
+              <div className={styles.macdLegend} aria-hidden>
+                <span className={styles.macdLegendTitle}>MACD 12 26 close 9</span>
+                <span
+                  className={styles.macdLegendHist}
+                  style={{
+                    color:
+                      Number(macdLegend.hist) >= 0
+                        ? MACD_STYLE.histPosUp
+                        : MACD_STYLE.histNegDown,
+                  }}
+                >
+                  {formatMacdLegendValue(macdLegend.hist)}
+                </span>
+                <span className={styles.macdLegendDif}>{formatMacdLegendValue(macdLegend.dif)}</span>
+                <span className={styles.macdLegendDea}>{formatMacdLegendValue(macdLegend.dea)}</span>
+              </div>
+              <div ref={navigatorRef} className={styles.navigatorChart} />
+            </div>
           </div>
-          <div ref={navigatorRef} className={styles.navigatorChart} />
+
+          <div className={styles.navigatorRow}>
+            <div className={styles.navigatorAction} />
+            <div className={styles.navigatorChartWrap}>
+              <div className={styles.macdLegend} aria-hidden>
+                <span className={styles.macdLegendTitle}>SKDJ 9 3</span>
+                <span className={styles.macdLegendDif} style={{ color: SKDJ_STYLE.k }}>
+                  {formatMacdLegendValue(skdjLegend.k)}
+                </span>
+                <span className={styles.macdLegendDea} style={{ color: SKDJ_STYLE.d }}>
+                  {formatMacdLegendValue(skdjLegend.d)}
+                </span>
+                <span className={styles.macdLegendHist} style={{ color: SKDJ_STYLE.j }}>
+                  {formatMacdLegendValue(skdjLegend.j)}
+                </span>
+              </div>
+              <div ref={skdjRef} className={styles.navigatorChart} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
