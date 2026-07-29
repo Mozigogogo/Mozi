@@ -302,7 +302,10 @@
 #mozi-arbitrage-radar td{padding:13PX 16PX;font-size:13PX;vertical-align:middle;white-space:nowrap}
 #mozi-arbitrage-radar .td-num{color:var(--t3);font-family:var(--mono);font-size:12PX;width:36PX}
 #mozi-arbitrage-radar .sym-cell{display:flex;align-items:center;gap:9PX}
-#mozi-arbitrage-radar .sym-ico{width:30PX;height:30PX;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11PX;font-weight:700;flex-shrink:0}
+#mozi-arbitrage-radar .sym-ico{width:30PX;height:30PX;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11PX;font-weight:700;flex-shrink:0;overflow:hidden}
+#mozi-arbitrage-radar .sym-ico.has-img{background:transparent!important;color:transparent;padding:0}
+#mozi-arbitrage-radar .sym-ico-img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+#mozi-arbitrage-radar .det-ttl .sym-ico{width:36PX;height:36PX;font-size:13PX}
 #mozi-arbitrage-radar .sym-name{font-weight:600;font-size:14PX}
 #mozi-arbitrage-radar .sym-sub{font-size:11PX;color:var(--t3);margin-top:1PX}
 #mozi-arbitrage-radar .exbadge{display:inline-flex;align-items:center;gap:4PX;padding:3PX 9PX;border-radius:4PX;font-size:11PX;font-weight:600;border:1PX solid}

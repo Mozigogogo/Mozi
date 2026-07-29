@@ -17,6 +17,7 @@ import styles from './index.module.less';
  *   detailExchange?: string;
  *   detailMinExchange?: string;
  *   detailMaxExchange?: string;
+ *   detailLogoUrl?: string;
  *   onNavigateDetail?: (op: object, type: string) => void;
  *   onBackToList?: () => void;
  * }} props
@@ -30,6 +31,7 @@ export default function ArbitrageRadar({
   detailExchange = '',
   detailMinExchange = '',
   detailMaxExchange = '',
+  detailLogoUrl = '',
   onNavigateDetail,
   onBackToList,
 }) {
@@ -49,6 +51,7 @@ export default function ArbitrageRadar({
       detailExchange,
       detailMinExchange,
       detailMaxExchange,
+      detailLogoUrl,
       onNavigateDetail: (op, type) => navRef.current.onNavigateDetail?.(op, type),
       onBackToList: () => navRef.current.onBackToList?.(),
     });
@@ -66,6 +69,7 @@ export default function ArbitrageRadar({
     detailExchange,
     detailMinExchange,
     detailMaxExchange,
+    detailLogoUrl,
   ]);
 
   return (

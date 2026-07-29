@@ -36,6 +36,8 @@ import {
   fmtOI,
   renderMobileListCards,
   renderMobileListSkeleton,
+  symIco,
+  parseLogoUrl,
 } from './arbitrageTabs';
 
 const LIST_PAGE_SIZE = 8;
@@ -118,6 +120,7 @@ function mapFundingItem(item, index) {
       Number.isFinite(settlementsPerDay) && settlementsPerDay > 0 ? settlementsPerDay : null,
     marginBufferRatio:
       Number.isFinite(marginBufferRatio) && marginBufferRatio > 0 ? marginBufferRatio : null,
+    logoUrl: parseLogoUrl(item),
   };
 }
 
@@ -215,6 +218,10 @@ if (detailOnly) {
     exchange: String(options.detailExchange || '').trim(),
     minExchange: String(options.detailMinExchange || '').trim() || undefined,
     maxExchange: String(options.detailMaxExchange || '').trim() || undefined,
+    logoUrl: (() => {
+      const u = String(options.detailLogoUrl || '').trim();
+      return /^https?:\/\//i.test(u) ? u : null;
+    })(),
   };
   listLoading = false;
 }
@@ -569,6 +576,7 @@ async function loadFundingDetail(op) {
         detail.nextFundingTs != null && detail.nextFundingTs > 0
           ? detail.nextFundingTs
           : op.nextFundingTs,
+      logoUrl: detail.logoUrl || op.logoUrl || null,
       detailLoaded: true,
     };
     detailLoading = false;
@@ -617,6 +625,7 @@ async function loadSpreadDetail(op) {
       ts: detail.ts || op.ts,
       dataTs: detail.dataTs || op.dataTs,
       chart30d: detail.chart30d,
+      logoUrl: detail.logoUrl || op.logoUrl || null,
       detailLoaded: true,
     };
     detailLoading = false;
@@ -671,6 +680,7 @@ async function loadBasisDetail(op) {
       ts: detail.ts || op.ts,
       dataTs: detail.dataTs || op.dataTs,
       chart30d: detail.chart30d,
+      logoUrl: detail.logoUrl || op.logoUrl || null,
       detailLoaded: true,
     };
     detailLoading = false;
@@ -707,6 +717,7 @@ async function loadOIDetail(op) {
       ts: detail.ts || op.ts,
       dataTs: detail.dataTs || op.dataTs,
       chart30d: detail.chart30d,
+      logoUrl: detail.logoUrl || op.logoUrl || null,
       detailLoaded: true,
     };
     detailLoading = false;
@@ -1130,7 +1141,7 @@ function rowHTML(o,opsIdx,displayRank) {
     <td class="td-num">${o.rank || displayRank}</td>
     <td>
       <div class="sym-cell">
-        <div class="sym-ico" style="background:${col}22;color:${col}">${o.sym.slice(0,3)}</div>
+        ${symIco(o.sym, opsIdx, o.logoUrl)}
         <div>
           <div class="sym-name">${o.sym}</div>
           <div class="sym-sub">USDT 永续</div>
@@ -1264,7 +1275,7 @@ function renderFundingDetail(o) {
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
-        <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${String(o.sym || '—').slice(0, 3)}</div>
+        ${symIco(o.sym, Math.max(0, ops.indexOf(o)), o.logoUrl)}
         ${escapeHtml(o.sym)}/USDT
         <span style="font-size:14px;font-weight:500;color:var(--t3)">·</span>
         <span style="font-size:14px;font-weight:500;color:${ex.color}">${escapeHtml(o.exchange)}</span>

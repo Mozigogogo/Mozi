@@ -19,5 +19,10 @@ export function buildArbitrageDetailPath(op, type = 'funding') {
     if (minEx) q.set('minExchange', minEx);
     if (maxEx) q.set('maxExchange', maxEx);
   }
+  // 列表点击带上 logo，详情首屏加载中即可展示
+  const logoUrl = String(op?.logoUrl || op?.url || '').trim();
+  if (logoUrl && /^https?:\/\//i.test(logoUrl)) {
+    q.set('logoUrl', logoUrl);
+  }
   return `/arbitrage/detail?${q.toString()}`;
 }

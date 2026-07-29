@@ -5,6 +5,14 @@
 import { request } from '../utils/request';
 import { Interface } from '../utils/constants';
 
+function parseLogoUrl(item) {
+  if (!item || typeof item !== 'object') return null;
+  const raw = item.url ?? item.logoUrl ?? item.logo_url ?? item.iconUrl ?? item.icon_url;
+  const s = String(raw || '').trim();
+  if (!s || !/^https?:\/\//i.test(s)) return null;
+  return s;
+}
+
 async function fetchCryptoArbList(path, params = {}, label = '列表') {
   const res = await request({
     url: path,
@@ -293,6 +301,7 @@ function mapFundingDetail(raw) {
     periodLabel,
     period: periodMatch ? Number(periodMatch[1]) : 8,
     nextFundingTs: nextFundingTs != null && nextFundingTs > 0 ? nextFundingTs : 0,
+    logoUrl: parseLogoUrl(item),
   };
 }
 
@@ -363,6 +372,7 @@ function mapSpreadDetail(raw) {
     ts: Number(item.ts) || 0,
     dataTs: Number(item.ts ?? item.dataTs ?? item.data_ts) || 0,
     chart30d,
+    logoUrl: parseLogoUrl(item),
   };
 }
 
@@ -420,6 +430,7 @@ function mapBasisDetail(raw) {
     ts: Number(item.ts) || 0,
     dataTs: Number(item.ts ?? item.dataTs ?? item.data_ts) || 0,
     chart30d,
+    logoUrl: parseLogoUrl(item),
   };
 }
 
@@ -464,5 +475,6 @@ function mapOIDetail(raw) {
     ts: Number(item.ts) || 0,
     dataTs: Number(item.ts ?? item.dataTs ?? item.data_ts) || 0,
     chart30d,
+    logoUrl: parseLogoUrl(item),
   };
 }

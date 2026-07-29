@@ -25,12 +25,15 @@ export default function ArbitrageDetailPage() {
   const detail = useMemo(() => {
     const typeRaw = String(searchParams?.get('type') || 'funding').trim();
     const type = DETAIL_TYPES.includes(typeRaw) ? typeRaw : 'funding';
+    const logoRaw = String(searchParams?.get('logoUrl') || '').trim();
+    const logoUrl = /^https?:\/\//i.test(logoRaw) ? logoRaw : '';
     return {
       type,
       symbol: String(searchParams?.get('symbol') || '').trim().toUpperCase(),
       exchange: String(searchParams?.get('exchange') || '').trim(),
       minExchange: String(searchParams?.get('minExchange') || '').trim(),
       maxExchange: String(searchParams?.get('maxExchange') || '').trim(),
+      logoUrl,
     };
   }, [searchParams]);
 
@@ -64,6 +67,7 @@ export default function ArbitrageDetailPage() {
       detailExchange={detail.exchange}
       detailMinExchange={detail.minExchange}
       detailMaxExchange={detail.maxExchange}
+      detailLogoUrl={detail.logoUrl}
       onBackToList={onBackToList}
     />
   );

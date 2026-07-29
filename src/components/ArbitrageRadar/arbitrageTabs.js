@@ -173,9 +173,31 @@ export function exBadge(name) {
   return `<span class="exbadge" style="background:${e.bg};border-color:${e.border};color:${e.color}">${name}</span>`;
 }
 
-function symIco(sym, idx) {
+/** 列表/详情币种 logo：优先用接口 url */
+export function parseLogoUrl(item) {
+  if (!item || typeof item !== 'object') return null;
+  const raw = item.url ?? item.logoUrl ?? item.logo_url ?? item.iconUrl ?? item.icon_url;
+  const s = String(raw || '').trim();
+  if (!s || !/^https?:\/\//i.test(s)) return null;
+  return s;
+}
+
+function escapeAttr(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/'/g, '&#39;');
+}
+
+export function symIco(sym, idx, logoUrl) {
   const c = symColors[idx % symColors.length];
-  return `<div class="sym-ico" style="background:${c}22;color:${c}">${String(sym).slice(0, 3)}</div>`;
+  const fallback = String(sym || '—').slice(0, 3);
+  const url = String(logoUrl || '').trim();
+  if (/^https?:\/\//i.test(url)) {
+    return `<div class="sym-ico has-img" data-fb="${escapeAttr(fallback)}" style="--sym-bg:${c}22;--sym-c:${c}"><img class="sym-ico-img" src="${escapeAttr(url)}" alt="" loading="lazy" decoding="async" onerror="var p=this.parentElement;if(!p)return;p.classList.remove('has-img');p.style.background=p.style.getPropertyValue('--sym-bg');p.style.color=p.style.getPropertyValue('--sym-c');p.textContent=p.getAttribute('data-fb')||'';this.remove()"/></div>`;
+  }
+  return `<div class="sym-ico" style="background:${c}22;color:${c}">${fallback}</div>`;
 }
 
 function valTierCls(pct, tiers = [0.5, 0.2]) {
@@ -214,6 +236,7 @@ export function mapSpreadItem(item, index) {
     volume24h: item.totalQuoteVolume24h ?? item.total_quote_volume_24h,
     ts: Number(item.ts) || 0,
     dataTs: Number(item.ts ?? item.dataTs ?? item.data_ts) || 0,
+    logoUrl: parseLogoUrl(item),
   };
 }
 
@@ -247,6 +270,7 @@ export function mapBasisItem(item, index) {
     volume24h: item.perpQuoteVolume24h ?? item.perp_quote_volume_24h ?? item.quoteVolume24h,
     ts: Number(item.ts) || 0,
     dataTs: Number(item.ts ?? item.dataTs ?? item.data_ts) || 0,
+    logoUrl: parseLogoUrl(item),
   };
 }
 
@@ -276,6 +300,7 @@ export function mapOIItem(item, index) {
     volume24h: item.quoteVolume24h ?? item.quote_volume_24h,
     sampleCount: item.sampleCount ?? item.sample_count ?? null,
     dataTs: Number(item.dataTs ?? item.data_ts) || 0,
+    logoUrl: parseLogoUrl(item),
   };
 }
 
@@ -332,7 +357,7 @@ export function renderMobileListCards(tab, displayOps, allOps) {
       const warnTitle = o.riskTooltip ? ` title="${String(o.riskTooltip).replace(/"/g, '&quot;')}"` : '';
       return `<div class="opp-card ${barCls}" onclick="openDetail(ops[${opsIdx}],'funding')" style="animation-delay:${i * 40}ms">
         <div class="card-top">
-          <div class="card-sym">${symIco(o.sym, i)}<div>
+          <div class="card-sym">${symIco(o.sym, i, o.logoUrl)}<div>
             <div class="sym-name">${o.sym}<span class="sym-pair">/USDT</span>
               ${o.warn ? `<span class="badge badge-warn" ${warnTitle}>⚠️极值</span>` : ''}
             </div>
@@ -362,7 +387,7 @@ export function renderMobileListCards(tab, displayOps, allOps) {
       const netText = truncateDecimals(net, 3);
       return `<div class="opp-card ${barCls}" onclick="openDetail(ops[${opsIdx}],'spread')" style="animation-delay:${i * 40}ms">
         <div class="card-top">
-          <div class="card-sym">${symIco(o.sym, i)}<div>
+          <div class="card-sym">${symIco(o.sym, i, o.logoUrl)}<div>
             <div class="sym-name">${o.sym}<span class="sym-pair">/USDT</span></div>
             <div class="sym-sub"><div class="ex-flow">${exNode(o.minExchange)}<span class="ex-arr">→</span>${exNode(o.maxExchange)}</div></div>
           </div></div>
@@ -390,7 +415,7 @@ export function renderMobileListCards(tab, displayOps, allOps) {
         : `${Number.isFinite(annNum) && annNum > 0 ? '+' : ''}${truncateDecimals(o.ann, 3) ?? '—'}%`;
       return `<div class="opp-card c-purple" onclick="openDetail(ops[${opsIdx}],'basis')" style="animation-delay:${i * 40}ms">
         <div class="card-top">
-          <div class="card-sym">${symIco(o.sym, i)}<div>
+          <div class="card-sym">${symIco(o.sym, i, o.logoUrl)}<div>
             <div class="sym-name">${o.sym}<span class="sym-pair">/USDT</span>
               <span class="badge" style="background:${isPos ? 'rgba(16,185,129,.1)' : 'rgba(239,68,68,.1)'};border-color:${isPos ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)'};color:${dirColor}">${isPos ? '升水' : '贴水'}</span>
             </div>
@@ -416,7 +441,7 @@ export function renderMobileListCards(tab, displayOps, allOps) {
       const pCls = o.priceChange24hPct >= 0 ? 'up' : 'dn';
       return `<div class="opp-card ${barCls}" onclick="openDetail(ops[${opsIdx}],'oi')" style="animation-delay:${i * 40}ms">
         <div class="card-top">
-          <div class="card-sym">${symIco(o.sym, i)}<div>
+          <div class="card-sym">${symIco(o.sym, i, o.logoUrl)}<div>
             <div class="sym-name">${o.sym}<span class="sym-pair">/USDT</span></div>
             <div class="sym-sub"><span class="ex-dot" style="background:${exDotColor(o.exchange)}"></span>${o.exchange}</div>
           </div></div>
@@ -549,7 +574,7 @@ export function tableRowHTML(tab, o, opsIdx, displayRank, helpers = {}) {
     const spreadPctText = truncateDecimals(o.spreadPct, 3);
     return `<tr ${click} style="animation-delay:${delay}ms">
       <td class="td-num">${o.rank || displayRank}</td>
-      <td><div class="sym-cell">${symIco(o.sym, opsIdx)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">${symSub}</div></div></div></td>
+      <td><div class="sym-cell">${symIco(o.sym, opsIdx, o.logoUrl)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">${symSub}</div></div></div></td>
       <td><div class="ex-flow">
         <span class="ex-node" style="background:${minEx.bg};border-color:${minEx.border};color:${minEx.color}">${o.minExchange} 买</span>
         <span class="ex-arrow">→</span>
@@ -584,7 +609,7 @@ export function tableRowHTML(tab, o, opsIdx, displayRank, helpers = {}) {
         })();
     return `<tr ${click} style="animation-delay:${delay}ms">
       <td class="td-num">${o.rank || displayRank}</td>
-      <td><div class="sym-cell">${symIco(o.sym, opsIdx)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">perp vs 现货</div></div></div></td>
+      <td><div class="sym-cell">${symIco(o.sym, opsIdx, o.logoUrl)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">perp vs 现货</div></div></div></td>
       <td>${exBadge(o.exchange)}</td>
       <td><span class="risk-badge" style="${dirStyle}">${dirLabel}</span></td>
       <td><div class="price-stack">
@@ -607,7 +632,7 @@ export function tableRowHTML(tab, o, opsIdx, displayRank, helpers = {}) {
     const priceCls = o.priceChange24hPct >= 0 ? 'val-pos' : 'val-neg';
     return `<tr ${click} style="animation-delay:${delay}ms">
       <td class="td-num">${o.rank || displayRank}</td>
-      <td><div class="sym-cell">${symIco(o.sym, opsIdx)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">永续合约</div></div></div></td>
+      <td><div class="sym-cell">${symIco(o.sym, opsIdx, o.logoUrl)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">永续合约</div></div></div></td>
       <td>${exBadge(o.exchange)}</td>
       <td><div class="price-stack">
         <span class="mono">${fmtOI(o.currentOiUsd)}</span>
@@ -764,7 +789,7 @@ export function renderSpreadDetail(o, opsIdx, opts = {}) {
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
-        <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${String(o.sym || '—').slice(0, 3)}</div>
+        ${symIco(o.sym, opsIdx, o.logoUrl)}
         ${escapeDetailHtml(o.sym)}/${escapeDetailHtml(quote)}
         <span class="type-chip type-chip-spread">现货价差</span>
       </div>
@@ -915,7 +940,7 @@ export function renderBasisDetail(o, opsIdx, opts = {}) {
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
-        <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${String(o.sym || '—').slice(0, 3)}</div>
+        ${symIco(o.sym, opsIdx, o.logoUrl)}
         ${escapeDetailHtml(o.sym)}/USDT
         <span style="font-size:14px;font-weight:500;color:var(--t3)">·</span>
         <span style="font-size:14px;font-weight:500;color:${exC}">${escapeDetailHtml(o.exchange)}</span>
@@ -1035,7 +1060,7 @@ export function renderOIDetail(o, opsIdx, opts = {}) {
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
-        <div class="sym-ico" style="background:${col}22;color:${col};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${String(o.sym || '—').slice(0, 3)}</div>
+        ${symIco(o.sym, opsIdx, o.logoUrl)}
         ${escapeDetailHtml(o.sym)}/USDT
         <span style="font-size:14px;font-weight:500;color:var(--t3)">·</span>
         <span style="font-size:14px;font-weight:500;color:${exC}">${escapeDetailHtml(o.exchange)}</span>
