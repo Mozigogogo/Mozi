@@ -21,9 +21,7 @@ import { getSectionList } from '@/api/market';
 import { buildSectorDetailHref } from '@/utils/sectorNavigation';
 import { buildPcFindRankHref } from '@/utils/pcFindNavigation';
 import { completeTask } from '@/api/user';
-import { buildArbitrageDetailPath } from '@/utils/arbitrageRoutes';
 import styles from './index.module.less';
-import ArbitrageBootSkeleton from '../ArbitrageRadar/BootSkeleton';
 import { SectorTreeMapChunkSkeleton, HotTopicsChunkSkeleton } from './ChunkSkeletons';
 
 // Lazy load heavy components — 必须带 loading，否则 chunk 下载期间整块空白
@@ -35,10 +33,6 @@ const PCHotTopics = dynamic(() => import('../PCHotTopics'), {
 });
 const PCSectorTreeMap = dynamic(() => import('../PCSectorTreeMap'), {
   loading: () => <SectorTreeMapChunkSkeleton />,
-});
-const ArbitrageRadar = dynamic(() => import('../ArbitrageRadar'), {
-  ssr: false,
-  loading: () => <ArbitrageBootSkeleton />,
 });
 
 // CDN 图片前缀
@@ -57,6 +51,15 @@ const derivativeIcons = {
   inventory: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/position_size.png',
   fundingRate: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/funding_rate.png',
   volume: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/trade_volume.png',
+};
+
+// 套利专区图标（与移动端一致）
+const ARB_ICON_CDN = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com';
+const arbitrageIcons = {
+  funding: `${ARB_ICON_CDN}/icon-funding.svg`,
+  spread: `${ARB_ICON_CDN}/icon-spread.svg`,
+  basis: `${ARB_ICON_CDN}/icon-basis.svg`,
+  oi: `${ARB_ICON_CDN}/icon-oi.svg`,
 };
 
 /**
@@ -143,6 +146,45 @@ export default function PCHome() {
       path: '/tradevol' 
     },
   ], [t]);
+
+  // 套利专区入口（与移动端四入口一致）
+  const arbitrageItems = useMemo(
+    () => [
+      {
+        key: 'funding',
+        icon: arbitrageIcons.funding,
+        title: (
+          <>
+            <span className={styles.arbEnLabel}>Funding</span> 套利
+          </>
+        ),
+        alt: 'Funding 套利',
+        path: '/arbitrage?tab=funding',
+      },
+      {
+        key: 'spread',
+        icon: arbitrageIcons.spread,
+        title: '现货价差',
+        alt: '现货价差',
+        path: '/arbitrage?tab=spread',
+      },
+      {
+        key: 'basis',
+        icon: arbitrageIcons.basis,
+        title: '基差套利',
+        alt: '基差套利',
+        path: '/arbitrage?tab=basis',
+      },
+      {
+        key: 'oi',
+        icon: arbitrageIcons.oi,
+        title: 'OI 异动',
+        alt: 'OI 异动',
+        path: '/arbitrage?tab=oi',
+      },
+    ],
+    []
+  );
 
   // 榜单 Tab 配置 - 使用 useMemo 优化，整合接口映射
   const rankTabs = useMemo(() => [
@@ -525,41 +567,39 @@ export default function PCHome() {
               )}
             </div>
 
-            {showArbitrageZone && activeZone === 'arbitrage' ? (
-              <div className={styles.arbitrageEmbed}>
-                <ArbitrageRadar
-                  embedded={true}
-                  onNavigateDetail={(op, type) => {
-                    router.push(buildArbitrageDetailPath(op, type));
-                  }}
-                />
-              </div>
-            ) : (
-              <div className={styles.zoneBody}>
-                <div className={styles.derivativeRow}>
-                  {derivativeItems.map((item) => (
-                    <div key={item.key} className={styles.derivativeCol}>
-                      <Card
-                        className={styles.derivativeCard}
-                        hoverable
-                        onClick={() => router.push(item.path)}
-                      >
-                        <div className={styles.derivativeContent}>
-                          <img src={item.icon} alt={item.title} className={styles.derivativeIcon} />
-                          <div className={styles.derivativeText}>
-                            <div className={styles.derivativeTitle}>{item.title}</div>
-                          </div>
+            <div className={styles.zoneBody}>
+              <div className={styles.derivativeRow}>
+                {(showArbitrageZone && activeZone === 'arbitrage'
+                  ? arbitrageItems
+                  : derivativeItems
+                ).map((item) => (
+                  <div key={item.key} className={styles.derivativeCol}>
+                    <Card
+                      className={styles.derivativeCard}
+                      hoverable
+                      onClick={() => router.push(item.path)}
+                    >
+                      <div className={styles.derivativeContent}>
+                        <span className={styles.derivativeIconWrap}>
+                          <img
+                            src={item.icon}
+                            alt={item.alt || (typeof item.title === 'string' ? item.title : '')}
+                            className={styles.derivativeIcon}
+                          />
+                        </span>
+                        <div className={styles.derivativeText}>
+                          <div className={styles.derivativeTitle}>{item.title}</div>
                         </div>
-                      </Card>
-                    </div>
-                  ))}
-                </div>
-
-                <div className={styles.marketDistributionWrapper}>
-                  <MarketDistribution isPC={true} />
-                </div>
+                      </div>
+                    </Card>
+                  </div>
+                ))}
               </div>
-            )}
+
+              <div className={styles.marketDistributionWrapper}>
+                <MarketDistribution isPC={true} />
+              </div>
+            </div>
           </div>
         </div>
 
