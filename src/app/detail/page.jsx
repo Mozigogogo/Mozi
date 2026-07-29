@@ -31,6 +31,7 @@ import { safeBack } from '@/utils/navigation';
 import { markTgAlertDeeplinkHandledBySymbol } from '@/utils/tgAlertDeeplink';
 import { hideDetailNavigationShell } from '@/utils/clientNavigation';
 import { notifyRouteBootReady } from '@/utils/routeBootLoading';
+import DetailPageLoading from '@/components/DetailPageLoading';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
@@ -226,26 +227,74 @@ export default function DetailPage() {
     priceChange1Year: '--'
   });
 
-  // 移动端首次进入详情时，等待首屏关键内容完成一次渲染后再收起过渡层，
-  // 避免样式 chunk 尚未稳定时暴露真实页面，出现图标和布局瞬间放大的闪烁。
-  useEffect(() => {
-    if (isPC || !symbol) return;
-    if (loading && isInitialLoad) return;
+  // 仅会话内「首次」进入详情页需要内容区遮罩，避免样式 chunk 未稳定时露出乱布局；
+  // 之后切币种 / 再次进入详情不再遮罩。
+  const DETAIL_SURFACE_BOOT_KEY = 'mozi_detail_surface_boot_done_v1';
+  const peekDetailSurfaceBootDone = () => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return sessionStorage.getItem(DETAIL_SURFACE_BOOT_KEY) === '1';
+    } catch {
+      return false;
+    }
+  };
+  const markDetailSurfaceBootDone = () => {
+    try {
+      sessionStorage.setItem(DETAIL_SURFACE_BOOT_KEY, '1');
+    } catch (_) {}
+  };
 
+  const needSurfaceBootRef = useRef(!peekDetailSurfaceBootDone());
+  const [surfaceReady, setSurfaceReady] = useState(() => !needSurfaceBootRef.current);
+
+  useEffect(() => {
+    if (!needSurfaceBootRef.current) {
+      setSurfaceReady(true);
+      hideDetailNavigationShell();
+      notifyRouteBootReady();
+      return undefined;
+    }
+    if (!symbol) {
+      setSurfaceReady(true);
+      needSurfaceBootRef.current = false;
+      markDetailSurfaceBootDone();
+      hideDetailNavigationShell();
+      notifyRouteBootReady();
+      return undefined;
+    }
+    // 首屏 coinInfo 尚未回来时继续遮罩
+    if (loading && isInitialLoad) return undefined;
+
+    let cancelled = false;
     let raf1 = 0;
     let raf2 = 0;
     raf1 = window.requestAnimationFrame(() => {
       raf2 = window.requestAnimationFrame(() => {
+        if (cancelled) return;
+        setSurfaceReady(true);
+        needSurfaceBootRef.current = false;
+        markDetailSurfaceBootDone();
         hideDetailNavigationShell();
         notifyRouteBootReady();
       });
     });
 
     return () => {
+      cancelled = true;
       window.cancelAnimationFrame(raf1);
       window.cancelAnimationFrame(raf2);
     };
-  }, [isPC, symbol, loading, isInitialLoad]);
+  }, [symbol, loading, isInitialLoad]);
+
+  const surfaceBootOverlay = needSurfaceBootRef.current && !surfaceReady ? (
+    <div
+      className={`${styles.surfaceBootOverlay}${isPC ? ` ${styles.surfaceBootOverlayPc}` : ''}`}
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <DetailPageLoading hideNavSkeleton inContent />
+    </div>
+  ) : null;
 
   const [orderBook, setOrderBook] = useState({
     bids: [],
@@ -2501,7 +2550,12 @@ ${coinInfo.name || symbol} (${symbol})
   if (isPC) {
     return (
       <>
-      <div ref={pcContentLayoutRef} className={styles.pcContentLayout}>
+      <div className={`${styles.surfaceBootWrap} ${styles.surfaceBootWrapPc}`}>
+        {surfaceBootOverlay}
+        <div
+          ref={pcContentLayoutRef}
+          className={`${styles.pcContentLayout}${surfaceReady ? '' : ` ${styles.surfaceBootHidden}`}`}
+        >
           <aside className={styles.pcContentColLeft}>
             <PCCoinDetail
               headerTitle={coinInfo?.name || symbol}
@@ -2712,6 +2766,7 @@ ${coinInfo.name || symbol} (${symbol})
             </div>
           </section>
         </div>
+      </div>
         {oneClickAlarmModalEl}
         <FloatingRobotPc
           message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
@@ -2753,7 +2808,12 @@ ${coinInfo.name || symbol} (${symbol})
         showBorder={false}
       />
 
-      <div ref={mobileRootRef} className={styles.container}>
+      <div className={styles.surfaceBootWrap}>
+        {surfaceBootOverlay}
+        <div
+          ref={mobileRootRef}
+          className={`${styles.container}${surfaceReady ? '' : ` ${styles.surfaceBootHidden}`}`}
+        >
         {renderCoinInfo()}
 
         <TabBar className={styles.tabContainer} activeKey={activeTab} onChange={handleTabChange}>
@@ -2821,6 +2881,7 @@ ${coinInfo.name || symbol} (${symbol})
             </button>
           </div>
         </div>
+      </div>
       </div>
 
       {oneClickAlarmModalEl}

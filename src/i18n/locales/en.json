@@ -1794,7 +1794,12 @@
       "volumeSub": "Volume"
     },
     "arbitrage": {
-      "title": "Arbitrage Zone"
+      "title": "Arbitrage Zone",
+      "funding": "Funding Arb",
+      "fundingSuffix": "Arb",
+      "spread": "Spot Spread",
+      "basis": "Basis Arb",
+      "oi": "OI Anomaly"
     },
     "sectorMap": {
       "title": "Sector Selection",

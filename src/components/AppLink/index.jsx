@@ -14,10 +14,13 @@ export default function AppLink({ href, className, children, onClick, style, rep
     const nextHref = String(href);
 
     // 内部路由跳转前显示 Logo loading，避免白屏等待
+    // 币种详情页自有内容区骨架，跳过全屏 LogoLoading
     if (nextHref.startsWith('/')) {
       try {
         const pathname = nextHref.split('?')[0];
-        markRouteBootLoading(pathname);
+        if (pathname !== '/detail') {
+          markRouteBootLoading(pathname);
+        }
       } catch (_) {}
     }
 

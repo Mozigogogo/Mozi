@@ -155,35 +155,36 @@ export default function PCHome() {
         icon: arbitrageIcons.funding,
         title: (
           <>
-            <span className={styles.arbEnLabel}>Funding</span> 套利
+            <span className={styles.arbEnLabel}>Funding</span>{' '}
+            {t('pcHome.arbitrage.fundingSuffix')}
           </>
         ),
-        alt: 'Funding 套利',
+        alt: t('pcHome.arbitrage.funding'),
         path: '/arbitrage?tab=funding',
       },
       {
         key: 'spread',
         icon: arbitrageIcons.spread,
-        title: '现货价差',
-        alt: '现货价差',
+        title: t('pcHome.arbitrage.spread'),
+        alt: t('pcHome.arbitrage.spread'),
         path: '/arbitrage?tab=spread',
       },
       {
         key: 'basis',
         icon: arbitrageIcons.basis,
-        title: '基差套利',
-        alt: '基差套利',
+        title: t('pcHome.arbitrage.basis'),
+        alt: t('pcHome.arbitrage.basis'),
         path: '/arbitrage?tab=basis',
       },
       {
         key: 'oi',
         icon: arbitrageIcons.oi,
-        title: 'OI 异动',
-        alt: 'OI 异动',
+        title: t('pcHome.arbitrage.oi'),
+        alt: t('pcHome.arbitrage.oi'),
         path: '/arbitrage?tab=oi',
       },
     ],
-    []
+    [t]
   );
 
   // 榜单 Tab 配置 - 使用 useMemo 优化，整合接口映射

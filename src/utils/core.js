@@ -217,6 +217,7 @@ export const jump2Detail = (symbol, fromFavorite = false) => {
   const url = fromFavorite 
     ? `/detail?symbol=${symbol}&fromFavorite=1`
     : `/detail?symbol=${symbol}`;
+  // 不走全屏 LogoLoading；详情页内用内容区骨架遮罩即可
   navigateToOrReload(url, { symbol });
 };
 

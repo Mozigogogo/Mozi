@@ -6,6 +6,42 @@
   min-height: 100vh;
 }
 
+/* 首屏样式/布局未稳定前隐藏真实 DOM，避免露出未排版结构 */
+.surfaceBootHidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.surfaceBootWrap {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.surfaceBootOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  overflow: auto;
+  background: #efefef;
+}
+
+.surfaceBootOverlayPc {
+  background: #fff;
+}
+
+.surfaceBootWrapPc {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.surfaceBootWrapPc > .pcContentLayout {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .pcContainer {
   padding-top: 0;
   padding-bottom: 0;

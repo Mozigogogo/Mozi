@@ -26,16 +26,32 @@ export default function ArbitrageArea({ inCarousel = false }) {
         icon: fundingArbIcon,
         text: (
           <>
-            <span className={styles.enLabel}>Funding</span> 套利
+            <span className={styles.enLabel}>Funding</span>{' '}
+            {t('pcHome.arbitrage.fundingSuffix')}
           </>
         ),
-        alt: 'Funding 套利',
+        alt: t('pcHome.arbitrage.funding'),
       },
-      { key: 'spread', icon: spreadIcon, text: '现货价差', alt: '现货价差' },
-      { key: 'basis', icon: basisIcon, text: '基差套利', alt: '基差套利' },
-      { key: 'oi', icon: oiAnomalyIcon, text: 'OI 异动', alt: 'OI 异动' },
+      {
+        key: 'spread',
+        icon: spreadIcon,
+        text: t('pcHome.arbitrage.spread'),
+        alt: t('pcHome.arbitrage.spread'),
+      },
+      {
+        key: 'basis',
+        icon: basisIcon,
+        text: t('pcHome.arbitrage.basis'),
+        alt: t('pcHome.arbitrage.basis'),
+      },
+      {
+        key: 'oi',
+        icon: oiAnomalyIcon,
+        text: t('pcHome.arbitrage.oi'),
+        alt: t('pcHome.arbitrage.oi'),
+      },
     ],
-    []
+    [t]
   );
 
   return (

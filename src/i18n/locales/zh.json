@@ -1792,7 +1792,12 @@
       "volumeSub": "Trading Volume"
     },
     "arbitrage": {
-      "title": "套利专区"
+      "title": "套利专区",
+      "funding": "Funding 套利",
+      "fundingSuffix": "套利",
+      "spread": "现货价差",
+      "basis": "基差套利",
+      "oi": "OI 异动"
     },
     "sectorMap": {
       "title": "板块选币",
