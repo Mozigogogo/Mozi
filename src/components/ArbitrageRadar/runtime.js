@@ -34,6 +34,8 @@ import {
   displayPctTrunc,
   displayRawNum,
   fmtOI,
+  renderMobileListCards,
+  renderMobileListSkeleton,
 } from './arbitrageTabs';
 
 const LIST_PAGE_SIZE = 8;
@@ -144,12 +146,42 @@ export function mountArbitrageRadar(__root, options = {}) {
 
   if (embedded) __root.classList.add('is-embedded');
   else __root.classList.remove('is-embedded');
+  if (options.detailOnly) __root.classList.add('is-detail-only');
+  else __root.classList.remove('is-detail-only');
+
+  const onNavigateDetail = typeof options.onNavigateDetail === 'function' ? options.onNavigateDetail : null;
+  const onBackToList = typeof options.onBackToList === 'function' ? options.onBackToList : null;
+  const detailOnly = !!options.detailOnly;
+
+  const MOBILE_MQ = '(max-width: 768px)';
+  function isMobileLayout() {
+    // 嵌入 PC 首页保持表格；独立页窄屏用卡片列表
+    if (embedded) return false;
+    try {
+      return window.matchMedia(MOBILE_MQ).matches;
+    } catch (_) {
+      return false;
+    }
+  }
+  function syncMobileClass() {
+    __root.classList.toggle('is-mobile', isMobileLayout());
+  }
+  syncMobileClass();
+  const mq = window.matchMedia(MOBILE_MQ);
+  const onMqChange = () => {
+    const wasMobile = __root.classList.contains('is-mobile');
+    syncMobileClass();
+    const nowMobile = __root.classList.contains('is-mobile');
+    if (wasMobile !== nowMobile && currentView === 'radar') render();
+  };
+  if (mq.addEventListener) mq.addEventListener('change', onMqChange);
+  else if (mq.addListener) mq.addListener(onMqChange);
 
   __root.innerHTML = embedded
     ? `<main class="main" id="main"></main><div id="toast"><span id="toast-txt"></span></div>`
     : `
 <header class="hdr">
-  <button type="button" class="hdr-back" id="nav-back" aria-label="返回">←</button>
+  <button type="button" class="hdr-back" id="nav-back" aria-label="返回"><svg class="hdr-back-ico" viewBox="0 0 48 48" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg></button>
   <div class="hdr-center">
     <div class="hdr-title" id="hdr-title">${TAB_LABELS[options.initialTab || 'funding'] || 'Funding 套利'}</div>
   </div>
@@ -170,14 +202,26 @@ let listTotal = 0;
 const symColors = ['#00B890','#D97706','#6366F1','#DB2777','#0D9488','#7C3AED','#EA580C','#0891B2'];
 
 // State
-let currentView = 'radar';
+let currentView = detailOnly ? 'detail' : 'radar';
 let selectedOp = null;
 let selectedType = 'funding';
-  let activeTab = options.initialTab || 'funding';
+let activeTab = options.initialTab || 'funding';
+if (detailOnly) {
+  const dt = String(options.detailType || 'funding').trim();
+  selectedType = ['funding', 'spread', 'basis', 'oi'].includes(dt) ? dt : 'funding';
+  activeTab = selectedType;
+  selectedOp = {
+    sym: String(options.detailSymbol || '').trim().toUpperCase(),
+    exchange: String(options.detailExchange || '').trim(),
+    minExchange: String(options.detailMinExchange || '').trim() || undefined,
+    maxExchange: String(options.detailMaxExchange || '').trim() || undefined,
+  };
+  listLoading = false;
+}
 let sortState = { key: null, dir: 'desc' }; // funding|ann|spreadAbs|spreadPct|quoteVolume|basisAbs|basisPct|changePct|null；默认不选中
 let calcState = {principal:10000, period:30, costRate:10};
 let countdown = {h:3,m:22,s:0};
-let detailLoading = false;
+let detailLoading = !!detailOnly;
 let detailError = null;
 let detailRequestId = 0;
 
@@ -238,7 +282,12 @@ function applyDataDelay(sec) {
 
 function syncHeaderTitle() {
   const el = __root.querySelector('#hdr-title');
-  if (el) el.textContent = TAB_LABELS[activeTab] || '套利专区';
+  if (!el) return;
+  if (detailOnly && selectedOp?.sym) {
+    el.textContent = `${selectedOp.sym}${selectedOp.exchange ? ` · ${selectedOp.exchange}` : ''}`;
+    return;
+  }
+  el.textContent = TAB_LABELS[activeTab] || '套利专区';
 }
 
 function goBack() {
@@ -366,7 +415,11 @@ function sortBy(key) {
   listPage = 1;
   // 只亮箭头、保留旧行，避免骨架/整页重绘抖动
   patchSortHeaders();
-  __root.querySelector('#tbl-body-scroll')?.classList.add('is-busy');
+  if (isMobileLayout()) {
+    __root.querySelector('#list-cards')?.classList.add('is-busy');
+  } else {
+    __root.querySelector('#tbl-body-scroll')?.classList.add('is-busy');
+  }
   loadActiveList({ showSkeleton: false, soft: true });
 }
 
@@ -440,8 +493,14 @@ function nav(view) {
 }
 
 function openDetail(op, type = activeTab) {
+  const t = type || activeTab || 'funding';
+  // 独立路由：跳转到 /arbitrage/detail
+  if (onNavigateDetail && !detailOnly) {
+    onNavigateDetail(op, t);
+    return;
+  }
   selectedOp = op;
-  selectedType = type || activeTab || 'funding';
+  selectedType = t;
   currentView = 'detail';
   detailError = null;
   detailLoading = false;
@@ -663,6 +722,15 @@ function backToRadar() {
   detailRequestId += 1;
   detailLoading = false;
   detailError = null;
+  if (onBackToList) {
+    onBackToList();
+    return;
+  }
+  if (detailOnly) {
+    // 详情独立页无回调时回列表路由
+    window.location.href = `/arbitrage?tab=${encodeURIComponent(selectedType || activeTab || 'funding')}`;
+    return;
+  }
   currentView = 'radar';
   selectedType = activeTab;
   render();
@@ -726,6 +794,7 @@ function render() {
   if (currentView === 'radar') {
     pendingTableScrollLeft = getTableScrollLeft();
   }
+  syncHeaderTitle();
   const m = __root.querySelector("#main");
   if(currentView==='radar') m.innerHTML = renderRadar();
   else if(currentView==='detail') m.innerHTML = renderDetailRoute();
@@ -759,6 +828,10 @@ function render() {
   }
   animateRows();
   if(currentView==='radar') {
+    if (isMobileLayout()) {
+      // 移动端卡片列表，无需表头测宽/横向滚动
+      return;
+    }
     initTableHScroll();
     if (pendingTableScrollLeft > 0) setTableScrollLeft(pendingTableScrollLeft);
     initTableHeaderTips();
@@ -849,6 +922,24 @@ function applyFixedColWidths(widths) {
 /** 局部更新表体/分页；表头 DOM 与列宽保持不动 */
 function syncRadarTableDom() {
   if (currentView !== 'radar') return false;
+
+  // 移动端卡片列表局部刷新
+  if (isMobileLayout()) {
+    const list = __root.querySelector('#list-cards');
+    if (!list) return false;
+    list.classList.toggle('is-busy', listLoading && ops.length > 0);
+    list.innerHTML = buildMobileListContent();
+    const pagerHtml = renderPager();
+    const existingPager = __root.querySelector('.tbl-pager');
+    if (existingPager) {
+      if (pagerHtml) existingPager.outerHTML = pagerHtml;
+      else existingPager.remove();
+    } else if (pagerHtml) {
+      list.insertAdjacentHTML('afterend', pagerHtml);
+    }
+    return true;
+  }
+
   const wrap = __root.querySelector('.tbl-wrap');
   const bodyScroll = __root.querySelector('#tbl-body-scroll');
   if (!wrap || !bodyScroll || !__root.querySelector('#tbl-head-table')) return false;
@@ -869,9 +960,9 @@ function syncRadarTableDom() {
     wrap.insertAdjacentHTML('afterend', pagerHtml);
   }
 
-  const locked = lockedColWidths[activeTab];
-  if (locked?.length && applyFixedColWidths(locked)) {
-    // 已有列宽锁：只重绑滚动，不再触发测宽
+  const widths = getPresetColWidths(__root.querySelector('#tbl-head-table'));
+  if (widths?.length && applyFixedColWidths(widths)) {
+    lockedColWidths[activeTab] = widths;
     bindTableHScrollOnly();
   } else {
     initTableHScroll();
@@ -882,9 +973,33 @@ function syncRadarTableDom() {
   return true;
 }
 
-function renderRadar() {
-  const { bodyContent, staticCols } = buildRadarBodyContent();
+function buildMobileListContent() {
+  if (listLoading && ops.length === 0) return renderMobileListSkeleton(LIST_PAGE_SIZE);
+  if (listError) {
+    return `<div class="tbl-state tbl-state-error">${escapeHtml(formatListError(listError))}<button type="button" class="tbl-retry" onclick="loadActiveList()">重试</button></div>`;
+  }
+  const display = getDisplayOps();
+  if (!display.length) return `<div class="tbl-state">暂无数据</div>`;
+  return renderMobileListCards(activeTab, display, ops);
+}
 
+function updObDots(el) {
+  const dots = __root.querySelectorAll('#ob-dots .dot');
+  if (!dots.length || !el) return;
+  const i = Math.round(el.scrollLeft / 210);
+  dots.forEach((d, j) => d.classList.toggle('on', j === i));
+}
+
+function renderRadar() {
+  const mobile = isMobileLayout();
+  if (mobile) {
+    return `${renderIntroStrip(activeTab, { mobile: true })}
+  <div class="type-tabs">${renderTypeTabs(activeTab)}</div>
+  <div class="list-cards${listLoading && ops.length > 0 ? ' is-busy' : ''}" id="list-cards">${buildMobileListContent()}</div>
+  ${renderPager()}`;
+  }
+
+  const { bodyContent, staticCols } = buildRadarBodyContent();
   return `${renderIntroStrip(activeTab)}
   <div class="type-tabs">${renderTypeTabs(activeTab)}</div>
   <div class="tbl-wrap${staticCols ? ' is-static-cols' : ''}">
@@ -914,59 +1029,47 @@ function renderDetailRoute() {
   return renderFundingDetail(o);
 }
 
+function getPresetColWidths(headTable) {
+  if (!headTable) return [];
+  return [...headTable.querySelectorAll('thead th')].map((th) => {
+    if (th.classList.contains('col-num')) return 48;
+    if (th.classList.contains('col-sym')) return 132;
+    if (th.classList.contains('col-ex')) return 110;
+    if (th.classList.contains('col-funding')) return 200;
+    if (th.classList.contains('col-ann')) return 120;
+    if (th.classList.contains('col-avg')) return 100;
+    if (th.classList.contains('col-days')) return 72;
+    if (th.classList.contains('col-stars') || th.classList.contains('col-rating')) return 100;
+    if (th.classList.contains('col-flow')) return 280;
+    if (th.classList.contains('col-prices')) return 180;
+    if (th.classList.contains('col-spread-abs') || th.classList.contains('col-basis-abs')) return 150;
+    if (th.classList.contains('col-spread') || th.classList.contains('col-basis')) return 150;
+    if (th.classList.contains('col-vol')) return 160;
+    if (th.classList.contains('col-oi')) return 160;
+    if (th.classList.contains('col-oi-chg')) return 120;
+    if (th.classList.contains('col-price-chg')) return 100;
+    if (th.classList.contains('col-signal')) return 120;
+    if (th.classList.contains('col-dir')) return 120;
+    if (th.classList.contains('col-funding-ann')) return 120;
+    return 100;
+  });
+}
+
 function applyStaticHeadColWidths(headTable, spacer, top, body) {
   if (!headTable) return;
-  const ths = headTable.querySelectorAll('thead th');
-  const widths = [];
-  ths.forEach((th) => {
-    let w = 100;
-    if (th.classList.contains('col-num')) w = 48;
-    else if (th.classList.contains('col-sym')) w = 132;
-    else if (th.classList.contains('col-ex')) w = 110;
-    else if (th.classList.contains('col-funding')) w = 200;
-    else if (th.classList.contains('col-ann')) w = 120;
-    else if (th.classList.contains('col-avg')) w = 100;
-    else if (th.classList.contains('col-days')) w = 72;
-    else if (th.classList.contains('col-stars')) w = 100;
-    else if (th.classList.contains('col-flow')) w = 160;
-    else if (th.classList.contains('col-prices')) w = 160;
-    else if (th.classList.contains('col-spread-abs') || th.classList.contains('col-basis-abs')) w = 150;
-    else if (th.classList.contains('col-spread') || th.classList.contains('col-basis')) w = 150;
-    else if (th.classList.contains('col-vol')) w = 160;
-    else if (th.classList.contains('col-oi')) w = 160;
-    else if (th.classList.contains('col-oi-chg')) w = 120;
-    else if (th.classList.contains('col-price-chg')) w = 100;
-    else if (th.classList.contains('col-signal')) w = 120;
-    else if (th.classList.contains('col-dir')) w = 120;
-    else if (th.classList.contains('col-funding-ann')) w = 120;
-    widths.push(w);
-  });
-  const total = Math.max(720, widths.reduce((a, b) => a + b, 0));
-  headTable.style.width = `${total}px`;
-  headTable.style.minWidth = `${total}px`;
-  headTable.style.tableLayout = 'fixed';
-  ths.forEach((th, i) => {
-    th.style.width = `${widths[i]}px`;
-    th.style.minWidth = `${widths[i]}px`;
-  });
-  if (spacer) spacer.style.width = `${total}px`;
+  const widths = getPresetColWidths(headTable);
+  if (!widths.length) return;
+  lockedColWidths[activeTab] = widths;
+  applyFixedColWidths(widths);
   const wrap = __root.querySelector('.tbl-wrap');
   wrap?.classList.add('is-static-cols');
-  if (top && body) {
-    const need = total > body.clientWidth + 1;
-    top.classList.toggle('show', need);
-    if (!need) {
-      top.scrollLeft = 0;
-      body.scrollLeft = 0;
-      __root.querySelector('#tbl-head-scroll')?.scrollTo?.({ left: 0 });
-    } else if (pendingTableScrollLeft > 0) {
-      const headEl = __root.querySelector('#tbl-head-scroll');
-      const maxLeft = Math.max(0, (top.scrollWidth || 0) - (top.clientWidth || 0));
-      const nextLeft = Math.min(pendingTableScrollLeft, maxLeft);
-      top.scrollLeft = nextLeft;
-      body.scrollLeft = nextLeft;
-      if (headEl) headEl.scrollLeft = nextLeft;
-    }
+  if (top && body && pendingTableScrollLeft > 0) {
+    const headEl = __root.querySelector('#tbl-head-scroll');
+    const maxLeft = Math.max(0, (top.scrollWidth || 0) - (top.clientWidth || 0));
+    const nextLeft = Math.min(pendingTableScrollLeft, maxLeft);
+    top.scrollLeft = nextLeft;
+    body.scrollLeft = nextLeft;
+    if (headEl) headEl.scrollLeft = nextLeft;
   }
 }
 
@@ -1107,12 +1210,12 @@ function formatHoverDate(ts) {
 
 function renderFundingDetail(o) {
   if (!o) {
-    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
       <div class="tbl-state tbl-state-error">暂无详情数据</div>`;
   }
 
   if (detailError) {
-    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
       <div class="tbl-state tbl-state-error">${escapeHtml(detailError)}
         <button type="button" class="tbl-retry" onclick="retryFundingDetail()">重试</button>
       </div>`;
@@ -1145,7 +1248,7 @@ function renderFundingDetail(o) {
       : `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">暂无走势数据</div>`;
 
   return `
-  <button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+  <button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
@@ -1726,8 +1829,13 @@ function bindTableHScrollOnly() {
   const onBodyScroll = () => setScroll(body.scrollLeft);
   const onHeadScroll = () => setScroll(head.scrollLeft);
   const onWinResize = () => {
-    delete lockedColWidths[activeTab];
-    initTableHScroll();
+    const widths = getPresetColWidths(__root.querySelector('#tbl-head-table'));
+    if (widths?.length) {
+      lockedColWidths[activeTab] = widths;
+      applyFixedColWidths(widths);
+    } else {
+      initTableHScroll();
+    }
   };
 
   top.addEventListener('scroll', onTopScroll);
@@ -1774,7 +1882,8 @@ function initTableHScroll() {
     syncTableBodyHeightLock();
   };
 
-  const syncColWidths = ({ forceRemeasure = false } = {}) => {
+  // 一律用预设列宽，避免窄屏重测把列挤扁（只剩 #）
+  const syncColWidths = () => {
     const bodyTable = __root.querySelector('#tbl-body-table');
     if (!bodyTable) return;
 
@@ -1794,49 +1903,16 @@ function initTableHScroll() {
         ? bodyTable.querySelector('tbody tr:not(.skel-row)') || bodyTable.querySelector('tbody tr')
         : null;
 
-    // 已锁定列宽：排序/换页直接复用，绝不清空重测
-    const locked = lockedColWidths[activeTab];
-    if (!forceRemeasure && locked?.length === ths.length && firstRow && !isStaticBody) {
-      applyFixedColWidths(locked);
-      restoreScroll(prevLeft);
-      return;
-    }
+    // 始终用最新预设列宽（避免 HMR/改宽后仍沿用旧锁）
+    const widths = getPresetColWidths(headTable);
+    lockedColWidths[activeTab] = widths;
 
-    // 错误/空态：用固定列宽
     if (isStaticBody || !firstRow) {
       applyStaticHeadColWidths(headTable, spacer, top, body);
       return;
     }
 
     clearStaticHeadColMode();
-    const tds = firstRow.children;
-    if (!tds.length || tds.length < ths.length) {
-      applyStaticHeadColWidths(headTable, spacer, top, body);
-      return;
-    }
-
-    // 仅首次或窗口 resize 时测宽
-    ths.forEach((th) => { th.style.width = ''; th.style.minWidth = ''; });
-    bodyTable.querySelectorAll('tbody tr td').forEach((td) => {
-      td.style.width = '';
-      td.style.minWidth = '';
-    });
-    headTable.style.tableLayout = 'auto';
-    bodyTable.style.tableLayout = 'auto';
-    headTable.style.width = '';
-    bodyTable.style.width = '';
-
-    const widths = [];
-    ths.forEach((th, i) => {
-      const td = tds[i];
-      const w = Math.ceil(Math.max(
-        th.getBoundingClientRect().width,
-        td ? td.getBoundingClientRect().width : 0
-      ));
-      widths.push(Math.max(w, 48));
-    });
-
-    lockedColWidths[activeTab] = widths;
     applyFixedColWidths(widths);
     restoreScroll(prevLeft);
   };
@@ -1862,17 +1938,14 @@ function initTableHScroll() {
 
   let ro = null;
   if (typeof ResizeObserver !== 'undefined') {
-    // 容器尺寸变化时复用锁宽，避免内容换行触发重测抖动
-    ro = new ResizeObserver(() => syncColWidths({ forceRemeasure: false }));
+    // 容器变窄时只复用预设列宽 + 更新横向滚动条，绝不重测
+    ro = new ResizeObserver(() => syncColWidths());
     ro.observe(body);
     ro.observe(headTable);
   }
-  const onWinResize = () => {
-    delete lockedColWidths[activeTab];
-    syncColWidths({ forceRemeasure: true });
-  };
+  const onWinResize = () => syncColWidths();
   window.addEventListener('resize', onWinResize);
-  requestAnimationFrame(() => requestAnimationFrame(() => syncColWidths({ forceRemeasure: false })));
+  requestAnimationFrame(() => requestAnimationFrame(syncColWidths));
 
   __root.__tblScrollCleanup = () => {
     top.removeEventListener('scroll', onTopScroll);
@@ -1913,7 +1986,7 @@ function showToast(msg) {
 
   // Patch render templates: after each render, nothing needed if we use window bridge
   const api = {
-    nav, goBack, openDetail, backToRadar, setTab, setListPage, sortBy, setPeriod, calcUpdate, calcSpread, calcBasis, bindTG, showToast, ops, render, loadFundingList, loadActiveList, retryFundingDetail, retrySpreadDetail, retryBasisDetail, retryOIDetail
+    nav, goBack, openDetail, backToRadar, setTab, setListPage, sortBy, setPeriod, calcUpdate, calcSpread, calcBasis, bindTG, showToast, ops, render, loadFundingList, loadActiveList, retryFundingDetail, retrySpreadDetail, retryBasisDetail, retryOIDetail, updObDots
   };
   Object.assign(__root, api);
 
@@ -1923,7 +1996,10 @@ function showToast(msg) {
   keys.forEach(k => { prev[k] = window[k]; window[k] = api[k]; });
 
   // Header nav (standalone only)
-  __root.querySelector('#nav-back')?.addEventListener('click', goBack);
+  __root.querySelector('#nav-back')?.addEventListener('click', () => {
+    if (detailOnly) backToRadar();
+    else goBack();
+  });
   syncHeaderTitle();
 
   const onLanguageChanged = () => {
@@ -1931,11 +2007,22 @@ function showToast(msg) {
   };
   i18n.on('languageChanged', onLanguageChanged);
 
-  loadActiveList();
+  if (detailOnly && selectedOp?.sym) {
+    syncHeaderTitle();
+    render();
+    if (selectedType === 'funding') loadFundingDetail(selectedOp);
+    else if (selectedType === 'spread') loadSpreadDetail(selectedOp);
+    else if (selectedType === 'basis') loadBasisDetail(selectedOp);
+    else if (selectedType === 'oi') loadOIDetail(selectedOp);
+  } else {
+    loadActiveList();
+  }
 
   return function cleanup() {
     listRequestId += 1;
     i18n.off('languageChanged', onLanguageChanged);
+    if (mq.removeEventListener) mq.removeEventListener('change', onMqChange);
+    else if (mq.removeListener) mq.removeListener(onMqChange);
     if (__root.__tblTipCleanup) {
       __root.__tblTipCleanup();
       __root.__tblTipCleanup = null;

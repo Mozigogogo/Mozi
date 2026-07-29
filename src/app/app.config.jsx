@@ -77,6 +77,11 @@ export const routes = [
     path: '/arbitrage',
     name: '套利专区',
     showTab: false
+  },
+  {
+    path: '/arbitrage/detail',
+    name: '套利详情',
+    showTab: false
   }
 ];
 

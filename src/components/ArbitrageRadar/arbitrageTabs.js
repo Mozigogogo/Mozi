@@ -279,16 +279,18 @@ export function mapOIItem(item, index) {
   };
 }
 
-export function renderIntroStrip(tab) {
+export function renderIntroStrip(tab, { mobile = false } = {}) {
   const cards = (introData[tab] || introData.funding).map(
     (c, i) => `
-    <div class="intro-card" style="animation-delay:${i * 0.05}s">
-      <div class="intro-icon">${c.icon}</div>
-      <div class="intro-label">${c.label}</div>
-      <div class="intro-desc">${c.desc}</div>
+    <div class="${mobile ? 'ob-card' : 'intro-card'}" style="animation-delay:${i * 0.05}s">
+      <div class="${mobile ? 'ob-icon' : 'intro-icon'}">${c.icon}</div>
+      <div class="${mobile ? 'ob-lbl' : 'intro-label'}">${c.label}</div>
+      <div class="${mobile ? 'ob-txt' : 'intro-desc'}">${c.desc}</div>
     </div>`
   ).join('');
-  return `<div class="intro-strip">${cards}</div>`;
+  if (!mobile) return `<div class="intro-strip">${cards}</div>`;
+  return `<div class="ob-strip" id="ob-strip" onscroll="updObDots(this)">${cards}</div>
+  <div class="ob-dots" id="ob-dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
 }
 
 export function renderTypeTabs(activeTab) {
@@ -297,9 +299,158 @@ export function renderTypeTabs(activeTab) {
     const color = TAB_COLORS[t];
     const style = on ? `style="color:${color};border-bottom-color:${color}"` : '';
     return `<button type="button" class="ttab ${on}" ${style} onclick="setTab('${t}',this)">
-      ${TAB_LABELS[t]}
+      <span class="tdot" aria-hidden="true"></span>${TAB_LABELS[t]}
     </button>`;
   }).join('');
+}
+
+function starsHTML(rating) {
+  const r = Math.max(0, Math.min(5, Number(rating) || 0));
+  return [1, 2, 3, 4, 5].map((s) => `<span class="${s <= r ? 's-on' : 's-off'}">★</span>`).join('');
+}
+
+function exDotColor(name) {
+  return (exColors[name] || {}).c || (exColors[name] || {}).color || '#94A3B8';
+}
+
+function exNode(name) {
+  const e = exColors[name] || { bg: 'rgba(15,23,42,.04)', border: 'rgba(15,23,42,.12)', color: '#64748b' };
+  return `<span class="ex-node" style="background:${e.bg};border-color:${e.border};color:${e.color}">${name}</span>`;
+}
+
+/** 移动端卡片列表（对齐 mozi-radar-mobile-light.html） */
+export function renderMobileListCards(tab, displayOps, allOps) {
+  if (tab === 'funding') {
+    return displayOps.map((o) => {
+      const opsIdx = allOps.indexOf(o);
+      const i = opsIdx >= 0 ? opsIdx : 0;
+      const ann = Number(o.ann) || 0;
+      const barCls = ann >= 25 ? 'c-green' : ann >= 8 ? 'c-warn' : 'c-dim';
+      const numColor = ann >= 25 ? 'var(--accent)' : ann >= 8 ? 'var(--t1)' : 'var(--t3)';
+      const periodLabel = o.periodLabel || `${o.period || 8}h`;
+      const avg30Text = o.avg30 == null ? '—' : displayPctTrunc(o.avg30);
+      const warnTitle = o.riskTooltip ? ` title="${String(o.riskTooltip).replace(/"/g, '&quot;')}"` : '';
+      return `<div class="opp-card ${barCls}" onclick="openDetail(ops[${opsIdx}],'funding')" style="animation-delay:${i * 40}ms">
+        <div class="card-top">
+          <div class="card-sym">${symIco(o.sym, i)}<div>
+            <div class="sym-name">${o.sym}<span class="sym-pair">/USDT</span>
+              ${o.warn ? `<span class="badge badge-warn" ${warnTitle}>⚠️极值</span>` : ''}
+            </div>
+            <div class="sym-sub"><span class="ex-dot" style="background:${exDotColor(o.exchange)}"></span>${o.exchange} · 永续</div>
+          </div></div>
+          <div class="card-main-val"><div class="main-num" style="color:${numColor}">${displayPctTrunc(o.ann)}</div><div class="main-lbl">年化</div></div>
+        </div>
+        <div class="card-grid g3">
+          <div><div class="cg-lbl">当前费率</div><div class="cg-val" style="color:var(--accent)">${displayPctTrunc(o.funding)}<span class="cg-unit">/${periodLabel}</span></div></div>
+          <div><div class="cg-lbl">30日均值</div><div class="cg-val" style="color:var(--t3)">${avg30Text}</div></div>
+          <div class="cg-right"><div class="cg-lbl">评级 · ${o.days || 0}天</div><div class="stars">${starsHTML(o.rating)}</div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if (tab === 'spread') {
+    return displayOps.map((o) => {
+      const opsIdx = allOps.indexOf(o);
+      const i = opsIdx >= 0 ? opsIdx : 0;
+      const pct = Number(o.spreadPct) || 0;
+      const barCls = pct >= 0.5 ? 'c-blue' : pct >= 0.2 ? 'c-warn' : 'c-dim';
+      const numColor = pct >= 0.5 ? 'var(--blue)' : pct >= 0.2 ? 'var(--t1)' : 'var(--t3)';
+      const feeSum =
+        (Number(o.minExchangeFeeRate) || 0.001) + (Number(o.maxExchangeFeeRate) || 0.001);
+      const net = pct - feeSum * 100;
+      const netText = truncateDecimals(net, 3);
+      return `<div class="opp-card ${barCls}" onclick="openDetail(ops[${opsIdx}],'spread')" style="animation-delay:${i * 40}ms">
+        <div class="card-top">
+          <div class="card-sym">${symIco(o.sym, i)}<div>
+            <div class="sym-name">${o.sym}<span class="sym-pair">/USDT</span></div>
+            <div class="sym-sub"><div class="ex-flow">${exNode(o.minExchange)}<span class="ex-arr">→</span>${exNode(o.maxExchange)}</div></div>
+          </div></div>
+          <div class="card-main-val"><div class="main-num" style="color:${numColor}">${truncateDecimals(o.spreadPct, 3) ?? '—'}%</div><div class="main-lbl">价差</div></div>
+        </div>
+        <div class="card-grid g3">
+          <div><div class="cg-lbl">买入价</div><div class="cg-val" style="color:var(--pos)">${displayRawNum(o.minPrice, { prefix: '$' })}</div></div>
+          <div><div class="cg-lbl">卖出价</div><div class="cg-val" style="color:var(--danger)">${displayRawNum(o.maxPrice, { prefix: '$' })}</div></div>
+          <div class="cg-right"><div class="cg-lbl">净价差</div><div class="cg-val" style="color:${net > 0 ? 'var(--pos)' : 'var(--danger)'}">~${netText == null ? '—' : `${netText}%`}</div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if (tab === 'basis') {
+    return displayOps.map((o) => {
+      const opsIdx = allOps.indexOf(o);
+      const i = opsIdx >= 0 ? opsIdx : 0;
+      const basisPctNum = Number(o.basisPct) || 0;
+      const isPos = basisPctNum >= 0;
+      const dirColor = isPos ? 'var(--pos)' : 'var(--danger)';
+      const annNum = Number(o.ann);
+      const annText = o.ann == null || o.ann === ''
+        ? '—'
+        : `${Number.isFinite(annNum) && annNum > 0 ? '+' : ''}${truncateDecimals(o.ann, 3) ?? '—'}%`;
+      return `<div class="opp-card c-purple" onclick="openDetail(ops[${opsIdx}],'basis')" style="animation-delay:${i * 40}ms">
+        <div class="card-top">
+          <div class="card-sym">${symIco(o.sym, i)}<div>
+            <div class="sym-name">${o.sym}<span class="sym-pair">/USDT</span>
+              <span class="badge" style="background:${isPos ? 'rgba(16,185,129,.1)' : 'rgba(239,68,68,.1)'};border-color:${isPos ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)'};color:${dirColor}">${isPos ? '升水' : '贴水'}</span>
+            </div>
+            <div class="sym-sub"><span class="ex-dot" style="background:${exDotColor(o.exchange)}"></span>${o.exchange} · perp vs 现货</div>
+          </div></div>
+          <div class="card-main-val"><div class="main-num" style="color:${dirColor}">${displayPctTrunc(o.basisPct, { signed: true })}</div><div class="main-lbl">基差</div></div>
+        </div>
+        <div class="card-grid g3">
+          <div><div class="cg-lbl">perp 价</div><div class="cg-val">${displayRawNum(o.perpPrice, { prefix: '$' })}</div></div>
+          <div><div class="cg-lbl">现货价</div><div class="cg-val" style="color:var(--t3)">${displayRawNum(o.spotPrice, { prefix: '$' })}</div></div>
+          <div class="cg-right"><div class="cg-lbl">Funding 年化</div><div class="cg-val" style="color:${Number.isFinite(annNum) && annNum >= 0 ? 'var(--pos)' : 'var(--danger)'}">${annText}</div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if (tab === 'oi') {
+    return displayOps.map((o) => {
+      const opsIdx = allOps.indexOf(o);
+      const i = opsIdx >= 0 ? opsIdx : 0;
+      const hs = hintStyles[o.correlationHint] || { bg: 'rgba(15,23,42,.04)', border: 'rgba(15,23,42,.12)', c: 'var(--t2)' };
+      const barCls = o.oiChangePct >= 0 ? 'c-orange' : 'c-dim';
+      const pCls = o.priceChange24hPct >= 0 ? 'up' : 'dn';
+      return `<div class="opp-card ${barCls}" onclick="openDetail(ops[${opsIdx}],'oi')" style="animation-delay:${i * 40}ms">
+        <div class="card-top">
+          <div class="card-sym">${symIco(o.sym, i)}<div>
+            <div class="sym-name">${o.sym}<span class="sym-pair">/USDT</span></div>
+            <div class="sym-sub"><span class="ex-dot" style="background:${exDotColor(o.exchange)}"></span>${o.exchange}</div>
+          </div></div>
+          <div class="card-main-val">
+            <div class="main-num" style="color:${o.oiChangePct >= 0 ? 'var(--pos)' : 'var(--danger)'}">${o.oiChangePct >= 0 ? '+' : ''}${truncateDecimals(o.oiChangePct, 1) ?? '—'}%</div>
+            <div class="main-lbl">vs 7日均值</div>
+          </div>
+        </div>
+        <div class="card-grid g3">
+          <div><div class="cg-lbl">当前 OI</div><div class="cg-val">${fmtOI(o.currentOiUsd)}</div></div>
+          <div><div class="cg-lbl">价格 24h</div><div class="cg-val ${pCls}">${o.priceChange24hPct >= 0 ? '↑' : '↓'}${truncateDecimals(Math.abs(o.priceChange24hPct), 1) ?? '—'}%</div></div>
+          <div class="cg-right"><div class="cg-lbl">信号</div><span class="hint-badge" style="background:${hs.bg};border-color:${hs.border};color:${hs.c}">${o.correlationHint}</span></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  return '';
+}
+
+export function renderMobileListSkeleton(count = 6) {
+  return Array.from({ length: count }, (_, i) => `
+    <div class="opp-card skel-card" aria-hidden="true" style="animation-delay:${i * 40}ms">
+      <div class="card-top">
+        <div class="card-sym"><span class="skel skel-avatar"></span><div class="skel-sym-text"><span class="skel skel-line skel-w64"></span><span class="skel skel-line skel-w48"></span></div></div>
+        <div class="card-main-val"><span class="skel skel-line skel-w64" style="height:22PX;width:72PX"></span></div>
+      </div>
+      <div class="card-grid g3">
+        <div><span class="skel skel-line skel-w48"></span></div>
+        <div><span class="skel skel-line skel-w48"></span></div>
+        <div><span class="skel skel-line skel-w48"></span></div>
+      </div>
+    </div>
+  `).join('');
 }
 
 export function tableHeadHTML(tab, sortIndFn) {
@@ -565,12 +716,12 @@ function resolveSpreadFees(o) {
 
 export function renderSpreadDetail(o, opsIdx, opts = {}) {
   if (!o) {
-    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
       <div class="tbl-state tbl-state-error">暂无详情数据</div>`;
   }
 
   if (opts.detailError) {
-    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
       <div class="tbl-state tbl-state-error">${escapeDetailHtml(opts.detailError)}
         <button type="button" class="tbl-retry" onclick="retrySpreadDetail()">重试</button>
       </div>`;
@@ -609,7 +760,7 @@ export function renderSpreadDetail(o, opsIdx, opts = {}) {
          <div class="c-tooltip" id="c-tooltip"></div>`
       : `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">暂无走势数据</div>`;
   return `
-  <button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+  <button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
@@ -693,12 +844,12 @@ export function renderSpreadDetail(o, opsIdx, opts = {}) {
 
 export function renderBasisDetail(o, opsIdx, opts = {}) {
   if (!o) {
-    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
       <div class="tbl-state tbl-state-error">暂无详情数据</div>`;
   }
 
   if (opts.detailError) {
-    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
       <div class="tbl-state tbl-state-error">${escapeDetailHtml(opts.detailError)}
         <button type="button" class="tbl-retry" onclick="retryBasisDetail()">重试</button>
       </div>`;
@@ -760,7 +911,7 @@ export function renderBasisDetail(o, opsIdx, opts = {}) {
          <div class="c-tooltip" id="c-tooltip"></div>`
       : `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">暂无走势数据</div>`;
   return `
-  <button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+  <button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
@@ -854,12 +1005,12 @@ const OI_SIGNAL_META = {
  */
 export function renderOIDetail(o, opsIdx, opts = {}) {
   if (!o) {
-    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
       <div class="tbl-state tbl-state-error">暂无详情数据</div>`;
   }
 
   if (opts.detailError) {
-    return `<button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
       <div class="tbl-state tbl-state-error">${escapeDetailHtml(opts.detailError)}
         <button type="button" class="tbl-retry" onclick="retryOIDetail()">重试</button>
       </div>`;
@@ -880,7 +1031,7 @@ export function renderOIDetail(o, opsIdx, opts = {}) {
       : `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">暂无走势数据</div>`;
 
   return `
-  <button class="back-btn" onclick="backToRadar()">← 返回列表</button>
+  <button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">

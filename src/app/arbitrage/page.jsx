@@ -1,8 +1,9 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useMemo, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { buildArbitrageDetailPath } from '@/utils/arbitrageRoutes';
 
 const ArbitrageRadar = dynamic(() => import('@/components/ArbitrageRadar'), {
   ssr: false,
@@ -12,15 +13,23 @@ const ArbitrageRadar = dynamic(() => import('@/components/ArbitrageRadar'), {
 });
 
 /**
- * 套利专区详情页
+ * 套利专区列表页
  * 支持 query: ?tab=funding|spread|basis|oi
  */
 export default function ArbitragePage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialTab = useMemo(() => {
     const tab = searchParams?.get('tab');
     return ['funding', 'spread', 'basis', 'oi'].includes(tab) ? tab : 'funding';
   }, [searchParams]);
 
-  return <ArbitrageRadar initialTab={initialTab} />;
+  const onNavigateDetail = useCallback(
+    (op, type) => {
+      router.push(buildArbitrageDetailPath(op, type));
+    },
+    [router]
+  );
+
+  return <ArbitrageRadar initialTab={initialTab} onNavigateDetail={onNavigateDetail} />;
 }

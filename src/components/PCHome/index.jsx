@@ -21,6 +21,7 @@ import { getSectionList } from '@/api/market';
 import { buildSectorDetailHref } from '@/utils/sectorNavigation';
 import { buildPcFindRankHref } from '@/utils/pcFindNavigation';
 import { completeTask } from '@/api/user';
+import { buildArbitrageDetailPath } from '@/utils/arbitrageRoutes';
 import styles from './index.module.less';
 import ArbitrageBootSkeleton from '../ArbitrageRadar/BootSkeleton';
 import { SectorTreeMapChunkSkeleton, HotTopicsChunkSkeleton } from './ChunkSkeletons';
@@ -526,7 +527,12 @@ export default function PCHome() {
 
             {showArbitrageZone && activeZone === 'arbitrage' ? (
               <div className={styles.arbitrageEmbed}>
-                <ArbitrageRadar embedded={true} />
+                <ArbitrageRadar
+                  embedded={true}
+                  onNavigateDetail={(op, type) => {
+                    router.push(buildArbitrageDetailPath(op, type));
+                  }}
+                />
               </div>
             ) : (
               <div className={styles.zoneBody}>

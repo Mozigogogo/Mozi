@@ -21,10 +21,19 @@ export default function ArbitrageArea({ inCarousel = false }) {
 
   const items = useMemo(
     () => [
-      { key: 'funding', icon: fundingArbIcon, text: 'Funding 套利' },
-      { key: 'spread', icon: spreadIcon, text: '现货价差' },
-      { key: 'basis', icon: basisIcon, text: '基差套利' },
-      { key: 'oi', icon: oiAnomalyIcon, text: 'OI 异动' },
+      {
+        key: 'funding',
+        icon: fundingArbIcon,
+        text: (
+          <>
+            <span className={styles.enLabel}>Funding</span> 套利
+          </>
+        ),
+        alt: 'Funding 套利',
+      },
+      { key: 'spread', icon: spreadIcon, text: '现货价差', alt: '现货价差' },
+      { key: 'basis', icon: basisIcon, text: '基差套利', alt: '基差套利' },
+      { key: 'oi', icon: oiAnomalyIcon, text: 'OI 异动', alt: 'OI 异动' },
     ],
     []
   );
@@ -43,9 +52,9 @@ export default function ArbitrageArea({ inCarousel = false }) {
               }}
             >
               <div className={styles.arbitrageIcon}>
-                <img src={item.icon} alt={item.text} />
+                <img src={item.icon} alt={item.alt} />
               </div>
-              <span>{item.text}</span>
+              <span className={styles.arbitrageLabel}>{item.text}</span>
             </Grid.Item>
           ))}
         </Grid>

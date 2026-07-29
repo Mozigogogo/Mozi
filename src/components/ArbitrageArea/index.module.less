@@ -66,9 +66,19 @@
     }
   }
 
-  span {
+  .arbitrageLabel {
+    display: inline-block;
+    max-width: 100%;
     font-size: 14px;
     color: #000;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+
+  .enLabel {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
   }
 
   @media (max-width: 768px) {
@@ -76,8 +86,11 @@
       width: 28px;
       height: 28px;
     }
-    span {
-      font-size: 14px;
+    .arbitrageLabel {
+      font-size: 13px;
+    }
+    .enLabel {
+      font-size: 12px;
     }
   }
 }
