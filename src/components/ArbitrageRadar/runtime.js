@@ -883,14 +883,25 @@ function applyFixedColWidths(widths) {
   const ths = headTable.querySelectorAll('thead th');
   if (ths.length !== widths.length) return false;
 
-  const total = Math.max(720, widths.reduce((a, b) => a + b, 0));
+  const presetTotal = widths.reduce((a, b) => a + b, 0);
+  // 容器比预设宽时按比例拉满，避免右侧大块留白
+  const containerW = Math.max(body?.clientWidth || 0, head?.clientWidth || 0);
+  let applied = widths.slice();
+  let total = Math.max(720, presetTotal);
+  if (containerW > presetTotal + 1) {
+    const scale = containerW / presetTotal;
+    applied = widths.map((w) => Math.max(1, Math.floor(w * scale)));
+    const sum = applied.reduce((a, b) => a + b, 0);
+    applied[applied.length - 1] += containerW - sum;
+    total = containerW;
+  }
 
   headTable.style.tableLayout = 'fixed';
   headTable.style.width = `${total}px`;
   headTable.style.minWidth = `${total}px`;
   ths.forEach((th, i) => {
-    th.style.width = `${widths[i]}px`;
-    th.style.minWidth = `${widths[i]}px`;
+    th.style.width = `${applied[i]}px`;
+    th.style.minWidth = `${applied[i]}px`;
   });
 
   if (bodyTable && bodyTable.tagName === 'TABLE' && !bodyTable.classList.contains('tbl-state')) {
@@ -900,9 +911,9 @@ function applyFixedColWidths(widths) {
     bodyTable.style.minWidth = `${total}px`;
     bodyTable.querySelectorAll('tbody tr').forEach((tr) => {
       [...tr.children].forEach((td, i) => {
-        if (widths[i] == null) return;
-        td.style.width = `${widths[i]}px`;
-        td.style.minWidth = `${widths[i]}px`;
+        if (applied[i] == null) return;
+        td.style.width = `${applied[i]}px`;
+        td.style.minWidth = `${applied[i]}px`;
       });
     });
   }
