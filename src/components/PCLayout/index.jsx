@@ -870,6 +870,7 @@ export default function PCLayout({ children }) {
 
   const isHelpPage =
     pathname === '/pc/help' || (pathname && pathname.startsWith('/pc/help/'));
+  const isDetailPage = pathname === '/detail';
 
   const isAiRoute = pathname === '/ai' || (pathname && pathname.startsWith('/ai/'));
   const isAlertsRoute =
@@ -1527,11 +1528,15 @@ export default function PCLayout({ children }) {
         </Sider>
 
         {/* 右侧 Content */}
-        <Content
-          className={`${styles.content} ${!isHelpPage ? styles.homeContent : ''} ${collapsed ? styles.contentCollapsed : ''}`}
+          <Content
+          className={`${styles.content} ${!isHelpPage ? styles.homeContent : ''} ${collapsed ? styles.contentCollapsed : ''} ${isDetailPage ? styles.contentDetail : ''}`}
         >
-          <div className={`${styles.contentWrapper} ${isHelpPage ? styles.contentWrapperHelp : ''}`}>
-            <div className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''}`}>
+          <div
+            className={`${styles.contentWrapper} ${isHelpPage ? styles.contentWrapperHelp : ''} ${isDetailPage ? styles.contentWrapperDetail : ''}`}
+          >
+            <div
+              className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''} ${isDetailPage ? styles.contentMainDetail : ''}`}
+            >
               {(() => {
                 if (shouldShowSearchOverlay) {
                   return (
@@ -1554,6 +1559,7 @@ export default function PCLayout({ children }) {
                 }
               })()}
             </div>
+            {isDetailPage ? <div className={styles.detailFooterSpacer} aria-hidden /> : null}
             
             {/* 底部公告栏 - 只在内容区域显示 */}
             <PCFooterNotice notices={notices} collapsed={collapsed} />

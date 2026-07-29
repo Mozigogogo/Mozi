@@ -39,6 +39,9 @@ const MoziGrid = ({
     : [];
 
   const containerStyle = minRows ? { minHeight: `${minRows * ROW_HEIGHT_PX}px` } : undefined;
+  const normalizedRowPadding = rowPadding
+    ? String(rowPadding).replace(/PX\b/g, 'px')
+    : null;
 
   // 对于交易所排行榜样式（showRanking）——即便没有数据也保持占位与固定高度
   const isRankingEmpty = showRanking && (!Array.isArray(gridContent) || gridContent.length === 0);
@@ -46,9 +49,10 @@ const MoziGrid = ({
 
   // 计算列宽：根据列数和模式（含简单序号）自适配
   const getColWidth = (index) => {
-    // 如果提供了自定义列宽，优先使用
+    // 如果提供了自定义列宽，优先使用（内联 style 单位必须小写 px）
     if (columnWidths && columnWidths[index]) {
-      return columnWidths[index];
+      const raw = String(columnWidths[index]).trim();
+      return raw.replace(/PX\b/g, 'px');
     }
     
     // 简单序号模式下，常见的“序号+3列数据”的布局（总共4列可见）
@@ -122,7 +126,7 @@ const MoziGrid = ({
                     position: stickyHeader ? 'sticky' : undefined,
                     top: stickyHeader ? stickyTop : undefined,
                     zIndex: stickyHeader ? 5 : undefined,
-                    fontSize: titleFontSize || undefined,
+                    fontSize: titleFontSize ? String(titleFontSize).replace(/PX\b/g, 'px') : undefined,
                     ...gridTitleStyle
                   }}
                 >
@@ -142,7 +146,7 @@ const MoziGrid = ({
                   <div 
                     key={index}
                     className={styles.gridListItem}
-                    style={rowPadding ? { padding: rowPadding } : undefined}
+                    style={normalizedRowPadding ? { padding: normalizedRowPadding } : undefined}
                     onClick={(e) => {
                       e.stopPropagation();
                       callback && callback(gridCon);
@@ -208,7 +212,7 @@ const MoziGrid = ({
                 position: stickyHeader ? 'sticky' : undefined,
                 top: stickyHeader ? stickyTop : undefined,
                 zIndex: stickyHeader ? 5 : undefined,
-                fontSize: titleFontSize || undefined,
+                fontSize: titleFontSize ? String(titleFontSize).replace(/PX\b/g, 'px') : undefined,
                 ...gridTitleStyle
               }}
             >
@@ -228,7 +232,7 @@ const MoziGrid = ({
               <div 
                 key={index}
                 className={styles.gridListItem}
-                style={rowPadding ? { padding: rowPadding } : undefined}
+                style={normalizedRowPadding ? { padding: normalizedRowPadding } : undefined}
                 onClick={(e) => {
                   e.stopPropagation();
                   callback && callback(gridCon);
@@ -273,7 +277,7 @@ const MoziGrid = ({
                 position: stickyHeader ? 'sticky' : undefined,
                 top: stickyHeader ? stickyTop : undefined,
                 zIndex: stickyHeader ? 5 : undefined,
-                fontSize: titleFontSize || undefined,
+                fontSize: titleFontSize ? String(titleFontSize).replace(/PX\b/g, 'px') : undefined,
                 ...gridTitleStyle
               }}
             >
@@ -295,13 +299,13 @@ const MoziGrid = ({
                 <div 
                   key={index}
                   className={styles.gridListItem}
-                  style={rowPadding ? { padding: rowPadding } : undefined}
+                  style={normalizedRowPadding ? { padding: normalizedRowPadding } : undefined}
                   onClick={(e) => {
                     e.stopPropagation();
                     callback && callback(gridCon);
                   }}
                 >
-                  <div className={styles.gridContent}>
+                  <div className={styles.gridContent} style={contentFontSize ? { fontSize: contentFontSize } : undefined}>
                     {Object.keys(gridCon).map((gridConItem, gridConIndex) => {
                       if (gridConItem === 'key' || gridConItem === 'img' || gridConItem === 'isFavorite') {
                         return null;
@@ -312,7 +316,12 @@ const MoziGrid = ({
                         <div 
                           key={gridConIndex}
                           className={`${styles.gridConItem} ${gridConIndex !== 0 ? styles.text : ''}`}
-                          style={{ width: getColWidth(gridConIndex) }}
+                          style={{
+                          width: getColWidth(gridConIndex),
+                          fontSize: contentFontSize
+                            ? String(contentFontSize).replace(/PX\b/g, 'px')
+                            : undefined,
+                        }}
                         >
                           {displayValue}
                         </div>

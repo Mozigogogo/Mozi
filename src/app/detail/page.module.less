@@ -30,15 +30,20 @@
   background: #fff;
 }
 
+/* 填满 contentMainDetail，否则内部 absolute 的 pcContentLayout 高度为 0 */
 .surfaceBootWrapPc {
-  flex: 1 1 auto;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .surfaceBootWrapPc > .pcContentLayout {
-  flex: 1 1 auto;
+  /* 相对 surfaceBootWrap 铺满，不再依赖 contentMainDetail 作为定位父级 */
+  position: absolute;
+  inset: 0;
+  flex: none;
   min-height: 0;
 }
 
@@ -59,72 +64,230 @@
   min-height: 320px;
 }
 
-/* PC 端主内容区：左 57% / 右 43% 双栏（略收窄左侧 K 线区） */
+/* PC 端主内容区：左图表 / 右「工作区」整块（内容 + 竖条同面板）
+ * 大写 PX：detail 页 less 会走 postcss-px-to-viewport（按 375），小写 px 在宽屏会被放大 */
 .pcContentLayout {
   display: grid;
-  grid-template-columns: minmax(0, 55%) minmax(0, 45%);
-  grid-template-rows: 1fr;
-  gap: 4px;
+  grid-template-columns: minmax(0, 1fr) 32PX;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
   align-items: stretch;
-  width: 100%;
-  /* PCLayout 的 contentMain 内层高度：
-   * 视口高度 100vh
-   * - 顶栏固定高度 64px
-   * - contentMain padding-top 24px
-   * - contentMain padding-bottom 64px（预留底部公告栏空间）
-   */
-  /* 使用 height 而不是仅 min-height，确保 flex:1 的子组件能拿到确定高度 */
-  /* 对齐 PCLayout contentMain：
-   * 视口 100vh
-   * - 顶栏 64px
-   * - contentMain padding-top 24px
-   * - contentMain padding-bottom 64px（预留公告栏空间）
-   */
   /*
-   * 直接跟随父级高度，避免手动用 100vh - 固定偏移估算。
-   * 父级来自 `PCLayout` 内的 `.contentMain`（flex: 1）。
+   * 绝对填满 contentMainDetail（含其 padding 区）：
+   * absolute 子元素相对 padding edge，inset:0 正好等于「父级内容区+padding」，
+   * 高度由父级 flex 分配决定，不会再被内容撑破底栏。
    */
-  height: 100%;
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
   min-height: 0;
+  max-height: none;
   box-sizing: border-box;
+  /* 用自身 padding 代替父级视觉边距，避免 absolute 盖住 padding */
+  padding: 12PX;
+  overflow: hidden;
+  transition: grid-template-columns 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.pcContentColLeft,
-.pcContentColRight {
-  height: auto;
+.pcContentLayoutFull {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pcContentLayout.pcRightOpen {
+  grid-template-columns: minmax(0, 1fr) minmax(320PX, 42%);
+  gap: 0;
+}
+
+.pcContentLayout.pcRightCollapsed {
+  grid-template-columns: minmax(0, 1fr) 32PX;
+  gap: 0;
+}
+
+.pcContentColLeft {
+  height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
   align-self: stretch;
-  /* 与站内白卡片一致，便于后续填入模块 */
   background: #fff;
-  border-radius: 10px;
-  border: 1px solid #f0f0f0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-radius: 8PX;
+  border: 1PX solid #f0f0f0;
+  border-bottom: none;
+  box-shadow: none;
+  overflow: hidden;
+
+  > * {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+  }
+}
+
+.pcContentLayoutFull .pcContentColLeft {
+  border-radius: 8PX;
+  border-right: 1PX solid #f0f0f0;
+}
+
+.pcRightOpen .pcContentColLeft {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  /* 折叠按钮左侧分割线 */
+  border-right: 1PX solid #e5e7eb;
+}
+
+/* 工作区整体：展开时左侧内容 + 右侧竖条；收起时只留竖条 */
+.pcWorkspace {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  height: 100%;
+  align-self: stretch;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 1PX solid #f0f0f0;
+  border-left: none;
+  border-radius: 0 10PX 10PX 0;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.pcRightCollapsed .pcWorkspace {
+  border-left: none;
+}
+
+/* 工作区内左侧竖条：展开时在内容左侧，收起时整块只留竖条 */
+.pcRightRail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 32PX;
+  width: 32PX;
+  min-width: 32PX;
+  height: 100%;
+  min-height: 0;
+  padding: 10PX 0 8PX;
+  box-sizing: border-box;
+  background: #fff;
+  border: none;
+  box-shadow: none;
+  overflow: hidden;
+  position: relative;
+}
+
+.pcRightCollapsed .pcRightRail {
+  background: #fff;
+  border: none;
+  border-radius: 0;
+  padding-top: 10PX;
+}
+
+.pcRightRailToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28PX;
+  height: 28PX;
+  margin: 0;
+  padding: 0;
+  border: 1PX solid #e5e7eb;
+  border-radius: 6PX;
+  background: #fff;
+  color: #4b5563;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #e8fff6;
+    color: #0b7556;
+    border-color: rgba(17, 183, 135, 0.35);
+    box-shadow: none;
+  }
+}
+
+.pcRightRailChevron {
+  font-size: 16PX;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.pcWorkspaceBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0 4PX 0 0;
+  box-sizing: border-box;
+  opacity: 1;
+  transition: opacity 0.18s ease;
+}
+
+.pcRightCollapsed .pcWorkspaceBody {
+  flex: 0 0 0;
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
 }
 
 .pcRightTopMarqueeWrap {
   margin-bottom: 10PX;
+  flex-shrink: 0;
 }
 
+/* 兼容旧类名 */
 .pcContentColRight {
   background: transparent;
   border: none;
+  box-shadow: none;
+}
+
+.pcRightRailLabel {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  margin-top: 10PX;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 11PX;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.12em;
+  user-select: none;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.2;
+
+  &:hover {
+    color: #0b7556;
+  }
 }
 
 .pcRightPanelContainer {
-  flex: 1;
-  height: 100%;
+  flex: 0 0 auto;
+  height: auto;
   min-height: 0;
   padding: 0;
 }
 
 .pcRightPanelGrid {
-  height: 100%;
+  height: auto;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 58%) minmax(0, 42%);
-  align-items: stretch;
+  align-items: start;
   gap: 12PX;
   padding: 0;
   border-radius: 0;
@@ -147,6 +310,283 @@
   min-height: 0;
   /* 覆盖 MoziCard 默认 margin-bottom，避免网格内产生额外空隙 */
   margin-bottom: 0 !important;
+}
+
+/* PC：投资回报率 + 市场 挪到图表左侧栏 */
+.pcRoiSideWrap {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  gap: 0;
+}
+
+.pcRoiSideMarquee {
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.pcRoiSideRoi {
+  flex: 0 0 auto;
+  border-top: 1PX solid #e5e7eb;
+}
+
+.pcRoiSideMarket {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-top: 1PX solid #e5e7eb;
+
+  > * {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
+  }
+}
+
+.pcRoiSideCard,
+.pcMarketSideCard {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 10PX 12PX !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.pcRoiSideCard {
+  flex: 0 0 auto !important;
+  height: auto !important;
+}
+
+.pcMarketSideCard {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  margin-bottom: 0 !important;
+  padding: 4PX 12PX 8PX !important;
+}
+
+.pcMarketSideCard :global([class*='cardHeader']),
+.pcMarketSideCard :global([class*='pcCardHeader']) {
+  flex: 0 0 auto !important;
+}
+
+/* 覆盖 MoziCard .pcCardBody 的 overflow:visible */
+.pcRoiSideMarket :global([class*='cardBody']),
+.pcRoiSideMarket :global([class*='pcCardBody']),
+.pcMarketSideCard :global([class*='cardBody']),
+.pcMarketSideCard :global([class*='pcCardBody']) {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* PC 市场表：表头下方常驻横滚条，表体与表头同步横滑 */
+.pcMarketTable {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pcMarketInner {
+  width: 640PX;
+  min-width: 640PX;
+  box-sizing: border-box;
+}
+
+.pcMarketHeadScroll {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  border-bottom: 1PX solid #eef1f4;
+  /* 强制露出横向滚动条（含 macOS） */
+  scrollbar-gutter: stable;
+  padding-bottom: 2PX;
+}
+
+.pcMarketHeadScroll::-webkit-scrollbar {
+  height: 8PX;
+}
+
+.pcMarketHeadScroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.75);
+  border-radius: 4PX;
+}
+
+.pcMarketHeadScroll::-webkit-scrollbar-track {
+  background: rgba(243, 244, 246, 1);
+}
+
+.pcMarketBodyScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  /* 横滚条只保留在表头下方，表体隐藏横向条避免重复 */
+  scrollbar-width: thin;
+}
+
+.pcMarketBodyScroll::-webkit-scrollbar:horizontal {
+  height: 0;
+}
+
+.pcMarketHeadRow,
+.pcMarketBodyRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 640PX;
+  min-width: 640PX;
+  box-sizing: border-box;
+}
+
+.pcMarketHeadRow {
+  min-height: 28PX;
+  color: #8b95a1;
+  font-size: 12PX;
+  font-weight: 500;
+}
+
+.pcMarketBodyRow {
+  min-height: 36PX;
+  border-bottom: 1PX solid rgba(249, 250, 251, 1);
+  font-size: 14PX;
+  color: #1f2937;
+
+  &:hover {
+    background: #f8f9fa;
+  }
+}
+
+.pcMarketCell {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  padding: 6PX 8PX;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.35;
+}
+
+.pcMarketCellLeft {
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.pcMarketCellRight {
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.pcMarketCol1 { width: 140PX; min-width: 140PX; max-width: 140PX; }
+.pcMarketCol2 { width: 120PX; min-width: 120PX; max-width: 120PX; }
+.pcMarketCol3 { width: 110PX; min-width: 110PX; max-width: 110PX; }
+.pcMarketCol4 { width: 135PX; min-width: 135PX; max-width: 135PX; }
+.pcMarketCol5 { width: 135PX; min-width: 135PX; max-width: 135PX; }
+
+.pcRightPanelGridCommunityOnly {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: auto;
+}
+
+.pcRightPanelGridCommunityOnly .pcCommunityFeedCard {
+  flex: 1 1 auto;
+  min-height: 360PX;
+}
+
+/* PC：大单侦测上半 + 社区下半 */
+.pcOrderCommunityCol {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+}
+
+.pcOrderHalf {
+  flex: 0 0 50%;
+  height: 50%;
+  max-height: 50%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1PX solid #e5e7eb;
+}
+
+.pcCommunityHalf,
+.pcCommunityHalfFull {
+  flex: 0 0 50%;
+  height: 50%;
+  max-height: 50%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.pcCommunityHalfFull {
+  flex: 1 1 auto;
+  height: auto;
+  max-height: none;
+}
+
+.pcCommunitySideCard {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 8PX 10PX !important;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0 !important;
+}
+
+.pcCommunityHalf > *,
+.pcCommunityHalfFull > * {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
 }
 
 /* PC：投资回报率标题左侧圆点 */
@@ -212,10 +652,30 @@
   padding: 10PX 20PX !important;
 }
 
-/* PC：市场卡片标题区与 ROI 一致（圆点标题 + 底部分割线） */
+/* PC：市场卡片标题区紧凑（左侧栏空间有限） */
 .pcRightMarketCard :global([class*='cardHeader']) {
   border-bottom: none !important;
-  padding: 18PX 20PX !important;
+  padding: 2PX 0 6PX !important;
+  min-height: 0 !important;
+}
+
+.pcRightMarketCard .pcRoiTitleText {
+  font-size: 14PX;
+  line-height: 18PX;
+}
+
+.pcRightMarketCard .pcRoiTitleDot {
+  width: 6PX;
+  height: 6PX;
+}
+
+.pcRightMarketCard .pcRoiTitleNumRight {
+  font-size: 11PX;
+  line-height: 18PX;
+}
+
+.pcMarketTitleLeft {
+  gap: 6PX;
 }
 
 /* 中间列最后一张卡片填满剩余高度，确保三栏底部齐平 */
@@ -504,15 +964,24 @@
 }
 
 .pcRightMarketGrid {
-  /* 各列按市场卡片宽度缩放（cqw），不跟整屏 vw */
-  --pc-market-title-size: clamp(10PX, 2.85cqw, 12PX);
-  --pc-market-cell-size: clamp(10PX, 3.15cqw, 13PX);
-  --pc-market-col1-size: clamp(10PX, 2.75cqw, 12PX);
-  --pc-market-col45-size: clamp(10PX, 2.9cqw, 12PX);
-  --pc-market-badge-font: clamp(10PX, 2.55cqw, 11PX);
-  --pc-market-badge-w: clamp(40PX, 12.5cqw, 52PX);
-  --pc-market-badge-h: clamp(18PX, 5.4cqw, 22PX);
-  --pc-market-exchange-icon: clamp(12PX, 3.6cqw, 16PX);
+  /* 可读字号；总宽约 572PX，窄侧栏内由 .pcMarketScroll 横滑 */
+  --pc-market-title-size: 13PX;
+  --pc-market-cell-size: 14PX;
+  --pc-market-col1-size: 14PX;
+  --pc-market-col45-size: 14PX;
+  --pc-market-badge-font: 12PX;
+  --pc-market-badge-w: 56PX;
+  --pc-market-badge-h: 24PX;
+  --pc-market-exchange-icon: 18PX;
+  width: 572PX;
+  min-width: 572PX;
+  max-width: none;
+  box-sizing: border-box;
+
+  > div {
+    width: 572PX;
+    min-width: 572PX;
+  }
 
   :global([class*='titleNum']) {
     font-size: var(--pc-market-title-size) !important;
@@ -521,16 +990,55 @@
   }
 
   :global([class*='gridTitle']) {
-    margin-bottom: 2PX;
+    margin-bottom: 4PX;
     font-size: var(--pc-market-title-size) !important;
+    width: 572PX;
+    min-width: 572PX;
   }
 
   :global([class*='gridTitleItem']) {
-    padding: 2PX 6PX !important;
+    padding: 4PX 8PX !important;
     white-space: nowrap;
     font-size: var(--pc-market-title-size) !important;
-    line-height: 1.2 !important;
-    min-width: 0 !important;
+    line-height: 1.35 !important;
+    flex: 0 0 auto !important;
+    box-sizing: border-box;
+  }
+
+  /* CSS 兜底列宽（防止内联 width 失效时仍挤进容器） */
+  :global([class*='gridTitleItem']:nth-child(1)),
+  :global([class*='gridConItem']:nth-child(1)) {
+    width: 132PX !important;
+    min-width: 132PX !important;
+    max-width: 132PX !important;
+  }
+
+  :global([class*='gridTitleItem']:nth-child(2)),
+  :global([class*='gridConItem']:nth-child(2)) {
+    width: 108PX !important;
+    min-width: 108PX !important;
+    max-width: 108PX !important;
+  }
+
+  :global([class*='gridTitleItem']:nth-child(3)),
+  :global([class*='gridConItem']:nth-child(3)) {
+    width: 96PX !important;
+    min-width: 96PX !important;
+    max-width: 96PX !important;
+  }
+
+  :global([class*='gridTitleItem']:nth-child(4)),
+  :global([class*='gridConItem']:nth-child(4)) {
+    width: 118PX !important;
+    min-width: 118PX !important;
+    max-width: 118PX !important;
+  }
+
+  :global([class*='gridTitleItem']:nth-child(5)),
+  :global([class*='gridConItem']:nth-child(5)) {
+    width: 118PX !important;
+    min-width: 118PX !important;
+    max-width: 118PX !important;
   }
 
   :global([class*='gridTitleItem']:first-child) {
@@ -544,15 +1052,26 @@
 
   :global([class*='gridContent']) {
     font-size: var(--pc-market-cell-size) !important;
+    width: 572PX;
+    min-width: 572PX;
   }
 
   :global([class*='gridConItem']) {
     font-size: var(--pc-market-cell-size) !important;
-    line-height: 1.2 !important;
+    line-height: 1.35 !important;
+    flex: 0 0 auto !important;
+    box-sizing: border-box;
+    padding: 0 8PX !important;
+    word-break: keep-all !important;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
   }
 
   :global([class*='gridConItem']:first-child) {
     font-size: var(--pc-market-col1-size) !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
   }
 
   :global([class*='gridConItem']:nth-child(4)),
@@ -579,34 +1098,26 @@
   }
 
   :global([class*='gridListItem']) {
-    padding: 12PX 0 !important;
+    padding: 10PX 0 !important;
     border-bottom: 1px solid rgba(249, 250, 251, 1);
+    width: 572PX;
+    min-width: 572PX;
   }
 
   :global([class*='gridListItem']:first-child) {
     border-top: 1px solid rgba(249, 250, 251, 1);
   }
 
-  :global([class*='gridConItem']) {
-    padding: 0 6PX !important;
-    word-break: keep-all !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  :global([class*='gridTitleItem']:first-child),
-  :global([class*='gridConItem']:first-child) {
-    justify-content: flex-start !important;
-    text-align: left !important;
-    min-width: 0 !important;
-    max-width: 100%;
-    word-break: normal !important;
+  :global([class*='list']) {
+    width: 572PX;
+    min-width: 572PX;
   }
 
   :global([class*='gridTitleItem']:first-child) {
-    overflow: hidden;
-    text-overflow: ellipsis;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    overflow: visible;
+    text-overflow: clip;
   }
 }
 
@@ -615,13 +1126,12 @@
   align-items: center;
   width: 100%;
   min-width: 0;
-  max-width: 100%;
   overflow: hidden;
 
   img {
-    width: 16PX;
-    height: 16PX;
-    margin-right: 4PX;
+    width: 18PX;
+    height: 18PX;
+    margin-right: 6PX;
     border-radius: 4PX;
     object-fit: contain;
     background-color: #fff;
@@ -630,42 +1140,17 @@
 }
 
 .pcMarketExchangeName {
-  flex: 1 1 0;
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-@container pc-market-card (max-width: 380px) {
-  .pcRightMarketGrid {
-    --pc-market-title-size: clamp(10PX, 2.65cqw, 11PX);
-    --pc-market-cell-size: clamp(10PX, 2.95cqw, 11PX);
-    --pc-market-col1-size: clamp(10PX, 2.55cqw, 11PX);
-    --pc-market-col45-size: clamp(10PX, 2.7cqw, 11PX);
-    --pc-market-badge-font: clamp(10PX, 2.35cqw, 11PX);
-    --pc-market-badge-w: clamp(36PX, 11.5cqw, 48PX);
-    --pc-market-badge-h: clamp(16PX, 5cqw, 20PX);
-    --pc-market-exchange-icon: clamp(11PX, 3.3cqw, 15PX);
-  }
-}
-
-@container pc-market-card (max-width: 320px) {
-  .pcRightMarketGrid {
-    --pc-market-title-size: clamp(10PX, 2.5cqw, 11PX);
-    --pc-market-cell-size: clamp(10PX, 2.8cqw, 11PX);
-    --pc-market-col1-size: clamp(10PX, 2.4cqw, 11PX);
-    --pc-market-col45-size: clamp(10PX, 2.55cqw, 11PX);
-    --pc-market-badge-font: clamp(10PX, 2.2cqw, 11PX);
-    --pc-market-badge-w: clamp(32PX, 10.5cqw, 44PX);
-    --pc-market-badge-h: clamp(15PX, 4.6cqw, 18PX);
-    --pc-market-exchange-icon: clamp(10PX, 3.1cqw, 14PX);
-  }
+  font-size: 14PX;
 }
 
 .pcRightMarketCard {
-  container-type: inline-size;
-  container-name: pc-market-card;
+  container-type: normal;
+  container-name: none;
 
   :global([class*='titleNum']) {
     font-size: 12PX !important;
@@ -711,8 +1196,20 @@
 /* 币种信息未加载时，使用同款白色容器并居中 Loading */
 .headerLoading {
   min-height: 80px;
+  display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* PC 侧栏（市场等）loading：撑满卡片内容区后居中 */
+.pcSidePanelLoading {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-height: 120PX;
+  height: 100%;
+  margin-bottom: 0;
+  box-sizing: border-box;
 }
 
 .sectionSkeleton {
@@ -932,29 +1429,62 @@
   border-radius: 12PX;
 }
 
+/* PC：大单侦测作为 K 线右侧栏上半，与社区对半 */
+.pcContentColLeft .orderBookSection {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+
+  > div {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    max-height: 100% !important;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0 !important;
+    overflow: hidden;
+  }
+}
+
+.pcContentColLeft .orderBookSection.pcOrderHalf {
+  flex: 0 0 50%;
+  height: 50%;
+  max-height: 50%;
+  border: none;
+  border-bottom: 1PX solid #e5e7eb;
+}
+
 .klineContainer {
   padding: 8px 4px;
   box-sizing: border-box;
 }
 
-/* PC 详情左栏：图表区随卡片高度伸展，避免「移动端控件放大」的观感 */
+/* PC 详情：K 线铺满左半，与右侧订单簿并排 */
 .klineContainerPc {
-  /* 不要在左侧 flex-column 中把图表容器撑满，
-   * 否则容易与下方订单簿区域发生裁切/覆盖，导致底部圆角边框不显示。 */
-  flex: 0 0 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 8PX;
-  padding: 0;
-  /* 桌面端图表区域外框 */
-  border: 1px solid rgba(243, 244, 246, 1);
-  border-radius: 24PX;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin-bottom: 0 !important;
+  padding: 8PX 0 8PX 4PX !important;
+  border: none !important;
+  border-radius: 0 !important;
   overflow: hidden;
   position: relative;
   z-index: 2;
   box-sizing: border-box;
-  padding: 10PX;
+  width: 100%;
+  background: #fff;
 }
 
 /* 市场行情区域 */
@@ -1363,11 +1893,22 @@
     padding: 10PX 0PX;
   }
 
+  .pcRoiSideCard .roiGrid {
+    gap: 8PX;
+    padding: 8PX 0 0;
+  }
+
   .roiCard {
     padding: 12PX 10PX;
     min-height: 64PX;
     /* 比默认 10px 更克制，避免子卡片视觉上像「胶囊」过圆 */
     border-radius: 8PX;
+  }
+
+  .pcRoiSideCard .roiCard {
+    padding: 10PX 8PX;
+    min-height: 56PX;
+    border-radius: 0 !important;
   }
 
   .roiValue {
@@ -1403,7 +1944,7 @@
 
 @media (max-width: 1440px) and (min-width: 1024px) {
   .pcContentLayout {
-    gap: 8PX;
+    gap: 0;
   }
 
   .pcRightTopMarqueeWrap {
@@ -1437,7 +1978,7 @@
 
 @media (max-width: 1280px) and (min-width: 1024px) {
   .pcContentLayout {
-    gap: 6PX;
+    gap: 0;
   }
 
   .pcRightTopMarqueeWrap {
@@ -1485,7 +2026,7 @@
 
 @media (max-width: 1160px) and (min-width: 1024px) {
   .pcContentLayout {
-    gap: 4PX;
+    gap: 0;
   }
 
   .pcRightTopMarqueeWrap {
