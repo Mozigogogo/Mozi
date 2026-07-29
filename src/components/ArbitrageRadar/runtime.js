@@ -359,7 +359,8 @@ async function loadActiveList({ showSkeleton, soft } = {}) {
     if (reqId !== listRequestId) return;
     listLoading = false;
     if (currentView === 'radar') {
-      if (soft && syncRadarTableDom()) return;
+      // 接口返回只换表体/分页，避免 intro 入场动画再跑一遍造成闪烁
+      if (syncRadarTableDom()) return;
       render();
     }
   }
