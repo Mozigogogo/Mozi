@@ -161,6 +161,8 @@ const formatCrosshairTimeLabel = (time, tickLabelMap, periodKey, language) => {
 
 const KlineChart = ({ 
   data, 
+  /** 当前 data 实际所属周期；切换中暂留旧图时可能与 activeKey 不同 */
+  dataPeriod,
   activeKey = 'hour', 
   onActiveChange, 
   chartType = 'line',
@@ -168,6 +170,8 @@ const KlineChart = ({
   showLandscapeBtn = false,
   onLandscapeClick,
   loading = false,
+  /** 周期切换刷新中：保留旧图 + 轻遮罩，避免闪白 */
+  refreshing = false,
   /** 桌面端：标题行 + 单行工具栏布局 */
   isPC = false,
   /** 点击「大单侦测」时回调（如滚动至订单簿区域） */
@@ -681,16 +685,31 @@ const KlineChart = ({
 
   // 更新图表数据
   useEffect(() => {
-    if (!chartInstance.current || !data) return;
+    if (!chartInstance.current) return;
 
     const chart = chartInstance.current;
-    const { candleData, lineData, tickLabelMap } = buildSeriesData(data);
-    const prevDataLen = prevDataLenRef.current;
-    const visibleRange = chart.timeScale().getVisibleLogicalRange();
     const periodChanged = prevActiveKeyRef.current !== activeKey;
     if (periodChanged) {
       userInteractedRef.current = false;
     }
+
+    // 切换中暂留旧周期数据：不重绘、不清空，只等新周期数据到位后一次替换
+    const dataReadyForActive =
+      Boolean(data?.values?.length) &&
+      (!dataPeriod || dataPeriod === activeKey);
+
+    if (refreshing && !dataReadyForActive) {
+      prevActiveKeyRef.current = activeKey;
+      return;
+    }
+
+    if (!data?.values?.length) {
+      return;
+    }
+
+    const { candleData, lineData, tickLabelMap } = buildSeriesData(data);
+    const prevDataLen = prevDataLenRef.current;
+    const visibleRange = chart.timeScale().getVisibleLogicalRange();
     const isInitialOrPeriodReset = periodChanged || prevDataLen === 0;
 
     const shouldFollowLatest =
@@ -938,7 +957,7 @@ const KlineChart = ({
     }
     prevDataLenRef.current = dataLen;
     prevActiveKeyRef.current = activeKey;
-  }, [data, chartType, isPC, activeKey, i18n.language]);
+  }, [data, dataPeriod, chartType, isPC, activeKey, loading, refreshing, i18n.language]);
 
   const chartTypeLineBtn = onChartTypeChange ? (
     <button
@@ -1068,7 +1087,7 @@ const KlineChart = ({
 
       {/* 图表容器 */}
       <div className={styles.chartContainer}>
-        {(loading || !data) && (
+        {loading && (
           isPC ? (
             <div className={styles.loadingWrapper}>
               <Loading color="#11B787" tip="" />
@@ -1081,7 +1100,21 @@ const KlineChart = ({
             </div>
           )
         )}
-        <div ref={chartRef} className={styles.chart} style={{ opacity: (loading || !data) ? 0 : 1 }}></div>
+        {refreshing && !loading ? (
+          <div className={styles.refreshOverlay} aria-busy="true">
+            <div className={styles.refreshSpinner}>
+              <Loading color="#11B787" tip="" size={isPC ? 28 : 22} />
+            </div>
+          </div>
+        ) : null}
+        <div
+          ref={chartRef}
+          className={styles.chart}
+          style={{
+            opacity: loading ? 0 : refreshing ? 0.72 : 1,
+            transition: 'opacity 0.18s ease',
+          }}
+        />
         {showLandscapeBtn && onLandscapeClick && !isPC ? (
           <button
             type="button"
@@ -1093,7 +1126,13 @@ const KlineChart = ({
           </button>
         ) : null}
         {isPC ? (
-          <div className={styles.indicatorStack} style={{ opacity: (loading || !data) ? 0 : 1 }}>
+          <div
+            className={styles.indicatorStack}
+            style={{
+              opacity: loading ? 0 : refreshing ? 0.72 : 1,
+              transition: 'opacity 0.18s ease',
+            }}
+          >
             <div className={styles.navigatorRow}>
               <div className={styles.navigatorAction} />
               <div className={styles.navigatorChartWrap}>

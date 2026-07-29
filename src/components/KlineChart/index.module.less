@@ -236,6 +236,23 @@
   z-index: 10;
 }
 
+.refreshOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+}
+
+.refreshSpinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .chartSkeletonWrap {
   position: absolute;
   inset: 0;

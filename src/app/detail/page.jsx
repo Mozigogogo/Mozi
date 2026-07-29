@@ -241,6 +241,10 @@ export default function DetailPage() {
   const isWsAuthenticatedRef = useRef(false); // WebSocket认证状态
   const isFirstRenderRef = useRef(true); // 是否首次渲染
   const currentKlinePeriodRef = useRef('hour'); // 当前K线时间周期
+  /** 周期切换代数：快速连点时丢弃过期的 subscribe 回调 */
+  const klineSwitchGenRef = useRef(0);
+  /** 最近一次成功绘制的 K 线（含所属周期），切换时暂留画面防闪烁 */
+  const paintedKlineRef = useRef({ period: 'hour', data: null });
   const [roiData, setRoiData] = useState({
     priceChange1Day: '--',
     priceChange7Day: '--',
@@ -1696,11 +1700,34 @@ ${coinInfo.name || symbol} (${symbol})
     // 监听 K线数据更新 - 更新 headerData 和 klineData
     ws.on(WS_EVENTS.KLINE, (data) => {
       if (!data.data) return;
+
+      const msgChannelId = data.channelId ?? data.data?.channelId ?? null;
+      if (
+        msgChannelId &&
+        currentKlineChannelRef.current &&
+        msgChannelId !== currentKlineChannelRef.current
+      ) {
+        return;
+      }
       
       // 数据结构: { klineData: { hisKlineData, realKlineData }, headerData, exchangesPriceData }
       const { klineData, headerData, exchangesPriceData } = data.data;
       const { hisKlineData, realKlineData } = klineData || {};
       const currentPeriod = currentKlinePeriodRef.current;
+
+      // 用历史 K 线间距校验周期，丢弃写错 tab 的迟到包
+      if (hisKlineData && Array.isArray(hisKlineData) && hisKlineData.length >= 2) {
+        const a = hisKlineData[0]?.dt || hisKlineData[0]?.timestamp;
+        const b = hisKlineData[1]?.dt || hisKlineData[1]?.timestamp;
+        const gap = Math.abs(new Date(a).getTime() - new Date(b).getTime());
+        if (Number.isFinite(gap) && gap > 0) {
+          let inferred = 'hour';
+          if (gap >= 20 * 24 * 3600 * 1000) inferred = 'month';
+          else if (gap >= 5 * 24 * 3600 * 1000) inferred = 'week';
+          else if (gap >= 18 * 3600 * 1000) inferred = 'day';
+          if (inferred !== currentPeriod) return;
+        }
+      }
       
       // 整合历史数据和实时数据
       let mergedKlineData = [];
@@ -1805,9 +1832,12 @@ ${coinInfo.name || symbol} (${symbol})
       
       // 如果 mergedKlineData 为空但有 realKlineData，使用函数式更新从 state 恢复数据
       if (mergedKlineData.length === 0 && realKlineData && !realKlineData.error && realKlineData.timestamp) {
-        
+        // 切换周期后若尚无历史快照，忽略纯实时单点，避免先画出一根“错周期”K 线
         setKlineData(prev => {
           const existingData = prev[currentPeriod];
+          if (!existingData?._rawData?.length) {
+            return prev;
+          }
           let sourceData = [];
           
           // 从 state 恢复原始数据
@@ -2183,19 +2213,14 @@ ${coinInfo.name || symbol} (${symbol})
       'month': KLINE_PERIODS.ONE_MONTH
     };
     
-    const periodLabel = {
-      'hour': t('chart.period.hour'),
-      'day': t('chart.period.day'),
-      'week': t('chart.period.week'),
-      'month': t('chart.period.month')
-    };
-    
     const newPeriod = periodMap[activeKlineTab];
-    const label = periodLabel[activeKlineTab];
-    
     if (!newPeriod) return;
-    
-    // 设置加载状态
+
+    const targetTab = activeKlineTab;
+    const switchGen = ++klineSwitchGenRef.current;
+
+    // 立刻绑定目标周期；不清空画面数据，避免切换闪白
+    currentKlinePeriodRef.current = targetTab;
     setKlineLoading(true);
     
     // 执行订阅切换
@@ -2206,20 +2231,27 @@ ${coinInfo.name || symbol} (${symbol})
       try {
         // 1. 如果有旧的订阅，先取消
         if (currentKlineChannelRef.current) {
-          await ws.unsubscribe([currentKlineChannelRef.current]);
+          const oldChannelId = currentKlineChannelRef.current;
           currentKlineChannelRef.current = null;
+          await ws.unsubscribe([oldChannelId]);
         }
         
+        // 被更新的切换抢占则退出
+        if (switchGen !== klineSwitchGenRef.current) return;
+
         // 2. 订阅新的K线数据
         const klineChannel = createKlineChannel([symbol], newPeriod, 100);
         const response = await ws.subscribe([klineChannel]);
+
+        if (switchGen !== klineSwitchGenRef.current) return;
         
-        // 3. 保存新的频道ID和当前时间周期
+        // 3. 保存新的频道ID；周期 ref 已在切换开始时更新
         if (response?.data?.channels?.[0]?.channelId) {
           currentKlineChannelRef.current = response.data.channels[0].channelId;
-          currentKlinePeriodRef.current = activeKlineTab;
         }
+        currentKlinePeriodRef.current = targetTab;
       } catch (err) {
+        if (switchGen !== klineSwitchGenRef.current) return;
         console.error('切换K线订阅失败:', err);
         setKlineLoading(false);
       }
@@ -2458,20 +2490,30 @@ ${coinInfo.name || symbol} (${symbol})
   // 渲染K线图表
   const renderKline = () => {
     const currentKlineData = klineData[activeKlineTab];
+    if (currentKlineData?.values?.length) {
+      paintedKlineRef.current = { period: activeKlineTab, data: currentKlineData };
+    }
+    const painted = paintedKlineRef.current;
+    const hasCurrent = Boolean(currentKlineData?.values?.length);
+    const displayData = hasCurrent ? currentKlineData : painted.data;
+    const dataPeriod = hasCurrent ? activeKlineTab : painted.period;
+    const isRefreshing = Boolean(klineLoading && displayData?.values?.length);
     
     return (
       <div
         className={`${styles.box} ${styles.klineContainer} ${isPC ? styles.klineContainerPc : ''}`}
       >
         <KlineChart 
-          data={currentKlineData}
+          data={displayData}
+          dataPeriod={dataPeriod}
           activeKey={activeKlineTab}
           onActiveChange={setActiveKlineTab}
           chartType={chartType}
           onChartTypeChange={handleChartTypeChange}
           showLandscapeBtn={!isPC}
           onLandscapeClick={isPC ? undefined : handleLandscapeClick}
-          loading={klineLoading}
+          loading={klineLoading && !displayData}
+          refreshing={isRefreshing}
           isPC={isPC}
           onBigOrderDetectClick={
             isPC
