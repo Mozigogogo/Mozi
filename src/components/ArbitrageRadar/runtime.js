@@ -263,15 +263,18 @@ function setListPage(page) {
   const next = Math.max(1, Math.min(getTotalPages(), Number(page) || 1));
   if (next === listPage) return;
   listPage = next;
-  if (currentView === 'radar') render();
+  if (currentView === 'radar') {
+    // 分页只换表体，避免整页重绘带动 intro 动画抖动
+    if (!syncRadarTableDom()) render();
+  }
 }
 
-async function loadActiveList({ showSkeleton } = {}) {
+async function loadActiveList({ showSkeleton, soft } = {}) {
   const reqId = ++listRequestId;
   const shouldShowSkeleton = showSkeleton != null ? !!showSkeleton : ops.length === 0;
   listLoading = true;
   listError = null;
-  // 首次加载 / 排序：先出骨架；其它静默刷新可保留旧数据
+  // 首次加载：出骨架；排序等 soft 刷新保留旧行，只在结束后局部更新表体
   if (currentView === 'radar' && shouldShowSkeleton) render();
 
   const loaders = {
@@ -306,7 +309,10 @@ async function loadActiveList({ showSkeleton } = {}) {
   } finally {
     if (reqId !== listRequestId) return;
     listLoading = false;
-    if (currentView === 'radar') render();
+    if (currentView === 'radar') {
+      if (soft && syncRadarTableDom()) return;
+      render();
+    }
   }
 }
 
@@ -335,21 +341,20 @@ function sortBy(key) {
   const defaultKey = defaultDescKeys[activeTab];
 
   if (key === defaultKey) {
+    // 三态：无激活(默认降序) → 降序激活 → 升序 → 无激活
     if (sortState.key == null) {
-      // 当前已是默认降序 → 切升序并激活
+      // 首次点击：显式降序并激活（一点即亮下箭头）
+      sortState.key = key;
+      sortState.dir = 'desc';
+    } else if (sortState.key === key && sortState.dir === 'desc') {
       sortState.key = key;
       sortState.dir = 'asc';
     } else if (sortState.key === key && sortState.dir === 'asc') {
-      // 升序 → 回到默认降序（无激活）
-      sortState.key = null;
-      sortState.dir = 'desc';
-    } else if (sortState.key === key && sortState.dir === 'desc') {
-      // 显式降序激活 → 取消激活（仍为默认降序）
       sortState.key = null;
       sortState.dir = 'desc';
     } else {
-      // 从其他列切回默认列 → 默认降序、无激活
-      sortState.key = null;
+      // 从其他列切到默认列：直接降序激活
+      sortState.key = key;
       sortState.dir = 'desc';
     }
   } else if (sortState.key === key) {
@@ -359,8 +364,10 @@ function sortBy(key) {
     sortState.dir = 'desc';
   }
   listPage = 1;
-  // 先激活排序态 + 脉冲骨架，再等接口
-  loadActiveList({ showSkeleton: true });
+  // 只亮箭头、保留旧行，避免骨架/整页重绘抖动
+  patchSortHeaders();
+  __root.querySelector('#tbl-body-scroll')?.classList.add('is-busy');
+  loadActiveList({ showSkeleton: false, soft: true });
 }
 
 function getDisplayOps() {
@@ -416,10 +423,11 @@ function renderPager() {
 }
 
 function sortInd(key) {
+  // key=null 表示服务端默认排序，表头不激活；显式升/降序时对应箭头亮
   const on = sortState.key === key;
   const up = on && sortState.dir === 'asc' ? 'on' : '';
   const dn = on && sortState.dir === 'desc' ? 'on' : '';
-  return `<span class="sort-ind" aria-hidden="true"><span class="sort-up ${up}">▲</span><span class="sort-dn ${dn}">▼</span></span>`;
+  return `<span class="sort-ind" data-sort-key="${key}" aria-hidden="true"><span class="sort-up ${up}">▲</span><span class="sort-dn ${dn}">▼</span></span>`;
 }
 
 // ===== NAVIGATION =====
@@ -664,6 +672,8 @@ function backToRadar() {
 let pendingTableScrollLeft = 0;
 // 按 Tab 锁定满页表体高度，避免末页行少导致容器上下跳动
 const lockedTblBodyH = {};
+// 按 Tab 锁定列宽，排序换行后不再重测，避免表头列宽抖动
+const lockedColWidths = {};
 
 function getTableScrollLeft() {
   const body = __root.querySelector('#tbl-body-scroll');
@@ -759,16 +769,121 @@ function render() {
 }
 
 // ===== RADAR VIEW =====
-function renderRadar() {
+function buildRadarBodyContent() {
+  // 有旧数据时加载不切骨架，避免排序闪动
+  const useSkeleton = listLoading && ops.length === 0;
   const staticCols = listError || (!listLoading && !getDisplayOps().length);
   const pageStart = (listPage - 1) * LIST_PAGE_SIZE;
-  const bodyContent = listLoading
+  const bodyContent = useSkeleton
     ? `<table class="tbl-sync" id="tbl-body-table"><tbody>${skeletonRowsHTML(LIST_PAGE_SIZE)}</tbody></table>`
     : listError
       ? `<div class="tbl-state tbl-state-error" id="tbl-body-table">${escapeHtml(formatListError(listError))}<button type="button" class="tbl-retry" onclick="loadActiveList()">重试</button></div>`
       : getDisplayOps().length
         ? `<table class="tbl-sync" id="tbl-body-table"><tbody>${getDisplayOps().map((o, i) => tableRowHTML(activeTab, o, ops.indexOf(o), pageStart + i + 1, { rowHTML })).join('')}</tbody></table>`
         : `<div class="tbl-state" id="tbl-body-table">暂无数据</div>`;
+  return { bodyContent, staticCols };
+}
+
+/** 仅切换排序箭头 class，不重写 thead（避免表头重排/列宽抖动） */
+function patchSortHeaders() {
+  const headTable = __root.querySelector('#tbl-head-table');
+  if (!headTable) return;
+  headTable.querySelectorAll('.sort-ind[data-sort-key]').forEach((ind) => {
+    const key = ind.getAttribute('data-sort-key');
+    const on = sortState.key === key;
+    ind.querySelector('.sort-up')?.classList.toggle('on', on && sortState.dir === 'asc');
+    ind.querySelector('.sort-dn')?.classList.toggle('on', on && sortState.dir === 'desc');
+  });
+}
+
+/** 把固定列宽套到当前表头 + 表体，不清空重测 */
+function applyFixedColWidths(widths) {
+  const headTable = __root.querySelector('#tbl-head-table');
+  const bodyTable = __root.querySelector('#tbl-body-table');
+  const spacer = __root.querySelector('#tbl-hscroll-inner');
+  const top = __root.querySelector('#tbl-hscroll');
+  const body = __root.querySelector('#tbl-body-scroll');
+  const head = __root.querySelector('#tbl-head-scroll');
+  if (!headTable || !widths?.length) return false;
+
+  const ths = headTable.querySelectorAll('thead th');
+  if (ths.length !== widths.length) return false;
+
+  const total = Math.max(720, widths.reduce((a, b) => a + b, 0));
+
+  headTable.style.tableLayout = 'fixed';
+  headTable.style.width = `${total}px`;
+  headTable.style.minWidth = `${total}px`;
+  ths.forEach((th, i) => {
+    th.style.width = `${widths[i]}px`;
+    th.style.minWidth = `${widths[i]}px`;
+  });
+
+  if (bodyTable && bodyTable.tagName === 'TABLE' && !bodyTable.classList.contains('tbl-state')) {
+    clearStaticHeadColMode();
+    bodyTable.style.tableLayout = 'fixed';
+    bodyTable.style.width = `${total}px`;
+    bodyTable.style.minWidth = `${total}px`;
+    bodyTable.querySelectorAll('tbody tr').forEach((tr) => {
+      [...tr.children].forEach((td, i) => {
+        if (widths[i] == null) return;
+        td.style.width = `${widths[i]}px`;
+        td.style.minWidth = `${widths[i]}px`;
+      });
+    });
+  }
+
+  if (spacer) spacer.style.width = `${total}px`;
+  if (top && body) {
+    const need = total > body.clientWidth + 1;
+    top.classList.toggle('show', need);
+    if (!need) {
+      top.scrollLeft = 0;
+      body.scrollLeft = 0;
+      if (head) head.scrollLeft = 0;
+    }
+  }
+  return true;
+}
+
+/** 局部更新表体/分页；表头 DOM 与列宽保持不动 */
+function syncRadarTableDom() {
+  if (currentView !== 'radar') return false;
+  const wrap = __root.querySelector('.tbl-wrap');
+  const bodyScroll = __root.querySelector('#tbl-body-scroll');
+  if (!wrap || !bodyScroll || !__root.querySelector('#tbl-head-table')) return false;
+
+  pendingTableScrollLeft = getTableScrollLeft();
+  const { bodyContent, staticCols } = buildRadarBodyContent();
+  patchSortHeaders();
+  bodyScroll.innerHTML = bodyContent;
+  bodyScroll.classList.toggle('is-busy', listLoading && ops.length > 0);
+  wrap.classList.toggle('is-static-cols', staticCols);
+
+  const pagerHtml = renderPager();
+  const existingPager = __root.querySelector('.tbl-pager');
+  if (existingPager) {
+    if (pagerHtml) existingPager.outerHTML = pagerHtml;
+    else existingPager.remove();
+  } else if (pagerHtml) {
+    wrap.insertAdjacentHTML('afterend', pagerHtml);
+  }
+
+  const locked = lockedColWidths[activeTab];
+  if (locked?.length && applyFixedColWidths(locked)) {
+    // 已有列宽锁：只重绑滚动，不再触发测宽
+    bindTableHScrollOnly();
+  } else {
+    initTableHScroll();
+  }
+  if (pendingTableScrollLeft > 0) setTableScrollLeft(pendingTableScrollLeft);
+  syncTableBodyHeightLock();
+  requestAnimationFrame(() => requestAnimationFrame(syncTableBodyHeightLock));
+  return true;
+}
+
+function renderRadar() {
+  const { bodyContent, staticCols } = buildRadarBodyContent();
 
   return `${renderIntroStrip(activeTab)}
   <div class="type-tabs">${renderTypeTabs(activeTab)}</div>
@@ -781,7 +896,7 @@ function renderRadar() {
     <div class="tbl-hscroll" id="tbl-hscroll" aria-label="表格横向滚动">
       <div class="tbl-hscroll-inner" id="tbl-hscroll-inner"></div>
     </div>
-    <div class="tbl-body-scroll" id="tbl-body-scroll">${bodyContent}</div>
+    <div class="tbl-body-scroll${listLoading && ops.length > 0 ? ' is-busy' : ''}" id="tbl-body-scroll">${bodyContent}</div>
   </div>
   ${renderPager()}`;
 }
@@ -930,8 +1045,9 @@ function setTab(tab, el) {
   listPage = 1;
   replaceOps([]);
   listError = null;
-  // 切 Tab 后按新列结构重新测高，避免沿用错误高度锁
+  // 切 Tab 后按新列结构重新测高/列宽，避免沿用错误锁
   delete lockedTblBodyH[tab];
+  delete lockedColWidths[tab];
   loadActiveList();
 }
 
@@ -1583,21 +1699,85 @@ function initTableHeaderTips() {
 }
 
 // ===== TABLE TOP SCROLLBAR (between thead & tbody) =====
-function initTableHScroll() {
+/** 只绑定横向滚动同步，不测列宽（排序局部刷新用） */
+function bindTableHScrollOnly() {
   const head = __root.querySelector('#tbl-head-scroll');
   const top = __root.querySelector('#tbl-hscroll');
   const body = __root.querySelector('#tbl-body-scroll');
-  const spacer = __root.querySelector('#tbl-hscroll-inner');
-  const headTable = __root.querySelector('#tbl-head-table');
-  const bodyTable = __root.querySelector('#tbl-body-table');
-  if (!head || !top || !body || !spacer || !headTable || !bodyTable) return;
+  if (!head || !top || !body) return;
 
   if (__root.__tblScrollCleanup) {
     __root.__tblScrollCleanup();
     __root.__tblScrollCleanup = null;
   }
 
-  const syncColWidths = () => {
+  let lock = false;
+  const setScroll = (left) => {
+    if (lock) return;
+    lock = true;
+    pendingTableScrollLeft = left;
+    if (top.scrollLeft !== left) top.scrollLeft = left;
+    if (body.scrollLeft !== left) body.scrollLeft = left;
+    if (head.scrollLeft !== left) head.scrollLeft = left;
+    lock = false;
+  };
+
+  const onTopScroll = () => setScroll(top.scrollLeft);
+  const onBodyScroll = () => setScroll(body.scrollLeft);
+  const onHeadScroll = () => setScroll(head.scrollLeft);
+  const onWinResize = () => {
+    delete lockedColWidths[activeTab];
+    initTableHScroll();
+  };
+
+  top.addEventListener('scroll', onTopScroll);
+  body.addEventListener('scroll', onBodyScroll);
+  head.addEventListener('scroll', onHeadScroll);
+  window.addEventListener('resize', onWinResize);
+
+  __root.__tblScrollCleanup = () => {
+    top.removeEventListener('scroll', onTopScroll);
+    body.removeEventListener('scroll', onBodyScroll);
+    head.removeEventListener('scroll', onHeadScroll);
+    window.removeEventListener('resize', onWinResize);
+  };
+}
+
+function initTableHScroll() {
+  const head = __root.querySelector('#tbl-head-scroll');
+  const top = __root.querySelector('#tbl-hscroll');
+  const body = __root.querySelector('#tbl-body-scroll');
+  const spacer = __root.querySelector('#tbl-hscroll-inner');
+  const headTable = __root.querySelector('#tbl-head-table');
+  if (!head || !top || !body || !spacer || !headTable) return;
+
+  if (__root.__tblScrollCleanup) {
+    __root.__tblScrollCleanup();
+    __root.__tblScrollCleanup = null;
+  }
+
+  const restoreScroll = (prevLeft) => {
+    const need = (parseFloat(spacer.style.width) || 0) > body.clientWidth + 1;
+    top.classList.toggle('show', need);
+    if (!need) {
+      top.scrollLeft = 0;
+      body.scrollLeft = 0;
+      head.scrollLeft = 0;
+      syncTableBodyHeightLock();
+      return;
+    }
+    const maxLeft = Math.max(0, (top.scrollWidth || 0) - (top.clientWidth || 0));
+    const nextLeft = Math.min(prevLeft, maxLeft);
+    top.scrollLeft = nextLeft;
+    body.scrollLeft = nextLeft;
+    head.scrollLeft = nextLeft;
+    syncTableBodyHeightLock();
+  };
+
+  const syncColWidths = ({ forceRemeasure = false } = {}) => {
+    const bodyTable = __root.querySelector('#tbl-body-table');
+    if (!bodyTable) return;
+
     const prevLeft = Math.max(
       pendingTableScrollLeft || 0,
       top.scrollLeft || 0,
@@ -1605,6 +1785,8 @@ function initTableHScroll() {
       head.scrollLeft || 0
     );
     const ths = headTable.querySelectorAll('thead th');
+    if (!ths.length) return;
+
     const isStaticBody =
       bodyTable.tagName !== 'TABLE' || bodyTable.classList?.contains('tbl-state');
     const firstRow =
@@ -1612,9 +1794,15 @@ function initTableHScroll() {
         ? bodyTable.querySelector('tbody tr:not(.skel-row)') || bodyTable.querySelector('tbody tr')
         : null;
 
-    if (!ths.length) return;
+    // 已锁定列宽：排序/换页直接复用，绝不清空重测
+    const locked = lockedColWidths[activeTab];
+    if (!forceRemeasure && locked?.length === ths.length && firstRow && !isStaticBody) {
+      applyFixedColWidths(locked);
+      restoreScroll(prevLeft);
+      return;
+    }
 
-    // 错误/空态：用固定列宽，避免 percentage + 100% 把表头挤在一起
+    // 错误/空态：用固定列宽
     if (isStaticBody || !firstRow) {
       applyStaticHeadColWidths(headTable, spacer, top, body);
       return;
@@ -1627,7 +1815,7 @@ function initTableHScroll() {
       return;
     }
 
-    // clear fixed widths first to measure natural size
+    // 仅首次或窗口 resize 时测宽
     ths.forEach((th) => { th.style.width = ''; th.style.minWidth = ''; });
     bodyTable.querySelectorAll('tbody tr td').forEach((td) => {
       td.style.width = '';
@@ -1648,43 +1836,9 @@ function initTableHScroll() {
       widths.push(Math.max(w, 48));
     });
 
-    const total = widths.reduce((a, b) => a + b, 0);
-    headTable.style.width = total + 'px';
-    bodyTable.style.width = total + 'px';
-    ths.forEach((th, i) => {
-      th.style.width = widths[i] + 'px';
-      th.style.minWidth = widths[i] + 'px';
-    });
-    // apply widths to all body rows
-    bodyTable.querySelectorAll('tbody tr').forEach((tr) => {
-      Array.from(tr.children).forEach((td, i) => {
-        if (!widths[i]) return;
-        td.style.width = widths[i] + 'px';
-        td.style.minWidth = widths[i] + 'px';
-      });
-    });
-
-    bodyTable.style.tableLayout = 'fixed';
-    headTable.style.tableLayout = 'fixed';
-
-    spacer.style.width = total + 'px';
-    const need = total > body.clientWidth + 1;
-    top.classList.toggle('show', need);
-    if (!need) {
-      top.scrollLeft = 0;
-      body.scrollLeft = 0;
-      head.scrollLeft = 0;
-      syncTableBodyHeightLock();
-      return;
-    }
-
-    // 改 tableLayout/列宽后浏览器常会把 scrollLeft 清零，这里恢复
-    const maxLeft = Math.max(0, (top.scrollWidth || 0) - (top.clientWidth || 0));
-    const nextLeft = Math.min(prevLeft, maxLeft);
-    top.scrollLeft = nextLeft;
-    body.scrollLeft = nextLeft;
-    head.scrollLeft = nextLeft;
-    syncTableBodyHeightLock();
+    lockedColWidths[activeTab] = widths;
+    applyFixedColWidths(widths);
+    restoreScroll(prevLeft);
   };
 
   let lock = false;
@@ -1708,14 +1862,17 @@ function initTableHScroll() {
 
   let ro = null;
   if (typeof ResizeObserver !== 'undefined') {
-    ro = new ResizeObserver(() => syncColWidths());
+    // 容器尺寸变化时复用锁宽，避免内容换行触发重测抖动
+    ro = new ResizeObserver(() => syncColWidths({ forceRemeasure: false }));
     ro.observe(body);
     ro.observe(headTable);
-    ro.observe(bodyTable);
   }
-  const onWinResize = () => syncColWidths();
+  const onWinResize = () => {
+    delete lockedColWidths[activeTab];
+    syncColWidths({ forceRemeasure: true });
+  };
   window.addEventListener('resize', onWinResize);
-  requestAnimationFrame(() => requestAnimationFrame(syncColWidths));
+  requestAnimationFrame(() => requestAnimationFrame(() => syncColWidths({ forceRemeasure: false })));
 
   __root.__tblScrollCleanup = () => {
     top.removeEventListener('scroll', onTopScroll);
