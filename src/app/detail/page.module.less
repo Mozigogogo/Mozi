@@ -1155,8 +1155,20 @@
 /* 币种信息未加载时，使用同款白色容器并居中 Loading */
 .headerLoading {
   min-height: 80px;
+  display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* PC 侧栏（市场等）loading：撑满卡片内容区后居中 */
+.pcSidePanelLoading {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-height: 120PX;
+  height: 100%;
+  margin-bottom: 0;
+  box-sizing: border-box;
 }
 
 .sectionSkeleton {

@@ -2347,7 +2347,7 @@ ${coinInfo.name || symbol} (${symbol})
           marginBottom={isPC ? '0' : undefined}
         >
           {isPC ? (
-            <div className={`${styles.box} ${styles.headerLoading}`} style={{ display: 'flex' }}>
+            <div className={`${styles.box} ${styles.headerLoading} ${styles.pcSidePanelLoading}`}>
               <Loading tip={t('common.loading')} size={24} />
             </div>
           ) : (
@@ -2470,7 +2470,7 @@ ${coinInfo.name || symbol} (${symbol})
           marginBottom={isPC ? '0' : undefined}
         >
           {isPC ? (
-            <div className={`${styles.box} ${styles.headerLoading}`} style={{ display: 'flex' }}>
+            <div className={`${styles.box} ${styles.headerLoading} ${styles.pcSidePanelLoading}`}>
               <Loading tip={t('common.loading')} size={24} />
             </div>
           ) : (

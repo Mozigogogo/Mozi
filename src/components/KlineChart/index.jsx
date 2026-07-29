@@ -500,20 +500,26 @@ const KlineChart = ({
         },
       },
       rightPriceScale: {
-        visible: true,
+        visible: isPC,
         borderVisible: false,
-        // 角落刻度只有完整可见时才绘制，避免顶/底半截数字
-        entireTextOnly: true,
-        minimumWidth: isPC ? 56 : 40,
-        scaleMargins: {
-          // 库默认 top≈0.2；过小会导致最高价刻度贴顶被 canvas 裁切
-          top: isPC ? 0.16 : 0.12,
-          bottom: isPC ? 0.08 : 0.06,
-        },
+        ...(isPC
+          ? {
+              entireTextOnly: true,
+              minimumWidth: 56,
+              scaleMargins: { top: 0.16, bottom: 0.08 },
+            }
+          : {}),
       },
       leftPriceScale: {
-        visible: false,
+        visible: !isPC,
         borderVisible: false,
+        ...(!isPC
+          ? {
+              entireTextOnly: true,
+              minimumWidth: 40,
+              scaleMargins: { top: 0.12, bottom: 0.06 },
+            }
+          : {}),
       },
       timeScale: {
         borderVisible: false,
@@ -569,7 +575,7 @@ const KlineChart = ({
     };
     window.addEventListener('resize', handleResize);
 
-    if (navigatorRef.current && !navigatorChartInstance.current) {
+    if (isPC && navigatorRef.current && !navigatorChartInstance.current) {
       const navChart = createIndicatorChart(navigatorRef.current);
       navigatorChartInstance.current = navChart;
       navigatorMacdSeries.current.histogram = navChart.addHistogramSeries({
@@ -597,7 +603,7 @@ const KlineChart = ({
       removeAttribution(navigatorRef.current);
     }
 
-    if (skdjRef.current && !skdjChartInstance.current) {
+    if (isPC && skdjRef.current && !skdjChartInstance.current) {
       const skdjChart = createIndicatorChart(skdjRef.current);
       skdjChartInstance.current = skdjChart;
       skdjSeriesRef.current.k = skdjChart.addLineSeries({
@@ -634,8 +640,10 @@ const KlineChart = ({
       attributionObservers.current.push(observer);
     };
     watchAttribution(chartRef.current);
-    watchAttribution(navigatorRef.current);
-    watchAttribution(skdjRef.current);
+    if (isPC) {
+      watchAttribution(navigatorRef.current);
+      watchAttribution(skdjRef.current);
+    }
 
     const parentEl = chartRef.current?.parentElement;
     const ro =
@@ -738,22 +746,30 @@ const KlineChart = ({
           formatShortDateLabel(tickLabelMap.get(Number(time)), activeKey, i18n.language),
       },
       leftPriceScale: {
-        visible: false,
+        visible: !isPC,
         borderVisible: false,
+        ...(!isPC
+          ? {
+              entireTextOnly: true,
+              minimumWidth: 40,
+              scaleMargins: { top: 0.12, bottom: 0.06 },
+            }
+          : {}),
       },
       rightPriceScale: {
-        visible: true,
+        visible: isPC,
         borderVisible: false,
-        // 角落刻度只有完整可见时才绘制，避免顶/底半截数字
-        entireTextOnly: true,
-        minimumWidth: isPC ? 56 : 40,
-        scaleMargins: {
-          // 库默认 top≈0.2；过小会导致最高价刻度贴顶被 canvas 裁切
-          top: isPC ? 0.16 : 0.12,
-          bottom: isPC ? 0.08 : 0.06,
-        },
+        ...(isPC
+          ? {
+              entireTextOnly: true,
+              minimumWidth: 56,
+              scaleMargins: { top: 0.16, bottom: 0.08 },
+            }
+          : {}),
       },
     });
+
+    const priceScaleId = isPC ? 'right' : 'left';
 
     const needRebuildMainSeries =
       !seriesInstance.current || mainSeriesTypeRef.current !== chartType;
@@ -768,7 +784,7 @@ const KlineChart = ({
           bottomColor: 'rgba(17, 183, 135, 0)',
           priceLineVisible: false,
           lastValueVisible: false,
-          priceScaleId: 'right',
+          priceScaleId,
         });
         seriesInstance.current = lineSeries;
       } else {
@@ -781,7 +797,7 @@ const KlineChart = ({
           wickDownColor: '#FA5F5F',
           priceLineVisible: false,
           lastValueVisible: false,
-          priceScaleId: 'right',
+          priceScaleId,
         });
         seriesInstance.current = candleSeries;
 
@@ -799,15 +815,15 @@ const KlineChart = ({
             priceLineVisible: false,
             lastValueVisible: false,
             crosshairMarkerVisible: false,
-            priceScaleId: 'right',
+            priceScaleId,
           })
         );
       }
       mainSeriesTypeRef.current = chartType;
     }
 
-    seriesInstance.current?.applyOptions({ priceScaleId: 'right' });
-    maSeriesInstances.current.forEach((s) => s.applyOptions({ priceScaleId: 'right' }));
+    seriesInstance.current?.applyOptions({ priceScaleId });
+    maSeriesInstances.current.forEach((s) => s.applyOptions({ priceScaleId }));
 
     if (chartType === 'line') {
       seriesInstance.current?.setData(lineData);
@@ -1062,68 +1078,65 @@ const KlineChart = ({
               <div className={styles.chartSkeletonMain}>
                 <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: 8 }} />
               </div>
-              <div className={styles.chartSkeletonNavigator}>
-                <Skeleton config={{ type: 'circle', size: 24 }} />
-                <Skeleton config={{ type: 'element', width: '92%', height: 28, borderRadius: 6 }} />
-              </div>
             </div>
           )
         )}
         <div ref={chartRef} className={styles.chart} style={{ opacity: (loading || !data) ? 0 : 1 }}></div>
-        <div className={styles.indicatorStack} style={{ opacity: (loading || !data) ? 0 : 1 }}>
-          <div className={styles.navigatorRow}>
-            <div className={styles.navigatorAction}>
-              {showLandscapeBtn && onLandscapeClick ? (
-                <button
-                  type="button"
-                  className={styles.navigatorZoomBtn}
-                  onClick={onLandscapeClick}
-                  aria-label="expand chart"
-                >
-                  <LandscapeIcon size={14} color="#8E8E8E" />
-                </button>
-              ) : null}
-            </div>
-            <div className={styles.navigatorChartWrap}>
-              <div className={styles.macdLegend} aria-hidden>
-                <span className={styles.macdLegendTitle}>MACD 12 26 close 9</span>
-                <span
-                  className={styles.macdLegendHist}
-                  style={{
-                    color:
-                      Number(macdLegend.hist) >= 0
-                        ? MACD_STYLE.histPosUp
-                        : MACD_STYLE.histNegDown,
-                  }}
-                >
-                  {formatMacdLegendValue(macdLegend.hist)}
-                </span>
-                <span className={styles.macdLegendDif}>{formatMacdLegendValue(macdLegend.dif)}</span>
-                <span className={styles.macdLegendDea}>{formatMacdLegendValue(macdLegend.dea)}</span>
+        {showLandscapeBtn && onLandscapeClick && !isPC ? (
+          <button
+            type="button"
+            className={styles.landscapeBtn}
+            onClick={onLandscapeClick}
+            aria-label="expand chart"
+          >
+            <LandscapeIcon size={14} color="#8E8E8E" />
+          </button>
+        ) : null}
+        {isPC ? (
+          <div className={styles.indicatorStack} style={{ opacity: (loading || !data) ? 0 : 1 }}>
+            <div className={styles.navigatorRow}>
+              <div className={styles.navigatorAction} />
+              <div className={styles.navigatorChartWrap}>
+                <div className={styles.macdLegend} aria-hidden>
+                  <span className={styles.macdLegendTitle}>MACD 12 26 close 9</span>
+                  <span
+                    className={styles.macdLegendHist}
+                    style={{
+                      color:
+                        Number(macdLegend.hist) >= 0
+                          ? MACD_STYLE.histPosUp
+                          : MACD_STYLE.histNegDown,
+                    }}
+                  >
+                    {formatMacdLegendValue(macdLegend.hist)}
+                  </span>
+                  <span className={styles.macdLegendDif}>{formatMacdLegendValue(macdLegend.dif)}</span>
+                  <span className={styles.macdLegendDea}>{formatMacdLegendValue(macdLegend.dea)}</span>
+                </div>
+                <div ref={navigatorRef} className={styles.navigatorChart} />
               </div>
-              <div ref={navigatorRef} className={styles.navigatorChart} />
             </div>
-          </div>
 
-          <div className={styles.navigatorRow}>
-            <div className={styles.navigatorAction} />
-            <div className={styles.navigatorChartWrap}>
-              <div className={styles.macdLegend} aria-hidden>
-                <span className={styles.macdLegendTitle}>SKDJ 9 3</span>
-                <span className={styles.macdLegendDif} style={{ color: SKDJ_STYLE.k }}>
-                  {formatMacdLegendValue(skdjLegend.k)}
-                </span>
-                <span className={styles.macdLegendDea} style={{ color: SKDJ_STYLE.d }}>
-                  {formatMacdLegendValue(skdjLegend.d)}
-                </span>
-                <span className={styles.macdLegendHist} style={{ color: SKDJ_STYLE.j }}>
-                  {formatMacdLegendValue(skdjLegend.j)}
-                </span>
+            <div className={styles.navigatorRow}>
+              <div className={styles.navigatorAction} />
+              <div className={styles.navigatorChartWrap}>
+                <div className={styles.macdLegend} aria-hidden>
+                  <span className={styles.macdLegendTitle}>SKDJ 9 3</span>
+                  <span className={styles.macdLegendDif} style={{ color: SKDJ_STYLE.k }}>
+                    {formatMacdLegendValue(skdjLegend.k)}
+                  </span>
+                  <span className={styles.macdLegendDea} style={{ color: SKDJ_STYLE.d }}>
+                    {formatMacdLegendValue(skdjLegend.d)}
+                  </span>
+                  <span className={styles.macdLegendHist} style={{ color: SKDJ_STYLE.j }}>
+                    {formatMacdLegendValue(skdjLegend.j)}
+                  </span>
+                </div>
+                <div ref={skdjRef} className={styles.navigatorChart} />
               </div>
-              <div ref={skdjRef} className={styles.navigatorChart} />
             </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </div>
   );
