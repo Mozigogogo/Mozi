@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, Children } from 'react';
-import { LeftOutlined } from '@ant-design/icons';
+import { HolderOutlined, LeftOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/Skeleton';
@@ -456,7 +456,11 @@ export default function PCCoinDetail({
                 aria-orientation="vertical"
                 aria-label={t('pcCoinDetail.resizeLeftPane', { defaultValue: '调整左侧栏宽度' })}
                 onPointerDown={(e) => startPaneDrag('left', e)}
-              />
+              >
+                <span className={styles.paneResizerHandle} aria-hidden>
+                  <HolderOutlined />
+                </span>
+              </div>
             ) : null}
             <div className={styles.chartPane}>
               <div className={styles.chartPaneMain}>{topChild}</div>
@@ -469,7 +473,11 @@ export default function PCCoinDetail({
                 aria-orientation="vertical"
                 aria-label={t('pcCoinDetail.resizeRightPane', { defaultValue: '调整右侧栏宽度' })}
                 onPointerDown={(e) => startPaneDrag('right', e)}
-              />
+              >
+                <span className={styles.paneResizerHandle} aria-hidden>
+                  <HolderOutlined />
+                </span>
+              </div>
             ) : null}
             {showRightPane ? (
               <aside className={styles.orderPane} style={rightPaneStyle}>

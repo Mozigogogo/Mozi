@@ -523,6 +523,9 @@
     touch-action: none;
     background: transparent;
     align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .paneResizer::before {
@@ -537,17 +540,39 @@
     transition: background 0.15s ease, width 0.15s ease;
   }
 
+  .paneResizer::after {
+    /* 扩大可点热区，不影响布局 */
+    content: '';
+    position: absolute;
+    inset: 0 -4PX;
+    background: transparent;
+  }
+
+  .paneResizerHandle {
+    position: relative;
+    z-index: 2;
+    width: 12PX;
+    height: 12PX;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    transform: rotate(90deg);
+    opacity: 0.9;
+    transition: color 0.15s ease, opacity 0.15s ease;
+    pointer-events: none;
+  }
+
   .paneResizer:hover::before,
   .paneResizerActive::before {
     width: 2PX;
     background: #11b787;
   }
 
-  .paneResizer::after {
-    /* 扩大可点热区，不影响布局 */
-    content: '';
-    position: absolute;
-    inset: 0 -4PX;
+  .paneResizer:hover .paneResizerHandle,
+  .paneResizerActive .paneResizerHandle {
+    color: #11b787;
+    opacity: 1;
   }
 
   .chartOrderRowDragging {

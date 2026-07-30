@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
+import { HolderOutlined } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import PCCoinDetail from '@/components/PCCoinDetail';
 import PCRightTopMarquee from '@/components/PCRightTopMarquee';
@@ -3230,7 +3231,11 @@ ${coinInfo.name || symbol} (${symbol})
                     aria-orientation="horizontal"
                     aria-label="调整大单侦测与社区高度"
                     onPointerDown={handlePcOrderCommunityResizeStart}
-                  />
+                  >
+                    <span className={styles.pcOrderCommunityResizerHandle} aria-hidden>
+                      <HolderOutlined />
+                    </span>
+                  </div>
                   <div
                     className={styles.pcCommunityHalf}
                     style={pcOrderBookHeightPx != null ? { flex: '1 1 auto', height: 'auto', maxHeight: 'none' } : undefined}
