@@ -38,6 +38,7 @@ import GeneralPopup from '@/app/user/components/GeneralPopup';
 import { getAgentConversations } from '@/api/ai';
 import { MOZI_AI_CONVERSATIONS_CHANGED } from '@/utils/aiConversationEvents';
 import AiConversationRowMenu from '@/app/ai/AiConversationRowMenu';
+import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
 import { request } from '@/utils/request';
 import { EMAIL, Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
@@ -417,7 +418,7 @@ export default function PCLayout({ children }) {
     if (keyword) {
       savePcAiFromSearch(keyword);
     }
-    router.push('/ai');
+    pushWithRouteBootLoading(router, '/ai');
   };
 
   // 内容显示状态 - 用于PC端tab切换
@@ -1346,7 +1347,7 @@ export default function PCLayout({ children }) {
                     setActiveContent(null);
                     setShowSearchResults(false);
                     if (pathname !== '/ai') {
-                      router.push('/ai');
+                      pushWithRouteBootLoading(router, '/ai');
                       setIsAiChatExpanded(true);
                     } else {
                       setIsAiChatExpanded((v) => !v);
@@ -1410,7 +1411,7 @@ export default function PCLayout({ children }) {
                                 onClick={() => {
                                   setActiveContent(null);
                                   setShowSearchResults(false);
-                                  router.push(`/ai/${conversationId}`);
+                                  pushWithRouteBootLoading(router, `/ai/${conversationId}`);
                                 }}
                               >
                                 <span className={styles.pcAiChatRowIcon} aria-hidden>

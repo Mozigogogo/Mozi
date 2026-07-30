@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
+import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
 import styles from './index.module.less';
 
 export default function PinkContainer() {
@@ -14,7 +15,7 @@ export default function PinkContainer() {
       id: 'ai',
       icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/ai_chat.svg',
       label: t('home.quickActions.ai'),
-      onClick: () => router.push('/ai')
+      onClick: () => pushWithRouteBootLoading(router, '/ai')
     },
     {
       id: 'price',

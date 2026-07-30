@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { trackEvent, HomeEvents } from '@/utils/amplitude';
+import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
 import styles from './index.module.less';
 
 /**
@@ -13,6 +15,13 @@ import styles from './index.module.less';
 export default function FloatingRobotPc({ message, targetPath = '/ai', onClick }) {
   const router = useRouter();
   const { t } = useTranslation();
+
+  useEffect(() => {
+    if (onClick || !targetPath || !targetPath.startsWith('/')) return;
+    try {
+      router.prefetch(targetPath);
+    } catch (_) {}
+  }, [router, targetPath, onClick]);
 
   const handleRobotClick = () => {
     trackEvent(HomeEvents.AI_CLICKED, {
@@ -26,7 +35,7 @@ export default function FloatingRobotPc({ message, targetPath = '/ai', onClick }
       return;
     }
 
-    router.push(targetPath);
+    pushWithRouteBootLoading(router, targetPath);
   };
 
   return (

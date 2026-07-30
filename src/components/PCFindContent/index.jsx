@@ -20,6 +20,7 @@ import { isEmpty } from 'lodash';
 import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import { savePcAiNav } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
+import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
 import styles from './index.module.less';
 
 const RANK_SHARE_ICON = '/icons/pc/share_toolbar.svg';
@@ -236,7 +237,7 @@ export default function PCFindContent() {
       const coin = String(symbol || '').trim().toUpperCase();
       if (!coin) return;
       savePcAiNav({ model: 'bigorder', message: `${coin}最近的大单` });
-      router.push('/ai');
+      pushWithRouteBootLoading(router, '/ai');
     },
     [router]
   );
@@ -250,7 +251,7 @@ export default function PCFindContent() {
         model: 'analyze',
         message: `帮我分析一下目前的 ${coin} 行情趋势，以及是否有大单异动。`,
       });
-      router.push('/ai');
+      pushWithRouteBootLoading(router, '/ai');
     },
     [router]
   );

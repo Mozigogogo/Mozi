@@ -39,3 +39,23 @@ export function pathMatchesBootTarget(currentPath, targetPath) {
   if (!currentPath || !targetPath) return false;
   return currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
 }
+
+/**
+ * 内部路由跳转前标记 Logo loading，避免首屏白屏等待。
+ * /ai 及其子路由统一按 /ai 标记，便于 pathMatchesBootTarget 匹配。
+ */
+export function pushWithRouteBootLoading(router, href, { replace = false } = {}) {
+  if (!router || href == null) return;
+  const nextHref = String(href);
+  if (nextHref.startsWith('/')) {
+    try {
+      const pathname = nextHref.split('?')[0] || '/';
+      if (pathname !== '/detail') {
+        const bootPath = pathname === '/ai' || pathname.startsWith('/ai/') ? '/ai' : pathname;
+        markRouteBootLoading(bootPath);
+      }
+    } catch (_) {}
+  }
+  if (replace) router.replace(nextHref);
+  else router.push(nextHref);
+}

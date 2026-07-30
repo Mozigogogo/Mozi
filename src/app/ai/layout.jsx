@@ -1,7 +1,13 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import AiChatView from './AiChatView';
+import AiChatBootShell from './AiChatBootShell';
+
+const AiChatView = dynamic(() => import('./AiChatView'), {
+  ssr: false,
+  loading: () => <AiChatBootShell />,
+});
 
 function getRouteConversationId(pathname) {
   const match = String(pathname || '').match(/^\/ai\/([^/?#]+)/);

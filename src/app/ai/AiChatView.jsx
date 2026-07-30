@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -43,6 +43,32 @@ import { fetchLatestScanCache } from '@/api/signals';
 import {
   getLocalizedMockAlphaSignalCards,
 } from '@/data/mockAlphaSignalCards';
+
+const PC_MEDIA_QUERY = '(min-width: 1024px)';
+
+function subscribePcMedia(onStoreChange) {
+  const mediaQuery = window.matchMedia(PC_MEDIA_QUERY);
+  mediaQuery.addEventListener('change', onStoreChange);
+  return () => mediaQuery.removeEventListener('change', onStoreChange);
+}
+
+function getPcMediaSnapshot() {
+  return window.matchMedia(PC_MEDIA_QUERY).matches;
+}
+
+/** SSR / 首帧与 PcLayoutGate 一致，避免 PC 端闪出移动端布局 */
+function getPcMediaServerSnapshot() {
+  return false;
+}
+
+function hasAuthToken() {
+  if (typeof window === 'undefined') return false;
+  try {
+    return !!localStorage.getItem('token');
+  } catch {
+    return false;
+  }
+}
 
 const AGENT_STREAM_API = '/api/ai/agent/stream';
 const ROBOT_MODEL_IDS = ['analyze', 'chat', 'signals', 'bigorder'];
@@ -501,20 +527,17 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   /** 临时：不请求 /api/ai/chat/history，测完请改回 false */
   const DEBUG_SKIP_CHAT_HISTORY_LOAD = false;
 
-  const [isPCState, setIsPCState] = useState(false);
   const [mounted, setMounted] = useState(false);
-  
+  const isPCMedia = useSyncExternalStore(
+    subscribePcMedia,
+    getPcMediaSnapshot,
+    getPcMediaServerSnapshot,
+  );
+  const isPC = propIsPC || isPCMedia;
+
   useEffect(() => {
     setMounted(true);
-    const checkDevice = () => {
-      setIsPCState(window.innerWidth >= 1024);
-    };
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
   }, []);
-
-  const isPC = propIsPC || isPCState;
 
   useEffect(() => {
     if (!mounted || scanCacheRequestRef.current) return;
@@ -588,8 +611,8 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   }, [listening, transcript]);
 
   const [showPopLogin, setShowPopLogin] = useState(false);
-  /** 已登录：进入页先等 /user/datainfo 返回再展示主界面，保证积分等与后端一致；未登录不等待 */
-  const [isBootstrappingUserData, setIsBootstrappingUserData] = useState(true);
+  /** 已登录：进入页先等 /user/datainfo；未登录首帧即可展示空态（避免无 token 也白等一拍） */
+  const [isBootstrappingUserData, setIsBootstrappingUserData] = useState(hasAuthToken);
   const [hasEnoughPoints, setHasEnoughPoints] = useState(true);   // 当前是否还有可用积分
   const [remainingPoints, setRemainingPoints] = useState(null);
   const [totalPoints, setTotalPoints] = useState(0);
@@ -641,14 +664,14 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
     runWhenIdle(bootstrapUserData);
   }, []);
 
+  // 壳层已绘制即可关掉路由 Logo loading；用户数据仍用页内 overlay，不阻塞首屏
   useEffect(() => {
-    if (!mounted || isBootstrappingUserData) return undefined;
-    const startTs = Date.now();
+    if (!mounted) return undefined;
     const timer = window.setTimeout(() => {
       notifyRouteBootReady();
-    }, Math.max(0, 250 - (Date.now() - startTs)));
+    }, 50);
     return () => window.clearTimeout(timer);
-  }, [mounted, isBootstrappingUserData]);
+  }, [mounted]);
 
   const handleCopyMessage = async (text) => {
     try {
@@ -2379,8 +2402,6 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         />
       </div>
   );
-
-  if (!mounted) return null;
 
   return content;
 }

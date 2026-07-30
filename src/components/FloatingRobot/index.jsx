@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { trackEvent, HomeEvents } from '@/utils/amplitude';
+import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
 import styles from './index.module.less';
 
 // 简单文本组件
@@ -140,6 +141,14 @@ export default function FloatingRobot({
     };
   }, [autoPlay, startDelay, showDuration, measureAndCalculateScroll]);
 
+  // 预取 /ai，降低首次点击白屏/等待
+  useEffect(() => {
+    if (!targetPath || !targetPath.startsWith('/')) return;
+    try {
+      router.prefetch(targetPath);
+    } catch (_) {}
+  }, [router, targetPath]);
+
   // 鼠标磁吸效果
   useEffect(() => {
     if (!enableMagnet) return;
@@ -183,8 +192,8 @@ export default function FloatingRobot({
       robotState: robotAnimState
     });
     
-    // 跳转到目标页面
-    router.push(targetPath);
+    // 跳转前亮 Logo loading，避免首次挂载白屏
+    pushWithRouteBootLoading(router, targetPath);
   };
 
   return (
