@@ -2953,11 +2953,11 @@ ${coinInfo.name || symbol} (${symbol})
                       loading={rightHotTickerLoading}
                     />
                   </div>
-                  <div ref={roiRef} className={styles.pcRoiSideRoi}>
-                    {renderROI()}
-                  </div>
                   <div ref={marketRef} className={styles.pcRoiSideMarket}>
                     {renderMarket()}
+                  </div>
+                  <div ref={roiRef} className={styles.pcRoiSideRoi}>
+                    {renderROI()}
                   </div>
                 </div>
               }

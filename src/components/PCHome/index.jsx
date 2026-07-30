@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Row, Col, Card, Tabs, Table, Tag, Carousel, Skeleton, message } from 'antd';
 import { 
   RiseOutlined, 
@@ -98,6 +98,8 @@ export default function PCHome() {
   const [treeMapLoading, setTreeMapLoading] = useState(true);
   const [showArbitrageZone, setShowArbitrageZone] = useState(true);
   const [activeZone, setActiveZone] = useState('arbitrage'); // arbitrage | derivatives
+  /** 榜单请求代数：快速切 tab / 翻页时丢弃过期响应，避免接口竞态 */
+  const rankRequestIdRef = useRef(0);
 
   useEffect(() => {
     if (!showArbitrageZone && activeZone === 'arbitrage') {
@@ -366,6 +368,7 @@ export default function PCHome() {
 
   // 获取榜单数据
   const fetchRankData = async (rankType = 'zhangfu', page = 1) => {
+    const requestId = ++rankRequestIdRef.current;
     setRankLoading(true);
     // 清空数据以防止显示上一个榜单的数据
     setRankData([]);
@@ -395,6 +398,9 @@ export default function PCHome() {
         url: apiUrl,
         data: requestData,
       });
+
+      // 已有更新的请求发出，丢弃本次过期结果
+      if (requestId !== rankRequestIdRef.current) return;
       
       let list = [];
       if (rankType === 'zixuan') {
@@ -425,9 +431,12 @@ export default function PCHome() {
         isFavorite: rankType === 'zixuan' ? true : (item.favorite || item.isSelfSelected || item.isLiked || false),
       })));
     } catch (e) {
+      if (requestId !== rankRequestIdRef.current) return;
       console.error('获取榜单失败:', e);
     } finally {
-      setRankLoading(false);
+      if (requestId === rankRequestIdRef.current) {
+        setRankLoading(false);
+      }
     }
   };
 
@@ -483,6 +492,7 @@ export default function PCHome() {
 
   const handleRankTabChange = (key) => {
     setActiveRankTab(key);
+    setPagination((prev) => ({ ...prev, current: 1 }));
     fetchRankData(key, 1);
   };
 
