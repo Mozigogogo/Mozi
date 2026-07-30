@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { Skeleton } from '@/components/Skeleton';
 import styles from './index.module.less';
 
 const SYMBOL_COLOR_PALETTE = [
@@ -63,9 +64,14 @@ export default function PCRightTopMarquee({
   if (loading) {
     return (
       <div className={`${styles.root} ${className}`.trim()}>
-        <div className={styles.loadingWrap}>
-          <span className={styles.loadingDot} aria-hidden />
-          <span className={styles.loadingText}>Loading...</span>
+        <div className={styles.skeletonWrap} aria-hidden>
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className={styles.skeletonItem}>
+              <Skeleton config={{ type: 'element', width: 36, height: 12, borderRadius: 4 }} />
+              <Skeleton config={{ type: 'element', width: 52, height: 12, borderRadius: 4 }} />
+              <Skeleton config={{ type: 'element', width: 44, height: 12, borderRadius: 4 }} />
+            </div>
+          ))}
         </div>
       </div>
     );

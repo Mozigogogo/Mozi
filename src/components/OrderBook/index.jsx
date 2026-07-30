@@ -252,17 +252,40 @@ export default function OrderBook({
     return () => clearInterval(timer);
   }, [endTime]);
 
-  // 买盘：价高在上；卖盘：价低靠近中间，展示时倒置（价高在上）
+  // 两侧均按「与当前价距离」排序：越靠近中间的行，价格越接近现价
+  const sortMid = useMemo(() => {
+    if (midPriceProp === undefined || midPriceProp === null || midPriceProp === '') return null;
+    const n = Number(String(midPriceProp).replace(/[$,\s]/g, ''));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [midPriceProp]);
+
   const bidLevels = useMemo(() => {
-    const items = [...(bids || [])].sort((a, b) => (Number(b?.price) || 0) - (Number(a?.price) || 0));
+    const items = [...(bids || [])];
+    if (sortMid != null) {
+      items.sort(
+        (a, b) =>
+          Math.abs((Number(a?.price) || 0) - sortMid) - Math.abs((Number(b?.price) || 0) - sortMid),
+      );
+    } else {
+      items.sort((a, b) => (Number(b?.price) || 0) - (Number(a?.price) || 0));
+    }
     return buildLevels(items, visibleRowsCount);
-  }, [bids, visibleRowsCount]);
+  }, [bids, visibleRowsCount, sortMid]);
 
   const askLevels = useMemo(() => {
-    const items = [...(asks || [])].sort((a, b) => (Number(a?.price) || 0) - (Number(b?.price) || 0));
+    const items = [...(asks || [])];
+    if (sortMid != null) {
+      items.sort(
+        (a, b) =>
+          Math.abs((Number(a?.price) || 0) - sortMid) - Math.abs((Number(b?.price) || 0) - sortMid),
+      );
+    } else {
+      items.sort((a, b) => (Number(a?.price) || 0) - (Number(b?.price) || 0));
+    }
     const levels = buildLevels(items, visibleRowsCount);
+    // 卖盘在上：距离远的在顶部，最接近现价的在底部贴中间
     return [...levels].reverse();
-  }, [asks, visibleRowsCount]);
+  }, [asks, visibleRowsCount, sortMid]);
 
   const maxDepth = useMemo(() => {
     const askMax = askLevels.length ? askLevels[0]?.total || 0 : 0;

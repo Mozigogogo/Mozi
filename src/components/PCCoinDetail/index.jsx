@@ -251,12 +251,14 @@ export default function PCCoinDetail({
         <div className={styles.mainCardBody}>
           <div className={styles.chartOrderRow}>
             {sideLeft ? <aside className={styles.roiPane}>{sideLeft}</aside> : null}
-            <div className={styles.chartPane}>{topChild}</div>
+            <div className={styles.chartPane}>
+              <div className={styles.chartPaneMain}>{topChild}</div>
+              {barrageBarEl}
+            </div>
             {restChildren.length > 0 ? (
               <aside className={styles.orderPane}>{restChildren}</aside>
             ) : null}
           </div>
-          {barrageBarEl}
         </div>
       </div>
     </div>

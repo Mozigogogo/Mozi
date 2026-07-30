@@ -1472,6 +1472,7 @@
       "update": "更新"
     },
     "messages": {
+      "publishing": "发布中...",
       "publishSuccess": "发布成功",
       "publishFailed": "发布失败",
       "updateSuccess": "更新成功",

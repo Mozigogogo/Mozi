@@ -1201,15 +1201,46 @@
   justify-content: center;
 }
 
-/* PC 侧栏（市场等）loading：撑满卡片内容区后居中 */
-.pcSidePanelLoading {
+/* PC 侧栏（市场/ROI）loading：脉冲骨架 */
+.pcSidePanelSkeleton {
   flex: 1 1 auto;
   align-self: stretch;
   width: 100%;
   min-height: 120PX;
   height: 100%;
-  margin-bottom: 0;
   box-sizing: border-box;
+  padding: 4PX 0 8PX;
+  display: flex;
+  flex-direction: column;
+}
+
+.pcMarketBlockSkeleton {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 220PX;
+  height: 100%;
+  align-self: stretch;
+
+  > * {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 220PX !important;
+    display: block !important;
+  }
+}
+
+.pcRoiBlockSkeleton {
+  width: 100%;
+  min-height: 156PX;
+  height: 156PX;
+  align-self: stretch;
+
+  > * {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 156PX !important;
+    display: block !important;
+  }
 }
 
 .sectionSkeleton {
@@ -1229,6 +1260,31 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   padding: 8px 0;
+}
+
+.pcCommunitySkeleton {
+  width: 100%;
+  padding: 4PX 0;
+}
+
+.pcCommunitySkeletonItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12PX;
+  padding: 16PX 0;
+  border-bottom: 1PX solid #f1f5f9;
+}
+
+.pcCommunitySkeletonItem:last-child {
+  border-bottom: none;
+}
+
+.pcCommunitySkeletonBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10PX;
 }
 
 .headerBox .left {

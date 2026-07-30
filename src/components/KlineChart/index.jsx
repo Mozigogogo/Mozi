@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { createChart } from 'lightweight-charts';
 import { TabBar } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
-import { Loading } from '../Loading';
 import { Skeleton } from '../Skeleton';
+import { Loading } from '../Loading';
 import { LandscapeIcon } from '../Icons';
 import styles from './index.module.less';
 
@@ -1088,33 +1088,35 @@ const KlineChart = ({
       {/* 图表容器 */}
       <div className={styles.chartContainer}>
         {loading && (
-          isPC ? (
-            <div className={styles.loadingWrapper}>
-              <Loading color="#11B787" tip="" />
+          <div className={`${styles.chartSkeletonWrap} ${isPC ? styles.chartSkeletonWrapPc : ''}`} aria-hidden>
+            <div className={`${styles.chartSkeletonMain} ${isPC ? styles.chartSkeletonMainPc : ''}`}>
+              <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: isPC ? 0 : 8 }} />
             </div>
-          ) : (
-            <div className={styles.chartSkeletonWrap} aria-hidden>
-              <div className={styles.chartSkeletonMain}>
-                <Skeleton config={{ type: 'element', width: '100%', height: '100%', borderRadius: 8 }} />
+            {isPC ? (
+              <div className={styles.chartSkeletonSubsPc}>
+                <Skeleton config={{ type: 'element', width: '100%', height: 72, borderRadius: 4 }} />
+                <Skeleton config={{ type: 'element', width: '100%', height: 72, borderRadius: 4 }} />
+              </div>
+            ) : null}
+          </div>
+        )}
+        <div className={`${styles.chartMainWrap} ${isPC ? styles.chartMainWrapPc : ''}`}>
+          {refreshing && !loading ? (
+            <div className={styles.refreshOverlay} aria-busy="true">
+              <div className={styles.refreshSpinner}>
+                <Loading color="#11B787" tip="" size={isPC ? 28 : 22} />
               </div>
             </div>
-          )
-        )}
-        {refreshing && !loading ? (
-          <div className={styles.refreshOverlay} aria-busy="true">
-            <div className={styles.refreshSpinner}>
-              <Loading color="#11B787" tip="" size={isPC ? 28 : 22} />
-            </div>
-          </div>
-        ) : null}
-        <div
-          ref={chartRef}
-          className={styles.chart}
-          style={{
-            opacity: loading ? 0 : refreshing ? 0.72 : 1,
-            transition: 'opacity 0.18s ease',
-          }}
-        />
+          ) : null}
+          <div
+            ref={chartRef}
+            className={styles.chart}
+            style={{
+              opacity: loading ? 0 : refreshing ? 0.65 : 1,
+              transition: 'opacity 0.18s ease',
+            }}
+          />
+        </div>
         {showLandscapeBtn && onLandscapeClick && !isPC ? (
           <button
             type="button"
@@ -1129,7 +1131,7 @@ const KlineChart = ({
           <div
             className={styles.indicatorStack}
             style={{
-              opacity: loading ? 0 : refreshing ? 0.72 : 1,
+              opacity: loading ? 0 : refreshing ? 0.65 : 1,
               transition: 'opacity 0.18s ease',
             }}
           >

@@ -1474,6 +1474,7 @@
       "update": "Update"
     },
     "messages": {
+      "publishing": "Publishing...",
       "publishSuccess": "Published successfully",
       "publishFailed": "Publish failed",
       "updateSuccess": "Updated successfully",

@@ -16,7 +16,6 @@ import KlineChart from '../../components/KlineChart';
 import OrderBook from '../../components/OrderBook';
 import OneClickAlarmModal from '@/components/OneClickAlarmModal';
 import ExchangePickerModal from '@/components/ExchangePickerModal';
-import { Loading } from '@/components/Loading';
 import { Skeleton } from '../../components/Skeleton';
 import { detailHeaderSkeletonConfig } from '../../components/Skeleton/configs/detailPageConfig';
 import { CaretUpIcon, CaretDownIcon, BellIcon, ShareIcon } from '@/components/Icons';
@@ -125,26 +124,64 @@ export default function DetailPage() {
     }
   }, [fromTgAlert, symbol, isPC]);
 
-  const renderMobileMarketSkeleton = () => (
-    <div className={styles.sectionSkeleton}>
-      {Array.from({ length: 5 }).map((_, index) => (
-        <div key={index} className={styles.sectionSkeletonRow}>
-          <Skeleton config={{ type: 'circle', size: 24 }} />
-          <Skeleton config={{ type: 'element', width: 72, height: 16, borderRadius: 4 }} />
-          <Skeleton config={{ type: 'element', width: 56, height: 16, borderRadius: 4 }} />
-          <Skeleton config={{ type: 'element', width: 48, height: 16, borderRadius: 4 }} />
+  const renderMarketSkeleton = () => {
+    if (isPC) {
+      return (
+        <div className={styles.pcMarketBlockSkeleton} aria-hidden>
+          <Skeleton
+            config={{ type: 'element', width: '100%', height: '100%', borderRadius: 8 }}
+          />
         </div>
-      ))}
-    </div>
-  );
+      );
+    }
+    return (
+      <div className={styles.sectionSkeleton}>
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index} className={styles.sectionSkeletonRow}>
+            <Skeleton config={{ type: 'circle', size: 24 }} />
+            <Skeleton config={{ type: 'element', width: 72, height: 16, borderRadius: 4 }} />
+            <Skeleton config={{ type: 'element', width: 56, height: 16, borderRadius: 4 }} />
+            <Skeleton config={{ type: 'element', width: 48, height: 16, borderRadius: 4 }} />
+          </div>
+        ))}
+      </div>
+    );
+  };
 
-  const renderMobileRoiSkeleton = () => (
-    <div className={styles.roiSkeletonGrid}>
-      {Array.from({ length: 4 }).map((_, index) => (
-        <Skeleton
-          key={index}
-          config={{ type: 'element', width: '100%', height: 72, borderRadius: 8 }}
-        />
+  const renderRoiSkeleton = () => {
+    if (isPC) {
+      return (
+        <div className={styles.pcRoiBlockSkeleton} aria-hidden>
+          <Skeleton
+            config={{ type: 'element', width: '100%', height: '100%', borderRadius: 8 }}
+          />
+        </div>
+      );
+    }
+    return (
+      <div className={styles.roiSkeletonGrid}>
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton
+            key={index}
+            config={{ type: 'element', width: '100%', height: 72, borderRadius: 8 }}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const renderPcCommunitySkeleton = (count = 4) => (
+    <div className={styles.pcCommunitySkeleton} aria-hidden>
+      {Array.from({ length: count }).map((_, index) => (
+        <div key={index} className={styles.pcCommunitySkeletonItem}>
+          <Skeleton config={{ type: 'circle', size: 40 }} />
+          <div className={styles.pcCommunitySkeletonBody}>
+            <Skeleton config={{ type: 'element', width: '42%', height: 14, borderRadius: 4 }} />
+            <Skeleton config={{ type: 'element', width: '88%', height: 12, borderRadius: 4 }} />
+            <Skeleton config={{ type: 'element', width: '70%', height: 12, borderRadius: 4 }} />
+            <Skeleton config={{ type: 'element', width: '36%', height: 10, borderRadius: 4 }} />
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -2194,18 +2231,7 @@ ${coinInfo.name || symbol} (${symbol})
     }
     
     if (!symbol) return;
-    
-    // 如果正在使用HTTP降级模式，暂时不需要切换订阅（数据会通过HTTP轮询获取）
-    if (useHttpFallbackRef.current) {
-      return;
-    }
-    
-    // 检查WebSocket连接状态
-    if (!wsRef.current || !isWsAuthenticatedRef.current || wsConnectionStatusRef.current !== 'connected') {
-      return;
-    }
-    
-    // 时间周期映射
+
     const periodMap = {
       'hour': KLINE_PERIODS.ONE_HOUR,
       'day': KLINE_PERIODS.ONE_DAY,
@@ -2222,11 +2248,34 @@ ${coinInfo.name || symbol} (${symbol})
     // 立刻绑定目标周期；不清空画面数据，避免切换闪白
     currentKlinePeriodRef.current = targetTab;
     setKlineLoading(true);
+
+    // HTTP 降级：各周期通常已预取，短暂轻 loading 后结束
+    if (useHttpFallbackRef.current) {
+      const timer = window.setTimeout(() => {
+        if (switchGen === klineSwitchGenRef.current) {
+          setKlineLoading(false);
+        }
+      }, 320);
+      return () => window.clearTimeout(timer);
+    }
+    
+    // 检查WebSocket连接状态
+    if (!wsRef.current || !isWsAuthenticatedRef.current || wsConnectionStatusRef.current !== 'connected') {
+      const timer = window.setTimeout(() => {
+        if (switchGen === klineSwitchGenRef.current) {
+          setKlineLoading(false);
+        }
+      }, 320);
+      return () => window.clearTimeout(timer);
+    }
     
     // 执行订阅切换
     const switchKlineSubscription = async () => {
       const ws = wsRef.current;
-      if (!ws) return;
+      if (!ws) {
+        setKlineLoading(false);
+        return;
+      }
       
       try {
         // 1. 如果有旧的订阅，先取消
@@ -2265,13 +2314,7 @@ ${coinInfo.name || symbol} (${symbol})
     if (!coinInfo) {
       return (
         <div className={styles.headerContainer}>
-          {isPC ? (
-            <div className={`${styles.headerBox} ${styles.headerLoading}`}>
-              <Loading tip={null} size={24} />
-            </div>
-          ) : (
-            <Skeleton config={detailHeaderSkeletonConfig} />
-          )}
+          <Skeleton config={detailHeaderSkeletonConfig} />
         </div>
       );
     }
@@ -2427,13 +2470,9 @@ ${coinInfo.name || symbol} (${symbol})
           }
           marginBottom={isPC ? '0' : undefined}
         >
-          {isPC ? (
-            <div className={`${styles.box} ${styles.headerLoading} ${styles.pcSidePanelLoading}`}>
-              <Loading tip={t('common.loading')} size={24} />
-            </div>
-          ) : (
-            renderMobileRoiSkeleton()
-          )}
+          <div className={isPC ? styles.pcSidePanelSkeleton : undefined}>
+            {renderRoiSkeleton()}
+          </div>
         </MoziCard>
       );
     }
@@ -2484,6 +2523,9 @@ ${coinInfo.name || symbol} (${symbol})
   
   // 处理K线时间周期切换
   const handleKlineTabChange = (key) => {
+    if (key === activeKlineTab) return;
+    // 立刻轻 loading，避免等 WS/HTTP 分支才出现反馈
+    setKlineLoading(true);
     setActiveKlineTab(key);
   };
   
@@ -2497,7 +2539,10 @@ ${coinInfo.name || symbol} (${symbol})
     const hasCurrent = Boolean(currentKlineData?.values?.length);
     const displayData = hasCurrent ? currentKlineData : painted.data;
     const dataPeriod = hasCurrent ? activeKlineTab : painted.period;
-    const isRefreshing = Boolean(klineLoading && displayData?.values?.length);
+    const isRefreshing = Boolean(
+      displayData?.values?.length &&
+        (klineLoading || (!hasCurrent && painted.period && painted.period !== activeKlineTab))
+    );
     
     return (
       <div
@@ -2560,13 +2605,9 @@ ${coinInfo.name || symbol} (${symbol})
           className={cardClassName}
           marginBottom={isPC ? '0' : undefined}
         >
-          {isPC ? (
-            <div className={`${styles.box} ${styles.headerLoading} ${styles.pcSidePanelLoading}`}>
-              <Loading tip={t('common.loading')} size={24} />
-            </div>
-          ) : (
-            renderMobileMarketSkeleton()
-          )}
+          <div className={isPC ? styles.pcSidePanelSkeleton : undefined}>
+            {renderMarketSkeleton()}
+          </div>
         </MoziCard>
       );
     }
@@ -2714,7 +2755,7 @@ ${coinInfo.name || symbol} (${symbol})
         throw new Error('NO_TOKEN');
       }
       const sym = String(symbol || '').toUpperCase() || 'BTC';
-      Toast.show({ icon: 'loading', content: t('common.loading'), duration: 0 });
+      Toast.show({ icon: 'loading', content: t('post.messages.publishing'), duration: 0 });
       try {
         const response = await request({
           url: Interface.POST_NEW,
@@ -2790,9 +2831,7 @@ ${coinInfo.name || symbol} (${symbol})
       </div>
       <div className={styles.pcCommunityList} onScroll={handlePcCommunityScroll}>
         {rightCommunityLoading ? (
-          <div className={`${styles.pcCommunityEmpty} ${styles.pcCommunityEmptyLoading}`}>
-            <Loading tip={t('common.loading')} size={20} />
-          </div>
+          renderPcCommunitySkeleton(4)
         ) : communityFeedItems.length === 0 ? (
           <div className={styles.pcCommunityEmpty}>
             {t('detail.empty.community', { defaultValue: '暂无社区动态' })}
@@ -2902,11 +2941,7 @@ ${coinInfo.name || symbol} (${symbol})
                 </div>
               );
             })}
-            {rightCommunityLoadingMore ? (
-              <div className={`${styles.pcCommunityEmpty} ${styles.pcCommunityEmptyLoading}`}>
-                <Loading tip={t('common.loading')} size={20} />
-              </div>
-            ) : null}
+            {rightCommunityLoadingMore ? renderPcCommunitySkeleton(2) : null}
           </>
         )}
       </div>
@@ -2944,7 +2979,8 @@ ${coinInfo.name || symbol} (${symbol})
               onGoTrade={handleGoTrade}
               onShare={shareToTelegram}
               onTradingRadar={handleTradingRadar}
-              showBarrage={false}
+              showBarrage
+              onBarrageSend={handleBarrageSend}
               sideLeft={
                 <div className={styles.pcRoiSideWrap}>
                   <div className={styles.pcRoiSideMarquee}>
