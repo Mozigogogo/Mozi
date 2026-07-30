@@ -172,8 +172,8 @@ const stripBarrageText = (raw) =>
     .trim();
 
 /** 主图顶部弹幕：按发帖时间从旧到新飘；每轨同时只飘一条 */
-const ChartBarrageLayer = ({ items }) => {
-  const texts = useMemo(() => {
+const ChartBarrageLayer = ({ items, onPostClick }) => {
+  const entries = useMemo(() => {
     const list = Array.isArray(items) ? [...items] : [];
     list.sort((a, b) => {
       const ta = new Date(a?.createdAt || a?.createTime || a?.created_at || 0).getTime();
@@ -190,26 +190,71 @@ const ChartBarrageLayer = ({ items }) => {
       const text = stripBarrageText(item?.content || item?.text || item?.title);
       if (!text || text.length < 2) return;
       const clipped = text.length > 36 ? `${text.slice(0, 36)}…` : text;
-      // 用 id+文案去重，允许不同帖子相同文案；同帖不重复
-      const key = `${item?.id ?? ''}|${clipped}`;
+      const postId = item?.id != null ? String(item.id) : '';
+      const key = `${postId}|${clipped}`;
       if (seen.has(key)) return;
       seen.add(key);
-      out.push(clipped);
+      out.push({ key, text: clipped, postId });
     });
-    // 保留最近 40 条（含刚发的），旧实现 slice(0,40) 会丢掉最新弹幕
+    // 保留最近 40 条（含刚发的）
     return out.slice(-40);
   }, [items]);
 
-  const poolRef = useRef(texts);
-  poolRef.current = texts;
+  const poolRef = useRef(entries);
+  poolRef.current = entries;
   const [flying, setFlying] = useState([]);
   const seqRef = useRef(0);
   const laneBusyRef = useRef(Array(DANMAKU_LANES).fill(false));
   const shownRef = useRef(new Set());
   const cursorRef = useRef(0);
   const spawnRef = useRef(() => {});
-  const hasPool = texts.length > 0;
-  const textsSig = useMemo(() => texts.join('\u0001'), [texts]);
+  const hoverIdsRef = useRef(new Set());
+  const removeTimersRef = useRef(new Map());
+  const hasPool = entries.length > 0;
+  const entriesSig = useMemo(() => entries.map((e) => e.key).join('\u0001'), [entries]);
+
+  const clearRemoveTimer = useCallback((flyId) => {
+    const meta = removeTimersRef.current.get(flyId);
+    if (!meta) return null;
+    if (meta.timeoutId) window.clearTimeout(meta.timeoutId);
+    removeTimersRef.current.delete(flyId);
+    return meta;
+  }, []);
+
+  const finishFlight = useCallback((flyId, lane) => {
+    clearRemoveTimer(flyId);
+    hoverIdsRef.current.delete(flyId);
+    laneBusyRef.current[lane] = false;
+    setFlying((prev) => prev.filter((x) => x.id !== flyId));
+    const pool = poolRef.current;
+    if (pool.some((e) => !shownRef.current.has(e.key))) {
+      spawnRef.current?.(true);
+    }
+  }, [clearRemoveTimer]);
+
+  const scheduleRemove = useCallback((flyId, lane, delayMs) => {
+    clearRemoveTimer(flyId);
+    const startedAt = Date.now();
+    const timeoutId = window.setTimeout(() => {
+      if (hoverIdsRef.current.has(flyId)) {
+        // hover 中：等松手后再删，先记剩余为 0 表示可立即删
+        removeTimersRef.current.set(flyId, {
+          timeoutId: null,
+          remaining: 0,
+          lane,
+          startedAt: Date.now(),
+        });
+        return;
+      }
+      finishFlight(flyId, lane);
+    }, Math.max(0, delayMs));
+    removeTimersRef.current.set(flyId, {
+      timeoutId,
+      remaining: delayMs,
+      lane,
+      startedAt,
+    });
+  }, [clearRemoveTimer, finishFlight]);
 
   const spawnOnce = useCallback((preferNewestUnshown = false) => {
     const pool = poolRef.current;
@@ -221,7 +266,7 @@ const ChartBarrageLayer = ({ items }) => {
     let pickIndex = -1;
     if (preferNewestUnshown) {
       for (let i = pool.length - 1; i >= 0; i -= 1) {
-        if (!shownRef.current.has(pool[i])) {
+        if (!shownRef.current.has(pool[i].key)) {
           pickIndex = i;
           break;
         }
@@ -229,7 +274,7 @@ const ChartBarrageLayer = ({ items }) => {
     } else {
       while (
         cursorRef.current < pool.length &&
-        shownRef.current.has(pool[cursorRef.current])
+        shownRef.current.has(pool[cursorRef.current].key)
       ) {
         cursorRef.current += 1;
       }
@@ -237,7 +282,7 @@ const ChartBarrageLayer = ({ items }) => {
         cursorRef.current = 0;
         while (
           cursorRef.current < pool.length &&
-          shownRef.current.has(pool[cursorRef.current])
+          shownRef.current.has(pool[cursorRef.current].key)
         ) {
           cursorRef.current += 1;
         }
@@ -247,35 +292,80 @@ const ChartBarrageLayer = ({ items }) => {
 
     if (pickIndex < 0) return false;
 
-    const text = pool[pickIndex];
+    const entry = pool[pickIndex];
     if (!preferNewestUnshown) cursorRef.current = pickIndex + 1;
-    shownRef.current.add(text);
+    shownRef.current.add(entry.key);
 
     const id = (seqRef.current += 1);
     const duration = DANMAKU_DURATION_S;
     laneBusyRef.current[lane] = true;
 
-    setFlying((prev) => [...prev.slice(-12), { id, text, lane, duration }]);
-    window.setTimeout(() => {
-      laneBusyRef.current[lane] = false;
-      setFlying((prev) => prev.filter((x) => x.id !== id));
-      // 轨道空出后若仍有未播（如刚发送时轨满），立刻补播最新一条
-      const pool = poolRef.current;
-      if (pool.some((t) => !shownRef.current.has(t))) {
-        spawnRef.current?.(true);
-      }
-    }, duration * 1000 + 80);
+    setFlying((prev) => [
+      ...prev.slice(-12),
+      {
+        id,
+        text: entry.text,
+        postId: entry.postId,
+        lane,
+        duration,
+        paused: false,
+      },
+    ]);
+    scheduleRemove(id, lane, duration * 1000 + 80);
     return true;
-  }, []);
+  }, [scheduleRemove]);
 
   spawnRef.current = spawnOnce;
 
-  // 列表变空时重置；有数据时开定时器，不因追加而整表重启（避免清掉飞行中的弹幕）
+  const handleMouseEnter = useCallback((flyId) => {
+    hoverIdsRef.current.add(flyId);
+    const meta = removeTimersRef.current.get(flyId);
+    if (meta?.timeoutId) {
+      const elapsed = Date.now() - meta.startedAt;
+      const remaining = Math.max(0, meta.remaining - elapsed);
+      window.clearTimeout(meta.timeoutId);
+      removeTimersRef.current.set(flyId, {
+        timeoutId: null,
+        remaining,
+        lane: meta.lane,
+        startedAt: Date.now(),
+      });
+    }
+    setFlying((prev) =>
+      prev.map((x) => (x.id === flyId ? { ...x, paused: true } : x))
+    );
+  }, []);
+
+  const handleMouseLeave = useCallback((flyId) => {
+    hoverIdsRef.current.delete(flyId);
+    const meta = removeTimersRef.current.get(flyId);
+    setFlying((prev) =>
+      prev.map((x) => (x.id === flyId ? { ...x, paused: false } : x))
+    );
+    if (!meta) return;
+    const delay = meta.remaining > 0 ? meta.remaining : 80;
+    scheduleRemove(flyId, meta.lane, delay);
+  }, [scheduleRemove]);
+
+  const handleClick = useCallback((event, postId) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const id = String(postId || '').trim();
+    if (!id || id.startsWith('local-')) return;
+    onPostClick?.(id);
+  }, [onPostClick]);
+
+  // 列表变空时重置；有数据时开定时器，不因追加而整表重启
   useEffect(() => {
     if (!hasPool) {
       shownRef.current = new Set();
       cursorRef.current = 0;
       laneBusyRef.current = Array(DANMAKU_LANES).fill(false);
+      hoverIdsRef.current = new Set();
+      removeTimersRef.current.forEach((meta) => {
+        if (meta?.timeoutId) window.clearTimeout(meta.timeoutId);
+      });
+      removeTimersRef.current.clear();
       setFlying([]);
       return undefined;
     }
@@ -292,30 +382,43 @@ const ChartBarrageLayer = ({ items }) => {
     };
   }, [hasPool]);
 
-  // 有新增未播文案时立刻补一条（优先最新），解决「发完一直不飘」
+  // 有新增未播文案时立刻补一条（优先最新）
   useEffect(() => {
     if (!hasPool) return;
     const pool = poolRef.current;
-    const hasUnshown = pool.some((t) => !shownRef.current.has(t));
+    const hasUnshown = pool.some((e) => !shownRef.current.has(e.key));
     if (!hasUnshown) return;
     spawnRef.current?.(true);
-  }, [hasPool, textsSig]);
+  }, [hasPool, entriesSig]);
 
-  if (!texts.length) return null;
+  useEffect(() => () => {
+    removeTimersRef.current.forEach((meta) => {
+      if (meta?.timeoutId) window.clearTimeout(meta.timeoutId);
+    });
+    removeTimersRef.current.clear();
+  }, []);
+
+  if (!entries.length) return null;
 
   return (
-    <div className={styles.barrageLayer} aria-hidden>
+    <div className={styles.barrageLayer}>
       {flying.map((item) => (
-        <span
+        <button
           key={item.id}
-          className={styles.barrageItem}
+          type="button"
+          className={`${styles.barrageItem}${item.paused ? ` ${styles.barrageItemPaused}` : ''}${item.postId && !String(item.postId).startsWith('local-') ? ` ${styles.barrageItemClickable}` : ''}`}
           style={{
             top: `${DANMAKU_LANE_TOPS[item.lane] ?? DANMAKU_LANE_TOPS[0]}PX`,
             animationDuration: `${item.duration}s`,
+            animationPlayState: item.paused ? 'paused' : 'running',
           }}
+          onMouseEnter={() => handleMouseEnter(item.id)}
+          onMouseLeave={() => handleMouseLeave(item.id)}
+          onClick={(e) => handleClick(e, item.postId)}
+          title={item.text}
         >
           {item.text}
-        </span>
+        </button>
       ))}
     </div>
   );
@@ -340,6 +443,8 @@ const KlineChart = ({
   onBigOrderDetectClick,
   /** 主图弹幕内容（社区真实帖子） */
   barrageItems,
+  /** 点击弹幕跳转帖子详情 */
+  onBarragePostClick,
 }) => {
   const { t, i18n } = useTranslation();
   const chartRef = useRef(null);
@@ -1273,7 +1378,7 @@ const KlineChart = ({
             </div>
           ) : null}
           {!loading && Array.isArray(barrageItems) && barrageItems.length > 0 ? (
-            <ChartBarrageLayer items={barrageItems} />
+            <ChartBarrageLayer items={barrageItems} onPostClick={onBarragePostClick} />
           ) : null}
           <div
             ref={chartRef}

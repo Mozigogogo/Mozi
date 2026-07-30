@@ -262,7 +262,7 @@
   justify-content: center;
 }
 
-/* K 线主图顶部弹幕层（不挡交互） */
+/* K 线主图顶部弹幕层（条目可 hover/点击，层本身不挡图表） */
 .barrageLayer {
   position: absolute;
   top: 0;
@@ -285,11 +285,12 @@
   display: inline-flex;
   align-items: center;
   border-radius: 13PX;
-  background: rgba(255, 255, 255, 0.82);
   border: 1PX solid rgba(17, 183, 135, 0.28);
+  background: rgba(255, 255, 255, 0.82);
   color: #0f766e;
   font-size: 12PX;
   font-weight: 500;
+  font-family: inherit;
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -301,6 +302,25 @@
   animation-name: klineDanmaku;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
+  pointer-events: auto;
+  cursor: default;
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  text-align: left;
+}
+
+.barrageItemClickable {
+  cursor: pointer;
+}
+
+.barrageItemPaused,
+.barrageItem:hover {
+  animation-play-state: paused;
+  z-index: 6;
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(17, 183, 135, 0.55);
+  box-shadow: 0 2PX 8PX rgba(15, 23, 42, 0.12);
 }
 
 @keyframes klineDanmaku {

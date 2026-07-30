@@ -2653,6 +2653,15 @@ ${coinInfo.name || symbol} (${symbol})
           refreshing={isRefreshing}
           isPC={isPC}
           barrageItems={isPC && barrageVisible ? barragePosts : undefined}
+          onBarragePostClick={
+            isPC
+              ? (postId) => {
+                  const id = String(postId || '').trim();
+                  if (!id || id.startsWith('local-')) return;
+                  navigateToOrReload(`/pc/community?postId=${encodeURIComponent(id)}`);
+                }
+              : undefined
+          }
           onBigOrderDetectClick={
             isPC
               ? () =>
