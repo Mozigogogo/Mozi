@@ -231,6 +231,14 @@ export default function OrderBook({
     return Math.min(maxRows, limit);
   }, [maxRows, selectedOption]);
 
+  const mobileBookBodyMinHeight = useMemo(() => {
+    if (isPcLayout) return null;
+    // 移动端在父容器非固定高度时，独立滚动区会被压缩；给出可读的最小高度兜底
+    const rowsPerSide = Math.max(3, Math.min(visibleRowsCount, 5));
+    const midRowHeight = 42;
+    return rowsPerSide * 24 * 2 + midRowHeight;
+  }, [isPcLayout, visibleRowsCount]);
+
   useEffect(() => {
     if (!endTime) return;
 
@@ -418,7 +426,10 @@ export default function OrderBook({
         </div>
 
         {hasData ? (
-          <div className={styles.bookBody}>
+          <div
+            className={styles.bookBody}
+            style={mobileBookBodyMinHeight ? { minHeight: `${mobileBookBodyMinHeight}px` } : undefined}
+          >
             <div className={styles.asksScroll}>
               <div className={styles.asks}>
                 {askLevels.map((level, idx) =>
