@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useDisconnect } from 'wagmi';
+import { PcShellContext } from '../PcShellContext';
 import PCSearchResults from '../PCSearchResults';
 import PCFindContent from '../PCFindContent';
 import PCCommunityContent from '../PCCommunityContent';
@@ -967,6 +968,7 @@ export default function PCLayout({ children }) {
   }, [pathname, detailSymbol]);
 
   return (
+    <PcShellContext.Provider value={true}>
     <Layout className={styles.layout}>
       {/* 顶部 Header */}
       <Header className={styles.header}>
@@ -1659,5 +1661,6 @@ export default function PCLayout({ children }) {
         }}
       />
     </Layout>
+    </PcShellContext.Provider>
   );
 }

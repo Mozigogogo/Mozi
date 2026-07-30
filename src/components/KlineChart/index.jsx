@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createChart } from 'lightweight-charts';
 import { TabBar } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
@@ -190,13 +190,14 @@ const ChartBarrageLayer = ({ items }) => {
       const text = stripBarrageText(item?.content || item?.text || item?.title);
       if (!text || text.length < 2) return;
       const clipped = text.length > 36 ? `${text.slice(0, 36)}…` : text;
+      // 用 id+文案去重，允许不同帖子相同文案；同帖不重复
       const key = `${item?.id ?? ''}|${clipped}`;
-      if (seen.has(key) || seen.has(clipped)) return;
+      if (seen.has(key)) return;
       seen.add(key);
-      seen.add(clipped);
       out.push(clipped);
     });
-    return out.slice(0, 40);
+    // 保留最近 40 条（含刚发的），旧实现 slice(0,40) 会丢掉最新弹幕
+    return out.slice(-40);
   }, [items]);
 
   const poolRef = useRef(texts);
@@ -206,9 +207,70 @@ const ChartBarrageLayer = ({ items }) => {
   const laneBusyRef = useRef(Array(DANMAKU_LANES).fill(false));
   const shownRef = useRef(new Set());
   const cursorRef = useRef(0);
+  const spawnRef = useRef(() => {});
   const hasPool = texts.length > 0;
+  const textsSig = useMemo(() => texts.join('\u0001'), [texts]);
 
-  // 列表变空时重置；有数据时不因追加帖子而重启定时器（避免旧弹幕未清完又往同轨塞）
+  const spawnOnce = useCallback((preferNewestUnshown = false) => {
+    const pool = poolRef.current;
+    if (!pool.length) return false;
+
+    const lane = laneBusyRef.current.findIndex((busy) => !busy);
+    if (lane < 0) return false;
+
+    let pickIndex = -1;
+    if (preferNewestUnshown) {
+      for (let i = pool.length - 1; i >= 0; i -= 1) {
+        if (!shownRef.current.has(pool[i])) {
+          pickIndex = i;
+          break;
+        }
+      }
+    } else {
+      while (
+        cursorRef.current < pool.length &&
+        shownRef.current.has(pool[cursorRef.current])
+      ) {
+        cursorRef.current += 1;
+      }
+      if (cursorRef.current >= pool.length) {
+        cursorRef.current = 0;
+        while (
+          cursorRef.current < pool.length &&
+          shownRef.current.has(pool[cursorRef.current])
+        ) {
+          cursorRef.current += 1;
+        }
+      }
+      if (cursorRef.current < pool.length) pickIndex = cursorRef.current;
+    }
+
+    if (pickIndex < 0) return false;
+
+    const text = pool[pickIndex];
+    if (!preferNewestUnshown) cursorRef.current = pickIndex + 1;
+    shownRef.current.add(text);
+
+    const id = (seqRef.current += 1);
+    const duration = DANMAKU_DURATION_S;
+    laneBusyRef.current[lane] = true;
+
+    setFlying((prev) => [...prev.slice(-12), { id, text, lane, duration }]);
+    window.setTimeout(() => {
+      laneBusyRef.current[lane] = false;
+      setFlying((prev) => prev.filter((x) => x.id !== id));
+      // 轨道空出后若仍有未播（如刚发送时轨满），立刻补播最新一条
+      const pool = poolRef.current;
+      if (pool.some((t) => !shownRef.current.has(t))) {
+        spawnRef.current?.(true);
+      }
+    }, duration * 1000 + 80);
+    return true;
+  }, []);
+
+  spawnRef.current = spawnOnce;
+
+  // 列表变空时重置；有数据时开定时器，不因追加而整表重启（避免清掉飞行中的弹幕）
   useEffect(() => {
     if (!hasPool) {
       shownRef.current = new Set();
@@ -219,59 +281,25 @@ const ChartBarrageLayer = ({ items }) => {
     }
 
     let cancelled = false;
-
-    const spawn = () => {
-      if (cancelled) return;
-      const pool = poolRef.current;
-      if (!pool.length) return;
-
-      const lane = laneBusyRef.current.findIndex((busy) => !busy);
-      if (lane < 0) return;
-
-      while (
-        cursorRef.current < pool.length &&
-        shownRef.current.has(pool[cursorRef.current])
-      ) {
-        cursorRef.current += 1;
-      }
-      if (cursorRef.current >= pool.length) {
-        // 可能前面有未播的被插到列表前面，回扫一次
-        cursorRef.current = 0;
-        while (
-          cursorRef.current < pool.length &&
-          shownRef.current.has(pool[cursorRef.current])
-        ) {
-          cursorRef.current += 1;
-        }
-        if (cursorRef.current >= pool.length) return;
-      }
-
-      const text = pool[cursorRef.current];
-      cursorRef.current += 1;
-      shownRef.current.add(text);
-
-      const id = (seqRef.current += 1);
-      const duration = DANMAKU_DURATION_S;
-      laneBusyRef.current[lane] = true;
-
-      setFlying((prev) => [...prev.slice(-12), { id, text, lane, duration }]);
-      window.setTimeout(() => {
-        laneBusyRef.current[lane] = false;
-        if (!cancelled) {
-          setFlying((prev) => prev.filter((x) => x.id !== id));
-        }
-      }, duration * 1000 + 80);
+    const tick = () => {
+      if (!cancelled) spawnRef.current?.(false);
     };
-
-    spawn();
-    const timer = window.setInterval(spawn, DANMAKU_SPAWN_MS);
+    tick();
+    const timer = window.setInterval(tick, DANMAKU_SPAWN_MS);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
-      laneBusyRef.current = Array(DANMAKU_LANES).fill(false);
-      setFlying([]);
     };
   }, [hasPool]);
+
+  // 有新增未播文案时立刻补一条（优先最新），解决「发完一直不飘」
+  useEffect(() => {
+    if (!hasPool) return;
+    const pool = poolRef.current;
+    const hasUnshown = pool.some((t) => !shownRef.current.has(t));
+    if (!hasUnshown) return;
+    spawnRef.current?.(true);
+  }, [hasPool, textsSig]);
 
   if (!texts.length) return null;
 

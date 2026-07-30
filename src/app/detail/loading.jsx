@@ -2,6 +2,8 @@
 
 import { useSyncExternalStore } from 'react';
 import DetailPageLoading from '@/components/DetailPageLoading';
+import { usePcShell } from '@/components/PcShellContext';
+import { peekDetailSurfaceBootDone } from '@/utils/detailSurfaceBoot';
 
 const PC_MEDIA_QUERY = '(min-width: 1024px)';
 
@@ -20,9 +22,20 @@ function getServerSnapshot() {
   return false;
 }
 
-/** 币种详情路由 loading：仅移动端展示全屏骨架，PC 交由页面内局部 loading */
+/**
+ * 币种详情路由 loading：
+ * - 移动端：全屏骨架
+ * - PC 首次：内容区骨架（防空窗）
+ * - PC 二次：静默白卡片占位（不闪骨架）
+ */
 export default function DetailLoading() {
-  const isPC = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  if (isPC) return null;
+  const inPcShell = usePcShell();
+  const mediaIsPC = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const isPC = inPcShell || mediaIsPC;
+
+  if (isPC) {
+    const quiet = peekDetailSurfaceBootDone();
+    return <DetailPageLoading hideNavSkeleton inContent pc quiet={quiet} />;
+  }
   return <DetailPageLoading />;
 }

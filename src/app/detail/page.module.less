@@ -26,8 +26,33 @@
   background: #efefef;
 }
 
+/* 与 pcContentLayout padding / 左栏圆角对齐，四周留出边距，不铺满整屏 */
 .surfaceBootOverlayPc {
+  inset: 12PX;
   background: #fff;
+  border-radius: 8PX;
+  overflow: hidden;
+}
+
+/*
+ * PC 宽屏：不依赖 isPC 状态（水合前可能仍为 false），用媒体查询立刻铺满内容区并带边距，
+ * 避免先露出空白再挂上遮罩。
+ */
+@media (min-width: 1024px) {
+  .surfaceBootWrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .surfaceBootOverlay {
+    inset: 12PX;
+    background: #fff;
+    border-radius: 8PX;
+    overflow: hidden;
+  }
 }
 
 /* 填满 contentMainDetail，否则内部 absolute 的 pcContentLayout 高度为 0 */

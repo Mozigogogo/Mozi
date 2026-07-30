@@ -31,3 +31,34 @@
   min-height: 100%;
   box-sizing: border-box;
 }
+
+/* PC：铺满 contentMainDetail，内卡片与 pcContentLayout padding / 圆角对齐 */
+.pcBootWrap {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.pcBootCard {
+  position: absolute;
+  /* 大写 PX：避免被 px-to-viewport 换成 vw */
+  inset: 12PX;
+  background: #fff;
+  border-radius: 8PX;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.pcBootCardQuiet {
+  /* 与正式内容白卡片同色同形，二次进入不播骨架，减少闪烁感 */
+  box-shadow: none;
+}
+
+.pageSkeletonPc {
+  background-color: #fff;
+  padding-top: 16PX;
+}

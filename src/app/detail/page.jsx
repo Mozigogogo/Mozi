@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Toast, Button, TabBar } from 'antd-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,7 +31,12 @@ import { safeBack } from '@/utils/navigation';
 import { markTgAlertDeeplinkHandledBySymbol } from '@/utils/tgAlertDeeplink';
 import { hideDetailNavigationShell } from '@/utils/clientNavigation';
 import { notifyRouteBootReady } from '@/utils/routeBootLoading';
+import {
+  markDetailSurfaceBootDone,
+  peekDetailSurfaceBootDone,
+} from '@/utils/detailSurfaceBoot';
 import DetailPageLoading from '@/components/DetailPageLoading';
+import { usePcShell } from '@/components/PcShellContext';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
@@ -52,6 +57,23 @@ import {
   createKlineChannel,
 } from '../../utils/websocketProtocol';
 import styles from './page.module.less';
+
+const PC_MEDIA_QUERY = '(min-width: 1024px)';
+
+function subscribePcMedia(onStoreChange) {
+  const mediaQuery = window.matchMedia(PC_MEDIA_QUERY);
+  mediaQuery.addEventListener('change', onStoreChange);
+  return () => mediaQuery.removeEventListener('change', onStoreChange);
+}
+
+function getPcMediaSnapshot() {
+  return window.matchMedia(PC_MEDIA_QUERY).matches;
+}
+
+/** SSR / 水合首帧与 PcLayoutGate 一致；实际 PC 以 PcShell 为准，避免软导航 false→true 闪布局 */
+function getPcMediaServerSnapshot() {
+  return false;
+}
 
 /** 去掉价格小数末尾无效 0，再按套利专区规则加 $ */
 function formatMarketLastPrice(raw) {
@@ -105,18 +127,14 @@ export default function DetailPage() {
   };
   // 高度调试：在 URL 加 ?debugHeight=1 时启用，避免污染日志
   const debugHeight = searchParams.get('debugHeight') === '1';
-  const [isPC, setIsPC] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth >= 1024 : false
+  const inPcShell = usePcShell();
+  const mediaIsPC = useSyncExternalStore(
+    subscribePcMedia,
+    getPcMediaSnapshot,
+    getPcMediaServerSnapshot
   );
-
-  useEffect(() => {
-    const checkDevice = () => {
-      setIsPC(window.innerWidth >= 1024);
-    };
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
-  }, []);
+  // 已在 PCLayout 壳内时首帧即 PC，避免二次进入 media 水合 false→true 整页闪切
+  const isPC = inPcShell || mediaIsPC;
 
   // PC 详情：进入时复位滚动，避免底部留白需手动滚回
   useEffect(() => {
@@ -344,21 +362,6 @@ export default function DetailPage() {
 
   // 仅会话内「首次」进入详情页需要内容区遮罩，避免样式 chunk 未稳定时露出乱布局；
   // 之后切币种 / 再次进入详情不再遮罩。
-  const DETAIL_SURFACE_BOOT_KEY = 'mozi_detail_surface_boot_done_v1';
-  const peekDetailSurfaceBootDone = () => {
-    if (typeof window === 'undefined') return false;
-    try {
-      return sessionStorage.getItem(DETAIL_SURFACE_BOOT_KEY) === '1';
-    } catch {
-      return false;
-    }
-  };
-  const markDetailSurfaceBootDone = () => {
-    try {
-      sessionStorage.setItem(DETAIL_SURFACE_BOOT_KEY, '1');
-    } catch (_) {}
-  };
-
   const needSurfaceBootRef = useRef(!peekDetailSurfaceBootDone());
   const [surfaceReady, setSurfaceReady] = useState(() => !needSurfaceBootRef.current);
 
@@ -2864,14 +2867,42 @@ ${coinInfo.name || symbol} (${symbol})
           } catch (taskError) {
             console.error('发帖任务上报失败:', taskError);
           }
+          const me = (() => {
+            if (typeof window === 'undefined') return { nickName: '', avatar: '' };
+            try {
+              const rawData = localStorage.getItem('userDataInfo');
+              if (rawData) {
+                const parsed = JSON.parse(rawData);
+                const ui = parsed?.userInfo || parsed;
+                const nickName = ui?.nickName || ui?.nickname || ui?.username || '';
+                const avatar = ui?.avatar || ui?.photoUrl || '';
+                if (nickName || avatar) return { nickName, avatar };
+              }
+              const raw = localStorage.getItem('userInfo');
+              if (raw) {
+                const ui = JSON.parse(raw);
+                return {
+                  nickName: ui?.nickName || ui?.nickname || ui?.username || '',
+                  avatar: ui?.avatar || ui?.photoUrl || '',
+                };
+              }
+            } catch (_) {}
+            return { nickName: '', avatar: '' };
+          })();
+          const apiUser = response?.data || {};
           const optimistic = {
-            id: response?.data?.id || `local-${Date.now()}`,
+            id: apiUser?.id || `local-${Date.now()}`,
             content: trimmed,
             title: `关于 ${sym} 的讨论`,
             category: '不懂就问',
             tags: [sym],
-            createdAt: new Date().toISOString(),
-            nickName: '我',
+            createdAt: apiUser?.createdAt || new Date().toISOString(),
+            nickName:
+              apiUser?.nickName ||
+              apiUser?.nickname ||
+              me.nickName ||
+              t('points.me', { defaultValue: '我' }),
+            avatar: apiUser?.avatar || me.avatar || '',
             userType: 'real',
           };
           // 社区与弹幕各自追加，互不依赖对方列表
