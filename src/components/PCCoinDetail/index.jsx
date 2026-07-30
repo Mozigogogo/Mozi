@@ -10,10 +10,10 @@ import styles from './index.module.less';
 const ICON_FAVORITE_ACTIVE = '/icons/new_detail/like_actived.svg';
 const ICON_FAVORITE_INACTIVE = '/icons/new_detail/like_no_actived.svg';
 
-const LEFT_PANE_DEFAULT = 300;
+const LEFT_PANE_DEFAULT = 240;
 const RIGHT_PANE_DEFAULT = 300;
-const LEFT_PANE_MIN = 200;
-const LEFT_PANE_MAX = 480;
+const LEFT_PANE_MIN = 160;
+const LEFT_PANE_MAX = 340;
 const RIGHT_PANE_MIN = 240;
 const RIGHT_PANE_MAX = 460;
 const CENTER_PANE_MIN = 360;

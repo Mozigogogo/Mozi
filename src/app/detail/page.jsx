@@ -414,7 +414,7 @@ export default function DetailPage() {
       aria-busy="true"
       aria-live="polite"
     >
-      <DetailPageLoading hideNavSkeleton inContent />
+      <DetailPageLoading hideNavSkeleton inContent pc={isPC} />
     </div>
   ) : null;
 
