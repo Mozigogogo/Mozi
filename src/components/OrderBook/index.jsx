@@ -418,9 +418,13 @@ export default function OrderBook({
         </div>
 
         {hasData ? (
-          <div className={styles.bookBodyScroll}>
-            <div className={styles.asks}>
-              {askLevels.map((level, idx) => renderLevelRow(level, 'ask', `ask-${idx}-${level.price}`, idx * 2 + 1))}
+          <div className={styles.bookBody}>
+            <div className={styles.asksScroll}>
+              <div className={styles.asks}>
+                {askLevels.map((level, idx) =>
+                  renderLevelRow(level, 'ask', `ask-${idx}-${level.price}`, idx * 2 + 1)
+                )}
+              </div>
             </div>
 
             <div className={styles.midRow}>
@@ -435,8 +439,12 @@ export default function OrderBook({
               ) : null}
             </div>
 
-            <div className={styles.bids}>
-              {bidLevels.map((level, idx) => renderLevelRow(level, 'bid', `bid-${idx}-${level.price}`, idx * 2 + 2))}
+            <div className={styles.bidsScroll}>
+              <div className={styles.bids}>
+                {bidLevels.map((level, idx) =>
+                  renderLevelRow(level, 'bid', `bid-${idx}-${level.price}`, idx * 2 + 2)
+                )}
+              </div>
             </div>
           </div>
         ) : (

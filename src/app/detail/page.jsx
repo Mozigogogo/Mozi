@@ -329,6 +329,8 @@ export default function DetailPage() {
   const [barrageVisible, setBarrageVisible] = useState(true);
   const [pcAiChatOpen, setPcAiChatOpen] = useState(false);
   const [pcAiAutoSend, setPcAiAutoSend] = useState({ text: '', token: '' });
+  const [pcOrderBookHeightPx, setPcOrderBookHeightPx] = useState(null);
+  const [pcOrderCommunityDragging, setPcOrderCommunityDragging] = useState(false);
   /** PC：右侧工作区已并入图表右侧栏（大单侦测 + 社区） */
   const needLoop = useRef(true);
   const chartRef = useRef(null);
@@ -337,6 +339,7 @@ export default function DetailPage() {
   const mobileRootRef = useRef(null);
   const pcContentLayoutRef = useRef(null);
   const pcOrderBookSectionRef = useRef(null);
+  const pcOrderCommunityColRef = useRef(null);
   const pcMarketHeadScrollRef = useRef(null);
   const pcMarketBodyScrollRef = useRef(null);
   const pcMarketScrollSyncingRef = useRef(false);
@@ -2675,6 +2678,42 @@ ${coinInfo.name || symbol} (${symbol})
       </div>
     );
   };
+
+  const handlePcOrderCommunityResizeStart = useCallback((event) => {
+    if (!isPC) return;
+    if (event.button != null && event.button !== 0) return;
+    event.preventDefault();
+
+    const container = pcOrderCommunityColRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const startY = event.clientY;
+    const startHeight = pcOrderBookSectionRef.current?.getBoundingClientRect()?.height ?? rect.height / 2;
+    const minHeight = 140;
+    const maxHeight = Math.max(minHeight, rect.height - 140);
+
+    const onMove = (moveEvent) => {
+      const deltaY = moveEvent.clientY - startY;
+      const next = Math.min(maxHeight, Math.max(minHeight, startHeight + deltaY));
+      setPcOrderBookHeightPx(next);
+    };
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      setPcOrderCommunityDragging(false);
+    };
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+    setPcOrderCommunityDragging(true);
+  }, [isPC]);
   
   // 渲染市场数据
   const renderMarket = () => {
@@ -3174,11 +3213,28 @@ ${coinInfo.name || symbol} (${symbol})
             >
               {renderKline()}
               {showOrderBook ? (
-                <div className={styles.pcOrderCommunityCol}>
-                  <div ref={pcOrderBookSectionRef} className={`${styles.orderBookSection} ${styles.pcOrderHalf}`}>
+                <div
+                  ref={pcOrderCommunityColRef}
+                  className={`${styles.pcOrderCommunityCol}${pcOrderCommunityDragging ? ` ${styles.pcOrderCommunityColDragging}` : ''}`}
+                >
+                  <div
+                    ref={pcOrderBookSectionRef}
+                    className={`${styles.orderBookSection} ${styles.pcOrderHalf}`}
+                    style={pcOrderBookHeightPx != null ? { flexBasis: `${pcOrderBookHeightPx}px`, height: `${pcOrderBookHeightPx}px`, maxHeight: `${pcOrderBookHeightPx}px` } : undefined}
+                  >
                     {renderOrderBook()}
                   </div>
-                  <div className={styles.pcCommunityHalf}>
+                  <div
+                    className={`${styles.pcOrderCommunityResizer}${pcOrderCommunityDragging ? ` ${styles.pcOrderCommunityResizerActive}` : ''}`}
+                    role="separator"
+                    aria-orientation="horizontal"
+                    aria-label="调整大单侦测与社区高度"
+                    onPointerDown={handlePcOrderCommunityResizeStart}
+                  />
+                  <div
+                    className={styles.pcCommunityHalf}
+                    style={pcOrderBookHeightPx != null ? { flex: '1 1 auto', height: 'auto', maxHeight: 'none' } : undefined}
+                  >
                     {renderPcCommunityPanel()}
                   </div>
                 </div>

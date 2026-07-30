@@ -282,9 +282,17 @@
   font-weight: 500;
 }
 
-/* 盘口内容区：超出高度时内部滚动，表头固定 */
-.bookBodyScroll {
+/* 盘口主体：上卖盘滚动 + 中间价固定 + 下买盘滚动 */
+.bookBody {
   flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.asksScroll,
+.bidsScroll {
+  flex: 1 1 0;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
@@ -293,16 +301,19 @@
   scrollbar-gutter: stable;
 }
 
-.bookBodyScroll::-webkit-scrollbar {
+.asksScroll::-webkit-scrollbar,
+.bidsScroll::-webkit-scrollbar {
   width: 6px;
 }
 
-.bookBodyScroll::-webkit-scrollbar-thumb {
+.asksScroll::-webkit-scrollbar-thumb,
+.bidsScroll::-webkit-scrollbar-thumb {
   background: rgba(156, 163, 175, 0.7);
   border-radius: 3px;
 }
 
-.bookBodyScroll::-webkit-scrollbar-track {
+.asksScroll::-webkit-scrollbar-track,
+.bidsScroll::-webkit-scrollbar-track {
   background: transparent;
 }
 

@@ -566,6 +566,10 @@
   background: #fff;
 }
 
+.pcOrderCommunityColDragging {
+  cursor: row-resize;
+}
+
 .pcOrderHalf {
   flex: 0 0 50%;
   height: 50%;
@@ -574,7 +578,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border-bottom: 1PX solid #e5e7eb;
+  border-bottom: none;
 }
 
 .pcCommunityHalf,
@@ -587,6 +591,41 @@
   display: flex;
   flex-direction: column;
   background: #fff;
+}
+
+.pcOrderCommunityResizer {
+  flex: 0 0 5PX;
+  height: 5PX;
+  margin: -2PX 0;
+  position: relative;
+  z-index: 3;
+  cursor: row-resize;
+  touch-action: none;
+  background: transparent;
+}
+
+.pcOrderCommunityResizer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1PX;
+  transform: translateY(-50%);
+  background: #e5e7eb;
+  transition: background 0.15s ease, height 0.15s ease;
+}
+
+.pcOrderCommunityResizer:hover::before,
+.pcOrderCommunityResizerActive::before {
+  height: 2PX;
+  background: #11b787;
+}
+
+.pcOrderCommunityResizer::after {
+  content: '';
+  position: absolute;
+  inset: -4PX 0;
 }
 
 .pcCommunityHalfFull {
