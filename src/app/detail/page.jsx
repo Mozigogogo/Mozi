@@ -35,6 +35,8 @@ import { notifyRouteBootReady } from '@/utils/routeBootLoading';
 import {
   markDetailSurfaceBootDone,
   peekDetailSurfaceBootDone,
+  waitAnimationFrames,
+  waitForDetailSurfaceSettled,
 } from '@/utils/detailSurfaceBoot';
 import DetailPageLoading from '@/components/DetailPageLoading';
 import { usePcShell } from '@/components/PcShellContext';
@@ -332,6 +334,24 @@ export default function DetailPage() {
   const [pcAiAutoSend, setPcAiAutoSend] = useState({ text: '', token: '' });
   const [pcOrderBookHeightPx, setPcOrderBookHeightPx] = useState(null);
   const [pcOrderCommunityDragging, setPcOrderCommunityDragging] = useState(false);
+
+  // 会话内若已拖到过矮，回弹到新的上下最小高度
+  useEffect(() => {
+    if (!isPC || pcOrderBookHeightPx == null) return undefined;
+    const ORDER_HALF_MIN = 240;
+    const COMMUNITY_HALF_MIN = 200;
+    const RESIZER_H = 5;
+    const containerH =
+      pcOrderCommunityColRef.current?.getBoundingClientRect()?.height ?? 0;
+    const maxHeight =
+      containerH > 0
+        ? Math.max(ORDER_HALF_MIN, containerH - COMMUNITY_HALF_MIN - RESIZER_H)
+        : Number.POSITIVE_INFINITY;
+    const next = Math.min(maxHeight, Math.max(ORDER_HALF_MIN, pcOrderBookHeightPx));
+    if (next !== pcOrderBookHeightPx) setPcOrderBookHeightPx(next);
+    return undefined;
+  }, [isPC, pcOrderBookHeightPx]);
+
   /** PC：右侧工作区已并入图表右侧栏（大单侦测 + 社区） */
   const needLoop = useRef(true);
   const chartRef = useRef(null);
@@ -368,55 +388,92 @@ export default function DetailPage() {
   // 之后切币种 / 再次进入详情不再遮罩。
   const needSurfaceBootRef = useRef(!peekDetailSurfaceBootDone());
   const [surfaceReady, setSurfaceReady] = useState(() => !needSurfaceBootRef.current);
+  const [bootOverlayVisible, setBootOverlayVisible] = useState(() => needSurfaceBootRef.current);
+  const [bootOverlayLeaving, setBootOverlayLeaving] = useState(false);
 
   useEffect(() => {
     if (!needSurfaceBootRef.current) {
       setSurfaceReady(true);
+      setBootOverlayVisible(false);
+      setBootOverlayLeaving(false);
       hideDetailNavigationShell();
       notifyRouteBootReady();
       return undefined;
     }
     if (!symbol) {
       setSurfaceReady(true);
+      setBootOverlayVisible(false);
+      setBootOverlayLeaving(false);
       needSurfaceBootRef.current = false;
       markDetailSurfaceBootDone();
       hideDetailNavigationShell();
       notifyRouteBootReady();
       return undefined;
     }
-    // 首屏 coinInfo 尚未回来时继续遮罩
+    // 首屏 coinInfo 尚未回来时继续遮罩（DOM 也还没准备好）
     if (loading && isInitialLoad) return undefined;
 
-    let cancelled = false;
-    let raf1 = 0;
-    let raf2 = 0;
-    raf1 = window.requestAnimationFrame(() => {
-      raf2 = window.requestAnimationFrame(() => {
-        if (cancelled) return;
-        setSurfaceReady(true);
-        needSurfaceBootRef.current = false;
-        markDetailSurfaceBootDone();
-        hideDetailNavigationShell();
-        notifyRouteBootReady();
+    const ac = new AbortController();
+    let leaveTimer = 0;
+
+    const finishBoot = () => {
+      if (ac.signal.aborted) return;
+      needSurfaceBootRef.current = false;
+      markDetailSurfaceBootDone();
+      hideDetailNavigationShell();
+      notifyRouteBootReady();
+      setBootOverlayVisible(false);
+      setBootOverlayLeaving(false);
+    };
+
+    (async () => {
+      const getRootEl = () =>
+        isPC ? pcContentLayoutRef.current : mobileRootRef.current;
+
+      // 1) 等真实 DOM 布局/字体落稳（此时内容仍 visibility:hidden，遮罩盖着）
+      await waitForDetailSurfaceSettled(getRootEl, {
+        isPC,
+        signal: ac.signal,
       });
-    });
+      if (ac.signal.aborted) return;
+
+      // 2) 先露出内容但仍盖着遮罩，再二次确认布局，避免揭盖瞬间跳动
+      setSurfaceReady(true);
+      await waitAnimationFrames(2);
+      if (ac.signal.aborted) return;
+
+      await waitForDetailSurfaceSettled(getRootEl, {
+        isPC,
+        timeoutMs: 900,
+        stableFrames: 2,
+        skipFonts: true,
+        signal: ac.signal,
+      });
+      if (ac.signal.aborted) return;
+
+      // 3) 淡出遮罩后再卸掉，减少硬切闪烁
+      setBootOverlayLeaving(true);
+      leaveTimer = window.setTimeout(finishBoot, 180);
+    })();
 
     return () => {
-      cancelled = true;
-      window.cancelAnimationFrame(raf1);
-      window.cancelAnimationFrame(raf2);
+      ac.abort();
+      if (leaveTimer) window.clearTimeout(leaveTimer);
     };
-  }, [symbol, loading, isInitialLoad]);
+  }, [symbol, loading, isInitialLoad, isPC]);
 
-  const surfaceBootOverlay = needSurfaceBootRef.current && !surfaceReady ? (
-    <div
-      className={`${styles.surfaceBootOverlay}${isPC ? ` ${styles.surfaceBootOverlayPc}` : ''}`}
-      aria-busy="true"
-      aria-live="polite"
-    >
-      <DetailPageLoading hideNavSkeleton inContent pc={isPC} />
-    </div>
-  ) : null;
+  const surfaceBootOverlay =
+    bootOverlayVisible || needSurfaceBootRef.current ? (
+      <div
+        className={`${styles.surfaceBootOverlay}${isPC ? ` ${styles.surfaceBootOverlayPc}` : ''}${
+          bootOverlayLeaving ? ` ${styles.surfaceBootOverlayLeaving}` : ''
+        }`}
+        aria-busy={!surfaceReady}
+        aria-live="polite"
+      >
+        <DetailPageLoading hideNavSkeleton inContent pc={isPC} quiet={bootOverlayLeaving} />
+      </div>
+    ) : null;
 
   const [orderBook, setOrderBook] = useState({
     bids: [],
@@ -1228,6 +1285,7 @@ export default function DetailPage() {
   }, []);
 
   // PC 右下角社区：按 symbol 拉取（不传 userType，与弹幕互不影响）
+  // 首次 surface boot 完成后再拉，减轻首屏 DOM/网络竞争
   useEffect(() => {
     let alive = true;
     rightCommunityMountedRef.current = true;
@@ -1235,6 +1293,12 @@ export default function DetailPage() {
     setRightCommunityPosts([]);
     setRightCommunityPage(1);
     setRightCommunityHasMore(true);
+    if (!isPC || !surfaceReady) {
+      return () => {
+        alive = false;
+        rightCommunityMountedRef.current = false;
+      };
+    }
     const PAGE_SIZE = 10;
 
     const normalizeList = (res) => {
@@ -1288,13 +1352,14 @@ export default function DetailPage() {
       alive = false;
       rightCommunityMountedRef.current = false;
     };
-  }, [symbol, isPC]);
+  }, [symbol, isPC, surfaceReady]);
 
   // PC K 线弹幕：单独拉真实用户帖（userType=real），不驱动右下角社区
+  // 等 surface 揭盖后再拉，避免首屏额外请求抢主线程
   useEffect(() => {
     let alive = true;
     setBarragePosts([]);
-    if (!isPC) return undefined;
+    if (!isPC || !surfaceReady) return undefined;
 
     const normalizeList = (res) => {
       const listRaw = res?.data;
@@ -1332,7 +1397,7 @@ export default function DetailPage() {
     return () => {
       alive = false;
     };
-  }, [symbol, isPC]);
+  }, [symbol, isPC, surfaceReady]);
 
   const handlePcCommunityScroll = useCallback(
     (e) => {
@@ -2690,8 +2755,15 @@ ${coinInfo.name || symbol} (${symbol})
     const rect = container.getBoundingClientRect();
     const startY = event.clientY;
     const startHeight = pcOrderBookSectionRef.current?.getBoundingClientRect()?.height ?? rect.height / 2;
-    const minHeight = 140;
-    const maxHeight = Math.max(minHeight, rect.height - 140);
+    // 抬高上下最小高度：避免大单侦测/社区被拖到几乎不可读
+    const ORDER_HALF_MIN = 240;
+    const COMMUNITY_HALF_MIN = 200;
+    const RESIZER_H = 5;
+    const minHeight = ORDER_HALF_MIN;
+    const maxHeight = Math.max(
+      minHeight,
+      rect.height - COMMUNITY_HALF_MIN - RESIZER_H
+    );
 
     const onMove = (moveEvent) => {
       const deltaY = moveEvent.clientY - startY;
@@ -3149,7 +3221,9 @@ ${coinInfo.name || symbol} (${symbol})
         {surfaceBootOverlay}
         <div
           ref={pcContentLayoutRef}
-          className={`${styles.pcContentLayout} ${styles.pcContentLayoutFull}${surfaceReady ? '' : ` ${styles.surfaceBootHidden}`}`}
+          className={`${styles.pcContentLayout} ${styles.pcContentLayoutFull}${
+            surfaceReady ? ` ${styles.surfaceBootContent}` : ` ${styles.surfaceBootHidden}`
+          }`}
         >
           <aside className={styles.pcContentColLeft}>
             <PCCoinDetail
@@ -3255,10 +3329,12 @@ ${coinInfo.name || symbol} (${symbol})
         </div>
       </div>
         {oneClickAlarmModalEl}
-        <FloatingRobotPc
-          message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
-          onClick={() => setPcAiChatOpen(true)}
-        />
+        {surfaceReady ? (
+          <FloatingRobotPc
+            message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
+            onClick={() => setPcAiChatOpen(true)}
+          />
+        ) : null}
         <AiChatModalPc
           open={pcAiChatOpen}
           onClose={() => setPcAiChatOpen(false)}
@@ -3299,7 +3375,9 @@ ${coinInfo.name || symbol} (${symbol})
         {surfaceBootOverlay}
         <div
           ref={mobileRootRef}
-          className={`${styles.container}${surfaceReady ? '' : ` ${styles.surfaceBootHidden}`}`}
+          className={`${styles.container}${
+            surfaceReady ? ` ${styles.surfaceBootContent}` : ` ${styles.surfaceBootHidden}`
+          }`}
         >
         {renderCoinInfo()}
 

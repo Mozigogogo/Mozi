@@ -10,9 +10,9 @@ import styles from './index.module.less';
 const ICON_FAVORITE_ACTIVE = '/icons/new_detail/like_actived.svg';
 const ICON_FAVORITE_INACTIVE = '/icons/new_detail/like_no_actived.svg';
 
-const LEFT_PANE_DEFAULT = 240;
+const LEFT_PANE_DEFAULT = 260;
 const RIGHT_PANE_DEFAULT = 300;
-const LEFT_PANE_MIN = 160;
+const LEFT_PANE_MIN = 260;
 const LEFT_PANE_MAX = 340;
 const RIGHT_PANE_MIN = 240;
 const RIGHT_PANE_MAX = 460;
@@ -82,6 +82,16 @@ export default function PCCoinDetail({
     try {
       localStorage.removeItem('mozi_pc_coin_detail_pane_widths_v1');
     } catch (_) {}
+  }, []);
+
+  // 防止会话内已拖到过窄宽度，低于新的最小值时自动回弹
+  useEffect(() => {
+    setPaneWidths((prev) => {
+      const left = clamp(prev.left, LEFT_PANE_MIN, LEFT_PANE_MAX);
+      const right = clamp(prev.right, RIGHT_PANE_MIN, RIGHT_PANE_MAX);
+      if (left === prev.left && right === prev.right) return prev;
+      return { ...prev, left, right };
+    });
   }, []);
 
   const setBarrage = useCallback(
