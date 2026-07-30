@@ -37,6 +37,10 @@ export default function PCCoinDetail({
   /** 图表左侧栏内容（如投资回报率） */
   sideLeft = null,
   showBarrage = true,
+  /** 是否显示 K 线弹幕（可受控） */
+  barrageVisible: barrageVisibleControlled,
+  defaultBarrageVisible = true,
+  onBarrageVisibleChange,
   barrageValue: barrageValueControlled,
   defaultBarrageValue = '',
   onBarrageChange,
@@ -47,6 +51,11 @@ export default function PCCoinDetail({
   const [barrageInner, setBarrageInner] = useState(defaultBarrageValue);
   const barrageValue =
     barrageValueControlled !== undefined ? barrageValueControlled : barrageInner;
+  const [barrageVisibleInner, setBarrageVisibleInner] = useState(defaultBarrageVisible);
+  const barrageVisible =
+    barrageVisibleControlled !== undefined
+      ? barrageVisibleControlled
+      : barrageVisibleInner;
 
   const setBarrage = useCallback(
     (v) => {
@@ -54,6 +63,14 @@ export default function PCCoinDetail({
       if (barrageValueControlled === undefined) setBarrageInner(v);
     },
     [onBarrageChange, barrageValueControlled]
+  );
+
+  const setBarrageVisible = useCallback(
+    (next) => {
+      if (onBarrageVisibleChange) onBarrageVisibleChange(next);
+      if (barrageVisibleControlled === undefined) setBarrageVisibleInner(next);
+    },
+    [onBarrageVisibleChange, barrageVisibleControlled]
   );
 
   const handleSend = useCallback(async () => {
@@ -79,30 +96,87 @@ export default function PCCoinDetail({
 
   const barrageBarEl =
     showBarrage ? (
-      <div className={styles.barrageBar}>
-        <img
-          src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/comment.svg"
-          alt=""
-          className={styles.barrageIcon}
-        />
-        <input
-          type="text"
-          className={styles.barrageInput}
-          placeholder={t('pcCoinDetail.barragePlaceholder')}
-          value={barrageValue}
-          onChange={(e) => setBarrage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleSend();
-          }}
-        />
+      <div className={styles.barrageRow}>
         <button
           type="button"
-          className={styles.barrageSend}
-          onClick={handleSend}
-          disabled={!onBarrageSend || !(barrageValue || '').trim()}
+          className={`${styles.barrageToggle} ${
+            barrageVisible ? styles.barrageToggleOn : styles.barrageToggleOff
+          }`}
+          onClick={() => setBarrageVisible(!barrageVisible)}
+          aria-pressed={barrageVisible}
+          title={
+            barrageVisible
+              ? t('pcCoinDetail.barrageOn')
+              : t('pcCoinDetail.barrageOff')
+          }
         >
-          {t('pcCoinDetail.send')}
+          <svg
+            className={styles.barrageToggleIcon}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden
+          >
+            <rect
+              x="2.5"
+              y="5"
+              width="15"
+              height="11.5"
+              rx="1.6"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <text
+              x="10"
+              y="13.6"
+              textAnchor="middle"
+              fill="currentColor"
+              fontSize="8"
+              fontWeight="700"
+              fontFamily="system-ui, -apple-system, sans-serif"
+            >
+              弹
+            </text>
+            {!barrageVisible ? (
+              <g>
+                <circle
+                  cx="17.5"
+                  cy="16.5"
+                  r="5.2"
+                  fill="#fff"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M14.2 19.8L20.8 13.2"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </g>
+            ) : null}
+          </svg>
         </button>
+        <div className={styles.barrageBar}>
+          <input
+            type="text"
+            className={styles.barrageInput}
+            placeholder={t('pcCoinDetail.barragePlaceholder')}
+            value={barrageValue}
+            onChange={(e) => setBarrage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSend();
+            }}
+          />
+          <button
+            type="button"
+            className={styles.barrageSend}
+            onClick={handleSend}
+            disabled={!onBarrageSend || !(barrageValue || '').trim()}
+          >
+            {t('pcCoinDetail.send')}
+          </button>
+        </div>
       </div>
     ) : null;
 

@@ -4,10 +4,10 @@ import React from 'react';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import styles from './index.module.less';
 
-const HighlightArea = ({ title = '', value, variant = 'default' }) => {
+const HighlightArea = ({ title = '', value, variant = 'default', maxDecimals = 2 }) => {
   const { formatValue } = useFormatNumber();
   
-  const formattedValue = formatValue(value);
+  const formattedValue = formatValue(value, maxDecimals);
   const isNegative = String(value).includes('-');
   const colorClass = isNegative ? styles.red : styles.green;
   

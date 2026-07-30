@@ -1433,6 +1433,8 @@
   },
   "pcCoinDetail": {
     "tradingRadar": "Trade radar",
+    "barrageOn": "Hide danmaku",
+    "barrageOff": "Show danmaku",
     "barragePlaceholder": "Spot a move? Drop a quick comment...",
     "send": "Send"
   },

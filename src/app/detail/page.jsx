@@ -25,6 +25,7 @@ import AiChatModalPc from '@/components/AiChatModalPc';
 import { request } from '@/utils/request';
 import { Interface, LOOPTIME, WS_URL } from '@/utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '@/utils/core';
+import { formatMoneyCompact } from '@/utils/formatMoney';
 import { navigateToOrReload } from '@/utils/clientNavigation';
 import { safeBack } from '@/utils/navigation';
 import { markTgAlertDeeplinkHandledBySymbol } from '@/utils/tgAlertDeeplink';
@@ -39,6 +40,11 @@ import { executeConsume } from '@/api/points';
 import { getMySubscription } from '@/api/vip';
 import { confirm } from '@/components/Modal/confirm';
 import {
+  displayRawNum,
+  displayPctTrunc,
+  displayVolWithUnit,
+} from '@/components/ArbitrageRadar/arbitrageTabs';
+import {
   WS_EVENTS,
   PLATFORMS,
   KLINE_PERIODS,
@@ -46,6 +52,24 @@ import {
   createKlineChannel,
 } from '../../utils/websocketProtocol';
 import styles from './page.module.less';
+
+/** 去掉价格小数末尾无效 0，再按套利专区规则加 $ */
+function formatMarketLastPrice(raw) {
+  if (raw == null || raw === '') return '—';
+  let s = String(raw).trim().replace(/,/g, '');
+  if (!s || s === 'NaN' || s === 'undefined') return '—';
+  if (s.includes('.')) {
+    s = s.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+  }
+  return displayRawNum(s, { prefix: '$' });
+}
+
+/** 成交量：万/亿 或 K/M，不加 $（标的数量） */
+function formatMarketVolume(raw, lng) {
+  if (raw == null || raw === '') return '—';
+  const out = formatMoneyCompact(raw, lng, false);
+  return !out || out.includes('--') ? '—' : out;
+}
 
 function normalizeWatchlistSymbols(data) {
   const list = Array.isArray(data) ? data : Array.isArray(data?.list) ? data.list : [];
@@ -72,7 +96,7 @@ export default function DetailPage() {
   const symbol = searchParams.get('symbol') || '';
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
   const fromTgAlert = searchParams.get('from') === 'tg_alert';
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const headerFieldLabel = (key) => {
     if (!key) return '';
@@ -220,6 +244,30 @@ export default function DetailPage() {
     [isPC],
   );
 
+  /** 市场列表数值：对齐套利专区（$ 价格 / 截断 % / 万·M 成交量） */
+  const mapMarketRow = useCallback(
+    (item) => ({
+      title: renderMarketExchangeTitle(item),
+      last: formatMarketLastPrice(item.last),
+      price24h: (
+        <HighlightArea
+          value={displayPctTrunc(item.price24h)}
+          variant={isPC ? 'pcMarket' : 'default'}
+          maxDecimals={3}
+        />
+      ),
+      vol: formatMarketVolume(item.vol, i18n.language),
+      usd: displayVolWithUnit(item.usd),
+    }),
+    [isPC, i18n.language, renderMarketExchangeTitle],
+  );
+
+  // 语言切换后按当前语言重算市场单位（K/M ↔ 万/亿）
+  useEffect(() => {
+    if (!marketRawRef.current?.length) return;
+    setMarketData(marketRawRef.current.map(mapMarketRow));
+  }, [i18n.language, mapMarketRow]);
+
   // 使用告警配置 Hook（自动获取）
   const { fetchConfig: fetchAlertConfig } = useAlertConfig({ autoFetch: false });
   
@@ -258,6 +306,9 @@ export default function DetailPage() {
   const [rightCommunityHasMore, setRightCommunityHasMore] = useState(true);
   const [rightCommunityLoadingMore, setRightCommunityLoadingMore] = useState(false);
   const rightCommunityMountedRef = useRef(false);
+  /** K 线弹幕专用（userType=real），与右下角社区列表互不影响 */
+  const [barragePosts, setBarragePosts] = useState([]);
+  const [barrageVisible, setBarrageVisible] = useState(true);
   const [pcAiChatOpen, setPcAiChatOpen] = useState(false);
   const [pcAiAutoSend, setPcAiAutoSend] = useState({ text: '', token: '' });
   /** PC：右侧工作区已并入图表右侧栏（大单侦测 + 社区） */
@@ -271,6 +322,8 @@ export default function DetailPage() {
   const pcMarketHeadScrollRef = useRef(null);
   const pcMarketBodyScrollRef = useRef(null);
   const pcMarketScrollSyncingRef = useRef(false);
+  /** 市场原始数据：切语言时按当前语言重算单位 */
+  const marketRawRef = useRef([]);
   /** 用户刚切换自选后的本地覆盖，防止 WS/轮询用过期 false 冲掉 */
   const favoriteLocalRef = useRef(null);
   const wsRef = useRef(null);
@@ -1072,21 +1125,19 @@ export default function DetailPage() {
       });
       
       if (response?.data && response.data.length > 0) {
-        // 处理市场数据，转换为MoziGrid需要的格式
-        const processedData = response.data.map((item) => ({
-          title: renderMarketExchangeTitle(item),
-          last: item.last,
-          price24h: <HighlightArea value={item.price24h} variant={isPC ? 'pcMarket' : 'default'} />,
-          vol: item.vol,
-          usd: item.usd
-        }));
-        setMarketData(processedData);
+        // 处理市场数据，转换为MoziGrid需要的格式（单位对齐套利专区）
+        marketRawRef.current = response.data;
+        setMarketData(response.data.map(mapMarketRow));
       } else if (!silent) {
+        marketRawRef.current = [];
         setMarketData([]);
       }
     } catch (error) {
       console.error('获取市场数据失败:', error);
-      if (!silent) setMarketData([]);
+      if (!silent) {
+        marketRawRef.current = [];
+        setMarketData([]);
+      }
     } finally {
       setMarketLoading(false);
     }
@@ -1169,7 +1220,7 @@ export default function DetailPage() {
     };
   }, []);
 
-  // PC 右侧社区：按当前路由 symbol 拉取 /posts?page=1&size=10&symbol=xxx
+  // PC 右下角社区：按 symbol 拉取（不传 userType，与弹幕互不影响）
   useEffect(() => {
     let alive = true;
     rightCommunityMountedRef.current = true;
@@ -1229,6 +1280,50 @@ export default function DetailPage() {
     return () => {
       alive = false;
       rightCommunityMountedRef.current = false;
+    };
+  }, [symbol, isPC]);
+
+  // PC K 线弹幕：单独拉真实用户帖（userType=real），不驱动右下角社区
+  useEffect(() => {
+    let alive = true;
+    setBarragePosts([]);
+    if (!isPC) return undefined;
+
+    const normalizeList = (res) => {
+      const listRaw = res?.data;
+      const list = Array.isArray(listRaw)
+        ? listRaw
+        : Array.isArray(listRaw?.data)
+          ? listRaw.data
+        : Array.isArray(listRaw?.list)
+          ? listRaw.list
+          : Array.isArray(listRaw?.items)
+            ? listRaw.items
+            : [];
+      return Array.isArray(list) ? list : [];
+    };
+
+    (async () => {
+      try {
+        const res = await request({
+          url: Interface.POSTS_API,
+          data: {
+            page: 1,
+            size: 40,
+            symbol: String(symbol || 'BTC').toUpperCase(),
+            userType: 'real',
+          },
+        });
+        if (!alive) return;
+        setBarragePosts(normalizeList(res));
+      } catch (_) {
+        if (!alive) return;
+        setBarragePosts([]);
+      }
+    })();
+
+    return () => {
+      alive = false;
     };
   }, [symbol, isPC]);
 
@@ -2074,14 +2169,8 @@ ${coinInfo.name || symbol} (${symbol})
       
       // 5. 更新市场数据（如果存在）
       if (exchangesPriceData && Array.isArray(exchangesPriceData) && exchangesPriceData.length > 0) {
-        const processedData = exchangesPriceData.map((item) => ({
-          title: renderMarketExchangeTitle(item),
-          last: item.last,
-          price24h: <HighlightArea value={item.price24h} variant={isPC ? 'pcMarket' : 'default'} />,
-          vol: item.vol,
-          usd: item.usd
-        }));
-        setMarketData(processedData);
+        marketRawRef.current = exchangesPriceData;
+        setMarketData(exchangesPriceData.map(mapMarketRow));
       }
     });
 
@@ -2560,6 +2649,7 @@ ${coinInfo.name || symbol} (${symbol})
           loading={klineLoading && !displayData}
           refreshing={isRefreshing}
           isPC={isPC}
+          barrageItems={isPC && barrageVisible ? barragePosts : undefined}
           onBigOrderDetectClick={
             isPC
               ? () =>
@@ -2774,6 +2864,25 @@ ${coinInfo.name || symbol} (${symbol})
           } catch (taskError) {
             console.error('发帖任务上报失败:', taskError);
           }
+          const optimistic = {
+            id: response?.data?.id || `local-${Date.now()}`,
+            content: trimmed,
+            title: `关于 ${sym} 的讨论`,
+            category: '不懂就问',
+            tags: [sym],
+            createdAt: new Date().toISOString(),
+            nickName: '我',
+            userType: 'real',
+          };
+          // 社区与弹幕各自追加，互不依赖对方列表
+          setRightCommunityPosts((prev) => [
+            optimistic,
+            ...(Array.isArray(prev) ? prev : []),
+          ]);
+          setBarragePosts((prev) => [
+            optimistic,
+            ...(Array.isArray(prev) ? prev : []),
+          ]);
           Toast.show({ icon: 'success', content: t('post.messages.publishSuccess') });
         } else {
           Toast.show({
@@ -2980,6 +3089,8 @@ ${coinInfo.name || symbol} (${symbol})
               onShare={shareToTelegram}
               onTradingRadar={handleTradingRadar}
               showBarrage
+              barrageVisible={barrageVisible}
+              onBarrageVisibleChange={setBarrageVisible}
               onBarrageSend={handleBarrageSend}
               sideLeft={
                 <div className={styles.pcRoiSideWrap}>

@@ -221,6 +221,7 @@ export default function UserProfilePanelPopup({
   const [commission, setCommission] = useState(data.commission);
   const [profileData, setProfileData] = useState(data);
   const selectedTagLabel = t(`editProfile.identity.options.${selectedTagId}`);
+  const currentLng = selectedLanguage === 'English' ? 'en' : 'zh';
   const commissionSaveTimerRef = useRef(null);
   const lastSavedCommissionRef = useRef((data.commission || '').trim());
 
@@ -494,16 +495,18 @@ export default function UserProfilePanelPopup({
           {languageExpanded ? (
             <div className={styles.languagePanel}>
               <div
-                className={styles.languageItem}
+                className={`${styles.languageItem} ${currentLng === 'zh' ? styles.languageItemActive : ''}`}
                 onClick={() => selectLanguage('zh')}
               >
-                中文（中国）
+                <span>中文（中国）</span>
+                {currentLng === 'zh' ? <span className={styles.check}>✓</span> : null}
               </div>
               <div
-                className={styles.languageItem}
+                className={`${styles.languageItem} ${currentLng === 'en' ? styles.languageItemActive : ''}`}
                 onClick={() => selectLanguage('en')}
               >
-                English
+                <span>English</span>
+                {currentLng === 'en' ? <span className={styles.check}>✓</span> : null}
               </div>
             </div>
           ) : null}

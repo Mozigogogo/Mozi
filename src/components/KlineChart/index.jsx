@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createChart } from 'lightweight-charts';
 import { TabBar } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
@@ -159,6 +159,140 @@ const formatCrosshairTimeLabel = (time, tickLabelMap, periodKey, language) => {
     : `${String(year).slice(-2)}年${month}月${day}日`;
 };
 
+const DANMAKU_LANES = 3;
+const DANMAKU_SPAWN_MS = 3200;
+const DANMAKU_DURATION_S = 14;
+/** 轨道顶部偏移（PX），行高 26 + 间距，保证竖向不叠 */
+const DANMAKU_LANE_TOPS = [4, 34, 64];
+
+const stripBarrageText = (raw) =>
+  String(raw || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/** 主图顶部弹幕：按发帖时间从旧到新飘；每轨同时只飘一条 */
+const ChartBarrageLayer = ({ items }) => {
+  const texts = useMemo(() => {
+    const list = Array.isArray(items) ? [...items] : [];
+    list.sort((a, b) => {
+      const ta = new Date(a?.createdAt || a?.createTime || a?.created_at || 0).getTime();
+      const tb = new Date(b?.createdAt || b?.createTime || b?.created_at || 0).getTime();
+      const na = Number.isFinite(ta) ? ta : 0;
+      const nb = Number.isFinite(tb) ? tb : 0;
+      if (na !== nb) return na - nb; // 旧 → 新
+      return String(a?.id ?? '').localeCompare(String(b?.id ?? ''));
+    });
+
+    const out = [];
+    const seen = new Set();
+    list.forEach((item) => {
+      const text = stripBarrageText(item?.content || item?.text || item?.title);
+      if (!text || text.length < 2) return;
+      const clipped = text.length > 36 ? `${text.slice(0, 36)}…` : text;
+      const key = `${item?.id ?? ''}|${clipped}`;
+      if (seen.has(key) || seen.has(clipped)) return;
+      seen.add(key);
+      seen.add(clipped);
+      out.push(clipped);
+    });
+    return out.slice(0, 40);
+  }, [items]);
+
+  const poolRef = useRef(texts);
+  poolRef.current = texts;
+  const [flying, setFlying] = useState([]);
+  const seqRef = useRef(0);
+  const laneBusyRef = useRef(Array(DANMAKU_LANES).fill(false));
+  const shownRef = useRef(new Set());
+  const cursorRef = useRef(0);
+  const hasPool = texts.length > 0;
+
+  // 列表变空时重置；有数据时不因追加帖子而重启定时器（避免旧弹幕未清完又往同轨塞）
+  useEffect(() => {
+    if (!hasPool) {
+      shownRef.current = new Set();
+      cursorRef.current = 0;
+      laneBusyRef.current = Array(DANMAKU_LANES).fill(false);
+      setFlying([]);
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    const spawn = () => {
+      if (cancelled) return;
+      const pool = poolRef.current;
+      if (!pool.length) return;
+
+      const lane = laneBusyRef.current.findIndex((busy) => !busy);
+      if (lane < 0) return;
+
+      while (
+        cursorRef.current < pool.length &&
+        shownRef.current.has(pool[cursorRef.current])
+      ) {
+        cursorRef.current += 1;
+      }
+      if (cursorRef.current >= pool.length) {
+        // 可能前面有未播的被插到列表前面，回扫一次
+        cursorRef.current = 0;
+        while (
+          cursorRef.current < pool.length &&
+          shownRef.current.has(pool[cursorRef.current])
+        ) {
+          cursorRef.current += 1;
+        }
+        if (cursorRef.current >= pool.length) return;
+      }
+
+      const text = pool[cursorRef.current];
+      cursorRef.current += 1;
+      shownRef.current.add(text);
+
+      const id = (seqRef.current += 1);
+      const duration = DANMAKU_DURATION_S;
+      laneBusyRef.current[lane] = true;
+
+      setFlying((prev) => [...prev.slice(-12), { id, text, lane, duration }]);
+      window.setTimeout(() => {
+        laneBusyRef.current[lane] = false;
+        if (!cancelled) {
+          setFlying((prev) => prev.filter((x) => x.id !== id));
+        }
+      }, duration * 1000 + 80);
+    };
+
+    spawn();
+    const timer = window.setInterval(spawn, DANMAKU_SPAWN_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      laneBusyRef.current = Array(DANMAKU_LANES).fill(false);
+      setFlying([]);
+    };
+  }, [hasPool]);
+
+  if (!texts.length) return null;
+
+  return (
+    <div className={styles.barrageLayer} aria-hidden>
+      {flying.map((item) => (
+        <span
+          key={item.id}
+          className={styles.barrageItem}
+          style={{
+            top: `${DANMAKU_LANE_TOPS[item.lane] ?? DANMAKU_LANE_TOPS[0]}PX`,
+            animationDuration: `${item.duration}s`,
+          }}
+        >
+          {item.text}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 const KlineChart = ({ 
   data, 
   /** 当前 data 实际所属周期；切换中暂留旧图时可能与 activeKey 不同 */
@@ -176,6 +310,8 @@ const KlineChart = ({
   isPC = false,
   /** 点击「大单侦测」时回调（如滚动至订单簿区域） */
   onBigOrderDetectClick,
+  /** 主图弹幕内容（社区真实帖子） */
+  barrageItems,
 }) => {
   const { t, i18n } = useTranslation();
   const chartRef = useRef(null);
@@ -1107,6 +1243,9 @@ const KlineChart = ({
                 <Loading color="#11B787" tip="" size={isPC ? 28 : 22} />
               </div>
             </div>
+          ) : null}
+          {!loading && Array.isArray(barrageItems) && barrageItems.length > 0 ? (
+            <ChartBarrageLayer items={barrageItems} />
           ) : null}
           <div
             ref={chartRef}

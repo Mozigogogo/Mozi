@@ -448,10 +448,17 @@
     flex-direction: column;
   }
 
-  .chartPane .barrageBar {
+  .chartPane .barrageRow {
     flex: 0 0 auto;
     margin-top: 8PX;
     width: 100%;
+    gap: 8PX;
+  }
+
+  .chartPane .barrageBar {
+    flex: 1 1 auto;
+    margin-top: 0;
+    width: auto;
     border-radius: 8PX;
     border: 1PX solid #e5e7eb;
     background: transparent;
@@ -507,18 +514,73 @@
     /* 让 barrageBar 也遵循 mainCardBody 的左右 padding */
     margin-left: 0;
     margin-right: 0;
-    width: 100%;
+    width: auto;
     border-radius: 0;
+  }
+
+  .barrageRow {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
   }
 }
 
+.barrageRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.barrageToggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #61666d;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: #18191c;
+  }
+}
+
+.barrageToggleOn {
+  color: #00bc7d;
+
+  &:hover {
+    color: #00a86f;
+    background: rgba(0, 188, 125, 0.08);
+  }
+}
+
+.barrageToggleOff {
+  color: #9499a0;
+}
+
+.barrageToggleIcon {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
 .barrageBar {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   padding: 8px 16px;
   border: 1px solid #f0f0f0;
   box-sizing: border-box;
-
 }
 
 .barrageIcon {

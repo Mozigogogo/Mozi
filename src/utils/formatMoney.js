@@ -3,9 +3,51 @@ export function isZhLanguage(lng) {
   return String(lng || '').toLowerCase().startsWith('zh');
 }
 
+/**
+ * 解析压缩金额/数量（支持纯数字、K/M/B/T、$、万/亿/万亿）
+ * 如 18.19K → 18190；$10.76亿 → 1076000000
+ */
+export function parseCompactNumber(val) {
+  if (val == null || val === '') return NaN;
+  if (typeof val === 'number') return Number.isFinite(val) ? val : NaN;
+
+  let s = String(val).trim().replace(/,/g, '').replace(/\s/g, '');
+  if (!s || s === '--' || s === '—' || s === 'NaN' || s === 'undefined') return NaN;
+
+  let sign = 1;
+  if (s.startsWith('-')) {
+    sign = -1;
+    s = s.slice(1);
+  } else if (s.startsWith('+')) {
+    s = s.slice(1);
+  }
+  if (s.startsWith('$')) s = s.slice(1);
+
+  const en = s.match(/^(\d+(?:\.\d+)?)([TBMK])$/i);
+  if (en) {
+    const n = parseFloat(en[1]);
+    if (!Number.isFinite(n)) return NaN;
+    const u = en[2].toUpperCase();
+    const mult = u === 'T' ? 1e12 : u === 'B' ? 1e9 : u === 'M' ? 1e6 : 1e3;
+    return sign * n * mult;
+  }
+
+  const zh = s.match(/^(\d+(?:\.\d+)?)(万亿|亿|万|千)?$/);
+  if (zh) {
+    const n = parseFloat(zh[1]);
+    if (!Number.isFinite(n)) return NaN;
+    const unit = zh[2] || '';
+    const mult =
+      unit === '万亿' ? 1e12 : unit === '亿' ? 1e8 : unit === '万' ? 1e4 : unit === '千' ? 1e3 : 1;
+    return sign * n * mult;
+  }
+
+  const n = Number(s);
+  return Number.isFinite(n) ? sign * n : NaN;
+}
+
 function safeFloat(val) {
-  const num = Number(String(val ?? '').trim().replace(/,/g, '').replace(/^\$/, ''));
-  return Number.isFinite(num) ? num : NaN;
+  return parseCompactNumber(val);
 }
 
 /**
@@ -54,32 +96,16 @@ export function formatMoneyCompact(val, lng, withDollar = true) {
 }
 
 /**
- * 将接口中文金额串（如 $2.29万亿、$608.67亿）转为当前语言展示
+ * 将接口金额串（含 $2.29万亿 / 18.19K / $608.67亿）转为当前语言展示
  */
 export function localizeMoneyFmt(fmt, lng) {
   const s = String(fmt ?? '').trim();
-  if (!s || s === '--') return '--';
+  if (!s || s === '--' || s === '—') return '--';
 
-  if (isZhLanguage(lng)) {
-    return s.startsWith('$') || s.startsWith('-$') ? s : `$${s.replace(/^\$/, '')}`;
+  const n = parseCompactNumber(s);
+  if (Number.isFinite(n)) {
+    return formatMoneyCompact(n, lng, true);
   }
 
-  // 已是英文缩写则原样（补 $）
-  const compact = s.replace(/\s/g, '');
-  if (/^\$?-?\d+(\.\d+)?[TBMK]$/i.test(compact) && !/[万亿千]/.test(s)) {
-    return compact.startsWith('$') || compact.startsWith('-$')
-      ? compact
-      : `$${compact.replace(/^\$/, '')}`;
-  }
-
-  const m = s.match(/^(-)?\$?\s*([+-]?\d+(?:\.\d+)?)\s*(万亿|亿|万|千)?/);
-  if (!m) return s.startsWith('$') || s.startsWith('-$') ? s : `$${s}`;
-
-  const n = parseFloat(m[2]);
-  if (!Number.isFinite(n)) return s;
-  const unit = m[3] || '';
-  const mult =
-    unit === '万亿' ? 1e12 : unit === '亿' ? 1e8 : unit === '万' ? 1e4 : unit === '千' ? 1e3 : 1;
-  const signed = (m[1] ? -1 : 1) * Math.abs(n) * mult;
-  return formatMoneyCompact(signed, lng);
+  return s.startsWith('$') || s.startsWith('-$') ? s : `$${s}`;
 }

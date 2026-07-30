@@ -262,6 +262,56 @@
   justify-content: center;
 }
 
+/* K 线主图顶部弹幕层（不挡交互） */
+.barrageLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 96PX;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+  container-type: inline-size;
+}
+
+.barrageItem {
+  position: absolute;
+  left: 0;
+  max-width: 280PX;
+  height: 26PX;
+  padding: 0 10PX;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 13PX;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1PX solid rgba(17, 183, 135, 0.28);
+  color: #0f766e;
+  font-size: 12PX;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 1PX 4PX rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(4PX);
+  -webkit-backdrop-filter: blur(4PX);
+  will-change: transform;
+  animation-name: klineDanmaku;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes klineDanmaku {
+  from {
+    transform: translateX(100cqw);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
 .chartSkeletonWrap {
   position: absolute;
   inset: 0;
@@ -344,6 +394,15 @@
     max-width: none;
     height: calc(100% - 140PX);
     flex: 1 1 auto;
+    position: relative;
+  }
+
+  .chartMainWrapPc .barrageItem {
+    max-width: 300PX;
+    height: 26PX;
+    padding: 0 12PX;
+    border-radius: 13PX;
+    font-size: 12PX;
   }
 
   .chartMainWrapPc .chart {

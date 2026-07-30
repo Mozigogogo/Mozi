@@ -1431,6 +1431,8 @@
   },
   "pcCoinDetail": {
     "tradingRadar": "交易雷达",
+    "barrageOn": "关闭弹幕",
+    "barrageOff": "开启弹幕",
     "barragePlaceholder": "发现好行情，发条弹幕交流吧...",
     "send": "发送"
   },
