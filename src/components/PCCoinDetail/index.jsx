@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, Children } from 'react';
+import { useState, useCallback, useEffect, useRef, Children } from 'react';
 import { LeftOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,38 @@ import styles from './index.module.less';
 
 const ICON_FAVORITE_ACTIVE = '/icons/new_detail/like_actived.svg';
 const ICON_FAVORITE_INACTIVE = '/icons/new_detail/like_no_actived.svg';
+
+const PANE_WIDTH_STORAGE_KEY = 'mozi_pc_coin_detail_pane_widths_v1';
+const LEFT_PANE_DEFAULT = 300;
+const RIGHT_PANE_DEFAULT = 300;
+const LEFT_PANE_MIN = 200;
+const LEFT_PANE_MAX = 480;
+const RIGHT_PANE_MIN = 240;
+const RIGHT_PANE_MAX = 460;
+const CENTER_PANE_MIN = 360;
+
+function readStoredPaneWidths() {
+  if (typeof window === 'undefined') {
+    return { left: LEFT_PANE_DEFAULT, right: RIGHT_PANE_DEFAULT };
+  }
+  try {
+    const raw = localStorage.getItem(PANE_WIDTH_STORAGE_KEY);
+    if (!raw) return { left: LEFT_PANE_DEFAULT, right: RIGHT_PANE_DEFAULT };
+    const parsed = JSON.parse(raw);
+    const left = Number(parsed?.left);
+    const right = Number(parsed?.right);
+    return {
+      left: Number.isFinite(left) ? left : LEFT_PANE_DEFAULT,
+      right: Number.isFinite(right) ? right : RIGHT_PANE_DEFAULT,
+    };
+  } catch {
+    return { left: LEFT_PANE_DEFAULT, right: RIGHT_PANE_DEFAULT };
+  }
+}
+
+function clamp(n, min, max) {
+  return Math.min(max, Math.max(min, n));
+}
 
 /**
  * PC 端币种详情页布局壳：顶栏（返回 + 标题行情 + 操作）、主卡片（左 ROI+市场 / 中 K 线 / 右大单侦测）、可选弹幕条。
@@ -57,6 +89,18 @@ export default function PCCoinDetail({
       ? barrageVisibleControlled
       : barrageVisibleInner;
 
+  const chartOrderRowRef = useRef(null);
+  const [paneWidths, setPaneWidths] = useState({
+    left: LEFT_PANE_DEFAULT,
+    right: RIGHT_PANE_DEFAULT,
+  });
+  const [draggingPane, setDraggingPane] = useState(null); // 'left' | 'right' | null
+  const dragRef = useRef(null);
+
+  useEffect(() => {
+    setPaneWidths(readStoredPaneWidths());
+  }, []);
+
   const setBarrage = useCallback(
     (v) => {
       if (onBarrageChange) onBarrageChange(v);
@@ -84,15 +128,110 @@ export default function PCCoinDetail({
     }
   }, [barrageValue, onBarrageSend, barrageValueControlled]);
 
+  const persistPaneWidths = useCallback((next) => {
+    try {
+      localStorage.setItem(PANE_WIDTH_STORAGE_KEY, JSON.stringify(next));
+    } catch (_) {}
+  }, []);
+
+  const startPaneDrag = useCallback(
+    (which, event) => {
+      if (event.button != null && event.button !== 0) return;
+      event.preventDefault();
+      const row = chartOrderRowRef.current;
+      const rowWidth = row?.getBoundingClientRect?.()?.width || 0;
+      dragRef.current = {
+        which,
+        startX: event.clientX,
+        startLeft: paneWidths.left,
+        startRight: paneWidths.right,
+        rowWidth,
+      };
+      setDraggingPane(which);
+    },
+    [paneWidths.left, paneWidths.right]
+  );
+
+  useEffect(() => {
+    if (!draggingPane) return undefined;
+
+    const onMove = (event) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const dx = event.clientX - drag.startX;
+      const rowWidth = drag.rowWidth || chartOrderRowRef.current?.getBoundingClientRect?.()?.width || 0;
+      const maxLeft = Math.min(
+        LEFT_PANE_MAX,
+        Math.max(LEFT_PANE_MIN, rowWidth - drag.startRight - CENTER_PANE_MIN)
+      );
+      const maxRight = Math.min(
+        RIGHT_PANE_MAX,
+        Math.max(RIGHT_PANE_MIN, rowWidth - drag.startLeft - CENTER_PANE_MIN)
+      );
+
+      setPaneWidths((prev) => {
+        if (drag.which === 'left') {
+          const left = clamp(drag.startLeft + dx, LEFT_PANE_MIN, maxLeft);
+          return { ...prev, left };
+        }
+        // 右分隔条：向右拖缩小右侧栏，向左拖放大右侧栏
+        const right = clamp(drag.startRight - dx, RIGHT_PANE_MIN, maxRight);
+        return { ...prev, right };
+      });
+    };
+
+    const onUp = () => {
+      setPaneWidths((current) => {
+        persistPaneWidths(current);
+        return current;
+      });
+      dragRef.current = null;
+      setDraggingPane(null);
+    };
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [draggingPane, persistPaneWidths]);
+
   const changeCls = isUp ? styles.changeUp : styles.changeDown;
 
   const childrenArr = Children.toArray(children);
   const topChild = childrenArr[0];
   const restChildren = childrenArr.slice(1);
+  const showRightPane = restChildren.length > 0;
+  const showLeftPane = Boolean(sideLeft);
 
   const flatStats = (statColumns || [])
     .flatMap((col) => (Array.isArray(col) ? col : [col]))
     .filter((cell) => cell && (cell.label || cell.value != null));
+
+  const leftPaneStyle = showLeftPane
+    ? {
+        flex: `0 0 ${paneWidths.left}px`,
+        width: `${paneWidths.left}px`,
+        maxWidth: `${LEFT_PANE_MAX}px`,
+        minWidth: `${LEFT_PANE_MIN}px`,
+      }
+    : undefined;
+  const rightPaneStyle = showRightPane
+    ? {
+        flex: `0 0 ${paneWidths.right}px`,
+        width: `${paneWidths.right}px`,
+        maxWidth: `${RIGHT_PANE_MAX}px`,
+        minWidth: `${RIGHT_PANE_MIN}px`,
+      }
+    : undefined;
 
   const barrageBarEl =
     showBarrage ? (
@@ -182,7 +321,12 @@ export default function PCCoinDetail({
 
   return (
     <div
-      className={`${styles.root} ${sideLeft ? styles.rootWithSideLeft : ''} ${className || ''}`}
+      className={`${styles.root} ${sideLeft ? styles.rootWithSideLeft : ''} ${draggingPane ? styles.rootDragging : ''} ${className || ''}`}
+      style={
+        showLeftPane
+          ? { ['--pc-side-left-width']: `${paneWidths.left}px` }
+          : undefined
+      }
     >
       <header className={styles.topBar}>
         <div className={sideLeft ? styles.topBarLead : styles.topBarLeadFlat}>
@@ -323,14 +467,41 @@ export default function PCCoinDetail({
 
       <div className={styles.mainCard}>
         <div className={styles.mainCardBody}>
-          <div className={styles.chartOrderRow}>
-            {sideLeft ? <aside className={styles.roiPane}>{sideLeft}</aside> : null}
+          <div
+            ref={chartOrderRowRef}
+            className={`${styles.chartOrderRow}${draggingPane ? ` ${styles.chartOrderRowDragging}` : ''}`}
+          >
+            {showLeftPane ? (
+              <aside className={styles.roiPane} style={leftPaneStyle}>
+                {sideLeft}
+              </aside>
+            ) : null}
+            {showLeftPane ? (
+              <div
+                className={`${styles.paneResizer} ${draggingPane === 'left' ? styles.paneResizerActive : ''}`}
+                role="separator"
+                aria-orientation="vertical"
+                aria-label={t('pcCoinDetail.resizeLeftPane', { defaultValue: '调整左侧栏宽度' })}
+                onPointerDown={(e) => startPaneDrag('left', e)}
+              />
+            ) : null}
             <div className={styles.chartPane}>
               <div className={styles.chartPaneMain}>{topChild}</div>
               {barrageBarEl}
             </div>
-            {restChildren.length > 0 ? (
-              <aside className={styles.orderPane}>{restChildren}</aside>
+            {showRightPane ? (
+              <div
+                className={`${styles.paneResizer} ${draggingPane === 'right' ? styles.paneResizerActive : ''}`}
+                role="separator"
+                aria-orientation="vertical"
+                aria-label={t('pcCoinDetail.resizeRightPane', { defaultValue: '调整右侧栏宽度' })}
+                onPointerDown={(e) => startPaneDrag('right', e)}
+              />
+            ) : null}
+            {showRightPane ? (
+              <aside className={styles.orderPane} style={rightPaneStyle}>
+                {restChildren}
+              </aside>
             ) : null}
           </div>
         </div>

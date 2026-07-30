@@ -30,7 +30,8 @@
 .topBarLead {
   flex: 0 0 var(--pc-side-left-width);
   width: var(--pc-side-left-width);
-  max-width: 420PX;
+  max-width: 480PX;
+  min-width: 200PX;
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
@@ -39,7 +40,6 @@
   gap: 10PX;
   padding: 0 12PX 0 16PX;
   border-right: 1PX solid #e5e7eb;
-  min-width: 0;
   overflow: hidden;
 }
 
@@ -475,10 +475,11 @@
   .roiPane {
     flex: 0 0 var(--pc-side-left-width);
     width: var(--pc-side-left-width);
-    max-width: 420PX;
+    max-width: 480PX;
+    min-width: 200PX;
     min-height: 0;
     height: 100%;
-    border-right: 1PX solid #e5e7eb;
+    border-right: none;
     overflow: hidden;
     align-self: stretch;
   }
@@ -491,12 +492,13 @@
   }
 
   .orderPane {
-    flex: 0 0 min(320PX, 34%);
-    width: min(320PX, 34%);
-    max-width: 340PX;
+    flex: 0 0 300PX;
+    width: 300PX;
+    max-width: 460PX;
+    min-width: 240PX;
     min-height: 0;
     height: 100%;
-    border-left: 1PX solid #e5e7eb;
+    border-left: none;
     overflow: hidden;
     align-self: stretch;
   }
@@ -508,6 +510,58 @@
     max-height: 100%;
     display: flex;
     flex-direction: column;
+  }
+
+  /* 左右栏可拖拽分隔条 */
+  .paneResizer {
+    flex: 0 0 5PX;
+    width: 5PX;
+    margin: 0 -2PX;
+    position: relative;
+    z-index: 3;
+    cursor: col-resize;
+    touch-action: none;
+    background: transparent;
+    align-self: stretch;
+  }
+
+  .paneResizer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1PX;
+    transform: translateX(-50%);
+    background: #e5e7eb;
+    transition: background 0.15s ease, width 0.15s ease;
+  }
+
+  .paneResizer:hover::before,
+  .paneResizerActive::before {
+    width: 2PX;
+    background: #11b787;
+  }
+
+  .paneResizer::after {
+    /* 扩大可点热区，不影响布局 */
+    content: '';
+    position: absolute;
+    inset: 0 -4PX;
+  }
+
+  .chartOrderRowDragging {
+    cursor: col-resize;
+  }
+
+  .chartOrderRowDragging .chartPane,
+  .chartOrderRowDragging .roiPane,
+  .chartOrderRowDragging .orderPane {
+    pointer-events: none;
+  }
+
+  .rootDragging {
+    cursor: col-resize;
   }
 
   .barrageBar {

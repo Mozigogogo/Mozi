@@ -517,13 +517,19 @@
   border-radius: 12PX;
   margin-bottom: 6PX;
   flex-shrink: 0;
+  flex-wrap: nowrap;
+  min-width: 0;
+  /* 按工具栏自身宽度适配，而非视口——左右拖栏变窄时也能收紧 */
+  container-type: inline-size;
+  container-name: kline-toolbar;
 }
 
 .pcPeriodRow {
   display: flex;
   align-items: center;
   gap: 2PX;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex: 0 1 auto;
   min-width: 0;
   background: rgba(244, 244, 245, 1);
   padding: 4PX;
@@ -541,6 +547,7 @@
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
+  flex-shrink: 0;
   line-height: 1.2;
   transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -614,6 +621,61 @@
 
 .pcChartTypeBtn:not(.pcChartTypeBtnActive) .chartTypeIcon {
   opacity: 0.55;
+}
+
+/* 图表栏被拖窄：周期保持单行，按钮收紧；图表类型只留图标 */
+@container kline-toolbar (max-width: 480px) {
+  .pcPeriodRow {
+    padding: 3PX;
+  }
+
+  .pcPeriodBtn {
+    font-size: 11PX;
+    padding: 4PX 10PX;
+  }
+
+  .pcChartTypeLabel {
+    display: none;
+  }
+
+  .pcChartTypeBtn {
+    padding: 0 8PX;
+    gap: 0;
+  }
+}
+
+@container kline-toolbar (max-width: 360px) {
+  .pcPeriodRow {
+    padding: 2PX;
+    gap: 1PX;
+  }
+
+  .pcPeriodBtn {
+    font-size: 10PX;
+    padding: 3PX 7PX;
+    border-radius: 10PX;
+  }
+
+  .pcChartTypeBtn {
+    height: 24PX;
+    padding: 0 6PX;
+  }
+
+  .pcChartTypeBtn .chartTypeIcon {
+    width: 12PX;
+    height: 12PX;
+  }
+}
+
+@container kline-toolbar (max-width: 280px) {
+  .pcPeriodBtn {
+    padding: 3PX 5PX;
+    font-size: 10PX;
+  }
+
+  .pcChartTypeRow {
+    padding: 2PX;
+  }
 }
 
 @media (max-width: 1440px) and (min-width: 1024px) {
