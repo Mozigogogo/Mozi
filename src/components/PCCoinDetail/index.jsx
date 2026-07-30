@@ -10,7 +10,6 @@ import styles from './index.module.less';
 const ICON_FAVORITE_ACTIVE = '/icons/new_detail/like_actived.svg';
 const ICON_FAVORITE_INACTIVE = '/icons/new_detail/like_no_actived.svg';
 
-const PANE_WIDTH_STORAGE_KEY = 'mozi_pc_coin_detail_pane_widths_v1';
 const LEFT_PANE_DEFAULT = 300;
 const RIGHT_PANE_DEFAULT = 300;
 const LEFT_PANE_MIN = 200;
@@ -18,25 +17,6 @@ const LEFT_PANE_MAX = 480;
 const RIGHT_PANE_MIN = 240;
 const RIGHT_PANE_MAX = 460;
 const CENTER_PANE_MIN = 360;
-
-function readStoredPaneWidths() {
-  if (typeof window === 'undefined') {
-    return { left: LEFT_PANE_DEFAULT, right: RIGHT_PANE_DEFAULT };
-  }
-  try {
-    const raw = localStorage.getItem(PANE_WIDTH_STORAGE_KEY);
-    if (!raw) return { left: LEFT_PANE_DEFAULT, right: RIGHT_PANE_DEFAULT };
-    const parsed = JSON.parse(raw);
-    const left = Number(parsed?.left);
-    const right = Number(parsed?.right);
-    return {
-      left: Number.isFinite(left) ? left : LEFT_PANE_DEFAULT,
-      right: Number.isFinite(right) ? right : RIGHT_PANE_DEFAULT,
-    };
-  } catch {
-    return { left: LEFT_PANE_DEFAULT, right: RIGHT_PANE_DEFAULT };
-  }
-}
 
 function clamp(n, min, max) {
   return Math.min(max, Math.max(min, n));
@@ -97,8 +77,11 @@ export default function PCCoinDetail({
   const [draggingPane, setDraggingPane] = useState(null); // 'left' | 'right' | null
   const dragRef = useRef(null);
 
+  // 清理历史持久化宽度，拖动仅会话内生效
   useEffect(() => {
-    setPaneWidths(readStoredPaneWidths());
+    try {
+      localStorage.removeItem('mozi_pc_coin_detail_pane_widths_v1');
+    } catch (_) {}
   }, []);
 
   const setBarrage = useCallback(
@@ -127,12 +110,6 @@ export default function PCCoinDetail({
       /* 失败时保留输入，由调用方提示 */
     }
   }, [barrageValue, onBarrageSend, barrageValueControlled]);
-
-  const persistPaneWidths = useCallback((next) => {
-    try {
-      localStorage.setItem(PANE_WIDTH_STORAGE_KEY, JSON.stringify(next));
-    } catch (_) {}
-  }, []);
 
   const startPaneDrag = useCallback(
     (which, event) => {
@@ -181,10 +158,6 @@ export default function PCCoinDetail({
     };
 
     const onUp = () => {
-      setPaneWidths((current) => {
-        persistPaneWidths(current);
-        return current;
-      });
       dragRef.current = null;
       setDraggingPane(null);
     };
@@ -202,7 +175,7 @@ export default function PCCoinDetail({
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
-  }, [draggingPane, persistPaneWidths]);
+  }, [draggingPane]);
 
   const changeCls = isUp ? styles.changeUp : styles.changeDown;
 

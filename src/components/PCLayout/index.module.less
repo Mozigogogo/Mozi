@@ -273,7 +273,10 @@
   height: calc(100vh - 64PX);
   position: fixed;
   left: 0;
-  overflow: auto;
+  /* 只允许纵向滚动，避免「我的问答」展开后出现左右拖动 */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: #fff;
   border-right: 1px solid #f0f0f0;
   transition: all 0.2s ease;
@@ -281,7 +284,18 @@
   :global(.ant-layout-sider-children) {
     display: flex;
     flex-direction: column;
+    /* 覆盖 antd 默认 height:100%，否则子项会被 flex 压缩导致标题与列表重叠 */
+    height: auto !important;
     min-height: 100%;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  :global(.ant-menu) {
+    flex-shrink: 0;
   }
 }
 
@@ -292,6 +306,10 @@
   padding: 16PX;
   border-top: 1PX solid #f0f0f0;
   background: #fff;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .footerLinks {
@@ -378,6 +396,7 @@
   height: 72px; /* Fixed height to prevent layout shift */
   box-sizing: border-box;
   overflow: hidden; /* Hide overflow content during transition */
+  flex-shrink: 0;
 }
 
 .userName {
@@ -399,10 +418,12 @@
   font-size: 12px;
   line-height: 1.5;
   color: rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
 }
 
 /* 展开态下「我的告警」等同组项上方已有「我的」标题，隐藏空的 ItemGroup 标题行 */
 .mineMenuLower {
+  flex-shrink: 0;
   /* 与上方「我的自选」紧贴：去掉第二个 Menu 默认顶 padding、分组列表顶距 */
   :global {
     .ant-menu {
@@ -433,6 +454,11 @@
 .pcWatchlist {
   padding: 0;
   margin-top: 0;
+  min-width: 0;
+  max-width: 100%;
+  /* 禁止被 sider flex 压扁，避免展开后标题与子项重叠 */
+  flex-shrink: 0;
+  overflow: visible;
 }
 
 .pcWatchlistHeader {
@@ -563,9 +589,11 @@
   gap: @pc-watchlist-row-gap;
   padding: 0 4px 4px @pcWatchlist-text-align-inset;
   max-height: calc(5 * @pc-watchlist-row-approx + 4 * @pc-watchlist-row-gap);
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   min-height: 0;
+  min-width: 0;
 }
 
 .pcAlertBody {
@@ -574,9 +602,11 @@
   flex-direction: column;
   gap: @pc-watchlist-row-gap;
   max-height: calc(5 * @pc-watchlist-row-approx + 4 * @pc-watchlist-row-gap);
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   min-height: 0;
+  min-width: 0;
 }
 
 .pcAlertEntry {
@@ -747,7 +777,10 @@
 .pcAiChatSection {
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
 }
 
 .pcAiChatBody {
@@ -756,18 +789,23 @@
   gap: @pc-ai-chat-row-gap;
   padding: 0 4px 4px @pcWatchlist-text-align-inset;
   overflow-x: hidden;
-  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .pcAiChatBodyScrollable {
   max-height: calc(5 * @pc-ai-chat-row-height + 4 * @pc-ai-chat-row-gap);
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 .pcAiChatLoadMore {
   display: block;
-  width: calc(100% - @pcWatchlist-text-align-inset - 4px);
+  width: auto;
+  max-width: 100%;
+  box-sizing: border-box;
   margin: 0 4px 4px @pcWatchlist-text-align-inset;
   padding: 6px 8px;
   border: none;
@@ -793,6 +831,8 @@
   align-items: center;
   gap: 2px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: @pc-ai-chat-row-height;
   box-sizing: border-box;
   margin: 0;

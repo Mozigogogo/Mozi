@@ -498,7 +498,6 @@ export default function PCLayout({ children }) {
     [aiConversations, aiConversationsVisibleCount],
   );
   const hasMoreAiConversations = aiConversations.length > aiConversationsVisibleCount;
-  const shouldAiChatBodyScroll = visibleAiConversations.length > AI_CONVERSATIONS_PAGE_SIZE;
 
   const handleLoadMoreAiConversations = useCallback(() => {
     setAiConversationsVisibleCount((prev) => prev + AI_CONVERSATIONS_PAGE_SIZE);
@@ -1378,9 +1377,7 @@ export default function PCLayout({ children }) {
                 {isAiChatExpanded && (
                   <div className={styles.pcAiChatSection}>
                     <div
-                      className={`${styles.pcAiChatBody} ${
-                        shouldAiChatBodyScroll ? styles.pcAiChatBodyScrollable : ''
-                      }`}
+                      className={`${styles.pcAiChatBody} ${styles.pcAiChatBodyScrollable}`}
                     >
                       {aiConversationsLoading && aiConversations.length === 0 ? (
                         <div className={`${styles.pcWatchlistHint} ${styles.pcWatchlistHintCenter}`}>
