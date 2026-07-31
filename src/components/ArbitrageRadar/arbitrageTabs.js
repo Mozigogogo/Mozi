@@ -223,11 +223,7 @@ export function renderValidSpotHedgeHtml(o) {
     ? list
         .map((ex) => {
           const isTop = top && ex.toLowerCase() === top.toLowerCase();
-          return `<span class="spot-ex-chip${isTop ? ' is-top' : ''}">${exBadge(ex)}${
-            isTop
-              ? `<span class="spot-hedge-badge spot-hedge-badge--rec">${arbT('detail.funding.topSpotRec')}</span>`
-              : ''
-          }</span>`;
+          return `<span class="spot-ex-chip${isTop ? ' is-top' : ''}">${exBadge(ex)}</span>`;
         })
         .join('')
     : `<span class="spot-ex-empty">${arbT('common.spotHedgeTip')}</span>`;
