@@ -290,7 +290,8 @@ export default function OrderBook({
     for (const level of bidLevels) {
       max = Math.max(max, Number(level.quantity) || 0);
     }
-    return Math.max(max, 1);
+    // 勿用 Math.max(max, 1)：BTC 等币数量常 <1，会被压成很短的柱
+    return max > 0 ? max : 1;
   }, [askLevels, bidLevels]);
 
   const midPrice = useMemo(() => {
