@@ -282,10 +282,15 @@ export default function OrderBook({
     return buildLevels(items, visibleRowsCount);
   }, [asks, visibleRowsCount]);
 
-  const maxDepth = useMemo(() => {
-    const askMax = askLevels.length ? askLevels[askLevels.length - 1]?.total || 0 : 0;
-    const bidMax = bidLevels.length ? bidLevels[bidLevels.length - 1]?.total || 0 : 0;
-    return Math.max(askMax, bidMax, 1);
+  const maxQty = useMemo(() => {
+    let max = 0;
+    for (const level of askLevels) {
+      max = Math.max(max, Number(level.quantity) || 0);
+    }
+    for (const level of bidLevels) {
+      max = Math.max(max, Number(level.quantity) || 0);
+    }
+    return Math.max(max, 1);
   }, [askLevels, bidLevels]);
 
   const midPrice = useMemo(() => {
@@ -344,7 +349,7 @@ export default function OrderBook({
   };
 
   const renderLevelRow = (level, side, key, seed) => {
-    const depthPct = Math.max(0, Math.min(100, (Number(level.total) / maxDepth) * 100));
+    const depthPct = Math.max(0, Math.min(100, (Number(level.quantity) / maxQty) * 100));
     const logo = pickRowLogo(level, seed);
     return (
       <div key={key} className={`${styles.bookRow} ${side === 'ask' ? styles.askRow : styles.bidRow}`}>
