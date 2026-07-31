@@ -42,6 +42,8 @@ import {
   backBtnHtml,
   chartLoadingHtml,
   chartEmptyHtml,
+  exBadge,
+  renderValidSpotHedgeHtml,
 } from './arbitrageTabs';
 
 const LIST_PAGE_SIZE = 8;
@@ -54,6 +56,23 @@ function parseFundingPct(raw) {
 function parsePeriodLabel(raw) {
   const s = String(raw ?? '').trim();
   return s || '8h';
+}
+
+/** Funding 现货对冲所：列表 count / 详情 exchanges / 推荐 top by QV */
+function mapValidSpotFields(item) {
+  const rawList = item?.validSpotExchanges ?? item?.valid_spot_exchanges;
+  const validSpotExchanges = Array.isArray(rawList)
+    ? rawList.map((ex) => String(ex || '').trim()).filter(Boolean)
+    : [];
+  const countRaw = Number(item?.validSpotCount ?? item?.valid_spot_count);
+  const validSpotCount =
+    Number.isFinite(countRaw) && countRaw >= 0
+      ? Math.floor(countRaw)
+      : validSpotExchanges.length;
+  const topRaw = item?.topSpotByQv ?? item?.top_spot_by_qv;
+  const topSpotByQv =
+    topRaw == null || String(topRaw).trim() === '' ? null : String(topRaw).trim();
+  return { validSpotCount, validSpotExchanges, topSpotByQv };
 }
 
 function mapFundingItem(item, index) {
@@ -92,6 +111,7 @@ function mapFundingItem(item, index) {
   const marginBufferRatio = Number(
     item.marginBufferRatio ?? item.margin_buffer_ratio
   );
+  const spotFields = mapValidSpotFields(item);
   return {
     rank: Number(item.rank) || index + 1,
     sym: String(item.symbol || item.sym || '').trim().toUpperCase() || '—',
@@ -124,13 +144,34 @@ function mapFundingItem(item, index) {
       Number.isFinite(settlementsPerDay) && settlementsPerDay > 0 ? settlementsPerDay : null,
     marginBufferRatio:
       Number.isFinite(marginBufferRatio) && marginBufferRatio > 0 ? marginBufferRatio : null,
+    ...spotFields,
     logoUrl: parseLogoUrl(item),
   };
 }
 
 export function mountArbitrageRadar(__root, options = {}) {
-  if (!__root || __root.__mounted) return () => {};
+  if (!__root) return () => {};
+  // 取消尚未执行的 StrictMode 延迟 cleanup，并在同参数下复用已挂载实例
+  __root.__arbCleanupToken = (__root.__arbCleanupToken || 0) + 1;
+  const optsKey = [
+    options.embedded ? 1 : 0,
+    options.initialTab || 'funding',
+    options.detailOnly ? 1 : 0,
+    options.detailType || '',
+    options.detailSymbol || '',
+    options.detailExchange || '',
+    options.detailMinExchange || '',
+    options.detailMaxExchange || '',
+    options.detailLogoUrl || '',
+  ].join('|');
+  if (__root.__mounted && __root.__arbOptsKey === optsKey) {
+    return __root.__arbCleanup || (() => {});
+  }
+  if (__root.__mounted && typeof __root.__arbCleanup === 'function') {
+    __root.__arbCleanup();
+  }
   __root.__mounted = true;
+  __root.__arbOptsKey = optsKey;
   const embedded = !!options.embedded;
 
   const _intervals = [];
@@ -584,6 +625,15 @@ async function loadFundingDetail(op) {
         detail.nextFundingTs != null && detail.nextFundingTs > 0
           ? detail.nextFundingTs
           : op.nextFundingTs,
+      validSpotCount:
+        detail.validSpotCount != null ? detail.validSpotCount : op.validSpotCount ?? 0,
+      validSpotExchanges: Array.isArray(detail.validSpotExchanges)
+        ? detail.validSpotExchanges
+        : Array.isArray(op.validSpotExchanges)
+          ? op.validSpotExchanges
+          : [],
+      topSpotByQv:
+        detail.topSpotByQv !== undefined ? detail.topSpotByQv : op.topSpotByQv ?? null,
       logoUrl: detail.logoUrl || op.logoUrl || null,
       detailLoaded: true,
     };
@@ -850,11 +900,13 @@ function render() {
   if(currentView==='radar') {
     if (isMobileLayout()) {
       // 移动端卡片列表，无需表头测宽/横向滚动
+      initSpotHedgeHovers();
       return;
     }
     initTableHScroll();
     if (pendingTableScrollLeft > 0) setTableScrollLeft(pendingTableScrollLeft);
     initTableHeaderTips();
+    initSpotHedgeHovers();
     // 先套用已锁定高度，再在布局稳定后复测满页高度
     syncTableBodyHeightLock();
     requestAnimationFrame(() => requestAnimationFrame(syncTableBodyHeightLock));
@@ -968,6 +1020,7 @@ function syncRadarTableDom() {
     } else if (pagerHtml) {
       list.insertAdjacentHTML('afterend', pagerHtml);
     }
+    initSpotHedgeHovers();
     return true;
   }
 
@@ -1001,6 +1054,7 @@ function syncRadarTableDom() {
   if (pendingTableScrollLeft > 0) setTableScrollLeft(pendingTableScrollLeft);
   syncTableBodyHeightLock();
   requestAnimationFrame(() => requestAnimationFrame(syncTableBodyHeightLock));
+  initSpotHedgeHovers();
   return true;
 }
 
@@ -1145,6 +1199,7 @@ function rowHTML(o,opsIdx,displayRank) {
   const periodLabel = o.periodLabel || `${o.period || 8}h`;
   const avg30Text = o.avg30 == null ? '—' : displayPctTrunc(o.avg30);
   const warnTitle = o.riskTooltip ? ` title="${String(o.riskTooltip).replace(/"/g, '&quot;')}"` : '';
+  const spotHedgeHtml = renderValidSpotHedgeHtml(o);
   return `<tr onclick="openDetail(ops[${opsIdx}],'funding')" style="animation-delay:${(displayRank-1)*35}ms">
     <td class="td-num">${o.rank || displayRank}</td>
     <td>
@@ -1156,7 +1211,7 @@ function rowHTML(o,opsIdx,displayRank) {
         </div>
       </div>
     </td>
-    <td><span class="exbadge" style="background:${ex.bg};border-color:${ex.border};color:${ex.color}">${o.exchange}</span></td>
+    <td class="td-ex"><div class="ex-cell ex-cell--stack"><span class="exbadge" style="background:${ex.bg};border-color:${ex.border};color:${ex.color}">${o.exchange}</span>${spotHedgeHtml}</div></td>
     <td><span class="mono">${displayPctTrunc(o.funding)}<span style="color:var(--t3);font-size:11px">/${periodLabel}</span></span></td>
     <td>
       <span class="ann ${annCls}">${displayPctTrunc(o.ann)}</span>
@@ -1277,6 +1332,19 @@ function renderFundingDetail(o) {
          <div class="c-tooltip" id="c-tooltip"></div>`
       : chartEmptyHtml();
 
+  const validSpotEx = Array.isArray(o.validSpotExchanges) ? o.validSpotExchanges : [];
+  const validSpotExHtml = validSpotEx.length
+    ? validSpotEx.map((exName) => exBadge(exName)).join('')
+    : '<span style="color:var(--t3)">—</span>';
+  const topSpot = o.topSpotByQv ? String(o.topSpotByQv).trim() : '';
+  const topSpotHtml = topSpot
+    ? `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px">
+        <span style="font-size:11px;color:var(--t3)">${arbT('detail.funding.topSpotByQv')}</span>
+        ${exBadge(topSpot)}
+        <span class="spot-hedge-badge spot-hedge-badge--rec" title="${arbT('detail.funding.topSpotByQvTip')}">${arbT('detail.funding.topSpotRec')}</span>
+      </div>`
+    : '';
+
   let riskMeanRevert = '';
   if (o.avg30 && o.funding) {
     const ratio = Number(o.funding) / Number(o.avg30);
@@ -1312,6 +1380,11 @@ function renderFundingDetail(o) {
         <div class="stars">${stars}</div>
         <div class="cntd">${arbT('detail.funding.nextSettle')} <span class="cntd-val" id="cntd-val">--:--:--</span></div>
         <div style="font-size:11px;color:var(--t3)">${arbT('detail.funding.duration', { days: daysText })}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px">
+          <span style="font-size:11px;color:var(--t3)">${arbT('detail.funding.validSpotExchanges')}</span>
+          ${validSpotExHtml}
+        </div>
+        ${topSpotHtml}
       </div>
     </div>
     <div class="det-right">
@@ -1554,11 +1627,15 @@ function calcUpdate() {
   const netAnn = ((parseFloat(net) / principal) * (365 / period) * 100).toFixed(1);
   const priceHintKey = spot > 0 ? 'detail.funding.priceSpot' : perp > 0 ? 'detail.funding.pricePerp' : '';
   const priceHint = priceHintKey ? arbT('detail.funding.step1Hint', { price: arbT(priceHintKey) }) : '';
+  const spotEx =
+    (o.topSpotByQv && String(o.topSpotByQv).trim()) ||
+    (Array.isArray(o.validSpotExchanges) && o.validSpotExchanges[0]) ||
+    o.exchange;
 
   const stepsEl = __root.querySelector('#steps-box');
   if (stepsEl) {
     stepsEl.innerHTML = `
-      <div class="step-row"><div class="step-n">1</div><div class="step-txt">${arbT('detail.funding.step1', { ex: escapeHtml(o.exchange), qty, sym: escapeHtml(o.sym), hint: priceHint })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">1</div><div class="step-txt">${arbT('detail.funding.step1', { ex: escapeHtml(spotEx), qty, sym: escapeHtml(o.sym), hint: priceHint })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
       <div class="step-row"><div class="step-n">2</div><div class="step-txt">${arbT('detail.funding.step2', { ex: escapeHtml(o.exchange), qty, sym: escapeHtml(o.sym) })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
       <div class="step-row"><div class="step-n">3</div><div class="step-txt">${arbT('detail.funding.step3', { ratio: marginRatio })}</div><div class="step-amt">≈ $${parseInt(totalCapital, 10).toLocaleString()}</div></div>`;
   }
@@ -1851,6 +1928,139 @@ function initTableHeaderTips() {
   };
 }
 
+/** 列表「N 所有效」hover / 点按：浮层展示 validSpotExchanges（portal 避开表格 overflow） */
+function initSpotHedgeHovers() {
+  if (__root.__spotHedgeCleanup) {
+    __root.__spotHedgeCleanup();
+    __root.__spotHedgeCleanup = null;
+  }
+
+  const blocks = Array.from(__root.querySelectorAll('[data-spot-hedge="1"]'));
+  if (!blocks.length) return;
+
+  let floating = document.getElementById('mozi-arb-spot-float');
+  if (!floating) {
+    floating = document.createElement('div');
+    floating.id = 'mozi-arb-spot-float';
+    floating.className = 'mozi-arb-tip-float is-spot-ex';
+    floating.setAttribute('role', 'tooltip');
+    document.body.appendChild(floating);
+  }
+
+  let active = null;
+  let hideTimer = null;
+
+  const clearHideTimer = () => {
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = null;
+    }
+  };
+
+  const hide = () => {
+    clearHideTimer();
+    active = null;
+    floating.classList.remove('show');
+    floating.innerHTML = '';
+    floating.style.left = '';
+    floating.style.top = '';
+  };
+
+  const position = (el) => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    floating.classList.add('show');
+    const tipWidth = Math.min(320, Math.max(floating.offsetWidth || 200, 160));
+    const tipHeight = floating.offsetHeight || 64;
+    const pad = 12;
+    let left = rect.left + rect.width / 2;
+    left = Math.max(pad + tipWidth / 2, Math.min(window.innerWidth - pad - tipWidth / 2, left));
+    let top = rect.bottom + 8;
+    if (top + tipHeight > window.innerHeight - pad) {
+      top = Math.max(pad, rect.top - tipHeight - 8);
+    }
+    floating.style.left = `${left}px`;
+    floating.style.top = `${top}px`;
+  };
+
+  const show = (block) => {
+    const pop = block.querySelector('.spot-hedge-pop');
+    if (!pop) return;
+    clearHideTimer();
+    active = block;
+    floating.innerHTML = pop.innerHTML;
+    position(block);
+  };
+
+  const cleanups = [];
+
+  blocks.forEach((block) => {
+    const onEnter = (e) => {
+      e.stopPropagation();
+      show(block);
+    };
+    const onLeave = () => {
+      clearHideTimer();
+      hideTimer = setTimeout(() => {
+        if (active === block && !block.matches(':hover')) hide();
+      }, 80);
+    };
+    const onClick = (e) => {
+      // 移动端无 hover：点 badge 看清单，不进详情
+      e.stopPropagation();
+      e.preventDefault();
+      if (active === block && floating.classList.contains('show')) hide();
+      else show(block);
+    };
+
+    block.addEventListener('mouseenter', onEnter);
+    block.addEventListener('mouseleave', onLeave);
+    block.addEventListener('click', onClick);
+    block.addEventListener('mousedown', (e) => e.stopPropagation());
+
+    cleanups.push(() => {
+      block.removeEventListener('mouseenter', onEnter);
+      block.removeEventListener('mouseleave', onLeave);
+      block.removeEventListener('click', onClick);
+    });
+  });
+
+  const onReposition = () => {
+    if (!active) return;
+    if (active.isConnected && (active.matches(':hover') || floating.classList.contains('show'))) {
+      position(active);
+      return;
+    }
+    hide();
+  };
+
+  const body = __root.querySelector('#tbl-body-scroll');
+  const list = __root.querySelector('#list-cards');
+  body?.addEventListener('scroll', onReposition, { passive: true });
+  list?.addEventListener('scroll', onReposition, { passive: true });
+  window.addEventListener('resize', onReposition);
+  const onDocPointer = (e) => {
+    if (!active) return;
+    if (active.contains(e.target) || floating.contains(e.target)) return;
+    hide();
+  };
+  document.addEventListener('pointerdown', onDocPointer, true);
+
+  cleanups.push(() => {
+    body?.removeEventListener('scroll', onReposition);
+    list?.removeEventListener('scroll', onReposition);
+    window.removeEventListener('resize', onReposition);
+    document.removeEventListener('pointerdown', onDocPointer, true);
+    hide();
+  });
+
+  __root.__spotHedgeCleanup = () => {
+    cleanups.forEach((fn) => {
+      try { fn(); } catch (_) {}
+    });
+  };
+}
+
 // ===== TABLE TOP SCROLLBAR (between thead & tbody) =====
 /** 只绑定横向滚动同步，不测列宽（排序局部刷新用） */
 function bindTableHScrollOnly() {
@@ -2070,7 +2280,8 @@ function showToast(msg) {
     loadActiveList();
   }
 
-  return function cleanup() {
+  function cleanup() {
+    if (__root.__arbCleanup !== cleanup) return;
     listRequestId += 1;
     i18n.off('languageChanged', onLanguageChanged);
     if (mq.removeEventListener) mq.removeEventListener('change', onMqChange);
@@ -2079,8 +2290,14 @@ function showToast(msg) {
       __root.__tblTipCleanup();
       __root.__tblTipCleanup = null;
     }
+    if (__root.__spotHedgeCleanup) {
+      __root.__spotHedgeCleanup();
+      __root.__spotHedgeCleanup = null;
+    }
     const floating = document.getElementById('mozi-arb-tip-float');
     if (floating) floating.remove();
+    const spotFloat = document.getElementById('mozi-arb-spot-float');
+    if (spotFloat) spotFloat.remove();
     if (__root.__tblScrollCleanup) {
       __root.__tblScrollCleanup();
       __root.__tblScrollCleanup = null;
@@ -2093,6 +2310,10 @@ function showToast(msg) {
       else window[k] = prev[k];
     });
     __root.__mounted = false;
+    __root.__arbOptsKey = null;
+    __root.__arbCleanup = null;
     __root.innerHTML = '';
-  };
+  }
+  __root.__arbCleanup = cleanup;
+  return cleanup;
 }

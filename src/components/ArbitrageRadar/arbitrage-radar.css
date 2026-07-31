@@ -310,6 +310,48 @@
 #mozi-arbitrage-radar .sym-name{font-weight:600;font-size:14PX}
 #mozi-arbitrage-radar .sym-sub{font-size:11PX;color:var(--t3);margin-top:1PX}
 #mozi-arbitrage-radar .exbadge{display:inline-flex;align-items:center;gap:4PX;padding:3PX 9PX;border-radius:4PX;font-size:11PX;font-weight:600;border:1PX solid}
+#mozi-arbitrage-radar .ex-cell{display:inline-flex;align-items:center;gap:6PX;flex-wrap:wrap}
+#mozi-arbitrage-radar .ex-cell--stack{flex-direction:column;align-items:flex-start;gap:6PX}
+#mozi-arbitrage-radar .spot-hedge-block{display:inline-flex;align-items:center;position:relative;cursor:help}
+#mozi-arbitrage-radar .spot-hedge-badge{
+  display:inline-flex;align-items:center;gap:3PX;padding:2PX 7PX;border-radius:4PX;
+  background:var(--accent-dim);border:1PX solid rgba(0,184,144,.28);color:var(--accent);
+  font-size:10PX;font-weight:600;vertical-align:middle;white-space:nowrap
+}
+#mozi-arbitrage-radar .spot-hedge-badge--rec{
+  background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.28);color:var(--warn)
+}
+#mozi-arbitrage-radar td.td-ex{white-space:normal;vertical-align:middle}
+#mozi-arbitrage-radar .spot-hedge-pop[hidden]{display:none!important}
+
+/* 现货对冲所 hover 浮层（挂 body，见 .mozi-arb-tip-float.is-spot-ex） */
+.mozi-arb-tip-float.is-spot-ex{
+  width:auto;
+  max-width:min(320PX, calc(100vw - 24PX));
+  padding:10PX 12PX;
+  pointer-events:none;
+}
+.mozi-arb-tip-float.is-spot-ex .spot-ex-pop-title{
+  font-size:11PX;font-weight:600;color:#64748B;margin-bottom:8PX
+}
+.mozi-arb-tip-float.is-spot-ex .spot-ex-chips{
+  display:flex;flex-wrap:wrap;gap:5PX;align-items:center
+}
+.mozi-arb-tip-float.is-spot-ex .spot-ex-chip{
+  display:inline-flex;align-items:center;gap:3PX
+}
+.mozi-arb-tip-float.is-spot-ex .spot-ex-chip .exbadge{
+  font-size:10PX;padding:2PX 6PX;font-weight:500
+}
+.mozi-arb-tip-float.is-spot-ex .spot-ex-chip.is-top .exbadge{
+  box-shadow:0 0 0 1PX rgba(245,158,11,.35)
+}
+.mozi-arb-tip-float.is-spot-ex .spot-ex-top{
+  margin-top:8PX;padding-top:8PX;border-top:1PX solid #E2E8F0;
+  display:flex;align-items:center;gap:6PX;flex-wrap:wrap;
+  font-size:11PX;color:#64748B
+}
+.mozi-arb-tip-float.is-spot-ex .spot-ex-empty{font-size:11PX;color:#94A3B8}
 #mozi-arbitrage-radar .mono{font-family:var(--mono)}
 #mozi-arbitrage-radar .ann{font-family:var(--mono);font-weight:600;font-size:13PX}
 #mozi-arbitrage-radar .ann-h{color:var(--accent)}

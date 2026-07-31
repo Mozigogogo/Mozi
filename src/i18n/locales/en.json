@@ -2304,7 +2304,9 @@
       "requestFailedCode": "Request failed ({{code}}). Please try again.",
       "requestFailed": "Request failed. Please try again.",
       "exchangesValid": "{{n}} venues",
-      "spotCross": "Spot cross-exchange"
+      "spotCross": "Spot cross-exchange",
+      "spotHedgeBadge": "Spot {{n}}",
+      "spotHedgeTip": "Number of venues available for spot hedge"
     },
     "intro": {
       "funding": [
@@ -2567,7 +2569,11 @@
         "resFees": "💸 Fees ({{fee}})",
         "resCost": "🏦 Opportunity cost ({{rate}}%/yr)",
         "resNet": "Net · {{days}}d",
-        "resNetAnn": "(net APR {{pct}}%)"
+        "resNetAnn": "(net APR {{pct}}%)",
+        "validSpotExchanges": "Spot hedge venues",
+        "topSpotByQv": "Recommended spot",
+        "topSpotByQvTip": "Spot hedge venue recommended by 24h quote volume",
+        "topSpotRec": "Top"
       },
       "basis": {
         "premiumFull": "Contango (perp premium)",

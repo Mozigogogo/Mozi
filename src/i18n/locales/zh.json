@@ -2302,7 +2302,9 @@
       "requestFailedCode": "请求失败（{{code}}），请稍后再试",
       "requestFailed": "请求失败，请稍后再试",
       "exchangesValid": "{{n}} 所有效",
-      "spotCross": "现货跨所"
+      "spotCross": "现货跨所",
+      "spotHedgeBadge": "现货 {{n}}",
+      "spotHedgeTip": "可用于现货对冲的交易所数量"
     },
     "intro": {
       "funding": [
@@ -2565,7 +2567,11 @@
         "resFees": "💸 手续费（{{fee}}）",
         "resCost": "🏦 资金机会成本（按 {{rate}}%/年）",
         "resNet": "净收益 · {{days}}天",
-        "resNetAnn": "（净年化 {{pct}}%）"
+        "resNetAnn": "（净年化 {{pct}}%）",
+        "validSpotExchanges": "现货对冲所",
+        "topSpotByQv": "推荐现货所",
+        "topSpotByQvTip": "按 24h 成交额推荐的现货对冲交易所",
+        "topSpotRec": "推荐"
       },
       "basis": {
         "premiumFull": "升水（perp 溢价）",

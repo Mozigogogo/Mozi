@@ -205,6 +205,47 @@ export function exBadge(name) {
   return `<span class="exbadge" style="background:${e.bg};border-color:${e.border};color:${e.color}">${name}</span>`;
 }
 
+/**
+ * Funding 列表：默认只显示「N 所有效」，hover/点按弹出具体交易所
+ */
+export function renderValidSpotHedgeHtml(o) {
+  const list = Array.isArray(o?.validSpotExchanges)
+    ? o.validSpotExchanges.map((ex) => String(ex || '').trim()).filter(Boolean)
+    : [];
+  const countRaw = Number(o?.validSpotCount);
+  const count =
+    Number.isFinite(countRaw) && countRaw >= 0 ? Math.floor(countRaw) : list.length;
+  if (count <= 0 && list.length === 0) return '';
+
+  const top = o?.topSpotByQv ? String(o.topSpotByQv).trim() : '';
+  const n = count || list.length;
+  const chips = list.length
+    ? list
+        .map((ex) => {
+          const isTop = top && ex.toLowerCase() === top.toLowerCase();
+          return `<span class="spot-ex-chip${isTop ? ' is-top' : ''}">${exBadge(ex)}${
+            isTop
+              ? `<span class="spot-hedge-badge spot-hedge-badge--rec">${arbT('detail.funding.topSpotRec')}</span>`
+              : ''
+          }</span>`;
+        })
+        .join('')
+    : `<span class="spot-ex-empty">${arbT('common.spotHedgeTip')}</span>`;
+
+  const topLine = top
+    ? `<div class="spot-ex-top">${arbT('detail.funding.topSpotByQv')} · ${exBadge(top)}</div>`
+    : '';
+
+  return `<div class="spot-hedge-block" data-spot-hedge="1">
+    <span class="spot-hedge-badge">${arbT('common.exchangesValid', { n })}</span>
+    <div class="spot-hedge-pop" hidden>
+      <div class="spot-ex-pop-title">${arbT('detail.funding.validSpotExchanges')}</div>
+      <div class="spot-ex-chips">${chips}</div>
+      ${topLine}
+    </div>
+  </div>`;
+}
+
 /** 列表/详情币种 logo：优先用接口 url */
 export function parseLogoUrl(item) {
   if (!item || typeof item !== 'object') return null;
@@ -387,6 +428,7 @@ export function renderMobileListCards(tab, displayOps, allOps) {
       const periodLabel = o.periodLabel || `${o.period || 8}h`;
       const avg30Text = o.avg30 == null ? '—' : displayPctTrunc(o.avg30);
       const warnTitle = o.riskTooltip ? ` title="${String(o.riskTooltip).replace(/"/g, '&quot;')}"` : '';
+      const spotHedgeHtml = renderValidSpotHedgeHtml(o);
       return `<div class="opp-card ${barCls}" onclick="openDetail(ops[${opsIdx}],'funding')" style="animation-delay:${i * 40}ms">
         <div class="card-top">
           <div class="card-sym">${symIco(o.sym, i, o.logoUrl)}<div>
@@ -394,6 +436,7 @@ export function renderMobileListCards(tab, displayOps, allOps) {
               ${o.warn ? `<span class="badge badge-warn" ${warnTitle}>⚠️${arbT('common.extreme')}</span>` : ''}
             </div>
             <div class="sym-sub"><span class="ex-dot" style="background:${exDotColor(o.exchange)}"></span>${o.exchange} · ${arbT('common.perp')}</div>
+            ${spotHedgeHtml}
           </div></div>
           <div class="card-main-val"><div class="main-num" style="color:${numColor}">${displayPctTrunc(o.ann)}</div><div class="main-lbl">${arbT('table.apr')}</div></div>
         </div>

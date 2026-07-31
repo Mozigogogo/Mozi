@@ -13,27 +13,53 @@ function parseLogoUrl(item) {
   return s;
 }
 
+/** StrictMode 双 effect / 快速重建时，同 key 列表请求只打一次 HTTP */
+const listInflight = new Map();
+const listRecent = new Map();
+const LIST_RECENT_MS = 500;
+
+function listCacheKey(path, params) {
+  return `${path}?${JSON.stringify(params || {})}`;
+}
+
 async function fetchCryptoArbList(path, params = {}, label = '列表') {
-  const res = await request({
-    url: path,
-    method: 'GET',
-    params,
+  const key = listCacheKey(path, params);
+  const recent = listRecent.get(key);
+  if (recent && Date.now() - recent.at < LIST_RECENT_MS) {
+    return recent.result;
+  }
+  const inflight = listInflight.get(key);
+  if (inflight) return inflight;
+
+  const promise = (async () => {
+    const res = await request({
+      url: path,
+      method: 'GET',
+      params,
+    });
+
+    if (!res || (res.code !== 0 && res.code !== 200 && res.success !== true)) {
+      const msg = res?.errorMsg || res?.message || res?.msg || `加载${label}失败`;
+      throw new Error(String(msg));
+    }
+
+    const data = res.data && typeof res.data === 'object' ? res.data : {};
+    const list = Array.isArray(data.list) ? data.list : Array.isArray(data) ? data : [];
+
+    const result = {
+      list,
+      total: Number(data.total) || list.length,
+      dataTs: data.dataTs != null ? Number(data.dataTs) : null,
+      dataDelaySec: data.dataDelaySec != null ? Number(data.dataDelaySec) : null,
+    };
+    listRecent.set(key, { at: Date.now(), result });
+    return result;
+  })().finally(() => {
+    if (listInflight.get(key) === promise) listInflight.delete(key);
   });
 
-  if (!res || (res.code !== 0 && res.code !== 200 && res.success !== true)) {
-    const msg = res?.errorMsg || res?.message || res?.msg || `加载${label}失败`;
-    throw new Error(String(msg));
-  }
-
-  const data = res.data && typeof res.data === 'object' ? res.data : {};
-  const list = Array.isArray(data.list) ? data.list : Array.isArray(data) ? data : [];
-
-  return {
-    list,
-    total: Number(data.total) || list.length,
-    dataTs: data.dataTs != null ? Number(data.dataTs) : null,
-    dataDelaySec: data.dataDelaySec != null ? Number(data.dataDelaySec) : null,
-  };
+  listInflight.set(key, promise);
+  return promise;
 }
 
 /**
@@ -271,6 +297,19 @@ function mapFundingDetail(raw) {
   const takerFeeRate = toNum(item.takerFeeRate ?? item.taker_fee_rate);
   const makerFeeRate = toNum(item.makerFeeRate ?? item.maker_fee_rate);
   const nextFundingTs = toNum(item.nextFundingTs ?? item.next_funding_ts);
+  const spotFields = (() => {
+    const rawList = item.validSpotExchanges ?? item.valid_spot_exchanges;
+    const validSpotExchanges = Array.isArray(rawList)
+      ? rawList.map((ex) => String(ex || '').trim()).filter(Boolean)
+      : [];
+    const countRaw = toNum(item.validSpotCount ?? item.valid_spot_count);
+    const validSpotCount =
+      countRaw != null && countRaw >= 0 ? Math.floor(countRaw) : validSpotExchanges.length;
+    const topRaw = item.topSpotByQv ?? item.top_spot_by_qv;
+    const topSpotByQv =
+      topRaw == null || String(topRaw).trim() === '' ? null : String(topRaw).trim();
+    return { validSpotCount, validSpotExchanges, topSpotByQv };
+  })();
 
   return {
     sym: String(item.symbol || '').trim() || null,
@@ -301,6 +340,7 @@ function mapFundingDetail(raw) {
     periodLabel,
     period: periodMatch ? Number(periodMatch[1]) : 8,
     nextFundingTs: nextFundingTs != null && nextFundingTs > 0 ? nextFundingTs : 0,
+    ...spotFields,
     logoUrl: parseLogoUrl(item),
   };
 }
