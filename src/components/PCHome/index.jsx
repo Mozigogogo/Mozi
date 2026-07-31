@@ -21,12 +21,13 @@ import { getSectionList } from '@/api/market';
 import { buildSectorDetailHref } from '@/utils/sectorNavigation';
 import { buildPcFindRankHref } from '@/utils/pcFindNavigation';
 import { completeTask } from '@/api/user';
+import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 import styles from './index.module.less';
-import { SectorTreeMapChunkSkeleton, HotTopicsChunkSkeleton } from './ChunkSkeletons';
+import { SectorTreeMapChunkSkeleton, HotTopicsChunkSkeleton, MarketDistributionChunkSkeleton } from './ChunkSkeletons';
 
 // Lazy load heavy components — 必须带 loading，否则 chunk 下载期间整块空白
 const MarketDistribution = dynamic(() => import('../MarketDistribution'), {
-  loading: () => <div className={styles.zoneBodySkeleton} />,
+  loading: () => <MarketDistributionChunkSkeleton />,
 });
 const PCHotTopics = dynamic(() => import('../PCHotTopics'), {
   loading: () => <HotTopicsChunkSkeleton />,
@@ -296,11 +297,11 @@ export default function PCHome() {
       width: 250,
       render: (text, record) => (
         <div className={styles.coinCell} style={{ justifyContent: 'flex-start', paddingLeft: '40px' }}>
-          <img 
-            src={record.url || '/default-coin.svg'} 
-            alt={text} 
+          <CoinSymbolIcon
+            symbol={text}
+            url={record.url}
+            size={24}
             className={styles.coinIcon}
-            onError={(e) => { e.target.src = '/default-coin.svg'; }}
           />
           <span>{text}</span>
         </div>

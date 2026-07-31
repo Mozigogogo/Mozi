@@ -21,6 +21,7 @@ import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import { savePcAiNav } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
 import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
+import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 import styles from './index.module.less';
 
 const RANK_SHARE_ICON = '/icons/pc/share_toolbar.svg';
@@ -265,15 +266,7 @@ export default function PCFindContent() {
       width: MARKET_TABLE_COL_WIDTHS[0],
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img 
-            src={record.url || record.img || '/default-coin.svg'} 
-            alt={text}
-            style={{ width: 24, height: 24, borderRadius: '50%' }}
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = '/default-coin.svg';
-            }}
-          />
+          <CoinSymbolIcon symbol={text} url={record.url || record.img} size={24} />
           <span style={{ fontWeight: 500 }}>{text}</span>
         </div>
       ),
@@ -396,15 +389,7 @@ export default function PCFindContent() {
       width: 200,
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img 
-            src={record.url || record.img || '/default-coin.svg'} 
-            alt={text}
-            style={{ width: 24, height: 24, borderRadius: '50%' }}
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = '/default-coin.svg';
-            }}
-          />
+          <CoinSymbolIcon symbol={text} url={record.url || record.img} size={24} />
           <span style={{ fontWeight: 500 }}>{text}</span>
         </div>
       ),
@@ -1233,14 +1218,11 @@ export default function PCFindContent() {
                             }}
                           >
                             <div className={styles.rankTopCardHeader}>
-                              <img
-                                src={item.url || item.img || '/default-coin.svg'}
-                                alt={item.symbol}
+                              <CoinSymbolIcon
+                                symbol={item.symbol}
+                                url={item.url || item.img}
+                                size={28}
                                 className={styles.rankTopCardIcon}
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.src = '/default-coin.svg';
-                                }}
                               />
                               <div className={styles.rankTopCardSymbol}>{item.symbol}</div>
                               <div className={styles.rankTopCardRank}>
@@ -1365,14 +1347,11 @@ export default function PCFindContent() {
                           >
                             <div className={styles.rankCoinCell}>
                               <span className={styles.rankNo}>{ridx + 1}</span>
-                              <img
-                                src={row.url || row.img || '/default-coin.svg'}
-                                alt={row.symbol}
+                              <CoinSymbolIcon
+                                symbol={row.symbol}
+                                url={row.url || row.img}
+                                size={22}
                                 className={styles.rankCoinIcon}
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.src = '/default-coin.svg';
-                                }}
                               />
                               <span className={styles.rankCoinSymbol}>{row.symbol}</span>
                             </div>

@@ -21,6 +21,7 @@ import {
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { MOZI_SESSION_CHANGED, notifySessionChanged } from '@/utils/sessionEvents';
+import { clearPostLoginSessionFlags } from '@/utils/postLogin';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -282,6 +283,7 @@ export default function PCLayout({ children }) {
       localStorage.removeItem('userInfo');
       localStorage.removeItem('userDataInfo');
       localStorage.removeItem('userId');
+      clearPostLoginSessionFlags();
     } catch (_) {}
     if (web3Connected) {
       try {

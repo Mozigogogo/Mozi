@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { notifySessionChanged } from '@/utils/sessionEvents';
 import { useRouter } from 'next/navigation';
 import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, completeTask } from '../../api/user';
-import { ensureFirstLoginAt } from '../../utils/postLogin';
+import { ensureFirstLoginAt, runPostLoginSideEffects, clearPostLoginSessionFlags } from '../../utils/postLogin';
 import InviteShareModal from '../InviteShareModal';
 import FeedbackPopup from '../../app/user/components/FeedbackPopup';
 import FeedbackSuccessModal from '../FeedbackSuccessModal';
@@ -141,6 +141,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
     localStorage.removeItem('userInfo');
     localStorage.removeItem('userDataInfo');
     localStorage.removeItem('userId');
+    clearPostLoginSessionFlags();
     
     // 断开钱包连接
     if (web3Connected) {
@@ -151,6 +152,7 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
     setUserInfo(null);
     setUserDataInfo(null);
     message.success(t('user.logoutSuccess') || '退出成功');
+    notifySessionChanged();
     
     // 退出后关闭弹窗
     onClose();
@@ -231,15 +233,22 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
           localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
           setUserInfo(userInfoWithSubscribe);
         }
-        if (res?.data?.userId) {
-          localStorage.setItem('userId', res.data.userId);
+        const loginUserId =
+          res?.data?.userId ??
+          userData?.userId ??
+          userData?.id ??
+          null;
+        if (loginUserId != null && String(loginUserId).trim()) {
+          localStorage.setItem('userId', String(loginUserId));
         }
         
         console.log('[DEBUG PCLoginModal] handleLogin success, will call /user/datainfo & completeTask, email =', email);
-        // 注意：PC 弹窗本身不再直接请求 datainfo，这里只标记调试和任务上报
         try {
-          completeTask('DAILY_LOGIN');
-          completeTask('FIRST_LOGIN');
+          await runPostLoginSideEffects({
+            force: true,
+            forceDataInfo: true,
+            caller: 'PCLoginModal_handleLogin',
+          });
           ensureFirstLoginAt({ caller: 'PCLoginModal_handleLogin' });
         } catch (error) {
           console.error('登录任务上报失败:', error);
@@ -323,27 +332,21 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
           localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
           setUserInfo(userInfoWithSubscribe);
         }
-        if (res?.data?.userId) {
-          localStorage.setItem('userId', res.data.userId);
+        const loginUserId =
+          res?.data?.userId ??
+          userData?.userId ??
+          userData?.id ??
+          null;
+        if (loginUserId != null && String(loginUserId).trim()) {
+          localStorage.setItem('userId', String(loginUserId));
         }
         
-        request({
-          url: Interface.USER_DATA_INFO,
-          method: 'GET'
-        }).then((dataInfoRes) => {
-          if (dataInfoRes?.data) {
-            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
-            setUserDataInfo(dataInfoRes.data);
-          }
-        }).catch((error) => {
-          console.error('获取用户详细信息失败:', error);
-        });
-        
-        // 完成每日登录任务
         try {
-          completeTask('DAILY_LOGIN');
-          // 首次登录任务上报
-          completeTask('FIRST_LOGIN');
+          await runPostLoginSideEffects({
+            force: true,
+            forceDataInfo: true,
+            caller: 'PCLoginModal_autoLoginAfterRegister',
+          });
           ensureFirstLoginAt({ caller: 'PCLoginModal_autoLoginAfterRegister' });
         } catch (error) {
           console.error('登录任务上报失败:', error);
@@ -414,27 +417,21 @@ export default function PCLoginModal({ open, onClose, onSuccess, collapsed }) {
           localStorage.setItem('userInfo', JSON.stringify(userInfoWithSubscribe));
           setUserInfo(userInfoWithSubscribe);
         }
-        if (res?.data?.userId) {
-          localStorage.setItem('userId', res.data.userId);
+        const loginUserId =
+          res?.data?.userId ??
+          userData?.userId ??
+          userData?.id ??
+          null;
+        if (loginUserId != null && String(loginUserId).trim()) {
+          localStorage.setItem('userId', String(loginUserId));
         }
         
-        request({
-          url: Interface.USER_DATA_INFO,
-          method: 'GET'
-        }).then((dataInfoRes) => {
-          if (dataInfoRes?.data) {
-            localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
-            setUserDataInfo(dataInfoRes.data);
-          }
-        }).catch((error) => {
-          console.error('获取用户详细信息失败:', error);
-        });
-        
-        // 完成每日登录任务
         try {
-          completeTask('DAILY_LOGIN');
-          // 首次登录任务上报
-          completeTask('FIRST_LOGIN');
+          await runPostLoginSideEffects({
+            force: true,
+            forceDataInfo: true,
+            caller: 'PCLoginModal_triggerWeb3SignatureLogin',
+          });
           ensureFirstLoginAt({ caller: 'PCLoginModal_triggerWeb3SignatureLogin' });
         } catch (error) {
           console.error('登录任务上报失败:', error);

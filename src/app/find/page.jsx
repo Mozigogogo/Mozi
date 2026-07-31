@@ -24,6 +24,7 @@ import { useAmplitude } from '../../hooks/useAmplitude';
 import { FindEvents } from '../../utils/amplitude';
 import styles from './page.module.less';
 import { useTranslation } from 'react-i18next';
+import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 
 // 过滤交易所名称中的.com，避免文字过长溢出
 const sanitizeExchangeName = (name) => {
@@ -39,11 +40,11 @@ const sanitizeExchangeName = (name) => {
 const MarketTitle = ({ url, symbol, totalVolume }) => {
   return (
     <div className={styles.rankTitle}>
-      <img 
-        className={styles.rankImg} 
-        src={url || '/default-coin.svg'} 
-        alt={symbol}
-        onError={(e) => { e.target.src = '/default-coin.svg'; }}
+      <CoinSymbolIcon
+        symbol={symbol}
+        url={url}
+        size={24}
+        className={styles.rankImg}
       />
       <div>
         <div className={styles.rankCoin}>{symbol}</div>
@@ -490,11 +491,11 @@ const loadingTimerRef = useRef(null);
         return {
           symbol: (
             <div className={styles.ownTitle}>
-              <img 
-                className={styles.ownImg} 
-                src={item.url || '/default-coin.svg'} 
-                alt={item.symbol}
-                onError={(e) => { e.target.src = '/default-coin.svg'; }}
+              <CoinSymbolIcon
+                symbol={item.symbol}
+                url={item.url}
+                size={16}
+                className={styles.ownImg}
               />
               {item.symbol}
             </div>

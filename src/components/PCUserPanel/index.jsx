@@ -14,6 +14,7 @@ import FeedbackSuccessModal from '../FeedbackSuccessModal';
 import GeneralPopup from '../../app/user/components/GeneralPopup';
 import RewardPopup from '../../app/user/components/RewardPopup';
 import { notifySessionChanged } from '@/utils/sessionEvents';
+import { clearPostLoginSessionFlags } from '@/utils/postLogin';
 import styles from './index.module.less';
 
 export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
@@ -100,6 +101,7 @@ export default function PCUserPanel({ open, onClose, collapsed, onLogin }) {
     localStorage.removeItem('userInfo');
     localStorage.removeItem('userDataInfo');
     localStorage.removeItem('userId');
+    clearPostLoginSessionFlags();
     
     // 断开钱包连接
     if (web3Connected) {

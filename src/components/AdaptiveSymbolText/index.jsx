@@ -1,6 +1,7 @@
 'use client';
 
 import { useSimpleAdaptiveFontSize } from '../../hooks/useAdaptiveFontSize';
+import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 import styles from './index.module.less';
 
 /**
@@ -14,12 +15,9 @@ const AdaptiveSymbolText = ({ symbol, iconUrl, className = '' }) => {
 
   return (
     <div className={`${styles.symbolContainer} ${className}`} style={{ fontSize }}>
-      <img 
-        className={styles.symbolIcon} 
-        src={iconUrl || '/default-coin.svg'} 
-        alt={symbol}
-        onError={(e) => { e.target.src = '/default-coin.svg'; }}
-      />
+      <span className={styles.symbolIconWrap} aria-hidden>
+        <CoinSymbolIcon symbol={symbol} url={iconUrl} size={18} />
+      </span>
       <span className={styles.symbolText}>
         {symbol}
       </span>

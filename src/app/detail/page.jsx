@@ -43,10 +43,13 @@ import { usePcShell } from '@/components/PcShellContext';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
+import { useIsWithinCreateTimeWindow } from '@/hooks/useIsWithinCreateTimeWindow';
 import { completeTask } from '@/api/user';
 import { executeConsume } from '@/api/points';
 import { getMySubscription } from '@/api/vip';
 import { confirm } from '@/components/Modal/confirm';
+import { MOZI_SESSION_CHANGED } from '@/utils/sessionEvents';
+import { pickCreateTimeFromDatainfo, parseCreateTimeMs } from '@/utils/companionDays';
 import {
   displayRawNum,
   displayPctTrunc,
@@ -489,6 +492,28 @@ export default function DetailPage() {
   const [orderBookTag, setOrderBookTag] = useState(null);
   const [mySubscription, setMySubscription] = useState(null);
 
+  // 注册 createTime 起 30 天内：免遮罩、无倒计时/限时 flag，开放 Top 40 深度
+  const { inWindow: withinCreateTime30d } = useIsWithinCreateTimeWindow({ days: 30 });
+  const isCreateTimeGrant = withinCreateTime30d === true;
+  /** 登录/登出/切号时递增，驱动订阅与解锁检查重跑 */
+  const [sessionTick, setSessionTick] = useState(0);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const bump = () => setSessionTick((n) => n + 1);
+    const onStorage = (e) => {
+      if (!e.key || e.key === 'userId' || e.key === 'token' || e.key === 'userDataInfo') {
+        bump();
+      }
+    };
+    window.addEventListener(MOZI_SESSION_CHANGED, bump);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener(MOZI_SESSION_CHANGED, bump);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+
   const isVipBySubscription = (sub) => {
     if (!sub) return false;
     if (sub?.isVip === true) return true;
@@ -497,6 +522,14 @@ export default function DetailPage() {
     if (!plan) return false;
     return plan !== 'FREE' && plan !== '0' && plan !== 'NONE';
   };
+
+  const orderBookUnlocked = isBigOrderUnlocked || isCreateTimeGrant;
+  const isVipOrderBook =
+    orderBookTag === 'VIP' || isVipBySubscription(mySubscription);
+  const orderBookEndTime =
+    isCreateTimeGrant && !isVipOrderBook ? null : unlockEndTime;
+  const orderBookDisplayTag =
+    isCreateTimeGrant && !isVipOrderBook ? null : orderBookTag;
 
   const getSubscriptionTier = (sub) => {
     const tierCode = String(sub?.tierCode || '').toUpperCase();
@@ -521,21 +554,29 @@ export default function DetailPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      setMySubscription(null);
+      return;
+    }
 
     const CACHE_KEY = 'mozi_my_subscription_cache_v1';
     const TTL = 5 * 60 * 1000; // 5min
     let alive = true;
 
-    try {
-      const cachedStr = localStorage.getItem(CACHE_KEY);
-      if (cachedStr) {
-        const cached = JSON.parse(cachedStr);
-        if (cached?.ts && Date.now() - cached.ts < TTL && cached?.data) {
-          setMySubscription(cached.data);
+    // 切号后不要沿用上一账号的短缓存
+    if (sessionTick === 0) {
+      try {
+        const cachedStr = localStorage.getItem(CACHE_KEY);
+        if (cachedStr) {
+          const cached = JSON.parse(cachedStr);
+          if (cached?.ts && Date.now() - cached.ts < TTL && cached?.data) {
+            setMySubscription(cached.data);
+          }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    } else {
+      setMySubscription(null);
+    }
 
     getMySubscription()
       .then((res) => {
@@ -553,7 +594,7 @@ export default function DetailPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [sessionTick]);
 
   // 初始化检查解锁状态
   useEffect(() => {
@@ -561,6 +602,18 @@ export default function DetailPage() {
       // 200积分解锁：全局生效（不依赖 symbol）
       const GLOBAL_UNLOCK_START_KEY = 'mozi_big_order_unlock_start_at_v1';
       const UNLOCK_DURATION_MS = 24 * 60 * 60 * 1000; // 24小时
+
+      // 0. 注册 createTime 30 天窗口（hook 已判定）：直接放开，无倒计时/限时 flag
+      if (withinCreateTime30d === true) {
+        setIsBigOrderUnlocked(true);
+        setUnlockEndTime(null);
+        setOrderBookTag(null);
+        return;
+      }
+      // hook 仍在解析中：先别落成「锁定」，避免闪一下又解锁；由 isCreateTimeGrant 驱动遮罩
+      if (withinCreateTime30d == null) {
+        return;
+      }
 
       // 1. 优先检查 VIP 状态 (最高优先级)
       if (isVipBySubscription(mySubscription)) {
@@ -589,8 +642,22 @@ export default function DetailPage() {
         console.error('Check VIP status failed:', e);
       }
 
-      // 2. 检查新用户试用 (7天)
+      // 2. 检查新用户试用 (firstLoginAt，最长 30 天；展示限时 flag 仅前 7 天兼容旧文案时可仍用 7)
       try {
+        // 补齐 userId（部分登录只把 id 写在 userInfo 里）
+        try {
+          if (!localStorage.getItem('userId')) {
+            const uiRaw = localStorage.getItem('userInfo');
+            if (uiRaw) {
+              const ui = JSON.parse(uiRaw);
+              const uid = ui?.userId ?? ui?.id;
+              if (uid != null && String(uid).trim()) {
+                localStorage.setItem('userId', String(uid));
+              }
+            }
+          }
+        } catch (_) {}
+
         const userId = localStorage.getItem('userId');
         const FIRST_LOGIN_AT_KEY_PREFIX = 'mozi_first_login_at_user_v1:';
 
@@ -617,8 +684,8 @@ export default function DetailPage() {
               if (typeof v === 'number' && Number.isFinite(v) && v > 0) {
                 firstLoginAtMs = v;
               } else if (typeof v === 'string' && v) {
-                const parsed = new Date(v).getTime();
-                if (Number.isFinite(parsed) && parsed > 0) firstLoginAtMs = parsed;
+                const parsed = parseCreateTimeMs(v);
+                if (parsed != null) firstLoginAtMs = parsed;
               }
             } catch (_) {}
           }
@@ -626,11 +693,11 @@ export default function DetailPage() {
 
         if (firstLoginAtMs) {
           const now = Date.now();
-          const trialDuration = 7 * 24 * 60 * 60 * 1000; // 7天
+          const trialDuration = 30 * 24 * 60 * 60 * 1000; // 与 30 天窗口对齐
           if (now - firstLoginAtMs < trialDuration) {
             setIsBigOrderUnlocked(true);
-            setUnlockEndTime(firstLoginAtMs + trialDuration);
-            setOrderBookTag(t('orderBook.limitedExperience')); // "限时体验"
+            setUnlockEndTime(null);
+            setOrderBookTag(null);
             return;
           }
         }
@@ -639,25 +706,28 @@ export default function DetailPage() {
         let createTimeStr = null;
         const userDataInfo = localStorage.getItem('userDataInfo');
         if (userDataInfo) {
-          const user = JSON.parse(userDataInfo);
-          createTimeStr = user.createTime || user.createdAt || user.registerTime;
+          try {
+            createTimeStr = pickCreateTimeFromDatainfo(JSON.parse(userDataInfo));
+          } catch (_) {}
         }
         if (!createTimeStr) {
           const userInfo = localStorage.getItem('userInfo');
           if (userInfo) {
-            const user = JSON.parse(userInfo);
-            createTimeStr = user.createTime || user.createdAt || user.registerTime;
+            try {
+              createTimeStr = pickCreateTimeFromDatainfo(JSON.parse(userInfo));
+            } catch (_) {}
           }
         }
 
         if (createTimeStr) {
-          const created = new Date(createTimeStr).getTime();
+          const created = parseCreateTimeMs(createTimeStr);
           const now = Date.now();
-          const trialDuration = 7 * 24 * 60 * 60 * 1000; // 7天
-          if (now - created < trialDuration) {
+          const trialDuration = 30 * 24 * 60 * 60 * 1000; // 与 createTime 30 天窗口对齐
+          if (created != null && now - created < trialDuration) {
             setIsBigOrderUnlocked(true);
-            setUnlockEndTime(created + trialDuration);
-            setOrderBookTag(t('orderBook.limitedExperience')); // "限时体验"
+            // 注册 30 天内：不展示倒计时 / 限时 flag（与 hook 授权一致）
+            setUnlockEndTime(null);
+            setOrderBookTag(null);
             return;
           }
         }
@@ -691,7 +761,7 @@ export default function DetailPage() {
     };
 
     checkStatus();
-  }, [symbol, t, mySubscription]);
+  }, [symbol, t, mySubscription, sessionTick, withinCreateTime30d]);
 
   // PC 详情高度调试：默认打印；URL 加 ?debugHeight=1 时额外打完整链路
   useEffect(() => {
@@ -901,7 +971,7 @@ export default function DetailPage() {
   // 积分/会员解锁后，部分服务端不会在“已订阅但未授权”状态下自动推送数据，
   // 因此需要在 unlock 状态变为 true 时重新订阅 big_deal。
   useEffect(() => {
-    if (!isBigOrderUnlocked) {
+    if (!orderBookUnlocked) {
       didResubscribeBigDealRef.current = false;
       return;
     }
@@ -934,7 +1004,7 @@ export default function DetailPage() {
     };
 
     run();
-  }, [isBigOrderUnlocked, symbol]);
+  }, [orderBookUnlocked, symbol]);
 
   // 这里不再打印解锁状态/订单簿更新日志，避免刷屏；big_deal 只保留最关键字段日志
   
@@ -2579,13 +2649,12 @@ ${coinInfo.name || symbol} (${symbol})
 
   const renderOrderBook = () => {
     const tier = getSubscriptionTier(mySubscription);
-    const maxRows = getOrderBookMaxRows(tier);
-    const dropdownOptions =
-      tier === 'pro'
-        ? ['Top 40', 'Top 20', 'Top 5']
-        : tier === 'lite'
-          ? ['Top 20', 'Top 5']
-          : ['Top 5'];
+    const maxRows = isCreateTimeGrant ? 40 : getOrderBookMaxRows(tier);
+    const dropdownOptions = isCreateTimeGrant || tier === 'pro'
+      ? ['Top 40', 'Top 20', 'Top 5']
+      : tier === 'lite'
+        ? ['Top 20', 'Top 5']
+        : ['Top 5'];
 
     return (
       <OrderBook 
@@ -2593,9 +2662,9 @@ ${coinInfo.name || symbol} (${symbol})
         asks={orderBook.asks}
         midPrice={coinInfo?.currentPrice}
         priceTrend={String(coinInfo?.priceChange_24h ?? '').includes('-') ? 'down' : 'up'}
-        endTime={unlockEndTime}
-        tag={orderBookTag}
-        showMask={!isBigOrderUnlocked}
+        endTime={orderBookEndTime}
+        tag={orderBookDisplayTag}
+        showMask={!orderBookUnlocked}
         onSubscribe={handleUnlockOrderBook}
         onBuyMembership={handleBuyMembership}
         maxRows={maxRows}

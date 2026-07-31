@@ -23,7 +23,22 @@ const getUserFirstLoginAtKey = (userId) => {
 export const ensureFirstLoginAt = ({ caller = 'unknown' } = {}) => {
   if (typeof window === 'undefined') return null;
 
-  const userId = localStorage.getItem('userId');
+  let userId = localStorage.getItem('userId');
+  if (!userId) {
+    try {
+      const raw = localStorage.getItem('userInfo');
+      if (raw) {
+        const info = JSON.parse(raw);
+        const uid = info?.userId ?? info?.id;
+        if (uid != null && String(uid).trim()) {
+          userId = String(uid);
+          localStorage.setItem('userId', userId);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
   const key = getUserFirstLoginAtKey(userId);
   if (!key) return null;
 
@@ -93,6 +108,14 @@ const safeRemove = (key) => {
   }
 };
 
+/** 登出时清掉会话级 post-login 标记，避免下一账号被跳过副作用 */
+export const clearPostLoginSessionFlags = () => {
+  safeRemove(STORAGE_KEYS.POST_LOGIN_DONE);
+  safeRemove(STORAGE_KEYS.POST_LOGIN_IN_FLIGHT);
+  inFlightPromise = null;
+  lastDatainfoSuccessAt = 0;
+};
+
 const isSameDay = (aMs, bMs) => {
   const a = new Date(aMs);
   const b = new Date(bMs);
@@ -102,8 +125,11 @@ const isSameDay = (aMs, bMs) => {
 export async function fetchUserDataInfoOnce({ force = false, caller = 'unknown' } = {}) {
   if (typeof window === 'undefined') return null;
 
-  // 任意并发（含 force:true）共用同一 in-flight，避免先前 force 分支未挂 Promise 导致重复请求
-  if (userDataInfoInFlightPromise) {
+  const tokenAtStart = localStorage.getItem('token');
+  if (!tokenAtStart) return null;
+
+  // 非强制：复用 in-flight，避免 StrictMode / 多入口重复请求
+  if (!force && userDataInfoInFlightPromise) {
     return userDataInfoInFlightPromise;
   }
 
@@ -132,6 +158,11 @@ export async function fetchUserDataInfoOnce({ force = false, caller = 'unknown' 
       method: 'GET',
     });
 
+    // 切号/登出后丢弃过期响应，避免旧账号写回 localStorage
+    if (localStorage.getItem('token') !== tokenAtStart) {
+      return null;
+    }
+
     if (res?.data) {
       try {
         localStorage.setItem('userDataInfo', JSON.stringify(res.data));
@@ -147,7 +178,9 @@ export async function fetchUserDataInfoOnce({ force = false, caller = 'unknown' 
   };
 
   const p = executeFetch().finally(() => {
-    userDataInfoInFlightPromise = null;
+    if (userDataInfoInFlightPromise === p) {
+      userDataInfoInFlightPromise = null;
+    }
   });
 
   userDataInfoInFlightPromise = p;
@@ -195,6 +228,7 @@ export async function runPostLoginSideEffects(options = {}) {
   const token = localStorage.getItem('token');
   if (!token) return;
 
+  // 先通知一次（token/userId 已写入），再在 datainfo 落盘后通知，确保解锁逻辑读到新缓存
   notifySessionChanged();
 
   if (!options?.force) {
@@ -221,6 +255,7 @@ export async function runPostLoginSideEffects(options = {}) {
       // 首次登录时间字段（自定义 firstLoginAt）
       ensureFirstLoginAt({ caller });
       safeSet(STORAGE_KEYS.POST_LOGIN_DONE, 'true');
+      notifySessionChanged();
     } finally {
       safeRemove(STORAGE_KEYS.POST_LOGIN_IN_FLIGHT);
       inFlightPromise = null;

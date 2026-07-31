@@ -47,6 +47,14 @@
   align-items: center;
   padding: 0 4px; // 8px / 2
   word-break: break-all;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 首列币种：留给图标+名称，避免被挤扁 */
+.gridConItem:first-child {
+  word-break: normal;
+  overflow: hidden;
 }
 
 .gridContent .text {

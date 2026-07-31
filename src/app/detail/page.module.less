@@ -457,8 +457,8 @@
 }
 
 .pcMarketInner {
-  width: 640PX;
-  min-width: 640PX;
+  width: 580PX;
+  min-width: 580PX;
   box-sizing: border-box;
 }
 
@@ -509,8 +509,8 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  width: 640PX;
-  min-width: 640PX;
+  width: 580PX;
+  min-width: 580PX;
   box-sizing: border-box;
 }
 
@@ -535,7 +535,7 @@
 .pcMarketCell {
   flex: 0 0 auto;
   box-sizing: border-box;
-  padding: 6PX 8PX;
+  padding: 6PX 6PX;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -554,11 +554,22 @@
   justify-content: flex-end;
 }
 
-.pcMarketCol1 { width: 140PX; min-width: 140PX; max-width: 140PX; }
-.pcMarketCol2 { width: 120PX; min-width: 120PX; max-width: 120PX; }
-.pcMarketCol3 { width: 110PX; min-width: 110PX; max-width: 110PX; }
-.pcMarketCol4 { width: 135PX; min-width: 135PX; max-width: 135PX; }
-.pcMarketCol5 { width: 135PX; min-width: 135PX; max-width: 135PX; }
+/* 交易所 ↔ 最新价：收窄列宽与列间留白，避免中间空一大块 */
+.pcMarketCol1 {
+  width: 108PX;
+  min-width: 108PX;
+  max-width: 108PX;
+  padding-right: 2PX;
+}
+.pcMarketCol2 {
+  width: 112PX;
+  min-width: 112PX;
+  max-width: 112PX;
+  padding-left: 2PX;
+}
+.pcMarketCol3 { width: 100PX; min-width: 100PX; max-width: 100PX; }
+.pcMarketCol4 { width: 130PX; min-width: 130PX; max-width: 130PX; }
+.pcMarketCol5 { width: 130PX; min-width: 130PX; max-width: 130PX; }
 
 .pcRightPanelGridCommunityOnly {
   display: flex;
@@ -1235,7 +1246,7 @@
   img {
     width: 18PX;
     height: 18PX;
-    margin-right: 6PX;
+    margin-right: 4PX;
     border-radius: 4PX;
     object-fit: contain;
     background-color: #fff;

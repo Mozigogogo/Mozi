@@ -18,7 +18,8 @@ import {
   updateUserInfo 
 } from '@/api/user';
 import { getMySubscription } from '@/api/vip';
-import { ensureFirstLoginAt } from '@/utils/postLogin';
+import { ensureFirstLoginAt, clearPostLoginSessionFlags } from '@/utils/postLogin';
+import { notifySessionChanged } from '@/utils/sessionEvents';
 import { syncAlertConfigFromDatainfo } from '@/utils/alertConfig';
 import UserInfo from '@/app/user/components/UserInfo';
 import StatsAndActions from '@/app/user/components/StatsAndActions';
@@ -868,6 +869,7 @@ export default function UserPage() {
       localStorage.removeItem('userInfo');
       localStorage.removeItem('userId');
       localStorage.removeItem(USER_DATA_INFO_STORAGE_KEY); // 清除 dataInfo 数据
+      clearPostLoginSessionFlags();
       
       // 清除邀请码
       localStorage.removeItem('inviteCode');
@@ -914,6 +916,7 @@ export default function UserPage() {
     });
     
     Toast.show({ content: t('user.logoutSuccess'), position: 'bottom' });
+    notifySessionChanged();
   };
 
   const handleShare = () => {

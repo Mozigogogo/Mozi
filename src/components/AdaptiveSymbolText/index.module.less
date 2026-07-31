@@ -1,26 +1,33 @@
 .symbolContainer {
   display: flex !important;
   width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
   align-items: center !important;
+  gap: 6px !important;
   overflow: hidden !important;
   font-weight: 500 !important;
-  min-height: 20px !important; /* 固定最小高度 */
+  min-height: 20px !important;
+  box-sizing: border-box !important;
 }
 
-.symbolIcon {
-  height: 18px !important;
-  width: 18px !important;
+.symbolIconWrap {
   flex: 0 0 18px !important;
-  display: block !important;
-  margin-right: 5px !important;
-  object-fit: cover !important;
+  width: 18px !important;
+  height: 18px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
 }
 
 .symbolText {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
-  flex: 1 !important;
+  flex: 1 1 auto !important;
   min-width: 0 !important;
   line-height: 1.2 !important;
 }
