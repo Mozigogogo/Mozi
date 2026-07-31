@@ -2305,7 +2305,10 @@ function showToast(msg) {
     _intervals.forEach(nativeClearInterval);
     _timeouts.forEach(nativeClearTimeout);
     try { if (cdInterval) nativeClearInterval(cdInterval); } catch (_) {}
-    keys.forEach(k => {
+    // 仅还原「仍是本实例」的 window 桥；避免详情页延迟 cleanup 把新挂载的列表实例冲掉
+    // （进详情再返回后 setTab / setListPage 点不动就是这个竞态）
+    keys.forEach((k) => {
+      if (window[k] !== api[k]) return;
       if (prev[k] === undefined) delete window[k];
       else window[k] = prev[k];
     });
