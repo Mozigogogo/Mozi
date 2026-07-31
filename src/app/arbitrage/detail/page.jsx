@@ -3,12 +3,12 @@
 import dynamic from 'next/dynamic';
 import { useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+import ArbitrageBootSkeleton from '@/components/ArbitrageRadar/BootSkeleton';
 
 const ArbitrageRadar = dynamic(() => import('@/components/ArbitrageRadar'), {
   ssr: false,
-  loading: () => (
-    <div style={{ padding: 48, textAlign: 'center', color: '#8B9CB5' }}>Loading…</div>
-  ),
+  loading: () => <ArbitrageBootSkeleton />,
 });
 
 const DETAIL_TYPES = ['funding', 'spread', 'basis', 'oi'];
@@ -21,6 +21,7 @@ const DETAIL_TYPES = ['funding', 'spread', 'basis', 'oi'];
 export default function ArbitrageDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   const detail = useMemo(() => {
     const typeRaw = String(searchParams?.get('type') || 'funding').trim();
@@ -49,10 +50,10 @@ export default function ArbitrageDetailPage() {
   if (!detail.symbol) {
     return (
       <div style={{ padding: 48, textAlign: 'center', color: '#8B9CB5' }}>
-        缺少币种参数
+        {t('arbitrageRadar.detail.missingSymbol')}
         <div style={{ marginTop: 16 }}>
           <button type="button" onClick={onBackToList}>
-            返回列表
+            {t('arbitrageRadar.detail.back')}
           </button>
         </div>
       </div>

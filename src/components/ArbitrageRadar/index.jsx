@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { mountArbitrageRadar } from './runtime';
-import ArbitrageBootSkeleton from './BootSkeleton';
 import './arbitrage-radar.css';
 import styles from './index.module.less';
 
@@ -36,11 +35,11 @@ export default function ArbitrageRadar({
   onBackToList,
 }) {
   const rootRef = useRef(null);
-  const [booted, setBooted] = useState(false);
   const navRef = useRef({ onNavigateDetail, onBackToList });
   navRef.current = { onNavigateDetail, onBackToList };
 
-  useEffect(() => {
+  // layout 阶段挂载，避免先画空白/骨架再切到内容造成闪一下
+  useLayoutEffect(() => {
     if (!rootRef.current) return undefined;
     const cleanup = mountArbitrageRadar(rootRef.current, {
       embedded,
@@ -55,9 +54,7 @@ export default function ArbitrageRadar({
       onNavigateDetail: (op, type) => navRef.current.onNavigateDetail?.(op, type),
       onBackToList: () => navRef.current.onBackToList?.(),
     });
-    setBooted(true);
     return () => {
-      setBooted(false);
       if (typeof cleanup === 'function') cleanup();
     };
   }, [
@@ -74,7 +71,6 @@ export default function ArbitrageRadar({
 
   return (
     <div className={styles.page}>
-      {!booted && <ArbitrageBootSkeleton />}
       <div
         id="mozi-arbitrage-radar"
         ref={rootRef}
@@ -85,7 +81,6 @@ export default function ArbitrageRadar({
         ]
           .filter(Boolean)
           .join(' ')}
-        style={booted ? undefined : { display: 'none' }}
       />
     </div>
   );

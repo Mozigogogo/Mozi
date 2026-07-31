@@ -76,11 +76,13 @@ export const routes = [
   {
     path: '/arbitrage',
     name: '套利专区',
+    i18nKey: 'arbitrageRadar.title',
     showTab: false
   },
   {
     path: '/arbitrage/detail',
     name: '套利详情',
+    i18nKey: 'arbitrageRadar.detail.pageTitle',
     showTab: false
   }
 ];

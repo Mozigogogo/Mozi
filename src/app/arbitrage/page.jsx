@@ -4,12 +4,11 @@ import dynamic from 'next/dynamic';
 import { useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { buildArbitrageDetailPath } from '@/utils/arbitrageRoutes';
+import ArbitrageBootSkeleton from '@/components/ArbitrageRadar/BootSkeleton';
 
 const ArbitrageRadar = dynamic(() => import('@/components/ArbitrageRadar'), {
   ssr: false,
-  loading: () => (
-    <div style={{ padding: 48, textAlign: 'center', color: '#8B9CB5' }}>Loading…</div>
-  ),
+  loading: () => <ArbitrageBootSkeleton />,
 });
 
 /**

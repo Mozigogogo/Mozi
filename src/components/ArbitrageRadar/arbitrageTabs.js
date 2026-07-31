@@ -6,12 +6,34 @@ import { formatMoneyCompact } from '@/utils/formatMoney';
 
 export const TAB_KEYS = ['funding', 'spread', 'basis', 'oi'];
 
-export const TAB_LABELS = {
-  funding: 'Funding 套利',
-  spread: '现货价差',
-  basis: '基差套利',
-  oi: 'OI 异动',
+const INTRO_ICONS = {
+  funding: ['📡', '🧮', '⭐', '⚠️'],
+  spread: ['🔀', '⏱', '💸', '🚨'],
+  basis: ['⚖️', '📈', '🔄', '⚠️'],
+  oi: ['📊', '📉', '🔄', '🌀'],
 };
+
+/** @param {string} key @param {Record<string, unknown>} [opts] */
+export function arbT(key, opts) {
+  return i18n.t(`arbitrageRadar.${key}`, opts);
+}
+
+export function tabLabel(tab) {
+  const k = TAB_KEYS.includes(tab) ? tab : 'funding';
+  return arbT(`tabs.${k}`);
+}
+
+/** @deprecated 使用 tabLabel；保留兼容旧引用 */
+export const TAB_LABELS = new Proxy(
+  {},
+  {
+    get(_t, prop) {
+      if (typeof prop !== 'string') return undefined;
+      if (!TAB_KEYS.includes(prop)) return undefined;
+      return tabLabel(prop);
+    },
+  }
+);
 
 export const TAB_COLORS = {
   funding: 'var(--accent)',
@@ -20,32 +42,26 @@ export const TAB_COLORS = {
   oi: 'var(--orange)',
 };
 
-export const introData = {
-  funding: [
-    { icon: '📡', label: '什么是 Funding 套利？', desc: '同时买现货 + 做空永续合约，Funding 费率为正时空头持续收取费用，方向风险接近中性。' },
-    { icon: '🧮', label: '年化怎么算？', desc: '当前 8h 费率 × 3 × 365，代表费率不变时全年理论收益，实际受市场波动影响。' },
-    { icon: '⭐', label: '评级代表什么？', desc: '综合年化、历史稳定性、交易量打分。5星 = 当前最优质机会，不代表无风险。' },
-    { icon: '⚠️', label: '「极值」警告', desc: '费率超过30日均值2倍时触发，可能存在诱多风险，建议等待回落或减半仓位。' },
-  ],
-  spread: [
-    { icon: '🔀', label: '什么是现货价差套利？', desc: '同一币种在不同交易所之间存在短暂价格差，在低价所买入再去高价所卖出，赚取价差。' },
-    { icon: '⏱', label: '时间窗口很关键', desc: '价差通常在几分钟内收敛。需要在机会窗口内完成搬砖，否则价差可能已消失。' },
-    { icon: '💸', label: '净价差才是真收益', desc: '毛价差扣除双所手续费才是可得收益。净价差 < 0.1% 通常不值得执行。' },
-    { icon: '🚨', label: '风险：执行期间价格波动', desc: '转账过程中（5-30分钟）价格可能逆向波动，建议只做 BTC/ETH 等高流动性主流币。' },
-  ],
-  basis: [
-    { icon: '⚖️', label: '什么是基差套利？', desc: '永续合约价格与现货价格之间存在差值（基差），通过同所买现货+空永续锁定这个差值。' },
-    { icon: '📈', label: '升水 vs 贴水', desc: 'perp > 现货 = 升水，做多现货+做空 perp 收取基差；perp < 现货 = 贴水，反向操作。' },
-    { icon: '🔄', label: '与 Funding 套利的关系', desc: '基差套利赚的是价差，Funding 套利赚的是资金费率，两者可以同时获得，形成双重收益。' },
-    { icon: '⚠️', label: '基差可能扩大', desc: '基差并非线性收敛，极端行情下可能扩大到2%以上，保证金率建议保持≥50%。' },
-  ],
-  oi: [
-    { icon: '📊', label: 'OI 是什么？', desc: '未平仓合约量，反映市场上所有未关闭的多空合约总量，是判断资金流向的核心指标。' },
-    { icon: '📉', label: 'OI↑价↑ = 多头入场', desc: '持仓量与价格同步上升，说明有新资金做多，是顺势偏多信号，可参考做多。' },
-    { icon: '🔄', label: 'OI↓价↑ = 空头平仓', desc: '持仓量下降但价格上涨，空头被迫止损平仓，短线仍有上涨动能。' },
-    { icon: '🌀', label: 'OI↑价↓ = 空头建仓', desc: '持仓量增加但价格下跌，新空头在高位入场，价格仍有下行压力。' },
-  ],
-};
+export function getIntroData(tab) {
+  const k = TAB_KEYS.includes(tab) ? tab : 'funding';
+  const icons = INTRO_ICONS[k] || INTRO_ICONS.funding;
+  return icons.map((icon, i) => ({
+    icon,
+    label: arbT(`intro.${k}.${i}.label`),
+    desc: arbT(`intro.${k}.${i}.desc`),
+  }));
+}
+
+/** @deprecated 使用 getIntroData */
+export const introData = new Proxy(
+  {},
+  {
+    get(_t, prop) {
+      if (typeof prop !== 'string') return undefined;
+      return getIntroData(prop);
+    },
+  }
+);
 
 export const exColors = {
   Binance: { bg: 'rgba(240,185,11,.12)', border: 'rgba(240,185,11,.4)', color: '#B45309', c: '#B45309' },
@@ -143,12 +159,28 @@ export function displayVolWithUnit(raw) {
   return out.includes('--') ? '—' : out;
 }
 
-export const hintStyles = {
-  多头入场: { bg: 'rgba(5,150,105,.1)', border: 'rgba(5,150,105,.3)', c: '#059669' },
-  空头入场: { bg: 'rgba(239,68,68,.1)', border: 'rgba(239,68,68,.3)', c: '#EF4444' },
-  空头平仓: { bg: 'rgba(5,150,105,.08)', border: 'rgba(5,150,105,.25)', c: '#059669' },
-  多头平仓: { bg: 'rgba(239,68,68,.08)', border: 'rgba(239,68,68,.25)', c: '#EF4444' },
+const HINT_STYLE_BY_KEY = {
+  longEntry: { bg: 'rgba(5,150,105,.1)', border: 'rgba(5,150,105,.3)', c: '#059669' },
+  shortEntry: { bg: 'rgba(239,68,68,.1)', border: 'rgba(239,68,68,.3)', c: '#EF4444' },
+  shortCover: { bg: 'rgba(5,150,105,.08)', border: 'rgba(5,150,105,.25)', c: '#059669' },
+  longExit: { bg: 'rgba(239,68,68,.08)', border: 'rgba(239,68,68,.25)', c: '#EF4444' },
 };
+
+const DEFAULT_HINT_STYLE = { bg: 'rgba(15,23,42,.04)', border: 'rgba(15,23,42,.12)', c: 'var(--t2)' };
+
+/** @deprecated 使用 getHintStyle；保留中文 key 兼容旧数据 */
+export const hintStyles = {
+  多头入场: HINT_STYLE_BY_KEY.longEntry,
+  空头入场: HINT_STYLE_BY_KEY.shortEntry,
+  空头平仓: HINT_STYLE_BY_KEY.shortCover,
+  多头平仓: HINT_STYLE_BY_KEY.longExit,
+};
+
+export function getHintStyle(raw) {
+  const key = oiHintKey(raw);
+  if (key && HINT_STYLE_BY_KEY[key]) return HINT_STYLE_BY_KEY[key];
+  return hintStyles[raw] || DEFAULT_HINT_STYLE;
+}
 
 const symColors = ['#00B890', '#D97706', '#6366F1', '#DB2777', '#0D9488', '#7C3AED', '#EA580C', '#0891B2'];
 
@@ -305,7 +337,7 @@ export function mapOIItem(item, index) {
 }
 
 export function renderIntroStrip(tab, { mobile = false } = {}) {
-  const cards = (introData[tab] || introData.funding).map(
+  const cards = getIntroData(tab).map(
     (c, i) => `
     <div class="${mobile ? 'ob-card' : 'intro-card'}" style="animation-delay:${i * 0.05}s">
       <div class="${mobile ? 'ob-icon' : 'intro-icon'}">${c.icon}</div>
@@ -324,7 +356,7 @@ export function renderTypeTabs(activeTab) {
     const color = TAB_COLORS[t];
     const style = on ? `style="color:${color};border-bottom-color:${color}"` : '';
     return `<button type="button" class="ttab ${on}" ${style} onclick="setTab('${t}',this)">
-      <span class="tdot" aria-hidden="true"></span>${TAB_LABELS[t]}
+      <span class="tdot" aria-hidden="true"></span>${tabLabel(t)}
     </button>`;
   }).join('');
 }
@@ -359,16 +391,16 @@ export function renderMobileListCards(tab, displayOps, allOps) {
         <div class="card-top">
           <div class="card-sym">${symIco(o.sym, i, o.logoUrl)}<div>
             <div class="sym-name">${o.sym}<span class="sym-pair">/USDT</span>
-              ${o.warn ? `<span class="badge badge-warn" ${warnTitle}>⚠️极值</span>` : ''}
+              ${o.warn ? `<span class="badge badge-warn" ${warnTitle}>⚠️${arbT('common.extreme')}</span>` : ''}
             </div>
-            <div class="sym-sub"><span class="ex-dot" style="background:${exDotColor(o.exchange)}"></span>${o.exchange} · 永续</div>
+            <div class="sym-sub"><span class="ex-dot" style="background:${exDotColor(o.exchange)}"></span>${o.exchange} · ${arbT('common.perp')}</div>
           </div></div>
-          <div class="card-main-val"><div class="main-num" style="color:${numColor}">${displayPctTrunc(o.ann)}</div><div class="main-lbl">年化</div></div>
+          <div class="card-main-val"><div class="main-num" style="color:${numColor}">${displayPctTrunc(o.ann)}</div><div class="main-lbl">${arbT('table.apr')}</div></div>
         </div>
         <div class="card-grid g3">
-          <div><div class="cg-lbl">当前费率</div><div class="cg-val" style="color:var(--accent)">${displayPctTrunc(o.funding)}<span class="cg-unit">/${periodLabel}</span></div></div>
-          <div><div class="cg-lbl">30日均值</div><div class="cg-val" style="color:var(--t3)">${avg30Text}</div></div>
-          <div class="cg-right"><div class="cg-lbl">评级 · ${o.days || 0}天</div><div class="stars">${starsHTML(o.rating)}</div></div>
+          <div><div class="cg-lbl">${arbT('mobile.currentRate')}</div><div class="cg-val" style="color:var(--accent)">${displayPctTrunc(o.funding)}<span class="cg-unit">/${periodLabel}</span></div></div>
+          <div><div class="cg-lbl">${arbT('mobile.avg30d')}</div><div class="cg-val" style="color:var(--t3)">${avg30Text}</div></div>
+          <div class="cg-right"><div class="cg-lbl">${arbT('mobile.ratingDays', { n: o.days || 0 })}</div><div class="stars">${starsHTML(o.rating)}</div></div>
         </div>
       </div>`;
     }).join('');
@@ -391,12 +423,12 @@ export function renderMobileListCards(tab, displayOps, allOps) {
             <div class="sym-name">${o.sym}<span class="sym-pair">/USDT</span></div>
             <div class="sym-sub"><div class="ex-flow">${exNode(o.minExchange)}<span class="ex-arr">→</span>${exNode(o.maxExchange)}</div></div>
           </div></div>
-          <div class="card-main-val"><div class="main-num" style="color:${numColor}">${truncateDecimals(o.spreadPct, 3) ?? '—'}%</div><div class="main-lbl">价差</div></div>
+          <div class="card-main-val"><div class="main-num" style="color:${numColor}">${truncateDecimals(o.spreadPct, 3) ?? '—'}%</div><div class="main-lbl">${arbT('mobile.spread')}</div></div>
         </div>
         <div class="card-grid g3">
-          <div><div class="cg-lbl">买入价</div><div class="cg-val" style="color:var(--pos)">${displayRawNum(o.minPrice, { prefix: '$' })}</div></div>
-          <div><div class="cg-lbl">卖出价</div><div class="cg-val" style="color:var(--danger)">${displayRawNum(o.maxPrice, { prefix: '$' })}</div></div>
-          <div class="cg-right"><div class="cg-lbl">净价差</div><div class="cg-val" style="color:${net > 0 ? 'var(--pos)' : 'var(--danger)'}">~${netText == null ? '—' : `${netText}%`}</div></div>
+          <div><div class="cg-lbl">${arbT('mobile.buyPrice')}</div><div class="cg-val" style="color:var(--pos)">${displayRawNum(o.minPrice, { prefix: '$' })}</div></div>
+          <div><div class="cg-lbl">${arbT('mobile.sellPrice')}</div><div class="cg-val" style="color:var(--danger)">${displayRawNum(o.maxPrice, { prefix: '$' })}</div></div>
+          <div class="cg-right"><div class="cg-lbl">${arbT('mobile.netSpread')}</div><div class="cg-val" style="color:${net > 0 ? 'var(--pos)' : 'var(--danger)'}">~${netText == null ? '—' : `${netText}%`}</div></div>
         </div>
       </div>`;
     }).join('');
@@ -417,16 +449,16 @@ export function renderMobileListCards(tab, displayOps, allOps) {
         <div class="card-top">
           <div class="card-sym">${symIco(o.sym, i, o.logoUrl)}<div>
             <div class="sym-name">${o.sym}<span class="sym-pair">/USDT</span>
-              <span class="badge" style="background:${isPos ? 'rgba(16,185,129,.1)' : 'rgba(239,68,68,.1)'};border-color:${isPos ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)'};color:${dirColor}">${isPos ? '升水' : '贴水'}</span>
+              <span class="badge" style="background:${isPos ? 'rgba(16,185,129,.1)' : 'rgba(239,68,68,.1)'};border-color:${isPos ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)'};color:${dirColor}">${isPos ? arbT('common.premium') : arbT('common.discount')}</span>
             </div>
-            <div class="sym-sub"><span class="ex-dot" style="background:${exDotColor(o.exchange)}"></span>${o.exchange} · perp vs 现货</div>
+            <div class="sym-sub"><span class="ex-dot" style="background:${exDotColor(o.exchange)}"></span>${o.exchange} · ${arbT('mobile.perpVsSpot')}</div>
           </div></div>
-          <div class="card-main-val"><div class="main-num" style="color:${dirColor}">${displayPctTrunc(o.basisPct, { signed: true })}</div><div class="main-lbl">基差</div></div>
+          <div class="card-main-val"><div class="main-num" style="color:${dirColor}">${displayPctTrunc(o.basisPct, { signed: true })}</div><div class="main-lbl">${arbT('mobile.basis')}</div></div>
         </div>
         <div class="card-grid g3">
-          <div><div class="cg-lbl">perp 价</div><div class="cg-val">${displayRawNum(o.perpPrice, { prefix: '$' })}</div></div>
-          <div><div class="cg-lbl">现货价</div><div class="cg-val" style="color:var(--t3)">${displayRawNum(o.spotPrice, { prefix: '$' })}</div></div>
-          <div class="cg-right"><div class="cg-lbl">Funding 年化</div><div class="cg-val" style="color:${Number.isFinite(annNum) && annNum >= 0 ? 'var(--pos)' : 'var(--danger)'}">${annText}</div></div>
+          <div><div class="cg-lbl">${arbT('mobile.perpPrice')}</div><div class="cg-val">${displayRawNum(o.perpPrice, { prefix: '$' })}</div></div>
+          <div><div class="cg-lbl">${arbT('mobile.spotPrice')}</div><div class="cg-val" style="color:var(--t3)">${displayRawNum(o.spotPrice, { prefix: '$' })}</div></div>
+          <div class="cg-right"><div class="cg-lbl">${arbT('mobile.fundingAnn')}</div><div class="cg-val" style="color:${Number.isFinite(annNum) && annNum >= 0 ? 'var(--pos)' : 'var(--danger)'}">${annText}</div></div>
         </div>
       </div>`;
     }).join('');
@@ -436,7 +468,7 @@ export function renderMobileListCards(tab, displayOps, allOps) {
     return displayOps.map((o) => {
       const opsIdx = allOps.indexOf(o);
       const i = opsIdx >= 0 ? opsIdx : 0;
-      const hs = hintStyles[o.correlationHint] || { bg: 'rgba(15,23,42,.04)', border: 'rgba(15,23,42,.12)', c: 'var(--t2)' };
+      const hs = getHintStyle(o.correlationHint);
       const barCls = o.oiChangePct >= 0 ? 'c-orange' : 'c-dim';
       const pCls = o.priceChange24hPct >= 0 ? 'up' : 'dn';
       return `<div class="opp-card ${barCls}" onclick="openDetail(ops[${opsIdx}],'oi')" style="animation-delay:${i * 40}ms">
@@ -447,13 +479,13 @@ export function renderMobileListCards(tab, displayOps, allOps) {
           </div></div>
           <div class="card-main-val">
             <div class="main-num" style="color:${o.oiChangePct >= 0 ? 'var(--pos)' : 'var(--danger)'}">${o.oiChangePct >= 0 ? '+' : ''}${truncateDecimals(o.oiChangePct, 1) ?? '—'}%</div>
-            <div class="main-lbl">vs 7日均值</div>
+            <div class="main-lbl">${arbT('mobile.vs7d')}</div>
           </div>
         </div>
         <div class="card-grid g3">
-          <div><div class="cg-lbl">当前 OI</div><div class="cg-val">${fmtOI(o.currentOiUsd)}</div></div>
-          <div><div class="cg-lbl">价格 24h</div><div class="cg-val ${pCls}">${o.priceChange24hPct >= 0 ? '↑' : '↓'}${truncateDecimals(Math.abs(o.priceChange24hPct), 1) ?? '—'}%</div></div>
-          <div class="cg-right"><div class="cg-lbl">信号</div><span class="hint-badge" style="background:${hs.bg};border-color:${hs.border};color:${hs.c}">${o.correlationHint}</span></div>
+          <div><div class="cg-lbl">${arbT('mobile.currentOi')}</div><div class="cg-val">${fmtOI(o.currentOiUsd)}</div></div>
+          <div><div class="cg-lbl">${arbT('table.price24h')}</div><div class="cg-val ${pCls}">${o.priceChange24hPct >= 0 ? '↑' : '↓'}${truncateDecimals(Math.abs(o.priceChange24hPct), 1) ?? '—'}%</div></div>
+          <div class="cg-right"><div class="cg-lbl">${arbT('table.signal')}</div><span class="hint-badge" style="background:${hs.bg};border-color:${hs.border};color:${hs.c}">${oiHintLabel(o.correlationHint)}</span></div>
         </div>
       </div>`;
     }).join('');
@@ -489,72 +521,72 @@ export function tableHeadHTML(tab, sortIndFn) {
   if (tab === 'spread') {
     return `<tr>
       <th class="col-num">#</th>
-      <th class="col-sym">标的</th>
-      <th class="col-flow">操作方向 ${tip('在低价所买入，在高价所卖出，赚取价差')}</th>
-      <th class="col-prices">买入价 / 卖出价</th>
+      <th class="col-sym">${arbT('common.symbol')}</th>
+      <th class="col-flow">${arbT('table.flow')} ${tip(arbT('table.flowTip'))}</th>
+      <th class="col-prices">${arbT('table.buySellPrice')}</th>
       <th class="th-sortable col-spread-abs" onclick="sortBy('spreadAbs')">
-        绝对价差 ${ind('spreadAbs')}
-        ${tip('高价 − 低价的绝对差值')}
+        ${arbT('table.spreadAbs')} ${ind('spreadAbs')}
+        ${tip(arbT('table.spreadAbsTip'))}
       </th>
       <th class="th-sortable col-spread" onclick="sortBy('spreadPct')">
-        价差 % ${ind('spreadPct')}
-        ${tip('(高价-低价)/均价×100，扣手续费后才是净收益；默认按此降序')}
+        ${arbT('table.spreadPct')} ${ind('spreadPct')}
+        ${tip(arbT('table.spreadPctTip'))}
       </th>
       <th class="th-sortable col-vol" onclick="sortBy('quoteVolume')">
-        24h 总成交量 ${ind('quoteVolume')}
-        ${tip('有效交易所合计 24h 成交额（计价货币）')}
+        ${arbT('table.vol24hTotal')} ${ind('quoteVolume')}
+        ${tip(arbT('table.vol24hTotalTip'))}
       </th>
     </tr>`;
   }
   if (tab === 'basis') {
     return `<tr>
       <th class="col-num">#</th>
-      <th class="col-sym">标的</th>
-      <th class="col-ex">交易所</th>
-      <th class="col-dir">方向 ${tip('升水=perp溢价，做多现货+做空perp；贴水=perp折价，反向操作')}</th>
-      <th class="col-prices">perp 价 / 现货价</th>
+      <th class="col-sym">${arbT('common.symbol')}</th>
+      <th class="col-ex">${arbT('common.exchange')}</th>
+      <th class="col-dir">${arbT('table.direction')} ${tip(arbT('table.directionTip'))}</th>
+      <th class="col-prices">${arbT('table.perpSpotPrice')}</th>
       <th class="th-sortable col-basis-abs" onclick="sortBy('basisAbs')">
-        绝对基差 ${ind('basisAbs')}
-        ${tip('perp 价 − 现货价的绝对差值，可正可负')}
+        ${arbT('table.basisAbs')} ${ind('basisAbs')}
+        ${tip(arbT('table.basisAbsTip'))}
       </th>
       <th class="th-sortable col-basis" onclick="sortBy('basisPct')">
-        基差 % ${ind('basisPct')}
-        ${tip('(perp价-现货价)/现货价×100，正=升水，负=贴水；默认按此降序')}
+        ${arbT('table.basisPct')} ${ind('basisPct')}
+        ${tip(arbT('table.basisPctTip'))}
       </th>
-      <th class="col-funding-ann">Funding 年化</th>
-      <th class="col-vol">24h 成交额 ${tip('上：合约成交额；下：现货成交额')}</th>
+      <th class="col-funding-ann">${arbT('table.fundingAnn')}</th>
+      <th class="col-vol">${arbT('table.vol24h')} ${tip(arbT('table.vol24hSplitTip'))}</th>
     </tr>`;
   }
   if (tab === 'oi') {
     return `<tr>
       <th class="col-num">#</th>
-      <th class="col-sym">标的</th>
-      <th class="col-ex">交易所</th>
-      <th class="col-oi">当前 OI / 7日均值 ${tip('未平仓合约总量（USD），与7日均值比较判断是否异常')}</th>
+      <th class="col-sym">${arbT('common.symbol')}</th>
+      <th class="col-ex">${arbT('common.exchange')}</th>
+      <th class="col-oi">${arbT('table.oiCurrentAvg')} ${tip(arbT('table.oiCurrentAvgTip'))}</th>
       <th class="th-sortable col-oi-chg" onclick="sortBy('changePct')">
-        vs 7日均值 ${ind('changePct')}
-        ${tip('当前OI相对过去7天均值的偏离百分比；默认按此降序')}
+        ${arbT('table.vs7dAvg')} ${ind('changePct')}
+        ${tip(arbT('table.vs7dAvgTip'))}
       </th>
-      <th class="col-price-chg">价格 24h</th>
-      <th class="col-signal">信号 ${tip('OI变化+价格变化的组合解读：多头入场/空头入场/空头平仓/多头平仓')}</th>
-      <th class="col-vol">24h 成交量</th>
+      <th class="col-price-chg">${arbT('table.price24h')}</th>
+      <th class="col-signal">${arbT('table.signal')} ${tip(arbT('table.signalTip'))}</th>
+      <th class="col-vol">${arbT('table.vol24hQty')}</th>
     </tr>`;
   }
   return `<tr>
     <th class="col-num">#</th>
-    <th class="col-sym">标的</th>
-    <th class="col-ex">交易所</th>
+    <th class="col-sym">${arbT('common.symbol')}</th>
+    <th class="col-ex">${arbT('common.exchange')}</th>
     <th class="th-sortable col-funding" onclick="sortBy('funding')">
-      当前 Funding ${ind('funding')}
-      ${tip('每8小时结算一次的资金费率，正数代表多头支付给空头')}
+      ${arbT('table.fundingCurrent')} ${ind('funding')}
+      ${tip(arbT('table.fundingTip'))}
     </th>
     <th class="th-sortable col-ann" onclick="sortBy('ann')">
-      年化 ${ind('ann')}
-      ${tip('按当前一期费率折算，实际收益受市场波动影响')}
+      ${arbT('table.apr')} ${ind('ann')}
+      ${tip(arbT('table.aprTip'))}
     </th>
-    <th class="col-avg">30d 均值</th>
-    <th class="col-days">持续</th>
-    <th class="col-rating">评级</th>
+    <th class="col-avg">${arbT('table.avg30d')}</th>
+    <th class="col-days">${arbT('table.duration')}</th>
+    <th class="col-rating">${arbT('table.rating')}</th>
   </tr>`;
 }
 
@@ -570,19 +602,19 @@ export function tableRowHTML(tab, o, opsIdx, displayRank, helpers = {}) {
     const maxEx = exColors[o.maxExchange] || exColors.Binance;
     const valCls = valTierCls(Number(o.spreadPct) || 0);
     const exCount = Array.isArray(o.validExchanges) ? o.validExchanges.length : 0;
-    const symSub = exCount > 0 ? `${exCount} 所有效` : '现货跨所';
+    const symSub = exCount > 0 ? arbT('common.exchangesValid', { n: exCount }) : arbT('common.spotCross');
     const spreadPctText = truncateDecimals(o.spreadPct, 3);
     return `<tr ${click} style="animation-delay:${delay}ms">
       <td class="td-num">${o.rank || displayRank}</td>
       <td><div class="sym-cell">${symIco(o.sym, opsIdx, o.logoUrl)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">${symSub}</div></div></div></td>
       <td><div class="ex-flow">
-        <span class="ex-node" style="background:${minEx.bg};border-color:${minEx.border};color:${minEx.color}">${o.minExchange} 买</span>
+        <span class="ex-node" style="background:${minEx.bg};border-color:${minEx.border};color:${minEx.color}">${o.minExchange} ${arbT('common.buy')}</span>
         <span class="ex-arrow">→</span>
-        <span class="ex-node" style="background:${maxEx.bg};border-color:${maxEx.border};color:${maxEx.color}">${o.maxExchange} 卖</span>
+        <span class="ex-node" style="background:${maxEx.bg};border-color:${maxEx.border};color:${maxEx.color}">${o.maxExchange} ${arbT('common.sell')}</span>
       </div></td>
       <td><div class="price-stack">
-        <span class="mono price-lo">低 ${displayRawNum(o.minPrice, { prefix: '$' })}</span>
-        <span class="mono price-hi">高 ${displayRawNum(o.maxPrice, { prefix: '$' })}</span>
+        <span class="mono price-lo">${arbT('common.low')} ${displayRawNum(o.minPrice, { prefix: '$' })}</span>
+        <span class="mono price-hi">${arbT('common.high')} ${displayRawNum(o.maxPrice, { prefix: '$' })}</span>
       </div></td>
       <td><span class="mono" style="color:var(--t2)">${displayRawNum(o.spreadAbs, { prefix: '$' })}</span></td>
       <td><span class="${valCls}">${spreadPctText == null ? '—' : `${spreadPctText}%`}</span></td>
@@ -594,7 +626,7 @@ export function tableRowHTML(tab, o, opsIdx, displayRank, helpers = {}) {
     const basisPctNum = Number(o.basisPct) || 0;
     const isPos = basisPctNum >= 0;
     const basisCls = valTierCls(Math.abs(basisPctNum), [0.3, 0.1]);
-    const dirLabel = isPos ? '升水' : '贴水';
+    const dirLabel = isPos ? arbT('common.premium') : arbT('common.discount');
     const dirStyle = isPos
       ? 'background:rgba(5,150,105,.1);border-color:rgba(5,150,105,.3);color:#059669'
       : 'background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#EF4444';
@@ -609,38 +641,38 @@ export function tableRowHTML(tab, o, opsIdx, displayRank, helpers = {}) {
         })();
     return `<tr ${click} style="animation-delay:${delay}ms">
       <td class="td-num">${o.rank || displayRank}</td>
-      <td><div class="sym-cell">${symIco(o.sym, opsIdx, o.logoUrl)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">perp vs 现货</div></div></div></td>
+      <td><div class="sym-cell">${symIco(o.sym, opsIdx, o.logoUrl)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">${arbT('detail.perpVsSpot')}</div></div></div></td>
       <td>${exBadge(o.exchange)}</td>
       <td><span class="risk-badge" style="${dirStyle}">${dirLabel}</span></td>
       <td><div class="price-stack">
-        <span class="mono" style="color:var(--t2);font-size:11px">perp ${displayRawNum(o.perpPrice, { prefix: '$' })}</span>
-        <span class="mono" style="color:var(--t3);font-size:11px">spot ${displayRawNum(o.spotPrice, { prefix: '$' })}</span>
+        <span class="mono" style="color:var(--t2);font-size:11px">${arbT('detail.funding.perp')} ${displayRawNum(o.perpPrice, { prefix: '$' })}</span>
+        <span class="mono" style="color:var(--t3);font-size:11px">${arbT('detail.funding.spot')} ${displayRawNum(o.spotPrice, { prefix: '$' })}</span>
       </div></td>
       <td><span class="mono" style="color:var(--t2)">${displaySignedMoney(o.basisAbs)}</span></td>
       <td><span class="${basisCls}">${displayPctTrunc(o.basisPct, { signed: true })}</span></td>
       <td><span class="mono" style="color:var(--t2)">${annText}</span></td>
       <td><div class="price-stack">
-        <span class="mono" style="color:var(--t2);font-size:11px">perp ${displayVolWithUnit(o.perpVolume24h)}</span>
-        <span class="mono" style="color:var(--t3);font-size:11px">spot ${displayVolWithUnit(o.spotVolume24h)}</span>
+        <span class="mono" style="color:var(--t2);font-size:11px">${arbT('detail.funding.perp')} ${displayVolWithUnit(o.perpVolume24h)}</span>
+        <span class="mono" style="color:var(--t3);font-size:11px">${arbT('detail.funding.spot')} ${displayVolWithUnit(o.spotVolume24h)}</span>
       </div></td>
     </tr>`;
   }
 
   if (tab === 'oi') {
-    const hs = hintStyles[o.correlationHint] || { bg: 'rgba(15,23,42,.04)', border: 'rgba(15,23,42,.12)', c: 'var(--t2)' };
+    const hs = getHintStyle(o.correlationHint);
     const oiCls = o.oiChangePct >= 0 ? 'val-pos' : 'val-neg';
     const priceCls = o.priceChange24hPct >= 0 ? 'val-pos' : 'val-neg';
     return `<tr ${click} style="animation-delay:${delay}ms">
       <td class="td-num">${o.rank || displayRank}</td>
-      <td><div class="sym-cell">${symIco(o.sym, opsIdx, o.logoUrl)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">永续合约</div></div></div></td>
+      <td><div class="sym-cell">${symIco(o.sym, opsIdx, o.logoUrl)}<div><div class="sym-name">${o.sym}</div><div class="sym-sub">${arbT('detail.perpContract')}</div></div></div></td>
       <td>${exBadge(o.exchange)}</td>
       <td><div class="price-stack">
         <span class="mono">${fmtOI(o.currentOiUsd)}</span>
-        <span class="mono" style="color:var(--t3);font-size:11px">7日均值 ${fmtOI(o.avg7dOiUsd)}</span>
+        <span class="mono" style="color:var(--t3);font-size:11px">${arbT('detail.avg7d', { v: fmtOI(o.avg7dOiUsd) })}</span>
       </div></td>
       <td><span class="${oiCls}">${o.oiChangePct >= 0 ? '↑' : '↓'} ${truncateDecimals(Math.abs(o.oiChangePct), 3) ?? '—'}%</span></td>
       <td><span class="${priceCls}">${o.priceChange24hPct >= 0 ? '↑' : '↓'} ${truncateDecimals(Math.abs(o.priceChange24hPct), 3) ?? '—'}%</span></td>
-      <td><span class="hint-badge" style="background:${hs.bg};border-color:${hs.border};color:${hs.c}">${o.correlationHint}</span></td>
+      <td><span class="hint-badge" style="background:${hs.bg};border-color:${hs.border};color:${hs.c}">${oiHintLabel(o.correlationHint)}</span></td>
       <td><span class="mono" style="color:var(--t3)">${fmtVol(o.volume24h)}</span></td>
     </tr>`;
   }
@@ -665,23 +697,34 @@ export function skeletonCellsHTML(tab) {
   return `${num}${sym}<td><span class="skel skel-badge"></span></td>${cell('skel-w88')}${cell('skel-w72')}${cell('skel-w64')}${cell('skel-w40')}<td><span class="skel skel-stars"></span></td>`;
 }
 
-const CHART_AXIS = '<span>6月1日</span><span>6月8日</span><span>6月15日</span><span>6月22日</span><span>今天</span>';
+const BACK_BTN_SVG =
+  '<svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg>';
+
+export function backBtnHtml() {
+  return `<button class="back-btn" onclick="backToRadar()">${BACK_BTN_SVG} ${arbT('detail.back')}</button>`;
+}
+
+export function chartLoadingHtml() {
+  return `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">${arbT('detail.loading')}</div>`;
+}
+
+export function chartEmptyHtml() {
+  return `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">${arbT('detail.noChart')}</div>`;
+}
+
+function isSameLocalDay(a, b) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
 
 function formatChartAxisLabel(ts, isLast) {
-  if (isLast) {
-    const d = new Date(ts);
-    const now = new Date();
-    if (
-      d.getFullYear() === now.getFullYear() &&
-      d.getMonth() === now.getMonth() &&
-      d.getDate() === now.getDate()
-    ) {
-      return '今天';
-    }
-  }
   const d = new Date(ts);
   if (Number.isNaN(d.getTime())) return '';
-  return `${d.getMonth() + 1}月${d.getDate()}日`;
+  if (isLast && isSameLocalDay(d, new Date())) return arbT('detail.today');
+  return arbT('detail.dateMd', { m: d.getMonth() + 1, d: d.getDate() });
 }
 
 function buildChartAxisLabels(points) {
@@ -699,15 +742,47 @@ function buildChartAxisLabels(points) {
 function formatHoverDate(ts) {
   const d = new Date(ts);
   if (Number.isNaN(d.getTime())) return '';
-  const now = new Date();
-  if (
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth() === now.getMonth() &&
-    d.getDate() === now.getDate()
-  ) {
-    return '今天';
+  if (isSameLocalDay(d, new Date())) return arbT('detail.today');
+  return arbT('detail.dateMd', { m: d.getMonth() + 1, d: d.getDate() });
+}
+
+const OI_HINT_KEY_MAP = {
+  多头入场: 'longEntry',
+  空头入场: 'shortEntry',
+  空头平仓: 'shortCover',
+  多头平仓: 'longExit',
+  'Long entry': 'longEntry',
+  'Short entry': 'shortEntry',
+  'Short cover': 'shortCover',
+  'Long exit': 'longExit',
+};
+
+function oiHintKey(raw) {
+  return OI_HINT_KEY_MAP[String(raw || '').trim()] || null;
+}
+
+function oiHintLabel(raw) {
+  const key = oiHintKey(raw);
+  return key ? arbT(`detail.signals.${key}`) : String(raw || '');
+}
+
+function oiSignalMeta(raw) {
+  const key = oiHintKey(raw);
+  if (!key) {
+    return {
+      icon: '📊',
+      desc: arbT('detail.oi.unknownDesc'),
+      action: [arbT('detail.oi.unknownAction')],
+      label: String(raw || ''),
+    };
   }
-  return `${d.getMonth() + 1}/${d.getDate()}`;
+  const icons = { longEntry: '📈', shortEntry: '📉', shortCover: '🔼', longExit: '🔽' };
+  return {
+    icon: icons[key] || '📊',
+    label: arbT(`detail.signals.${key}`),
+    desc: arbT(`detail.oi.${key}Desc`),
+    action: [1, 2, 3].map((i) => arbT(`detail.oi.${key}A${i}`)),
+  };
 }
 
 function escapeDetailHtml(str) {
@@ -734,25 +809,26 @@ function resolveSpreadFees(o) {
   const minPct = (minFee * 100).toFixed(2);
   const maxPct = (maxFee * 100).toFixed(2);
   const feeLabel =
-    minPct === maxPct ? `各 ${minPct}%` : `买 ${minPct}% + 卖 ${maxPct}%`;
+    minPct === maxPct
+      ? arbT('detail.feeEach', { pct: minPct })
+      : arbT('detail.feeBuySell', { buy: minPct, sell: maxPct });
   const feeSumPct = (feeSum * 100).toFixed(2);
   return { minFee, maxFee, feeSum, minPct, maxPct, feeLabel, feeSumPct };
 }
 
 export function renderSpreadDetail(o, opsIdx, opts = {}) {
   if (!o) {
-    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
-      <div class="tbl-state tbl-state-error">暂无详情数据</div>`;
+    return `${backBtnHtml()}
+      <div class="tbl-state tbl-state-error">${arbT('detail.noData')}</div>`;
   }
 
   if (opts.detailError) {
-    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
+    return `${backBtnHtml()}
       <div class="tbl-state tbl-state-error">${escapeDetailHtml(opts.detailError)}
-        <button type="button" class="tbl-retry" onclick="retrySpreadDetail()">重试</button>
+        <button type="button" class="tbl-retry" onclick="retrySpreadDetail()">${arbT('common.retry')}</button>
       </div>`;
   }
 
-  const col = symColors[Math.max(0, opsIdx) % symColors.length];
   const minExC = exColors[o.minExchange] || exColors.Binance;
   const maxExC = exColors[o.maxExchange] || exColors.Binance;
   const { feeSum, minPct, maxPct, feeSumPct } = resolveSpreadFees(o);
@@ -771,53 +847,62 @@ export function renderSpreadDetail(o, opsIdx, opts = {}) {
   const slipHint = Number.isFinite(Number(o.slippageHintNotional))
     ? Number(o.slippageHintNotional)
     : 50000;
-  const chainText = o.chain ? escapeDetailHtml(String(o.chain)) : '该链';
+  const chainText = o.chain ? escapeDetailHtml(String(o.chain)) : arbT('detail.thisChain');
   const withdrawText =
     o.withdrawFeeUsd != null && Number.isFinite(Number(o.withdrawFeeUsd))
       ? displayRawNum(o.withdrawFeeUsd, { prefix: '$' })
       : '—';
   const chartPoints = Array.isArray(o.chart30d) ? o.chart30d : [];
   const axisHTML = buildChartAxisLabels(chartPoints);
+  const netPctDisp = truncateDecimals(netSpread, 3) ?? netSpread;
+  const netAfterFee = `${netSpread > 0 ? '+' : ''}${netPctDisp}`;
   const chartBody = opts.detailLoading
-    ? `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">加载中…</div>`
+    ? chartLoadingHtml()
     : chartPoints.length
       ? `<svg id="fchart" width="100%" height="160" viewBox="0 0 720 160" preserveAspectRatio="none" style="display:block"></svg>
          <div class="c-tooltip" id="c-tooltip"></div>`
-      : `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">暂无走势数据</div>`;
+      : chartEmptyHtml();
+  const metaVolAbs = arbT('detail.spread.metaVolAbs', {
+    vol: volumeText,
+    abs: displayRawNum(o.spreadAbs, { prefix: '$' }),
+  });
+  const metaChain = o.chain
+    ? arbT('detail.spread.metaChain', { chain: escapeDetailHtml(String(o.chain)) })
+    : '';
   return `
-  <button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
+  ${backBtnHtml()}
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
         ${symIco(o.sym, opsIdx, o.logoUrl)}
         ${escapeDetailHtml(o.sym)}/${escapeDetailHtml(quote)}
-        <span class="type-chip type-chip-spread">现货价差</span>
+        <span class="type-chip type-chip-spread">${tabLabel('spread')}</span>
       </div>
       <div class="det-meta">
         <div class="ex-flow">
-          <span class="ex-node" style="background:${minExC.bg};border-color:${minExC.border};color:${minExC.color}">${escapeDetailHtml(o.minExchange)} 买</span>
+          <span class="ex-node" style="background:${minExC.bg};border-color:${minExC.border};color:${minExC.color}">${arbT('detail.spread.buyNode', { ex: escapeDetailHtml(o.minExchange) })}</span>
           <span class="ex-arrow" style="font-size:16px">→</span>
-          <span class="ex-node" style="background:${maxExC.bg};border-color:${maxExC.border};color:${maxExC.color}">${escapeDetailHtml(o.maxExchange)} 卖</span>
+          <span class="ex-node" style="background:${maxExC.bg};border-color:${maxExC.border};color:${maxExC.color}">${arbT('detail.spread.sellNode', { ex: escapeDetailHtml(o.maxExchange) })}</span>
         </div>
-        <div style="font-size:11px;color:var(--t3)">24h 总成交量 ${volumeText} · 绝对价差 ${displayRawNum(o.spreadAbs, { prefix: '$' })}${o.chain ? ` · 链 ${escapeDetailHtml(String(o.chain))}` : ''}</div>
+        <div style="font-size:11px;color:var(--t3)">${metaVolAbs}${metaChain}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px">
-          <span style="font-size:11px;color:var(--t3)">有效交易所</span>
+          <span style="font-size:11px;color:var(--t3)">${arbT('detail.spread.validExchanges')}</span>
           ${validExHtml}
         </div>
       </div>
     </div>
     <div class="det-right">
       <div class="big-val" style="color:var(--blue)">${spreadPctText == null ? '—' : `${spreadPctText}%`}</div>
-      <div class="big-label">毛价差</div>
-      <div class="big-sub" style="color:${netSpread > 0 ? 'var(--pos)' : 'var(--danger)'}">扣手续费后净价差 ${netSpread > 0 ? '+' : ''}${truncateDecimals(netSpread, 3) ?? netSpread}%</div>
+      <div class="big-label">${arbT('detail.spread.grossSpread')}</div>
+      <div class="big-sub" style="color:${netSpread > 0 ? 'var(--pos)' : 'var(--danger)'}">${arbT('detail.spread.netAfterFee', { pct: netAfterFee })}</div>
     </div>
   </div>
   <div class="chart-card">
     <div class="chart-card-hdr">
-      <div class="chart-title">${escapeDetailHtml(o.sym)} 跨所价格 30日走势</div>
+      <div class="chart-title">${arbT('detail.spread.chartTitle', { sym: escapeDetailHtml(o.sym) })}</div>
       <div class="chart-legend">
-        <div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div>${escapeDetailHtml(o.minExchange)}（买入所）</div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>${escapeDetailHtml(o.maxExchange)}（卖出所）</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div>${arbT('detail.spread.legBuy', { ex: escapeDetailHtml(o.minExchange) })}</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>${arbT('detail.spread.legSell', { ex: escapeDetailHtml(o.maxExchange) })}</div>
       </div>
     </div>
     <div class="chart-svg-wrap">${chartBody}</div>
@@ -825,67 +910,66 @@ export function renderSpreadDetail(o, opsIdx, opts = {}) {
   </div>
   <div class="g3">
     <div class="card">
-      <div class="card-t">${escapeDetailHtml(o.minExchange)} 买入</div>
-      <div class="met-row"><div class="met-l">现货价</div><div class="met-v" style="color:var(--pos)">${displayRawNum(o.minPrice, { prefix: '$' })}</div></div>
-      <div class="met-row"><div class="met-l">买入手续费</div><div class="met-v" style="color:var(--danger)">-${minPct}%</div></div>
-      <div class="met-row"><div class="met-l">成交量</div><div class="met-v">${volumeText}</div></div>
+      <div class="card-t">${arbT('detail.spread.cardBuy', { ex: escapeDetailHtml(o.minExchange) })}</div>
+      <div class="met-row"><div class="met-l">${arbT('detail.spread.spotPrice')}</div><div class="met-v" style="color:var(--pos)">${displayRawNum(o.minPrice, { prefix: '$' })}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.spread.buyFee')}</div><div class="met-v" style="color:var(--danger)">-${minPct}%</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.spread.volume')}</div><div class="met-v">${volumeText}</div></div>
     </div>
     <div class="card">
-      <div class="card-t">${escapeDetailHtml(o.maxExchange)} 卖出</div>
-      <div class="met-row"><div class="met-l">现货价</div><div class="met-v" style="color:var(--danger)">${displayRawNum(o.maxPrice, { prefix: '$' })}</div></div>
-      <div class="met-row"><div class="met-l">卖出手续费</div><div class="met-v" style="color:var(--danger)">-${maxPct}%</div></div>
-      <div class="met-row"><div class="met-l">均价</div><div class="met-v">${avgPriceText}</div></div>
+      <div class="card-t">${arbT('detail.spread.cardSell', { ex: escapeDetailHtml(o.maxExchange) })}</div>
+      <div class="met-row"><div class="met-l">${arbT('detail.spread.spotPrice')}</div><div class="met-v" style="color:var(--danger)">${displayRawNum(o.maxPrice, { prefix: '$' })}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.spread.sellFee')}</div><div class="met-v" style="color:var(--danger)">-${maxPct}%</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.spread.avgPrice')}</div><div class="met-v">${avgPriceText}</div></div>
     </div>
     <div class="card">
-      <div class="card-t">收益拆解</div>
-      <div class="met-row"><div class="met-l">绝对价差</div><div class="met-v">${displayRawNum(o.spreadAbs, { prefix: '$' })}</div></div>
-      <div class="met-row"><div class="met-l">毛价差</div><div class="met-v">${spreadPctText == null ? '—' : `+${spreadPctText}%`}</div></div>
-      <div class="met-row"><div class="met-l">双所手续费</div><div class="met-v" style="color:var(--danger)">-${feeSumPct}%</div></div>
-      <div class="met-row"><div class="met-l">提币费</div><div class="met-v" style="color:var(--danger)">${withdrawText === '—' ? '—' : `-${withdrawText}`}</div></div>
-      <div class="met-row"><div class="met-l">净价差</div><div class="met-v" style="color:${netSpread > 0 ? 'var(--pos)' : 'var(--danger)'}">${netSpread > 0 ? '+' : ''}${truncateDecimals(netSpread, 3) ?? netSpread}%</div></div>
+      <div class="card-t">${arbT('detail.spread.pnlBreakdown')}</div>
+      <div class="met-row"><div class="met-l">${arbT('detail.spread.spreadAbs')}</div><div class="met-v">${displayRawNum(o.spreadAbs, { prefix: '$' })}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.spread.grossSpread')}</div><div class="met-v">${spreadPctText == null ? '—' : `+${spreadPctText}%`}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.spread.twoVenueFees')}</div><div class="met-v" style="color:var(--danger)">-${feeSumPct}%</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.spread.withdrawFee')}</div><div class="met-v" style="color:var(--danger)">${withdrawText === '—' ? '—' : `-${withdrawText}`}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.spread.netSpread')}</div><div class="met-v" style="color:${netSpread > 0 ? 'var(--pos)' : 'var(--danger)'}">${netSpread > 0 ? '+' : ''}${netPctDisp}%</div></div>
     </div>
   </div>
   <div class="calc-card calc-card-blue">
-    <div class="calc-t">💰 单次搬砖收益估算</div>
-    <div class="calc-desc">输入搬砖金额，查看单次执行预期收益</div>
+    <div class="calc-t">${arbT('detail.spread.calcTitle')}</div>
+    <div class="calc-desc">${arbT('detail.spread.calcDesc')}</div>
     <div class="inp-row">
       <div class="inp-g">
-        <label class="inp-lbl">搬砖金额</label>
+        <label class="inp-lbl">${arbT('detail.spread.amountLabel')}</label>
         <div class="inp-wrap"><span class="inp-pfx">$</span><input class="inp-f" id="inp-spread" type="number" value="10000" min="100" onchange="calcSpread()"></div>
       </div>
     </div>
     <div class="steps-box" id="spread-steps"></div>
     <div class="res-table" id="spread-res"></div>
   </div>
-  <div class="disc">⚠️ 搬砖过程中价差可能已收敛，实际到账收益可能为负。大额操作请评估当前链上拥堵情况和滑点。</div>
+  <div class="disc">${arbT('detail.spread.disc')}</div>
   <div class="risk-box">
-    <div class="risk-t">⚠️ 风险提示</div>
-    <div class="risk-li">执行风险：链上转账期间（${etaMin}-${etaMax}分钟）价格可能反向波动，价差可能变为负数</div>
-    <div class="risk-li">滑点风险：大额（>$${slipHint.toLocaleString()}）搬砖会产生明显滑点，需单独评估盘口深度</div>
-    <div class="risk-li">提币风险：网络拥堵时转账时间延长，建议评估${chainText}当前 Gas 费和确认时间</div>
-    ${spreadPctNum < 0.2 ? '<div class="risk-li" style="color:var(--danger)">价差过小：净价差极低，执行稍有偏差即可能亏损，建议等待更大价差机会</div>' : ''}
+    <div class="risk-t">${arbT('detail.riskTitle')}</div>
+    <div class="risk-li">${arbT('detail.spread.riskExec', { min: etaMin, max: etaMax })}</div>
+    <div class="risk-li">${arbT('detail.spread.riskSlip', { n: slipHint.toLocaleString() })}</div>
+    <div class="risk-li">${arbT('detail.spread.riskWithdraw', { chain: chainText })}</div>
+    ${spreadPctNum < 0.2 ? `<div class="risk-li" style="color:var(--danger)">${arbT('detail.spread.riskTiny')}</div>` : ''}
   </div>`;
 }
 
 export function renderBasisDetail(o, opsIdx, opts = {}) {
   if (!o) {
-    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
-      <div class="tbl-state tbl-state-error">暂无详情数据</div>`;
+    return `${backBtnHtml()}
+      <div class="tbl-state tbl-state-error">${arbT('detail.noData')}</div>`;
   }
 
   if (opts.detailError) {
-    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
+    return `${backBtnHtml()}
       <div class="tbl-state tbl-state-error">${escapeDetailHtml(opts.detailError)}
-        <button type="button" class="tbl-retry" onclick="retryBasisDetail()">重试</button>
+        <button type="button" class="tbl-retry" onclick="retryBasisDetail()">${arbT('common.retry')}</button>
       </div>`;
   }
 
-  const col = symColors[Math.max(0, opsIdx) % symColors.length];
   const exC = (exColors[o.exchange] || {}).c || '#64748b';
   const basisPctNum = Number(o.basisPct) || 0;
   const isPos = basisPctNum >= 0;
   const typeColor = isPos ? 'var(--pos)' : 'var(--danger)';
-  const typeLabel = isPos ? '升水（perp 溢价）' : '贴水（perp 折价）';
+  const typeLabel = isPos ? arbT('detail.basis.premiumFull') : arbT('detail.basis.discountFull');
   const annText = o.ann == null || o.ann === ''
     ? '—'
     : (() => {
@@ -930,13 +1014,18 @@ export function renderBasisDetail(o, opsIdx, opts = {}) {
   const chartPoints = Array.isArray(o.chart30d) ? o.chart30d : [];
   const axisHTML = buildChartAxisLabels(chartPoints);
   const chartBody = opts.detailLoading
-    ? `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">加载中…</div>`
+    ? chartLoadingHtml()
     : chartPoints.length
       ? `<svg id="fchart" width="100%" height="160" viewBox="0 0 720 160" preserveAspectRatio="none" style="display:block"></svg>
          <div class="c-tooltip" id="c-tooltip"></div>`
-      : `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">暂无走势数据</div>`;
+      : chartEmptyHtml();
+  const metaFunding = arbT('detail.basis.metaFunding', { funding: currentFundingText, ann: annText });
+  const metaVol = arbT('detail.basis.metaVol', {
+    perp: displayVolWithUnit(o.perpVolume24h),
+    spot: displayVolWithUnit(o.spotVolume24h),
+  });
   return `
-  <button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
+  ${backBtnHtml()}
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
@@ -944,28 +1033,28 @@ export function renderBasisDetail(o, opsIdx, opts = {}) {
         ${escapeDetailHtml(o.sym)}/USDT
         <span style="font-size:14px;font-weight:500;color:var(--t3)">·</span>
         <span style="font-size:14px;font-weight:500;color:${exC}">${escapeDetailHtml(o.exchange)}</span>
-        <span class="type-chip type-chip-basis">基差套利</span>
-        <span class="risk-badge" style="background:${isPos ? 'rgba(5,150,105,.1)' : 'rgba(239,68,68,.1)'};border-color:${isPos ? 'rgba(5,150,105,.3)' : 'rgba(239,68,68,.3)'};color:${typeColor}">${isPos ? '升水' : '贴水'}</span>
+        <span class="type-chip type-chip-basis">${tabLabel('basis')}</span>
+        <span class="risk-badge" style="background:${isPos ? 'rgba(5,150,105,.1)' : 'rgba(239,68,68,.1)'};border-color:${isPos ? 'rgba(5,150,105,.3)' : 'rgba(239,68,68,.3)'};color:${typeColor}">${isPos ? arbT('common.premium') : arbT('common.discount')}</span>
       </div>
       <div class="det-meta">
         <div style="font-size:11px;color:var(--t2)">${typeLabel}</div>
-        <div style="font-size:11px;color:var(--t3)">Funding ${currentFundingText} · 年化 ${annText}</div>
-        <div style="font-size:11px;color:var(--t3);margin-top:4px">合约 24h ${displayVolWithUnit(o.perpVolume24h)} · 现货 24h ${displayVolWithUnit(o.spotVolume24h)}</div>
+        <div style="font-size:11px;color:var(--t3)">${metaFunding}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:4px">${metaVol}</div>
       </div>
     </div>
     <div class="det-right">
       <div class="big-val" style="color:${typeColor}">${displayPctTrunc(o.basisPct, { signed: true })}</div>
-      <div class="big-label">当前基差</div>
-      <div class="big-sub">perp ${displayRawNum(o.perpPrice, { prefix: '$' })} vs 现货 ${displayRawNum(o.spotPrice, { prefix: '$' })}</div>
-      <div class="big-sub" style="color:${typeColor};margin-top:3px">绝对差值 ${displaySignedMoney(o.basisAbs)}</div>
+      <div class="big-label">${arbT('detail.basis.currentBasis')}</div>
+      <div class="big-sub">${arbT('detail.basis.perpVsSpot', { perp: displayRawNum(o.perpPrice, { prefix: '$' }), spot: displayRawNum(o.spotPrice, { prefix: '$' }) })}</div>
+      <div class="big-sub" style="color:${typeColor};margin-top:3px">${arbT('detail.basis.absDiff', { v: displaySignedMoney(o.basisAbs) })}</div>
     </div>
   </div>
   <div class="chart-card">
     <div class="chart-card-hdr">
-      <div class="chart-title">基差 30日历史（%）</div>
+      <div class="chart-title">${arbT('detail.basis.chartTitle')}</div>
       <div class="chart-legend">
-        <div class="leg-item"><div class="leg-dot" style="background:var(--purple)"></div>基差（perp-spot）/spot %</div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--border-lit);height:2px;width:16px;border-radius:1px"></div>零轴</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--purple)"></div>${arbT('detail.basis.legBasis')}</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--border-lit);height:2px;width:16px;border-radius:1px"></div>${arbT('detail.basis.legZero')}</div>
       </div>
     </div>
     <div class="chart-svg-wrap">${chartBody}</div>
@@ -973,27 +1062,27 @@ export function renderBasisDetail(o, opsIdx, opts = {}) {
   </div>
   <div class="g2">
     <div class="card">
-      <div class="card-t">价格对比（同 ${escapeDetailHtml(o.exchange)}）</div>
-      <div class="met-row"><div class="met-l">永续合约价</div><div class="met-v">${displayRawNum(o.perpPrice, { prefix: '$' })}</div></div>
-      <div class="met-row"><div class="met-l">现货价</div><div class="met-v">${displayRawNum(o.spotPrice, { prefix: '$' })}</div></div>
-      <div class="met-row"><div class="met-l">价差（USD）</div><div class="met-v" style="color:${typeColor}">${displaySignedMoney(o.basisAbs)}</div></div>
-      <div class="met-row"><div class="met-l">建议杠杆</div><div class="met-v">${leverage}x</div></div>
+      <div class="card-t">${arbT('detail.basis.priceCompare', { ex: escapeDetailHtml(o.exchange) })}</div>
+      <div class="met-row"><div class="met-l">${arbT('detail.basis.perpPrice')}</div><div class="met-v">${displayRawNum(o.perpPrice, { prefix: '$' })}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.basis.spotPrice')}</div><div class="met-v">${displayRawNum(o.spotPrice, { prefix: '$' })}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.basis.diffUsd')}</div><div class="met-v" style="color:${typeColor}">${displaySignedMoney(o.basisAbs)}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.basis.leverage')}</div><div class="met-v">${leverage}x</div></div>
     </div>
     <div class="card">
-      <div class="card-t">组合收益分析</div>
-      <div class="met-row"><div class="met-l">基差收益</div><div class="met-v" style="color:${typeColor}">${displayPctTrunc(o.basisPct, { signed: true })}</div></div>
-      <div class="met-row"><div class="met-l">当期 Funding</div><div class="met-v">${currentFundingText}</div></div>
-      <div class="met-row"><div class="met-l">Funding 年化</div><div class="met-v" style="color:${annColor}">${annText}</div></div>
-      <div class="met-row"><div class="met-l">预估收敛</div><div class="met-v">${convDays} 天</div></div>
-      <div class="met-row"><div class="met-l">手续费合计</div><div class="met-v" style="color:var(--danger)">-${feeSumPct}%</div></div>
+      <div class="card-t">${arbT('detail.basis.comboTitle')}</div>
+      <div class="met-row"><div class="met-l">${arbT('detail.basis.basisGain')}</div><div class="met-v" style="color:${typeColor}">${displayPctTrunc(o.basisPct, { signed: true })}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.basis.currentFunding')}</div><div class="met-v">${currentFundingText}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.basis.fundingAnn')}</div><div class="met-v" style="color:${annColor}">${annText}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.basis.convDays')}</div><div class="met-v">${arbT('detail.basis.convDaysVal', { n: convDays })}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.basis.feeTotal')}</div><div class="met-v" style="color:var(--danger)">-${feeSumPct}%</div></div>
     </div>
   </div>
   <div class="calc-card calc-card-purple">
-    <div class="calc-t">🧮 基差套利执行指引</div>
+    <div class="calc-t">${arbT('detail.basis.calcTitle')}</div>
     <div class="calc-desc" id="basis-calc-desc"></div>
     <div class="inp-row">
       <div class="inp-g">
-        <label class="inp-lbl">投入本金</label>
+        <label class="inp-lbl">${arbT('detail.basis.principal')}</label>
         <div class="inp-wrap"><span class="inp-pfx">$</span><input class="inp-f" id="inp-basis" type="number" value="10000" min="100" onchange="calcBasis()"></div>
       </div>
     </div>
@@ -1001,27 +1090,20 @@ export function renderBasisDetail(o, opsIdx, opts = {}) {
     <div class="res-table" id="basis-res"></div>
   </div>
   <div class="info-box">
-    <div class="info-t">💡 基差与 Funding 的关系</div>
-    <div class="info-li">升水（perp > spot）通常意味着 Funding 为正，多头付费给空头，做空 perp 同时可收取 Funding</div>
-    <div class="info-li">贴水（perp < spot）通常意味着 Funding 为负，空头付费给多头，策略需反向且注意成本</div>
-    <div class="info-li">本策略同时吃基差收敛 + Funding 费率，是比单纯 Funding 套利更完整的 Cash & Carry 形态</div>
+    <div class="info-t">${arbT('detail.basis.infoTitle')}</div>
+    <div class="info-li">${arbT('detail.basis.info1')}</div>
+    <div class="info-li">${arbT('detail.basis.info2')}</div>
+    <div class="info-li">${arbT('detail.basis.info3')}</div>
   </div>
-  <div class="disc">⚠️ 基差不一定线性收敛，可能扩大后再收窄。全程需保证充足保证金率（≥${marginPct}%），不构成投资建议。</div>
+  <div class="disc">${arbT('detail.basis.disc', { pct: marginPct })}</div>
   <div class="risk-box">
-    <div class="risk-t">⚠️ 风险提示</div>
-    <div class="risk-li">基差扩大风险：极端行情下基差可能扩大至 2%+，触发保证金不足强平</div>
-    <div class="risk-li">Funding 翻转：${isPos ? '若市场转熊，Funding 可能变负，空头端需反向付费' : '贴水状态下 Funding 通常为负，持有成本需精细核算'}</div>
-    <div class="risk-li">流动性风险：合约 ${displayVolWithUnit(o.perpVolume24h)} / 现货 ${displayVolWithUnit(o.spotVolume24h)}（24h），大额建仓注意滑点</div>
-    <div class="risk-li">杠杆与保证金：建议杠杆 ${leverage}x，保证金率建议 ≥${marginPct}%</div>
+    <div class="risk-t">${arbT('detail.riskTitle')}</div>
+    <div class="risk-li">${arbT('detail.basis.riskWiden')}</div>
+    <div class="risk-li">${isPos ? arbT('detail.basis.riskFlipPos') : arbT('detail.basis.riskFlipNeg')}</div>
+    <div class="risk-li">${arbT('detail.basis.riskLiq', { perp: displayVolWithUnit(o.perpVolume24h), spot: displayVolWithUnit(o.spotVolume24h) })}</div>
+    <div class="risk-li">${arbT('detail.basis.riskLev', { lev: leverage, pct: marginPct })}</div>
   </div>`;
 }
-
-const OI_SIGNAL_META = {
-  多头入场: { icon: '📈', desc: 'OI 与价格同步上升，新资金入场做多。趋势确立时的顺势信号，可谨慎跟多，但注意追高风险。', action: ['观察 OI 是否持续增加以确认趋势', '在回调时逢低入场而非追高', '设置止损在近期支撑位'] },
-  空头入场: { icon: '📉', desc: 'OI 增加但价格下跌，新空头资金在高位做空。偏空信号，多头持仓建议减仓或做对冲。', action: ['多头用户可适当减仓或止损', '等待 OI 是否继续增加以判断趋势持续性', '不建议逆势抄底'] },
-  空头平仓: { icon: '🔼', desc: 'OI 下降但价格上涨，空头被迫止损平仓。短线偏多，但动力来自空头回补而非新多头入场，需观察。', action: ['短线多头可持有，但需观察是否有新多头接力', 'OI 若持续下降，上涨动力减弱，需警惕', '可小仓位参与，控制风险'] },
-  多头平仓: { icon: '🔽', desc: 'OI 下降且价格下跌，多头离场平仓。偏空信号，已有多头持仓需注意控制回撤。', action: ['多头持仓建议设置止损保护利润', '等待 OI 企稳后再考虑新的多头入场', '短期不建议加仓'] },
-};
 
 /**
  * @param {object} o
@@ -1030,33 +1112,35 @@ const OI_SIGNAL_META = {
  */
 export function renderOIDetail(o, opsIdx, opts = {}) {
   if (!o) {
-    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
-      <div class="tbl-state tbl-state-error">暂无详情数据</div>`;
+    return `${backBtnHtml()}
+      <div class="tbl-state tbl-state-error">${arbT('detail.noData')}</div>`;
   }
 
   if (opts.detailError) {
-    return `<button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
+    return `${backBtnHtml()}
       <div class="tbl-state tbl-state-error">${escapeDetailHtml(opts.detailError)}
-        <button type="button" class="tbl-retry" onclick="retryOIDetail()">重试</button>
+        <button type="button" class="tbl-retry" onclick="retryOIDetail()">${arbT('common.retry')}</button>
       </div>`;
   }
 
-  const col = symColors[Math.max(0, opsIdx) % symColors.length];
   const exC = (exColors[o.exchange] || {}).c || '#64748b';
-  const hs = hintStyles[o.correlationHint] || { bg: 'rgba(15,23,42,.04)', border: 'rgba(15,23,42,.12)', c: 'var(--t2)' };
-  const signalMeta = OI_SIGNAL_META[o.correlationHint] || { icon: '📊', desc: 'OI 与价格变化，方向信号不明确。', action: ['建议观望，等待方向明朗'] };
+  const hs = getHintStyle(o.correlationHint);
+  const signalMeta = oiSignalMeta(o.correlationHint);
+  const signalLabel = signalMeta.label;
   const oiChgColor = o.oiChangePct >= 0 ? 'var(--pos)' : 'var(--danger)';
+  const oiChgText = `${o.oiChangePct >= 0 ? '↑' : '↓'}${truncateDecimals(Math.abs(o.oiChangePct), 3) ?? '—'}%`;
+  const priceChgText = `${o.priceChange24hPct >= 0 ? '↑' : '↓'}${truncateDecimals(Math.abs(o.priceChange24hPct), 3) ?? '—'}%`;
   const chartPoints = Array.isArray(o.chart30d) ? o.chart30d : [];
   const axisHTML = buildChartAxisLabels(chartPoints);
   const chartBody = opts.detailLoading
-    ? `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">加载中…</div>`
+    ? chartLoadingHtml()
     : chartPoints.length
       ? `<svg id="fchart" width="100%" height="160" viewBox="0 0 720 160" preserveAspectRatio="none" style="display:block"></svg>
          <div class="c-tooltip" id="c-tooltip"></div>`
-      : `<div class="tbl-state" style="min-height:160px;display:flex;align-items:center;justify-content:center">暂无走势数据</div>`;
+      : chartEmptyHtml();
 
   return `
-  <button class="back-btn" onclick="backToRadar()"><svg class="back-btn-ico" viewBox="0 0 48 48" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg> 返回列表</button>
+  ${backBtnHtml()}
   <div class="det-hdr">
     <div class="det-left">
       <div class="det-ttl">
@@ -1064,35 +1148,35 @@ export function renderOIDetail(o, opsIdx, opts = {}) {
         ${escapeDetailHtml(o.sym)}/USDT
         <span style="font-size:14px;font-weight:500;color:var(--t3)">·</span>
         <span style="font-size:14px;font-weight:500;color:${exC}">${escapeDetailHtml(o.exchange)}</span>
-        <span class="type-chip type-chip-oi">OI 异动</span>
+        <span class="type-chip type-chip-oi">${tabLabel('oi')}</span>
       </div>
       <div class="det-meta">
-        <span class="hint-badge" style="background:${hs.bg};border-color:${hs.border};color:${hs.c};padding:4px 12px;font-size:12px">${signalMeta.icon} ${escapeDetailHtml(o.correlationHint)}</span>
-        <div style="font-size:11px;color:var(--t3)">OI vs 7日均值</div>
+        <span class="hint-badge" style="background:${hs.bg};border-color:${hs.border};color:${hs.c};padding:4px 12px;font-size:12px">${signalMeta.icon} ${escapeDetailHtml(signalLabel)}</span>
+        <div style="font-size:11px;color:var(--t3)">${arbT('detail.oi.vs7d')}</div>
       </div>
     </div>
     <div class="det-right">
       <div class="big-val" style="color:${oiChgColor}">${displayPctTrunc(o.oiChangePct, { signed: true })}</div>
-      <div class="big-label">OI vs 7日均值</div>
-      <div class="big-sub">当前 ${fmtOI(o.currentOiUsd)} · 均值 ${fmtOI(o.avg7dOiUsd)}</div>
+      <div class="big-label">${arbT('detail.oi.vs7d')}</div>
+      <div class="big-sub">${arbT('detail.oi.currentAvg', { cur: fmtOI(o.currentOiUsd), avg: fmtOI(o.avg7dOiUsd) })}</div>
     </div>
   </div>
   <div class="signal-card" style="background:${hs.bg};border-color:${hs.border}">
     <div class="signal-hdr">
       <div class="signal-icon">${signalMeta.icon}</div>
       <div>
-        <div class="signal-ttl" style="color:${hs.c}">${escapeDetailHtml(o.correlationHint)}</div>
-        <div style="font-size:11px;color:var(--t2);margin-top:2px">OI ${o.oiChangePct >= 0 ? '↑' : '↓'}${truncateDecimals(Math.abs(o.oiChangePct), 3) ?? '—'}% · 价格 ${o.priceChange24hPct >= 0 ? '↑' : '↓'}${truncateDecimals(Math.abs(o.priceChange24hPct), 3) ?? '—'}%</div>
+        <div class="signal-ttl" style="color:${hs.c}">${escapeDetailHtml(signalLabel)}</div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px">${arbT('detail.oi.signalMeta', { oi: oiChgText, price: priceChgText })}</div>
       </div>
     </div>
     <div class="signal-desc">${signalMeta.desc}</div>
   </div>
   <div class="chart-card">
     <div class="chart-card-hdr">
-      <div class="chart-title">OI 30日走势</div>
+      <div class="chart-title">${arbT('detail.oi.chartTitle')}</div>
       <div class="chart-legend">
-        <div class="leg-item"><div class="leg-dot" style="background:var(--orange)"></div>OI（柱状）</div>
-        <div class="leg-item"><div class="leg-line" style="border-top:1.5px dashed var(--warn);width:14px"></div>7日均值</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--orange)"></div>${arbT('detail.oi.legOi')}</div>
+        <div class="leg-item"><div class="leg-line" style="border-top:1.5px dashed var(--warn);width:14px"></div>${arbT('detail.oi.legAvg7d')}</div>
       </div>
     </div>
     <div class="chart-svg-wrap">${chartBody}</div>
@@ -1100,30 +1184,30 @@ export function renderOIDetail(o, opsIdx, opts = {}) {
   </div>
   <div class="g3">
     <div class="card">
-      <div class="card-t">OI 数据</div>
-      <div class="met-row"><div class="met-l">当前 OI</div><div class="met-v">${fmtOI(o.currentOiUsd)}</div></div>
-      <div class="met-row"><div class="met-l">7日均值 OI</div><div class="met-v">${fmtOI(o.avg7dOiUsd)}</div></div>
-      <div class="met-row"><div class="met-l">vs 7日均值</div><div class="met-v" style="color:${oiChgColor}">${displayPctTrunc(o.oiChangePct, { signed: true })}</div></div>
-      ${o.sampleCount != null ? `<div class="met-row"><div class="met-l">样本天数</div><div class="met-v">${escapeDetailHtml(o.sampleCount)}</div></div>` : ''}
+      <div class="card-t">${arbT('detail.oi.dataTitle')}</div>
+      <div class="met-row"><div class="met-l">${arbT('detail.oi.currentOi')}</div><div class="met-v">${fmtOI(o.currentOiUsd)}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.oi.avg7dOi')}</div><div class="met-v">${fmtOI(o.avg7dOiUsd)}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.oi.vs7d')}</div><div class="met-v" style="color:${oiChgColor}">${displayPctTrunc(o.oiChangePct, { signed: true })}</div></div>
+      ${o.sampleCount != null ? `<div class="met-row"><div class="met-l">${arbT('detail.oi.sampleDays')}</div><div class="met-v">${escapeDetailHtml(o.sampleCount)}</div></div>` : ''}
     </div>
     <div class="card">
-      <div class="card-t">价格数据</div>
-      <div class="met-row"><div class="met-l">24h 涨跌</div><div class="met-v" style="color:${o.priceChange24hPct >= 0 ? 'var(--pos)' : 'var(--danger)'}">${o.priceChange24hPct >= 0 ? '↑' : '↓'} ${truncateDecimals(Math.abs(o.priceChange24hPct), 3) ?? '—'}%</div></div>
-      <div class="met-row"><div class="met-l">OI/价格关系</div><div class="met-v" style="color:${hs.c}">${escapeDetailHtml(o.correlationHint)}</div></div>
-      <div class="met-row"><div class="met-l">24h 成交量</div><div class="met-v">${fmtVol(o.volume24h)}</div></div>
+      <div class="card-t">${arbT('detail.oi.priceTitle')}</div>
+      <div class="met-row"><div class="met-l">${arbT('detail.oi.chg24h')}</div><div class="met-v" style="color:${o.priceChange24hPct >= 0 ? 'var(--pos)' : 'var(--danger)'}">${o.priceChange24hPct >= 0 ? '↑' : '↓'} ${truncateDecimals(Math.abs(o.priceChange24hPct), 3) ?? '—'}%</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.oi.relation')}</div><div class="met-v" style="color:${hs.c}">${escapeDetailHtml(signalLabel)}</div></div>
+      <div class="met-row"><div class="met-l">${arbT('detail.oi.vol24h')}</div><div class="met-v">${fmtVol(o.volume24h)}</div></div>
     </div>
     <div class="card">
-      <div class="card-t">参考操作</div>
+      <div class="card-t">${arbT('detail.oi.actions')}</div>
       ${signalMeta.action.map((a) => `<div class="met-row" style="align-items:flex-start"><div class="met-v" style="font-size:11px;color:var(--t2);font-family:var(--sans);font-weight:400;line-height:1.6;white-space:normal">· ${a}</div></div>`).join('')}
     </div>
   </div>
-  <div class="disc">⚠️ OI 异动信号仅为市场情绪参考，不代表价格必然按信号方向运动，不构成投资建议。请结合更多维度综合判断。</div>
+  <div class="disc">${arbT('detail.oi.disc')}</div>
   <div class="risk-box">
-    <div class="risk-t">⚠️ 风险提示</div>
-    <div class="risk-li">OI 信号滞后：OI 数据反映已发生的持仓变化，对未来价格无预测保证</div>
-    <div class="risk-li">极端 OI 反转：OI 极端高位后容易发生急速清算（多杀多/空杀空）</div>
-    <div class="risk-li">数据精度：7日均值基于日级聚合数据，精度为日级别</div>
-    ${Math.abs(o.oiChangePct) > 50 ? '<div class="risk-li" style="color:var(--warn)">当前 OI 偏离极端（>50%），情绪过热，操作需格外谨慎</div>' : ''}
+    <div class="risk-t">${arbT('detail.riskTitle')}</div>
+    <div class="risk-li">${arbT('detail.oi.riskLag')}</div>
+    <div class="risk-li">${arbT('detail.oi.riskExtreme')}</div>
+    <div class="risk-li">${arbT('detail.oi.riskPrecision')}</div>
+    ${Math.abs(o.oiChangePct) > 50 ? `<div class="risk-li" style="color:var(--warn)">${arbT('detail.oi.riskHot')}</div>` : ''}
   </div>`;
 }
 
@@ -1139,7 +1223,10 @@ function makeSeries(base, len, noiseF, lo, hi) {
   return a;
 }
 
-const CHART_DATES = ['6/1', '6/2', '6/3', '6/4', '6/5', '6/6', '6/7', '6/8', '6/9', '6/10', '6/11', '6/12', '6/13', '6/14', '6/15', '6/16', '6/17', '6/18', '6/19', '6/20', '6/21', '6/22', '6/23', '6/24', '6/25', '6/26', '6/27', '6/28', '6/29', '今天'];
+function chartDatesLabels() {
+  const base = ['6/1', '6/2', '6/3', '6/4', '6/5', '6/6', '6/7', '6/8', '6/9', '6/10', '6/11', '6/12', '6/13', '6/14', '6/15', '6/16', '6/17', '6/18', '6/19', '6/20', '6/21', '6/22', '6/23', '6/24', '6/25', '6/26', '6/27', '6/28', '6/29'];
+  return [...base, arbT('detail.today')];
+}
 
 function animPath(id, svg) {
   const el = (svg || document).querySelector(`#${id}`);
@@ -1159,7 +1246,7 @@ function attachChartHover(root, svg) {
   svg.querySelectorAll('.hpt').forEach((el) => {
     el.addEventListener('mouseenter', function onEnter() {
       tip.style.opacity = '1';
-      tip.innerHTML = `<span style="color:var(--accent)">${this.dataset.v}</span> <span style="color:var(--t3)">·</span> ${CHART_DATES[+this.dataset.i] || ''}`;
+      tip.innerHTML = `<span style="color:var(--accent)">${this.dataset.v}</span> <span style="color:var(--t3)">·</span> ${chartDatesLabels()[+this.dataset.i] || ''}`;
       const r = svg.getBoundingClientRect();
       const er = this.getBoundingClientRect();
       const left = Math.max(0, Math.min(er.left - r.left - tip.offsetWidth / 2 + 8, r.width - tip.offsetWidth));
@@ -1345,27 +1432,28 @@ export function calcSpread(root, o) {
   const etaMax = Number.isFinite(Number(o.transferEtaMax)) ? Number(o.transferEtaMax) : null;
   const etaLabel =
     etaMin != null && etaMax != null
-      ? `约 ${etaMin}–${etaMax} 分钟`
-      : '等待确认';
-  const chainHint = o.chain ? `经 ${o.chain} ` : '';
+      ? arbT('detail.spread.etaRange', { min: etaMin, max: etaMax })
+      : arbT('detail.spread.etaWait');
+  const chainHint = o.chain ? arbT('detail.spread.step2Chain', { chain: o.chain }) : '';
   const steps = root.querySelector('#spread-steps');
   if (steps) {
     steps.innerHTML = `
-      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${escapeDetailHtml(o.minExchange)} 以 ${displayRawNum(o.minPrice, { prefix: '$' })} 买入 ${escapeDetailHtml(o.sym)}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">2</div><div class="step-txt">将 ${escapeDetailHtml(o.sym)} ${chainHint}转账至 ${escapeDetailHtml(o.maxExchange)}（链上或内部划转）</div><div class="step-amt">${etaLabel}</div></div>
-      <div class="step-row"><div class="step-n">3</div><div class="step-txt">在 ${escapeDetailHtml(o.maxExchange)} 以 ${displayRawNum(o.maxPrice, { prefix: '$' })} 卖出 ${escapeDetailHtml(o.sym)}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>`;
+      <div class="step-row"><div class="step-n">1</div><div class="step-txt">${arbT('detail.spread.step1', { ex: escapeDetailHtml(o.minExchange), price: displayRawNum(o.minPrice, { prefix: '$' }), sym: escapeDetailHtml(o.sym) })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">2</div><div class="step-txt">${arbT('detail.spread.step2', { sym: escapeDetailHtml(o.sym), chain: chainHint, ex: escapeDetailHtml(o.maxExchange) })}</div><div class="step-amt">${etaLabel}</div></div>
+      <div class="step-row"><div class="step-n">3</div><div class="step-txt">${arbT('detail.spread.step3', { ex: escapeDetailHtml(o.maxExchange), price: displayRawNum(o.maxPrice, { prefix: '$' }), sym: escapeDetailHtml(o.sym) })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>`;
   }
   const withdrawRow =
     withdrawFee > 0
-      ? `<div class="res-row"><div class="res-l">提币手续费</div><div class="res-v n">-$${withdrawFee.toFixed(2)}</div></div>`
+      ? `<div class="res-row"><div class="res-l">${arbT('detail.spread.resWithdraw')}</div><div class="res-v n">-$${withdrawFee.toFixed(2)}</div></div>`
       : '';
   const res = root.querySelector('#spread-res');
   if (res) {
+    const pctLabel = spreadPctText == null ? '—' : `${spreadPctText}%`;
     res.innerHTML = `
-      <div class="res-row"><div class="res-l">毛价差收入（${spreadPctText == null ? '—' : `${spreadPctText}%`}）</div><div class="res-v p">+$${grossUsd.toFixed(2)}</div></div>
-      <div class="res-row"><div class="res-l">双所手续费（${feeLabel}）</div><div class="res-v n">-$${feeUsd.toFixed(2)}</div></div>
+      <div class="res-row"><div class="res-l">${arbT('detail.spread.resGross', { pct: pctLabel })}</div><div class="res-v p">+$${grossUsd.toFixed(2)}</div></div>
+      <div class="res-row"><div class="res-l">${arbT('detail.spread.resFees', { fee: feeLabel })}</div><div class="res-v n">-$${feeUsd.toFixed(2)}</div></div>
       ${withdrawRow}
-      <div class="res-row tot"><div class="res-l" style="font-weight:600;color:var(--t1)">单次净收益</div><div class="res-v tot" style="color:${netUsd > 0 ? 'var(--accent)' : 'var(--danger)'}">
+      <div class="res-row tot"><div class="res-l" style="font-weight:600;color:var(--t1)">${arbT('detail.spread.resNet')}</div><div class="res-v tot" style="color:${netUsd > 0 ? 'var(--accent)' : 'var(--danger)'}">
         ${netUsd > 0 ? '+' : ''}$${netUsd.toFixed(2)}
         <span style="font-size:11px;color:var(--t2)">（${netPct > 0 ? '+' : ''}${netPctText == null ? netPct.toFixed(3) : netPctText}%）</span>
       </div></div>`;
@@ -1395,27 +1483,32 @@ export function calcBasis(root, o) {
   const perpClose = Number.isFinite(Number(o.perpCloseFeeRate))
     ? Number(o.perpCloseFeeRate)
     : 0.0006;
-  // 现货开+平 + 永续开+平
   const feeRateSum = spotFee * 2 + perpOpen + perpClose;
-  const feeLabel = `现货 ${(spotFee * 100).toFixed(2)}%×2 + 永续开 ${(perpOpen * 100).toFixed(2)}% + 平 ${(perpClose * 100).toFixed(2)}%`;
+  const feeLabel = arbT('detail.basis.feeLabel', {
+    spot: (spotFee * 100).toFixed(2),
+    open: (perpOpen * 100).toFixed(2),
+    close: (perpClose * 100).toFixed(2),
+  });
+  const annForStep =
+    annRaw == null ? '—' : `${Number(o.ann) > 0 ? '+' : ''}${annRaw}%`;
 
   const desc = root.querySelector('#basis-calc-desc');
   if (desc) {
     desc.textContent = isPos
-      ? `当前策略：在 ${o.exchange} 买入现货 + 做空永续，等待基差收敛至零`
-      : `当前策略：在 ${o.exchange} 做多永续 + 持有/借入现货做空，等待基差收敛`;
+      ? arbT('detail.basis.descPos', { ex: o.exchange })
+      : arbT('detail.basis.descNeg', { ex: o.exchange });
   }
   const steps = root.querySelector('#basis-steps');
   if (steps) {
     steps.innerHTML = isPos
       ? `
-      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${escapeDetailHtml(o.exchange)} 买入 ${escapeDetailHtml(o.sym)} 现货，价格 ${displayRawNum(o.spotPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">2</div><div class="step-txt">在 ${escapeDetailHtml(o.exchange)} 做空等量 ${escapeDetailHtml(o.sym)} 永续合约（${leverage}x 杠杆），价格 ${displayRawNum(o.perpPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">3</div><div class="step-txt">持续收取 Funding 费率（${annRaw == null ? '—' : `${Number(o.ann) > 0 ? '+' : ''}${annRaw}%`}/年）并等待基差收敛</div><div class="step-amt">约 ${convDays} 天</div></div>`
+      <div class="step-row"><div class="step-n">1</div><div class="step-txt">${arbT('detail.basis.step1Pos', { ex: escapeDetailHtml(o.exchange), sym: escapeDetailHtml(o.sym), price: displayRawNum(o.spotPrice, { prefix: '$' }) })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">2</div><div class="step-txt">${arbT('detail.basis.step2Pos', { ex: escapeDetailHtml(o.exchange), sym: escapeDetailHtml(o.sym), lev: leverage, price: displayRawNum(o.perpPrice, { prefix: '$' }) })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">3</div><div class="step-txt">${arbT('detail.basis.step3Pos', { ann: annForStep })}</div><div class="step-amt">${arbT('detail.basis.aboutDays', { n: convDays })}</div></div>`
       : `
-      <div class="step-row"><div class="step-n">1</div><div class="step-txt">在 ${escapeDetailHtml(o.exchange)} 做多 ${escapeDetailHtml(o.sym)} 永续合约（${leverage}x 杠杆），价格 ${displayRawNum(o.perpPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">2</div><div class="step-txt">在 ${escapeDetailHtml(o.exchange)} 借入并做空 ${escapeDetailHtml(o.sym)} 现货，价格 ${displayRawNum(o.spotPrice, { prefix: '$' })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
-      <div class="step-row"><div class="step-n">3</div><div class="step-txt">贴水环境下 Funding 可能为负（空头付费），按 ${convDays} 天估算收敛</div><div class="step-amt">谨慎评估</div></div>`;
+      <div class="step-row"><div class="step-n">1</div><div class="step-txt">${arbT('detail.basis.step1Neg', { ex: escapeDetailHtml(o.exchange), sym: escapeDetailHtml(o.sym), lev: leverage, price: displayRawNum(o.perpPrice, { prefix: '$' }) })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">2</div><div class="step-txt">${arbT('detail.basis.step2Neg', { ex: escapeDetailHtml(o.exchange), sym: escapeDetailHtml(o.sym), price: displayRawNum(o.spotPrice, { prefix: '$' }) })}</div><div class="step-amt">≈ $${principal.toLocaleString()}</div></div>
+      <div class="step-row"><div class="step-n">3</div><div class="step-txt">${arbT('detail.basis.step3Neg', { days: convDays })}</div><div class="step-amt">${arbT('detail.basis.caution')}</div></div>`;
   }
   const res = root.querySelector('#basis-res');
   if (res) {
@@ -1424,9 +1517,9 @@ export function calcBasis(root, o) {
     const fees = principal * feeRateSum;
     const total = basisGain + fundingGain - fees;
     res.innerHTML = `
-      <div class="res-row"><div class="res-l">基差部分（若完全收敛）</div><div class="res-v p">+$${basisGain.toFixed(2)}</div></div>
-      <div class="res-row"><div class="res-l">Funding 收益（按${convDays}天估算）</div><div class="res-v p">+$${fundingGain.toFixed(2)}</div></div>
-      <div class="res-row"><div class="res-l">手续费（${feeLabel}）</div><div class="res-v n">-$${fees.toFixed(2)}</div></div>
-      <div class="res-row tot"><div class="res-l" style="font-weight:600;color:var(--t1)">${convDays}日预期净收益</div><div class="res-v tot" style="color:${total > 0 ? 'var(--accent)' : 'var(--danger)'}">${total > 0 ? '+' : ''}$${total.toFixed(2)}</div></div>`;
+      <div class="res-row"><div class="res-l">${arbT('detail.basis.resBasis')}</div><div class="res-v p">+$${basisGain.toFixed(2)}</div></div>
+      <div class="res-row"><div class="res-l">${arbT('detail.basis.resFunding', { days: convDays })}</div><div class="res-v p">+$${fundingGain.toFixed(2)}</div></div>
+      <div class="res-row"><div class="res-l">${arbT('detail.basis.resFees', { fee: feeLabel })}</div><div class="res-v n">-$${fees.toFixed(2)}</div></div>
+      <div class="res-row tot"><div class="res-l" style="font-weight:600;color:var(--t1)">${arbT('detail.basis.resNet', { days: convDays })}</div><div class="res-v tot" style="color:${total > 0 ? 'var(--accent)' : 'var(--danger)'}">${total > 0 ? '+' : ''}$${total.toFixed(2)}</div></div>`;
   }
 }

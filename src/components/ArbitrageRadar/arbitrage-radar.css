@@ -123,8 +123,9 @@
 
 /* MAIN */
 #mozi-arbitrage-radar .main{max-width:1080PX;margin:0 auto;padding:28PX 24PX 80PX}
-#mozi-arbitrage-radar .view{animation:vin .28s cubic-bezier(.4,0,.2,1)}
-@keyframes vin{from{opacity:0;transform:translateY(12PX)}to{opacity:1;transform:translateY(0)}}
+/* 仅显式加 .is-enter 时做轻位移，避免首屏 opacity:0→1 整页闪一下 */
+#mozi-arbitrage-radar .view.is-enter{animation:vin .22s cubic-bezier(.4,0,.2,1)}
+@keyframes vin{from{transform:translateY(8PX)}to{transform:translateY(0)}}
 
 /* TABS */
 #mozi-arbitrage-radar .type-tabs{display:flex;gap:0;margin-bottom:22PX;border-bottom:1PX solid var(--border);max-width:100%;overflow-x:auto;scrollbar-width:none}
@@ -354,8 +355,7 @@
 
 /* LABEL INTRO (onboarding strip) */
 #mozi-arbitrage-radar .intro-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12PX;margin-bottom:22PX}
-#mozi-arbitrage-radar .intro-card{background:var(--surface);border:1PX solid var(--border);border-radius:var(--r);padding:14PX 16PX;animation:vin .3s ease both}
-#mozi-arbitrage-radar .intro-card:nth-child(2){animation-delay:.05s}#mozi-arbitrage-radar .intro-card:nth-child(3){animation-delay:.1s}#mozi-arbitrage-radar .intro-card:nth-child(4){animation-delay:.15s}
+#mozi-arbitrage-radar .intro-card{background:var(--surface);border:1PX solid var(--border);border-radius:var(--r);padding:14PX 16PX}
 #mozi-arbitrage-radar .intro-icon{font-size:20PX;margin-bottom:8PX}
 #mozi-arbitrage-radar .intro-label{font-size:12PX;font-weight:600;color:var(--t1);margin-bottom:4PX}
 #mozi-arbitrage-radar .intro-desc{font-size:11PX;color:var(--t3);line-height:1.6}
