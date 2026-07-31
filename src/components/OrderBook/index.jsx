@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import BarChart from '@/components/BarChart';
 import styles from './index.module.less';
@@ -135,6 +135,9 @@ export default function OrderBook({
   const [isPcLayout, setIsPcLayout] = useState(false);
   const userSelectedRef = useRef(false);
   const prevOptionsKeyRef = useRef('');
+  const asksScrollRef = useRef(null);
+  // 卖盘默认贴底（靠近中间价）；用户手动上滚后不再强行拉回
+  const asksPinnedToBottomRef = useRef(true);
   const pcCountdownStyles = isPcLayout
     ? {
         wrapper: {
@@ -260,43 +263,27 @@ export default function OrderBook({
     return () => clearInterval(timer);
   }, [endTime]);
 
-  // 两侧均按「与当前价距离」排序：越靠近中间的行，价格越接近现价
-  const sortMid = useMemo(() => {
-    if (midPriceProp === undefined || midPriceProp === null || midPriceProp === '') return null;
-    const n = Number(String(midPriceProp).replace(/[$,\s]/g, ''));
-    return Number.isFinite(n) && n > 0 ? n : null;
-  }, [midPriceProp]);
-
+  // 买盘：从上往下价格从小到大；卖盘：从上往下价格从大到小（不做贴近中间价截取）
   const bidLevels = useMemo(() => {
-    const items = [...(bids || [])];
-    if (sortMid != null) {
-      items.sort(
-        (a, b) =>
-          Math.abs((Number(a?.price) || 0) - sortMid) - Math.abs((Number(b?.price) || 0) - sortMid),
-      );
-    } else {
-      items.sort((a, b) => (Number(b?.price) || 0) - (Number(a?.price) || 0));
-    }
+    const items = [...(bids || [])].sort((a, b) => {
+      const priceDiff = (Number(a?.price) || 0) - (Number(b?.price) || 0);
+      if (priceDiff !== 0) return priceDiff;
+      return (Number(b?.quantity) || 0) - (Number(a?.quantity) || 0);
+    });
     return buildLevels(items, visibleRowsCount);
-  }, [bids, visibleRowsCount, sortMid]);
+  }, [bids, visibleRowsCount]);
 
   const askLevels = useMemo(() => {
-    const items = [...(asks || [])];
-    if (sortMid != null) {
-      items.sort(
-        (a, b) =>
-          Math.abs((Number(a?.price) || 0) - sortMid) - Math.abs((Number(b?.price) || 0) - sortMid),
-      );
-    } else {
-      items.sort((a, b) => (Number(a?.price) || 0) - (Number(b?.price) || 0));
-    }
-    const levels = buildLevels(items, visibleRowsCount);
-    // 卖盘在上：距离远的在顶部，最接近现价的在底部贴中间
-    return [...levels].reverse();
-  }, [asks, visibleRowsCount, sortMid]);
+    const items = [...(asks || [])].sort((a, b) => {
+      const priceDiff = (Number(b?.price) || 0) - (Number(a?.price) || 0);
+      if (priceDiff !== 0) return priceDiff;
+      return (Number(b?.quantity) || 0) - (Number(a?.quantity) || 0);
+    });
+    return buildLevels(items, visibleRowsCount);
+  }, [asks, visibleRowsCount]);
 
   const maxDepth = useMemo(() => {
-    const askMax = askLevels.length ? askLevels[0]?.total || 0 : 0;
+    const askMax = askLevels.length ? askLevels[askLevels.length - 1]?.total || 0 : 0;
     const bidMax = bidLevels.length ? bidLevels[bidLevels.length - 1]?.total || 0 : 0;
     return Math.max(askMax, bidMax, 1);
   }, [askLevels, bidLevels]);
@@ -310,7 +297,7 @@ export default function OrderBook({
     const fromProp = parseMid(midPriceProp);
     if (fromProp !== null) return fromProp;
     const bestAsk = askLevels.length ? askLevels[askLevels.length - 1]?.price : null;
-    const bestBid = bidLevels.length ? bidLevels[0]?.price : null;
+    const bestBid = bidLevels.length ? bidLevels[bidLevels.length - 1]?.price : null;
     if (Number.isFinite(bestAsk) && Number.isFinite(bestBid) && bestAsk > 0 && bestBid > 0) {
       return (bestAsk + bestBid) / 2;
     }
@@ -321,12 +308,40 @@ export default function OrderBook({
     if (priceTrend === 'down') return true;
     if (priceTrend === 'up') return false;
     const bestAsk = askLevels.length ? askLevels[askLevels.length - 1]?.price : null;
-    const bestBid = bidLevels.length ? bidLevels[0]?.price : null;
+    const bestBid = bidLevels.length ? bidLevels[bidLevels.length - 1]?.price : null;
     if (!Number.isFinite(bestAsk) || !Number.isFinite(bestBid) || !Number.isFinite(midPrice)) return false;
     return Math.abs(midPrice - bestAsk) < Math.abs(midPrice - bestBid);
   }, [askLevels, bidLevels, midPrice, priceTrend]);
 
   const hasData = askLevels.length > 0 || bidLevels.length > 0;
+
+  const scrollAsksToBottom = () => {
+    const el = asksScrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  };
+
+  useLayoutEffect(() => {
+    asksPinnedToBottomRef.current = true;
+    scrollAsksToBottom();
+    // 布局未完成时再补一次，避免首屏仍停在顶部
+    const raf = requestAnimationFrame(scrollAsksToBottom);
+    return () => cancelAnimationFrame(raf);
+  }, [visibleRowsCount, isPcLayout]);
+
+  useLayoutEffect(() => {
+    if (!asksPinnedToBottomRef.current) return;
+    scrollAsksToBottom();
+    const raf = requestAnimationFrame(scrollAsksToBottom);
+    return () => cancelAnimationFrame(raf);
+  }, [askLevels]);
+
+  const handleAsksScroll = () => {
+    const el = asksScrollRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    asksPinnedToBottomRef.current = distanceFromBottom <= 4;
+  };
 
   const renderLevelRow = (level, side, key, seed) => {
     const depthPct = Math.max(0, Math.min(100, (Number(level.total) / maxDepth) * 100));
@@ -430,7 +445,11 @@ export default function OrderBook({
             className={styles.bookBody}
             style={mobileBookBodyMinHeight ? { minHeight: `${mobileBookBodyMinHeight}px` } : undefined}
           >
-            <div className={styles.asksScroll}>
+            <div
+              ref={asksScrollRef}
+              className={styles.asksScroll}
+              onScroll={handleAsksScroll}
+            >
               <div className={styles.asks}>
                 {askLevels.map((level, idx) =>
                   renderLevelRow(level, 'ask', `ask-${idx}-${level.price}`, idx * 2 + 1)

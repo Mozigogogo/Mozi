@@ -563,7 +563,7 @@ export default function DetailPage() {
     const TTL = 5 * 60 * 1000; // 5min
     let alive = true;
 
-    // 切号后不要沿用上一账号的短缓存
+    // 切号/登录后不要沿用上一账号的短缓存
     if (sessionTick === 0) {
       try {
         const cachedStr = localStorage.getItem(CACHE_KEY);
@@ -576,6 +576,9 @@ export default function DetailPage() {
       } catch (_) {}
     } else {
       setMySubscription(null);
+      try {
+        localStorage.removeItem(CACHE_KEY);
+      } catch (_) {}
     }
 
     getMySubscription()
@@ -2319,7 +2322,6 @@ ${coinInfo.name || symbol} (${symbol})
     // 监听大单侦测数据（big_deal）
     ws.on('big_deal', (msg) => {
       bigDealMsgCountRef.current += 1;
-      const cnt = bigDealMsgCountRef.current;
       const data = msg?.data;
 
       if (!data) return;
@@ -2333,11 +2335,11 @@ ${coinInfo.name || symbol} (${symbol})
 
       // 服务端结构（示例）：
       // { event:"big_deal", data:{ base:"DOGE", buy:[{deal_price, deal_quantity,...}], sell:[...] } }
-      const buy = Array.isArray(data?.buy) ? data.buy : [];
-      const sell = Array.isArray(data?.sell) ? data.sell : [];
+      const buyRaw = Array.isArray(data?.buy) ? data.buy : [];
+      const sellRaw = Array.isArray(data?.sell) ? data.sell : [];
 
       // 若 buy/sell 都为空，视为“暂无市场深度数据”：清空订单簿并标记已收到大单数据
-      if (!buy.length && !sell.length) {
+      if (!buyRaw.length && !sellRaw.length) {
         hasBigDealDataRef.current = true;
         setOrderBook({
           bids: [],
@@ -2348,28 +2350,35 @@ ${coinInfo.name || symbol} (${symbol})
 
       // 统一映射为业内订单簿格式：[{ price, quantity, value }]
       const mapSide = (arr) =>
-        arr.map((x) => {
-          const price = toNumber(x?.deal_price ?? x?.price);
-          const qty = toNumber(x?.deal_quantity ?? x?.quantity ?? x?.qty ?? x?.size);
-          const notional = price !== null && qty !== null ? price * qty : null;
-          const fallbackDealValue = toNumber(x?.deal_value ?? x?.deal_amount ?? x?.notional ?? x?.amount);
-          return {
-            price: price ?? 0,
-            quantity: qty ?? 0,
-            value: notional ?? fallbackDealValue ?? qty ?? 0,
-            logo: x?.logo || null,
-          };
-        });
+        (arr || [])
+          .map((x) => {
+            const price = toNumber(x?.deal_price ?? x?.price);
+            const qty = toNumber(x?.deal_quantity ?? x?.quantity ?? x?.qty ?? x?.size);
+            const notional = price !== null && qty !== null ? price * qty : null;
+            const fallbackDealValue = toNumber(x?.deal_value ?? x?.deal_amount ?? x?.notional ?? x?.amount);
+            return {
+              price: price ?? 0,
+              quantity: qty ?? 0,
+              value: notional ?? fallbackDealValue ?? qty ?? 0,
+              logo: x?.logo || null,
+            };
+          })
+          .filter((row) => row.price > 0);
 
-      const bids = mapSide(buy);
-      const asks = mapSide(sell);
+      const buyLevels = mapSide(buyRaw);
+      const sellLevels = mapSide(sellRaw);
+
+      // 买盘从小到大、卖盘从大到小截取，不做贴近中间价筛选
+      const bids = [...buyLevels]
+        .sort((a, b) => (a.price - b.price) || (b.quantity - a.quantity))
+        .slice(0, 40);
+      const asks = [...sellLevels]
+        .sort((a, b) => (b.price - a.price) || (b.quantity - a.quantity))
+        .slice(0, 40);
 
       hasBigDealDataRef.current = true;
 
-      setOrderBook({
-        bids: bids.slice(0, 40),
-        asks: asks.slice(0, 40),
-      });
+      setOrderBook({ bids, asks });
     });
     
     // 监听WebSocket错误

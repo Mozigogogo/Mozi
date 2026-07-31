@@ -1574,7 +1574,7 @@ export default function PCLayout({ children }) {
         open={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         onSuccess={() => {
-          // 登录成功后刷新用户信息
+          // 登录成功后刷新用户信息，并通知详情页订单流等按新会话重算权益
           const syncUserInfo = () => {
             const storedUserDataInfo = localStorage.getItem('userDataInfo');
             if (storedUserDataInfo) {
@@ -1599,6 +1599,7 @@ export default function PCLayout({ children }) {
             }
           };
           syncUserInfo();
+          notifySessionChanged();
         }}
       />
 

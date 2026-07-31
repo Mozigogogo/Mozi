@@ -12,10 +12,9 @@ import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
-import { request } from '../../utils/request';
-import { Interface } from '../../utils/constants';
-import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle, resetPassword, completeTask } from '../../api/user';
-import { ensureFirstLoginAt } from '../../utils/postLogin';
+import { sendVerificationCode, loginByEmail, registerByEmail, loginByWallet, loginByGoogle, resetPassword } from '../../api/user';
+import { ensureFirstLoginAt, runPostLoginSideEffects } from '../../utils/postLogin';
+import { notifySessionChanged } from '@/utils/sessionEvents';
 import { forceBlurAndResetViewport } from '../../utils/iosViewportFix';
 import { encrypt, decrypt } from '../../utils/security';
 import styles from './index.module.less';
@@ -130,7 +129,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
     setLoading(true);
     try {
       const res = await loginByGoogle(tokenResponse.access_token, inviteCode, 'pc');
-      handleAuthResponse(res);
+      await handleAuthResponse(res);
     } catch (error) {
       console.error('Google login failed:', error);
       message.error(t('auth.loginFailedRetry') || 'Login failed, please try again');
@@ -192,7 +191,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
       
       const signature = await signMessageAsync({ message: messageToSign });
       const res = await loginByWallet(currentAddress, signature, 'pc');
-      handleAuthResponse(res);
+      await handleAuthResponse(res);
     } catch (error) {
       console.error('Wallet signature failed:', error);
       if (error?.message?.includes('User rejected')) {
@@ -234,13 +233,13 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
           message.success(t('auth.registerSuccess') || 'Registration successful');
           // Auto login after register
           const loginRes = await loginByEmail(email, password, '', 'pc');
-          handleAuthResponse(loginRes);
+          await handleAuthResponse(loginRes);
           return;
         }
       } else {
         res = await loginByEmail(email, password, '', 'pc');
       }
-      handleAuthResponse(res);
+      await handleAuthResponse(res);
     } catch (error) {
       console.error('Auth failed:', error);
       message.error(error?.errorMsg || error?.message || (mode === 'email_register' ? 'Registration failed' : 'Login failed'));
@@ -305,7 +304,7 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
     }
   };
 
-  const handleAuthResponse = (res) => {
+  const handleAuthResponse = async (res) => {
     if (res?.data?.token) {
       localStorage.setItem('token', res.data.token);
 
@@ -316,38 +315,29 @@ export default function PCAuthModal({ open, onClose, onSuccess, initialMode = 's
       if (userData) {
         localStorage.setItem('userInfo', JSON.stringify(userData));
       }
-      if (res?.data?.userId) {
-        localStorage.setItem('userId', res.data.userId);
+      const loginUserId =
+        res?.data?.userId ??
+        userData?.userId ??
+        userData?.id ??
+        null;
+      if (loginUserId != null && String(loginUserId).trim()) {
+        localStorage.setItem('userId', String(loginUserId));
+      }
+
+      // 与 PCLoginModal 一致：拉 datainfo / 上报任务，并通知详情页等刷新权益（含 Top40）
+      try {
+        await runPostLoginSideEffects({
+          force: true,
+          forceDataInfo: true,
+          caller: 'PCAuthModal_handleAuthResponse',
+        });
+        ensureFirstLoginAt({ caller: 'PCAuthModal_handleAuthResponse' });
+      } catch (error) {
+        console.error('登录任务上报失败:', error);
       }
       
-      // Handle Remember Password
-      // if (rememberPassword && email && password) {
-      //   localStorage.setItem('rememberedEmail', email);
-      //   // Encrypt password before storing
-      //   const encryptedPass = encrypt(password);
-      //   localStorage.setItem('rememberedPasswordData', encryptedPass);
-      // } else {
-      //   localStorage.removeItem('rememberedEmail');
-      //   localStorage.removeItem('rememberedPasswordData');
-      //   localStorage.removeItem('rememberedPassword'); // Clean up legacy key
-      // }
-
-      console.log('[DEBUG PCAuthModal] handleAuthResponse success, will call /user/datainfo & completeTask');
-      // 这里保持原有行为：获取 datainfo + 上报任务
-      request({
-        url: Interface.USER_DATA_INFO,
-        method: 'GET'
-      }).then((dataInfoRes) => {
-        if (dataInfoRes?.data) {
-          localStorage.setItem('userDataInfo', JSON.stringify(dataInfoRes.data));
-        }
-      });
-      
-      completeTask('DAILY_LOGIN');
-      completeTask('FIRST_LOGIN');
-      ensureFirstLoginAt({ caller: 'PCAuthModal_handleAuthResponse' });
-      
       message.success(t('auth.loginSuccess') || 'Login successful');
+      notifySessionChanged();
       onSuccess?.();
       onClose();
     } else {
