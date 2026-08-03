@@ -52,6 +52,7 @@ const {
   flushCommandUsagesToBackend,
 } = require('./lib/tgCommandUsage');
 const { ensureBotInfo } = require('./lib/botMention');
+const { registerBotCommands } = require('./lib/botCommands');
 
 if (!config.BOT_TOKEN) {
   process.exit(1);
@@ -156,6 +157,13 @@ async function startBot() {
     await ensureBotInfo(bot.telegram);
   } catch {
     /* ignore */
+  }
+
+  try {
+    await registerBotCommands(bot.telegram);
+    console.log('[BOT] setMyCommands ok');
+  } catch (err) {
+    console.warn('[BOT] setMyCommands failed:', err?.message || err);
   }
 }
 

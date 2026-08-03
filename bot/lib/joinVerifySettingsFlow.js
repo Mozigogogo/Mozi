@@ -23,6 +23,7 @@ const {
   saveJoinVerifyTextSession,
   getJoinVerifyTextSession,
   clearJoinVerifyTextSession,
+  deleteJoinVerifyPromptMessage,
 } = require('./joinVerifyTextSession');
 
 const TIMEOUT_PRESETS = [60, 120, 180, 300];
@@ -583,7 +584,8 @@ async function handleJoinVerifyAskWelcomeText(ctx, config, getTexts, groupId) {
 }
 
 /**
- * 发送 ForceReply，让群主输入 joinVerifyWelcomeText
+ * 发送普通提示（不用 ForceReply，避免客户端一直挂着「回复」条）
+ * 靠进程内 session 接收下一条私聊文本
  */
 async function promptJoinVerifyWelcomeText(ctx, getTexts, groupId, opts = {}) {
   const texts = getTexts(ctx.from?.language_code || 'en');
@@ -592,23 +594,25 @@ async function promptJoinVerifyWelcomeText(ctx, getTexts, groupId, opts = {}) {
   if (uid == null || chatId == null) return;
 
   const panelMessageId = ctx.callbackQuery?.message?.message_id;
-  saveJoinVerifyTextSession(uid, {
-    groupId: Number(groupId),
-    chatId: Number(chatId),
-    panelMessageId,
-  });
 
   const currentHint = opts.currentText
     ? `\n\n${texts.joinVerifySettingsCurrentQuestionHint(escapeHtml(String(opts.currentText).slice(0, 120)))}`
     : '';
 
-  await ctx.reply(
+  const sent = await ctx.reply(
     (texts.joinVerifySettingsAskQuestionHtml || '请输入加密答题的问题文案：') + currentHint,
     {
       parse_mode: 'HTML',
-      ...Markup.forceReply(),
+      reply_markup: { remove_keyboard: true },
     },
   );
+
+  saveJoinVerifyTextSession(uid, {
+    groupId: Number(groupId),
+    chatId: Number(chatId),
+    panelMessageId,
+    promptMessageId: sent?.message_id,
+  });
 }
 
 /**
@@ -627,8 +631,13 @@ async function handleJoinVerifyWelcomeTextInput(ctx, config, getTexts) {
   const texts = getTexts(ctx.from?.language_code || 'en');
   const raw = String(ctx.message?.text || '').trim();
 
-  if (CANCEL_WELCOME_TOKENS.has(raw.toLowerCase()) || CANCEL_WELCOME_TOKENS.has(raw)) {
+  const finishPrompt = async () => {
+    await deleteJoinVerifyPromptMessage(ctx, session);
     clearJoinVerifyTextSession(uid);
+  };
+
+  if (CANCEL_WELCOME_TOKENS.has(raw.toLowerCase()) || CANCEL_WELCOME_TOKENS.has(raw)) {
+    await finishPrompt();
     await ctx.reply(texts.joinVerifySettingsQuestionCancelled || '已取消').catch(() => {});
     return true;
   }
@@ -637,14 +646,14 @@ async function handleJoinVerifyWelcomeTextInput(ctx, config, getTexts) {
   if (raw.startsWith('/')) return false;
 
   if (!raw) {
-    clearJoinVerifyTextSession(uid);
+    await finishPrompt();
     await ctx.reply(texts.joinVerifySettingsQuestionCancelled || '已取消').catch(() => {});
     return true;
   }
 
   const authRes = await resolveOwnerAuth(ctx, config);
   if (!authRes.ok) {
-    clearJoinVerifyTextSession(uid);
+    await finishPrompt();
     await ctx.reply(texts.predictScheduleNeedLogin).catch(() => {});
     return true;
   }
@@ -670,7 +679,7 @@ async function handleJoinVerifyWelcomeTextInput(ctx, config, getTexts) {
         await ctx.reply(texts.predictScheduleFetchFailed).catch(() => {});
         return;
       }
-      clearJoinVerifyTextSession(uid);
+      await finishPrompt();
       await ctx
         .reply(
           welcomeText == null

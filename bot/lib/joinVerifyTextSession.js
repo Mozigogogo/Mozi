@@ -6,7 +6,11 @@
 
 const TTL_MS = 10 * 60 * 1000;
 
-/** @type {Map<string, { groupId: number; chatId: number; panelMessageId?: number; expireAt: number }>} */
+/**
+ * @typedef {{ groupId: number; chatId: number; panelMessageId?: number; promptMessageId?: number; expireAt: number }} JoinVerifyTextSession
+ */
+
+/** @type {Map<string, JoinVerifyTextSession>} */
 const sessions = new Map();
 
 function keyOf(userId) {
@@ -22,7 +26,7 @@ function purgeExpired() {
 
 /**
  * @param {string | number} userId
- * @param {{ groupId: number; chatId: number; panelMessageId?: number }} data
+ * @param {{ groupId: number; chatId: number; panelMessageId?: number; promptMessageId?: number }} data
  */
 function saveJoinVerifyTextSession(userId, data) {
   const key = keyOf(userId);
@@ -32,6 +36,7 @@ function saveJoinVerifyTextSession(userId, data) {
     groupId: Number(data.groupId),
     chatId: Number(data.chatId),
     panelMessageId: data.panelMessageId,
+    promptMessageId: data.promptMessageId,
     expireAt: Date.now() + TTL_MS,
   });
 }
@@ -54,8 +59,21 @@ function clearJoinVerifyTextSession(userId) {
   sessions.delete(keyOf(userId));
 }
 
+/**
+ * 删除「请输入问题」提示消息，避免客户端残留回复条
+ * @param {import('telegraf').Context} ctx
+ * @param {JoinVerifyTextSession | null | undefined} session
+ */
+async function deleteJoinVerifyPromptMessage(ctx, session) {
+  const chatId = session?.chatId ?? ctx.chat?.id;
+  const mid = session?.promptMessageId;
+  if (chatId == null || mid == null) return;
+  await ctx.telegram.deleteMessage(chatId, mid).catch(() => {});
+}
+
 module.exports = {
   saveJoinVerifyTextSession,
   getJoinVerifyTextSession,
   clearJoinVerifyTextSession,
+  deleteJoinVerifyPromptMessage,
 };

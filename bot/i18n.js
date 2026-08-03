@@ -311,10 +311,10 @@ const i18n = {
     joinVerifySettingsModeMinToast: '请选择一种验证方式',
     joinVerifySettingsModeAlreadyToast: '已是当前验证模式',
     joinVerifySettingsEditQuestionBtn: '✏️ 配置加密问题',
-    joinVerifySettingsAskQuestionToast: '请回复下方消息输入问题',
+    joinVerifySettingsAskQuestionToast: '请直接发送下一条消息输入问题',
     joinVerifySettingsAskQuestionHtml:
       '✏️ <b>配置加密答题问题</b>\n\n' +
-      '请直接回复本消息，输入要展示给新成员的问题/验证文案。\n\n' +
+      '请直接发送下一条消息，输入要展示给新成员的问题/验证文案。\n\n' +
       '可用 <code>{timeout}</code> 表示超时秒数。\n' +
       '发送 <code>-</code> 或 <code>清除</code> 恢复默认模板；发送 <code>取消</code> 放弃本次编辑。',
     joinVerifySettingsCurrentQuestionHint: (preview) => `当前文案：\n<blockquote>${preview}</blockquote>`,
@@ -775,10 +775,10 @@ const i18n = {
     joinVerifySettingsModeMinToast: 'Please choose one verification mode',
     joinVerifySettingsModeAlreadyToast: 'Already the current mode',
     joinVerifySettingsEditQuestionBtn: '✏️ Edit captcha question',
-    joinVerifySettingsAskQuestionToast: 'Reply to the prompt to enter the question',
+    joinVerifySettingsAskQuestionToast: 'Send the next message with your question',
     joinVerifySettingsAskQuestionHtml:
       '✏️ <b>Configure captcha question</b>\n\n' +
-      'Reply to this message with the question / prompt shown to new members.\n\n' +
+      'Send your next message with the question / prompt shown to new members.\n\n' +
       'Use <code>{timeout}</code> for the timeout seconds.\n' +
       'Send <code>-</code> or <code>clear</code> to restore the default template; send <code>cancel</code> to abort.',
     joinVerifySettingsCurrentQuestionHint: (preview) => `Current text:\n<blockquote>${preview}</blockquote>`,
