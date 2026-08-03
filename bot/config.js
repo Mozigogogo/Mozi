@@ -239,6 +239,22 @@ const TG_GROUP_SAVE_PATH = (process.env.TG_GROUP_SAVE_PATH || 'tg/stats/group/sa
   .trim()
   .replace(/^\/+/, '');
 
+/** GET 单群配置（入群验证等），默认 tg/stats/group/get */
+const TG_GROUP_GET_PATH = (process.env.TG_GROUP_GET_PATH || 'tg/stats/group/get')
+  .trim()
+  .replace(/^\/+/, '');
+
+/** 入群验证配置进程内缓存 TTL（毫秒），默认 60s */
+const JOIN_VERIFY_CONFIG_CACHE_MS = Math.max(
+  0,
+  Math.min(600_000, parseInt(process.env.JOIN_VERIFY_CONFIG_CACHE_MS || '60000', 10) || 60_000),
+);
+
+/** 入群验证过程日志，默认开启；JOIN_VERIFY_LOG=0 关闭 */
+const JOIN_VERIFY_LOG = !/^0|false|no$/i.test(
+  String(process.env.JOIN_VERIFY_LOG ?? '1').trim(),
+);
+
 /** 定时自动发布默认币种 */
 const PREDICT_AUTO_PUBLISH_SYMBOL = (
   process.env.PREDICT_AUTO_PUBLISH_SYMBOL || 'BTC'
@@ -303,6 +319,9 @@ module.exports = {
   TG_GROUP_LEAVE_PATH,
   TG_GROUP_LIST_BY_TELEGRAM_ID_PATH,
   TG_GROUP_SAVE_PATH,
+  TG_GROUP_GET_PATH,
+  JOIN_VERIFY_CONFIG_CACHE_MS,
+  JOIN_VERIFY_LOG,
   PREDICT_AUTO_PUBLISH_SYMBOL,
   PREDICT_AUTO_PUBLISH_TIME,
   PREDICT_AUTO_PUBLISH_ENABLED,

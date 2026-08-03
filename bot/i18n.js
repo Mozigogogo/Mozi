@@ -250,7 +250,7 @@ const i18n = {
     predictListResultUp: '\n✅ 结果：涨',
     predictListResultDown: '\n✅ 结果：跌',
     predictSchedulePrivateOnly:
-      '请私聊本机器人发送 <code>/group</code>，用于管理群内每日定时 AI 信号卡推送。',
+      '请私聊本机器人发送 <code>/group</code>，用于管理群配置（定时推送 / 入群验证）。',
     predictScheduleLoading: '⏳ 正在加载你的群列表…',
     predictScheduleNeedLogin:
       '需要先完成 Mozi 账户绑定。请先 <code>/register</code> 或完成注册后再试。',
@@ -269,6 +269,64 @@ const i18n = {
     predictScheduleNotOwnerToast: '仅群主可修改该群的定时推送',
     predictScheduleEnabledToast: '已开启定时推送',
     predictScheduleDisabledToast: '已关闭定时推送',
+    groupSettingsHubIntro:
+      '⚙️ <b>群配置中心</b>\n\n选择要管理的功能（仅群主可用）：',
+    groupSettingsScheduleBtn: '⏰ 定时推送 AI 信号卡',
+    groupSettingsJoinVerifyBtn: '🛡️ 新成员入群验证',
+    groupSettingsBackBtn: '« 返回',
+    joinVerifySettingsIntro:
+      '🛡️ <b>新成员入群验证</b>\n\n选择群进入详细配置。开启后，新成员需通过验证才能正常发言。',
+    joinVerifySettingsGroupLine: (title, enabled, mode, timeoutSec) => {
+      const status = enabled ? '已开启' : '已关闭';
+      return `• <b>${title}</b> — ${status} · ${mode} · ${timeoutSec}s`;
+    },
+    joinVerifySettingsDetailHtml: (title, onOff, mode, timeoutSec, maxFail, banLine, customText) =>
+      `🛡️ <b>${title}</b> · 入群验证\n\n` +
+      `开关：<b>${onOff}</b>\n` +
+      `模式：<code>${mode}</code>\n` +
+      `超时：<b>${timeoutSec}</b> 秒\n` +
+      `失败上限：<b>${maxFail}</b>\n` +
+      `超限处置：${banLine}\n` +
+      `验证文案：${customText}`,
+    joinVerifySettingsOn: '已开启',
+    joinVerifySettingsOff: '已关闭',
+    joinVerifySettingsBanOn: (sec) => `临时封禁 <b>${sec}</b> 秒`,
+    joinVerifySettingsBanOff: '仅踢出（不封禁）',
+    joinVerifySettingsDefaultText: 'Bot 默认模板',
+    joinVerifySettingsEnableBtn: '开启验证',
+    joinVerifySettingsDisableBtn: '关闭验证',
+    joinVerifySettingsBanEnableBtn: '超限封禁·开',
+    joinVerifySettingsBanDisableBtn: '超限封禁·关',
+    joinVerifySettingsBackListBtn: '« 返回列表',
+    joinVerifySettingsEnabledToast: '已开启入群验证',
+    joinVerifySettingsDisabledToast: '已关闭入群验证',
+    joinVerifySettingsSavedToast: '已保存',
+    joinVerifySettingsModeMinToast: '至少保留一种验证方式',
+    joinVerifySettingsGroupNotFound: '未找到该群',
+    joinVerifyTitle: '入群验证',
+    joinVerifyButtonLabel: '我不是机器人',
+    joinVerifyModeLabelButton: '点击按钮',
+    joinVerifyModeLabelQuiz: '算术验证',
+    joinVerifyModeLabelCaptcha: '加密答题',
+    joinVerifyButtonPromptHtml: (mention, timeoutSec) =>
+      `🛡️ <b>入群验证</b>\n\n欢迎 ${mention}！\n请在 <b>${timeoutSec}</b> 秒内点击下方按钮完成验证。\n未通过将被移出本群。`,
+    joinVerifyQuizPromptHtml: (mention, expression, timeoutSec) =>
+      `🛡️ <b>入群验证</b>\n\n欢迎 ${mention}！\n请在 <b>${timeoutSec}</b> 秒内点击正确答案：\n\n<code>${expression} = ?</code>\n\n未通过将被移出本群。`,
+    joinVerifyCaptchaPromptHtml: (mention, questionHtml, timeoutSec) =>
+      `🛡️ <b>入群验证</b>\n\n欢迎 ${mention}！\n请在 <b>${timeoutSec}</b> 秒内回答：\n\n<b>${questionHtml}</b>\n\n未通过将被移出本群。`,
+    joinVerifyCaptchaAsk: (question) => `请回答：<b>${question}</b>`,
+    joinVerifyFailLeftHint: (left) => `\n\n剩余尝试：<b>${left}</b> 次`,
+    joinVerifyWrongUser: '请由入群本人完成验证',
+    joinVerifyExpired: '验证已过期或已完成',
+    joinVerifyPassToast: '验证通过，欢迎入群！',
+    joinVerifyFailToast: '验证失败，已达上限',
+    joinVerifyRetryToast: (left) => `答错了，还可再试 ${left} 次`,
+    joinVerifyPassedWelcomeHtml: (mention, groupTitle) =>
+      `🎉 欢迎 ${mention} 加入 <b>${groupTitle}</b>！\n\n可发送 <code>/help</code> 查看 Bot 功能，或私聊 Bot 发送 <code>/start</code> 打开 Mini App。`,
+    joinVerifyFailedHtml: (mention) => `❌ ${mention} 验证失败，已移出本群。`,
+    joinVerifyBannedHtml: (mention, sec) =>
+      `❌ ${mention} 验证失败次数过多，已临时封禁 <b>${Math.ceil(sec / 60)}</b> 分钟。`,
+    joinVerifyTimeoutHtml: (mention) => `⏰ ${mention} 验证超时，已移出本群。`,
     helpBody: `🤖   Mozi AI 行情助手 · 指令说明
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -287,7 +345,7 @@ const i18n = {
 📈 涨跌预测（免费）
 /predict        发起 24 小时涨跌竞猜（前 6 小时可下注；群内点按钮私聊 Bot，确认后发布到该群）
 /predict list   查看本群竞猜列表
-/group  群主：开启/关闭群内每日定时 AI 信号卡推送
+/group  群主：群配置（定时推送 AI 信号卡 / 新成员入群验证）
 
 🔔 告警设置（免费）
 /alert          跳转 App 配置价格告警
@@ -636,7 +694,7 @@ const i18n = {
     predictListResultUp: '\n✅ Result: Up',
     predictListResultDown: '\n✅ Result: Down',
     predictSchedulePrivateOnly:
-      'DM this bot and send <code>/group</code> to manage daily AI signal auto-push for your groups.',
+      'DM this bot and send <code>/group</code> to manage group settings (scheduled push / join verification).',
     predictScheduleLoading: '⏳ Loading your groups…',
     predictScheduleNeedLogin: 'Please bind your Mozi account first (<code>/register</code>), then try again.',
     predictScheduleFetchFailed: 'Could not load your groups. Please try again later.',
@@ -655,6 +713,64 @@ const i18n = {
     predictScheduleNotOwnerToast: 'Only the group owner can change scheduled push',
     predictScheduleEnabledToast: 'Scheduled push enabled',
     predictScheduleDisabledToast: 'Scheduled push disabled',
+    groupSettingsHubIntro:
+      '⚙️ <b>Group settings</b>\n\nChoose a feature to manage (group owners only):',
+    groupSettingsScheduleBtn: '⏰ Scheduled AI signal push',
+    groupSettingsJoinVerifyBtn: '🛡️ New member verification',
+    groupSettingsBackBtn: '« Back',
+    joinVerifySettingsIntro:
+      '🛡️ <b>New member verification</b>\n\nPick a group to configure. When enabled, new members must verify before chatting.',
+    joinVerifySettingsGroupLine: (title, enabled, mode, timeoutSec) => {
+      const status = enabled ? 'On' : 'Off';
+      return `• <b>${title}</b> — ${status} · ${mode} · ${timeoutSec}s`;
+    },
+    joinVerifySettingsDetailHtml: (title, onOff, mode, timeoutSec, maxFail, banLine, customText) =>
+      `🛡️ <b>${title}</b> · Join verification\n\n` +
+      `Status: <b>${onOff}</b>\n` +
+      `Mode: <code>${mode}</code>\n` +
+      `Timeout: <b>${timeoutSec}</b>s\n` +
+      `Max fails: <b>${maxFail}</b>\n` +
+      `On max fails: ${banLine}\n` +
+      `Prompt text: ${customText}`,
+    joinVerifySettingsOn: 'On',
+    joinVerifySettingsOff: 'Off',
+    joinVerifySettingsBanOn: (sec) => `Temp ban <b>${sec}</b>s`,
+    joinVerifySettingsBanOff: 'Kick only (no ban)',
+    joinVerifySettingsDefaultText: 'Bot default template',
+    joinVerifySettingsEnableBtn: 'Enable',
+    joinVerifySettingsDisableBtn: 'Disable',
+    joinVerifySettingsBanEnableBtn: 'Ban on fail · On',
+    joinVerifySettingsBanDisableBtn: 'Ban on fail · Off',
+    joinVerifySettingsBackListBtn: '« Back to list',
+    joinVerifySettingsEnabledToast: 'Join verification enabled',
+    joinVerifySettingsDisabledToast: 'Join verification disabled',
+    joinVerifySettingsSavedToast: 'Saved',
+    joinVerifySettingsModeMinToast: 'Keep at least one verification mode',
+    joinVerifySettingsGroupNotFound: 'Group not found',
+    joinVerifyTitle: 'Join verification',
+    joinVerifyButtonLabel: "I'm not a robot",
+    joinVerifyModeLabelButton: 'Button',
+    joinVerifyModeLabelQuiz: 'Math quiz',
+    joinVerifyModeLabelCaptcha: 'Crypto quiz',
+    joinVerifyButtonPromptHtml: (mention, timeoutSec) =>
+      `🛡️ <b>Join verification</b>\n\nWelcome ${mention}!\nPlease tap the button within <b>${timeoutSec}</b> seconds to verify.\nFailing will remove you from this group.`,
+    joinVerifyQuizPromptHtml: (mention, expression, timeoutSec) =>
+      `🛡️ <b>Join verification</b>\n\nWelcome ${mention}!\nPlease tap the correct answer within <b>${timeoutSec}</b> seconds:\n\n<code>${expression} = ?</code>\n\nFailing will remove you from this group.`,
+    joinVerifyCaptchaPromptHtml: (mention, questionHtml, timeoutSec) =>
+      `🛡️ <b>Join verification</b>\n\nWelcome ${mention}!\nPlease answer within <b>${timeoutSec}</b> seconds:\n\n<b>${questionHtml}</b>\n\nFailing will remove you from this group.`,
+    joinVerifyCaptchaAsk: (question) => `Please answer: <b>${question}</b>`,
+    joinVerifyFailLeftHint: (left) => `\n\nAttempts left: <b>${left}</b>`,
+    joinVerifyWrongUser: 'Only the new member can complete verification',
+    joinVerifyExpired: 'Verification expired or already completed',
+    joinVerifyPassToast: 'Verified — welcome!',
+    joinVerifyFailToast: 'Verification failed (max attempts)',
+    joinVerifyRetryToast: (left) => `Wrong answer. ${left} attempt(s) left`,
+    joinVerifyPassedWelcomeHtml: (mention, groupTitle) =>
+      `🎉 Welcome ${mention} to <b>${groupTitle}</b>!\n\nSend <code>/help</code> to see bot commands, or DM the bot with <code>/start</code> to open the Mini App.`,
+    joinVerifyFailedHtml: (mention) => `❌ ${mention} failed verification and was removed.`,
+    joinVerifyBannedHtml: (mention, sec) =>
+      `❌ ${mention} failed too many times and is temporarily banned for <b>${Math.ceil(sec / 60)}</b> min.`,
+    joinVerifyTimeoutHtml: (mention) => `⏰ ${mention} timed out and was removed.`,
     helpBody: `🤖 Mozi AI · Commands
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -673,7 +789,7 @@ const i18n = {
 📈 Up/down poll (free)
 /predict         Start a 24-hour poll (6 hours to bet; tap button to DM bot; publishes back to source group)
 /predict list    List polls in this group
-/group  Group owners: toggle daily AI signal auto-push
+/group  Group owners: settings (scheduled AI push / join verification)
 
 🔔 Alerts (free)
 /alert           Open app to set price alerts

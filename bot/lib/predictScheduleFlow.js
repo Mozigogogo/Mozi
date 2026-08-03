@@ -131,7 +131,10 @@ function buildSchedulePanelKeyboard(texts, groups) {
       Markup.button.callback(texts.predictScheduleDisableBtn(title), `ps:t:${g.groupId}:0`),
     ];
   });
-  rows.push([Markup.button.callback(texts.predictScheduleRefreshBtn, 'ps:r')]);
+  rows.push([
+    Markup.button.callback(texts.predictScheduleRefreshBtn, 'ps:r'),
+    Markup.button.callback(texts.groupSettingsBackBtn, 'gs:home'),
+  ]);
   return Markup.inlineKeyboard(rows);
 }
 
@@ -295,10 +298,20 @@ async function handleScheduleToggle(ctx, config, getTexts, groupId, enabled) {
   await renderSchedulePanel(ctx, config, getTexts, { edit: true, skipLoading: true });
 }
 
+/**
+ * 从群配置中心进入定时推送面板
+ */
+async function handleOpenScheduleFromHub(ctx, config, getTexts) {
+  await ctx.answerCbQuery().catch(() => {});
+  await renderSchedulePanel(ctx, config, getTexts, { edit: true, skipLoading: true });
+}
+
 module.exports = {
   executePredictScheduleCommand,
   handleScheduleRefresh,
   handleScheduleToggle,
+  handleOpenScheduleFromHub,
+  renderSchedulePanel,
   fetchOwnerGroupsFromApi,
   normalizeScheduleGroups,
 };

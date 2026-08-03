@@ -6,11 +6,12 @@
  * /ai、/chat、/bigorder：统一 POST 主栈 /ai/agent/stream（type=analyze|chat|bigorder）；/ai、/chat 成功后扣积分
  * 群内 @Bot 自然语言：POST /ai/agent/route（handlers/agentMention.js）
  * /price：handlers/price.js + lib/apis.js（GET /detail/header，默认 BTC，简报格式）
- * /predict、/group：handlers/predict.js、handlers/predictSchedule.js（/group 群主定时推送开关；每日自动发布见 lib/predictAutoPublishScheduler.js → POST /coinDirectionGuess/autoPublish）
+ * /predict、/group：handlers/predict.js、handlers/predictSchedule.js（/group 群配置中心：定时推送 + 入群验证；每日自动发布见 lib/predictAutoPublishScheduler.js）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
  * my_chat_member、/bind_ref：handlers/groupReferrer.js（入群自动绑定群主邀请码；/bind_ref 仅群主可重绑）
  * my_chat_member、群名/头像变更：handlers/tgGroupStats.js（POST /tg/stats/group/save 群档案；POST /tg/stats/group/leave 退群）
+ * new_chat_members / chat_member：handlers/joinVerify.js（GET /tg/stats/group/get 读入群验证配置）
  * 斜杠指令调用：middleware/tgCommandUsage.js（按窗口聚合 count，定时 POST /tg/stats/command；/register、/bind_ref、/start 除外）
  * /ai、/chat：未注册时 save 提问 + 群内「注册」按钮；注册成功后 on-registered 事件驱动群内重放；见 tgChatRegisterWatcher
  */
@@ -42,6 +43,7 @@ const { initTgChatRegisterWatcher } = require('./lib/tgChatRegisterWatcher');
 const { initGuessSettlementWatcher } = require('./lib/guessSettlementWatcher');
 const { initPredictAutoPublishScheduler, stopPredictAutoPublishScheduler } = require('./lib/predictAutoPublishScheduler');
 const { registerTgGroupStats } = require('./handlers/tgGroupStats');
+const { registerJoinVerify } = require('./handlers/joinVerify');
 const { createResumePendingAiChatOnPrivate } = require('./middleware/resumePendingAiChatOnPrivate');
 const { createTgCommandUsageMiddleware } = require('./middleware/tgCommandUsage');
 const {
@@ -63,6 +65,7 @@ initCommandUsageFlushScheduler(config);
 registerTgGroupStats(bot, config);
 
 const i18nApi = { getTexts };
+registerJoinVerify(bot, config, i18nApi);
 /** /group 优先注册，避免私聊中间件网络请求拖慢或无响应 */
 registerPredictSchedule(bot, config, i18nApi);
 
@@ -125,7 +128,18 @@ async function startBot() {
   for (;;) {
     attempt += 1;
     try {
-      await bot.launch({ dropPendingUpdates: true });
+      await bot.launch({
+        dropPendingUpdates: true,
+        allowedUpdates: [
+          'message',
+          'edited_message',
+          'callback_query',
+          'inline_query',
+          'my_chat_member',
+          'chat_member',
+          'chat_join_request',
+        ],
+      });
       break;
     } catch (err) {
       const code = err?.response?.error_code;

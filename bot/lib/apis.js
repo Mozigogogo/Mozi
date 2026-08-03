@@ -1880,18 +1880,112 @@ function parseTgStatsGroupListByTelegramId(json) {
   return [];
 }
 
+/** 入群验证可选模式 */
+const JOIN_VERIFY_MODE_SET = new Set(['button', 'quiz', 'captcha']);
+
+/**
+ * 解析 community.tg_group 入群验证平铺字段（7 个）
+ * @param {object | null | undefined} raw
+ */
+function parseJoinVerifyFields(raw) {
+  const src = raw && typeof raw === 'object' ? raw : {};
+  const enabledRaw = src.joinVerifyEnabled ?? src.join_verify_enabled ?? 0;
+  const joinVerifyEnabled = Number(enabledRaw) === 1 || enabledRaw === true ? 1 : 0;
+
+  const modeRaw = String(src.joinVerifyMode ?? src.join_verify_mode ?? 'button').trim() || 'button';
+  const joinVerifyModes = [
+    ...new Set(
+      modeRaw
+        .split(',')
+        .map((s) => s.trim().toLowerCase())
+        .filter((m) => JOIN_VERIFY_MODE_SET.has(m)),
+    ),
+  ];
+  if (joinVerifyModes.length === 0) joinVerifyModes.push('button');
+
+  let joinVerifyTimeoutSec = Math.floor(
+    Number(src.joinVerifyTimeoutSec ?? src.join_verify_timeout_sec ?? 120),
+  );
+  if (!Number.isFinite(joinVerifyTimeoutSec) || joinVerifyTimeoutSec < 30) {
+    joinVerifyTimeoutSec = 120;
+  }
+  joinVerifyTimeoutSec = Math.min(600, joinVerifyTimeoutSec);
+
+  let joinVerifyMaxFail = Math.floor(
+    Number(src.joinVerifyMaxFail ?? src.join_verify_max_fail ?? 3),
+  );
+  if (!Number.isFinite(joinVerifyMaxFail) || joinVerifyMaxFail < 1) {
+    joinVerifyMaxFail = 3;
+  }
+  joinVerifyMaxFail = Math.min(20, joinVerifyMaxFail);
+
+  const banRaw = src.joinVerifyBanEnabled ?? src.join_verify_ban_enabled ?? 1;
+  const joinVerifyBanEnabled = Number(banRaw) === 1 || banRaw === true ? 1 : 0;
+
+  let joinVerifyBanDurationSec = Math.floor(
+    Number(src.joinVerifyBanDurationSec ?? src.join_verify_ban_duration_sec ?? 3600),
+  );
+  if (!Number.isFinite(joinVerifyBanDurationSec) || joinVerifyBanDurationSec < 60) {
+    joinVerifyBanDurationSec = 3600;
+  }
+  joinVerifyBanDurationSec = Math.min(31_536_000, joinVerifyBanDurationSec);
+
+  let joinVerifyWelcomeText =
+    src.joinVerifyWelcomeText ?? src.join_verify_welcome_text ?? null;
+  if (joinVerifyWelcomeText != null) {
+    const t = String(joinVerifyWelcomeText).trim();
+    joinVerifyWelcomeText = t || null;
+  }
+
+  return {
+    joinVerifyEnabled,
+    joinVerifyMode: joinVerifyModes.join(','),
+    joinVerifyModes,
+    joinVerifyTimeoutSec,
+    joinVerifyMaxFail,
+    joinVerifyBanEnabled,
+    joinVerifyBanDurationSec,
+    joinVerifyWelcomeText,
+  };
+}
+
+/**
+ * @param {object} item
+ * @param {object} row
+ */
+function appendJoinVerifySaveFields(item, row) {
+  if (!row || typeof row !== 'object') return;
+  if (row.joinVerifyEnabled != null) {
+    item.joinVerifyEnabled = Number(row.joinVerifyEnabled) ? 1 : 0;
+  }
+  if (row.joinVerifyMode != null) {
+    const parsed = parseJoinVerifyFields({ joinVerifyMode: row.joinVerifyMode });
+    item.joinVerifyMode = parsed.joinVerifyMode;
+  }
+  if (row.joinVerifyTimeoutSec != null) {
+    const n = Math.floor(Number(row.joinVerifyTimeoutSec));
+    if (Number.isFinite(n) && n >= 30) item.joinVerifyTimeoutSec = Math.min(600, n);
+  }
+  if (row.joinVerifyMaxFail != null) {
+    const n = Math.floor(Number(row.joinVerifyMaxFail));
+    if (Number.isFinite(n) && n >= 1) item.joinVerifyMaxFail = Math.min(20, n);
+  }
+  if (row.joinVerifyBanEnabled != null) {
+    item.joinVerifyBanEnabled = Number(row.joinVerifyBanEnabled) ? 1 : 0;
+  }
+  if (row.joinVerifyBanDurationSec != null) {
+    const n = Math.floor(Number(row.joinVerifyBanDurationSec));
+    if (Number.isFinite(n) && n >= 60) item.joinVerifyBanDurationSec = Math.min(31_536_000, n);
+  }
+  if (row.joinVerifyWelcomeText !== undefined) {
+    item.joinVerifyWelcomeText =
+      row.joinVerifyWelcomeText == null ? null : String(row.joinVerifyWelcomeText);
+  }
+}
+
 /**
  * @param {object | null} raw
- * @returns {{
- *   groupId: number;
- *   groupTitle: string;
- *   avatar: string;
- *   ownerUserId: string;
- *   memberCount: number | null;
- *   status: number | null;
- *   autoPublishGuess: number;
- *   enabled: boolean;
- * } | null}
+ * @returns {object | null}
  */
 function parseTgStatsGroupListItem(raw) {
   if (!raw || typeof raw !== 'object') return null;
@@ -1906,6 +2000,7 @@ function parseTgStatsGroupListItem(raw) {
       : Math.floor(Number(memberCountRaw));
   const statusRaw = raw.status;
   const status = statusRaw == null || !Number.isFinite(Number(statusRaw)) ? null : Number(statusRaw);
+  const joinVerify = parseJoinVerifyFields(raw);
   return {
     groupId,
     groupTitle: String(raw.groupTitle ?? raw.title ?? raw.group_title ?? '').trim(),
@@ -1915,6 +2010,7 @@ function parseTgStatsGroupListItem(raw) {
     status,
     autoPublishGuess,
     enabled: autoPublishGuess === 1,
+    ...joinVerify,
   };
 }
 
@@ -2102,6 +2198,7 @@ async function postTgStatsGroupSave({
       if (row.autoPublishGuess != null) {
         item.autoPublishGuess = Number(row.autoPublishGuess) ? 1 : 0;
       }
+      appendJoinVerifySaveFields(item, row);
       return item;
     })
     .filter((row) => Number.isFinite(row.groupId));
@@ -2142,6 +2239,110 @@ async function postTgStatsGroupSave({
     return out;
   } catch (err) {
     tgGroupStatsLog('response_error', {
+      message: err?.message || String(err),
+    });
+    throw err;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// --- GET /tg/stats/group/get（单群配置，含入群验证字段）------------------------
+
+/**
+ * @param {object | null} json
+ * @returns {object | null}
+ */
+function parseTgStatsGroupGetPayload(json) {
+  if (!json || typeof json !== 'object') return null;
+  const data = json.data;
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    if (data.group && typeof data.group === 'object') return data.group;
+    return data;
+  }
+  if (Array.isArray(data) && data[0] && typeof data[0] === 'object') return data[0];
+  if (json.groupId != null || json.group_id != null) return json;
+  return null;
+}
+
+/**
+ * GET /tg/stats/group/get?groupId=
+ */
+async function getTgStatsGroupGet({
+  apiBaseUrl,
+  groupId,
+  auth = '',
+  appUrl = '',
+  path = 'tg/stats/group/get',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'tg/stats/group/get').trim().replace(/^\/+/, '');
+  const gid = String(groupId ?? '').trim();
+  const url = `${base}/${rel}?${new URLSearchParams({ groupId: gid }).toString()}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+  if (rawAuth) {
+    headers.authentication = rawAuth;
+  }
+  if (app) {
+    headers.referer = `${app}/`;
+  }
+  tgGroupStatsLog('request', {
+    method: 'GET',
+    url,
+    params: { groupId: gid },
+    hasAuth: Boolean(rawAuth),
+  });
+  try {
+    const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const rawGroup = parseTgStatsGroupGetPayload(json);
+    const group = parseTgStatsGroupListItem(rawGroup);
+    const out = {
+      ok: res.ok,
+      status: res.status,
+      json,
+      text,
+      group,
+      errorMessage: res.ok ? null : text.slice(0, 300) || `HTTP ${res.status}`,
+    };
+    tgGroupStatsLog('response', {
+      method: 'GET',
+      path: 'tg/stats/group/get',
+      httpStatus: res.status,
+      ok: res.ok,
+      groupId: group?.groupId ?? null,
+      joinVerifyEnabled: group?.joinVerifyEnabled ?? null,
+      text: text.slice(0, 2000),
+    });
+    apiDebug('GET /tg/stats/group/get →', {
+      groupId: gid,
+      httpStatus: res.status,
+      ok: res.ok,
+      joinVerifyEnabled: group?.joinVerifyEnabled,
+      joinVerifyMode: group?.joinVerifyMode,
+      bodyPreview: text.slice(0, 500),
+    });
+    return out;
+  } catch (err) {
+    tgGroupStatsLog('response_error', {
+      method: 'GET',
+      path: 'tg/stats/group/get',
       message: err?.message || String(err),
     });
     throw err;
@@ -3915,7 +4116,9 @@ module.exports = {
   postTgStatsGroupSave,
   postTgStatsGroupLeave,
   getTgStatsGroupListByTelegramId,
+  getTgStatsGroupGet,
   parseTgStatsGroupListItem,
+  parseJoinVerifyFields,
   postTgStatsCommand,
   postTgChatSave,
   getTgChatGet,
