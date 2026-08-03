@@ -19,8 +19,16 @@ const { fetchOwnerGroupsFromApi } = require('./predictScheduleFlow');
 const { invalidateJoinVerifyConfigCache } = require('./joinVerifyConfig');
 const { tgGroupListLog } = require('./tgGroupListDebug');
 const { withTypingWhileAwaiting } = require('./telegramTypingPulse');
+const {
+  saveJoinVerifyTextSession,
+  getJoinVerifyTextSession,
+  clearJoinVerifyTextSession,
+} = require('./joinVerifyTextSession');
 
 const TIMEOUT_PRESETS = [60, 120, 180, 300];
+const WELCOME_TEXT_MAX_LEN = 500;
+const CLEAR_WELCOME_TOKENS = new Set(['-', '—', '清除', '清空', '默认', 'clear', 'default']);
+const CANCEL_WELCOME_TOKENS = new Set(['取消', 'cancel', '/cancel']);
 const MAX_FAIL_PRESETS = [1, 2, 3, 5];
 const BAN_DURATION_PRESETS = [600, 3600, 86400];
 const MODE_OPTIONS = ['button', 'quiz', 'captcha'];
@@ -165,6 +173,16 @@ function buildJoinVerifyDetailKeyboard(texts, g) {
     ],
     [label(texts.joinVerifySettingsSectionMode)],
     modeRow,
+    ...(modesHas(g, 'captcha')
+      ? [
+          [
+            Markup.button.callback(
+              texts.joinVerifySettingsEditQuestionBtn || '✏️ 配置加密问题',
+              `jv:txt:${gid}`,
+            ),
+          ],
+        ]
+      : []),
     [label(texts.joinVerifySettingsSectionTimeout)],
     timeoutRow,
     [label(texts.joinVerifySettingsSectionMaxFail)],
@@ -212,6 +230,12 @@ async function saveJoinVerifyPatch(ctx, config, auth, patch) {
       joinVerifyMaxFail: patch.joinVerifyMaxFail,
       joinVerifyBanEnabled: patch.joinVerifyBanEnabled,
       joinVerifyBanDurationSec: patch.joinVerifyBanDurationSec,
+      joinVerifyWelcomeText:
+        patch.joinVerifyWelcomeText === undefined
+          ? undefined
+          : patch.joinVerifyWelcomeText == null
+            ? null
+            : String(patch.joinVerifyWelcomeText).slice(0, 80),
     },
   });
   const saveRes = await postTgStatsGroupSave({
@@ -486,6 +510,16 @@ async function handleJoinVerifyToggleMode(ctx, config, getTexts, groupId, mode) 
         (Array.isArray(current.joinVerifyModes) && current.joinVerifyModes[0]) ||
         String(current.joinVerifyMode || 'button').split(',')[0].trim() ||
         'button';
+
+      // 已是加密答题：再次点击打开问题配置输入
+      if (currentMode === mode && mode === 'captcha') {
+        await ctx.answerCbQuery(texts.joinVerifySettingsAskQuestionToast || '请输入问题').catch(() => {});
+        await promptJoinVerifyWelcomeText(ctx, getTexts, groupId, {
+          currentText: current.joinVerifyWelcomeText,
+        });
+        return;
+      }
+
       if (currentMode === mode) {
         await ctx
           .answerCbQuery(texts.joinVerifySettingsModeAlreadyToast || texts.joinVerifySettingsModeMinToast)
@@ -508,10 +542,154 @@ async function handleJoinVerifyToggleMode(ctx, config, getTexts, groupId, mode) 
         edit: true,
         overlay: { joinVerifyMode: nextMode },
       });
+
+      // 切换到加密答题后，引导群主配置问题文案
+      if (nextMode === 'captcha') {
+        await promptJoinVerifyWelcomeText(ctx, getTexts, groupId, {
+          currentText: current.joinVerifyWelcomeText,
+        });
+      }
     })());
   } catch {
     await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
   }
+}
+
+/**
+ * 主动打开「配置加密问题」输入（按钮 jv:txt:）
+ */
+async function handleJoinVerifyAskWelcomeText(ctx, config, getTexts, groupId) {
+  const texts = getTexts(ctx.from?.language_code || 'en');
+  const authRes = await resolveOwnerAuth(ctx, config);
+  if (!authRes.ok) {
+    await ctx.answerCbQuery(texts.predictScheduleNeedLogin, { show_alert: true }).catch(() => {});
+    return;
+  }
+  try {
+    const current = await loadJoinVerifyGroup(ctx, config, groupId);
+    if (!current) {
+      await ctx
+        .answerCbQuery(texts.joinVerifySettingsGroupNotFound, { show_alert: true })
+        .catch(() => {});
+      return;
+    }
+    await ctx.answerCbQuery(texts.joinVerifySettingsAskQuestionToast || '请输入问题').catch(() => {});
+    await promptJoinVerifyWelcomeText(ctx, getTexts, groupId, {
+      currentText: current.joinVerifyWelcomeText,
+    });
+  } catch {
+    await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+  }
+}
+
+/**
+ * 发送 ForceReply，让群主输入 joinVerifyWelcomeText
+ */
+async function promptJoinVerifyWelcomeText(ctx, getTexts, groupId, opts = {}) {
+  const texts = getTexts(ctx.from?.language_code || 'en');
+  const uid = ctx.from?.id;
+  const chatId = ctx.chat?.id ?? ctx.callbackQuery?.message?.chat?.id;
+  if (uid == null || chatId == null) return;
+
+  const panelMessageId = ctx.callbackQuery?.message?.message_id;
+  saveJoinVerifyTextSession(uid, {
+    groupId: Number(groupId),
+    chatId: Number(chatId),
+    panelMessageId,
+  });
+
+  const currentHint = opts.currentText
+    ? `\n\n${texts.joinVerifySettingsCurrentQuestionHint(escapeHtml(String(opts.currentText).slice(0, 120)))}`
+    : '';
+
+  await ctx.reply(
+    (texts.joinVerifySettingsAskQuestionHtml || '请输入加密答题的问题文案：') + currentHint,
+    {
+      parse_mode: 'HTML',
+      ...Markup.forceReply(),
+    },
+  );
+}
+
+/**
+ * 私聊文本：保存 / 清除 / 取消 joinVerifyWelcomeText
+ * @returns {Promise<boolean>} 是否已消费该消息
+ */
+async function handleJoinVerifyWelcomeTextInput(ctx, config, getTexts) {
+  const uid = ctx.from?.id;
+  if (uid == null) return false;
+  const session = getJoinVerifyTextSession(uid);
+  if (!session) return false;
+
+  // 仅私聊会话
+  if (ctx.chat?.type !== 'private') return false;
+
+  const texts = getTexts(ctx.from?.language_code || 'en');
+  const raw = String(ctx.message?.text || '').trim();
+
+  if (CANCEL_WELCOME_TOKENS.has(raw.toLowerCase()) || CANCEL_WELCOME_TOKENS.has(raw)) {
+    clearJoinVerifyTextSession(uid);
+    await ctx.reply(texts.joinVerifySettingsQuestionCancelled || '已取消').catch(() => {});
+    return true;
+  }
+
+  // 其他斜杠指令不拦截（如 /group）
+  if (raw.startsWith('/')) return false;
+
+  if (!raw) {
+    clearJoinVerifyTextSession(uid);
+    await ctx.reply(texts.joinVerifySettingsQuestionCancelled || '已取消').catch(() => {});
+    return true;
+  }
+
+  const authRes = await resolveOwnerAuth(ctx, config);
+  if (!authRes.ok) {
+    clearJoinVerifyTextSession(uid);
+    await ctx.reply(texts.predictScheduleNeedLogin).catch(() => {});
+    return true;
+  }
+
+  let welcomeText = raw;
+  if (CLEAR_WELCOME_TOKENS.has(raw.toLowerCase()) || CLEAR_WELCOME_TOKENS.has(raw)) {
+    welcomeText = null;
+  } else if (welcomeText.length > WELCOME_TEXT_MAX_LEN) {
+    await ctx
+      .reply(texts.joinVerifySettingsQuestionTooLong(WELCOME_TEXT_MAX_LEN))
+      .catch(() => {});
+    return true;
+  }
+
+  try {
+    await withTypingWhileAwaiting(ctx, (async () => {
+      const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, {
+        groupId: Number(session.groupId),
+        joinVerifyMode: 'captcha',
+        joinVerifyWelcomeText: welcomeText,
+      });
+      if (!isSaveBusinessOk(saveRes)) {
+        await ctx.reply(texts.predictScheduleFetchFailed).catch(() => {});
+        return;
+      }
+      clearJoinVerifyTextSession(uid);
+      await ctx
+        .reply(
+          welcomeText == null
+            ? texts.joinVerifySettingsQuestionCleared || '已恢复默认文案'
+            : texts.joinVerifySettingsQuestionSaved || '问题已保存',
+        )
+        .catch(() => {});
+      await renderJoinVerifyDetailPanel(ctx, config, getTexts, session.groupId, {
+        edit: false,
+        overlay: {
+          joinVerifyMode: 'captcha',
+          joinVerifyWelcomeText: welcomeText,
+        },
+      });
+    })());
+  } catch {
+    await ctx.reply(texts.predictScheduleFetchFailed).catch(() => {});
+  }
+  return true;
 }
 
 async function handleJoinVerifySetNumberField(ctx, config, getTexts, groupId, field, value, toastKey) {
@@ -575,6 +753,8 @@ module.exports = {
   handleJoinVerifyOpenDetail,
   handleJoinVerifyToggleEnabled,
   handleJoinVerifyToggleMode,
+  handleJoinVerifyAskWelcomeText,
+  handleJoinVerifyWelcomeTextInput,
   handleJoinVerifySetNumberField,
   handleJoinVerifyToggleBan,
   normalizeJoinVerifyGroups,

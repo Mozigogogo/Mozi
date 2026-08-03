@@ -18,6 +18,8 @@ const {
   handleJoinVerifyOpenDetail,
   handleJoinVerifyToggleEnabled,
   handleJoinVerifyToggleMode,
+  handleJoinVerifyAskWelcomeText,
+  handleJoinVerifyWelcomeTextInput,
   handleJoinVerifySetNumberField,
   handleJoinVerifyToggleBan,
 } = require('../lib/joinVerifySettingsFlow');
@@ -46,6 +48,17 @@ function registerPredictSchedule(bot, config, { getTexts }) {
   };
 
   bot.command('group', runGroupCommand);
+
+  // 加密答题问题文案输入（优先于其他私聊文本中间件）
+  bot.on('text', async (ctx, next) => {
+    try {
+      const handled = await handleJoinVerifyWelcomeTextInput(ctx, config, getTexts);
+      if (handled) return;
+    } catch {
+      /* fall through */
+    }
+    return next();
+  });
 
   // —— 配置中心 ——
   bot.action('gs:home', async (ctx) => {
@@ -140,6 +153,15 @@ function registerPredictSchedule(bot, config, { getTexts }) {
   bot.action(/^jv:m:(-?\d+):(button|quiz|captcha)$/, async (ctx) => {
     try {
       await handleJoinVerifyToggleMode(ctx, config, getTexts, ctx.match[1], ctx.match[2]);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^jv:txt:(-?\d+)$/, async (ctx) => {
+    try {
+      await handleJoinVerifyAskWelcomeText(ctx, config, getTexts, ctx.match[1]);
     } catch {
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
