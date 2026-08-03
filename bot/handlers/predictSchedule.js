@@ -98,6 +98,11 @@ function registerPredictSchedule(bot, config, { getTexts }) {
   });
 
   // —— 新成员验证配置 ——
+  bot.action('jv:noop', async (ctx) => {
+    const texts = getTexts(ctx.from?.language_code || 'en');
+    await ctx.answerCbQuery(texts.joinVerifySettingsNoopToast || '请点击下方选项').catch(() => {});
+  });
+
   bot.action('jv:list', async (ctx) => {
     try {
       await handleJoinVerifyOpenList(ctx, config, getTexts);

@@ -126,9 +126,10 @@ function buildJoinVerifyDetailText(texts, g) {
 
 function buildJoinVerifyDetailKeyboard(texts, g) {
   const gid = g.groupId;
-  const modes = new Set(g.joinVerifyModes || []);
+  const label = (text) => Markup.button.callback(`—— ${text} ——`, 'jv:noop');
+
   const modeRow = MODE_OPTIONS.map((m) => {
-    const on = modes.has(m);
+    const on = modesHas(g, m);
     return Markup.button.callback(
       `${on ? '✅' : '⬜'} ${modeLabel(m, texts)}`,
       `jv:m:${gid}:${m}`,
@@ -147,31 +148,42 @@ function buildJoinVerifyDetailKeyboard(texts, g) {
     ),
   );
   const banDurRow = BAN_DURATION_PRESETS.map((sec) => {
-    const label = sec >= 86400 ? `${sec / 86400}d` : sec >= 3600 ? `${sec / 3600}h` : `${sec / 60}m`;
+    const dur =
+      sec >= 86400 ? `${sec / 86400}d` : sec >= 3600 ? `${sec / 3600}h` : `${sec / 60}m`;
     return Markup.button.callback(
-      sec === g.joinVerifyBanDurationSec ? `·${label}·` : label,
+      sec === g.joinVerifyBanDurationSec ? `·${dur}·` : dur,
       `jv:bd:${gid}:${sec}`,
     );
   });
 
   return Markup.inlineKeyboard([
+    [label(texts.joinVerifySettingsSectionSwitch)],
     [
       Markup.button.callback(texts.joinVerifySettingsEnableBtn, `jv:e:${gid}:1`),
       Markup.button.callback(texts.joinVerifySettingsDisableBtn, `jv:e:${gid}:0`),
     ],
+    [label(texts.joinVerifySettingsSectionMode)],
     modeRow,
+    [label(texts.joinVerifySettingsSectionTimeout)],
     timeoutRow,
+    [label(texts.joinVerifySettingsSectionMaxFail)],
     failRow,
+    [label(texts.joinVerifySettingsSectionBan)],
     [
       Markup.button.callback(texts.joinVerifySettingsBanEnableBtn, `jv:ban:${gid}:1`),
       Markup.button.callback(texts.joinVerifySettingsBanDisableBtn, `jv:ban:${gid}:0`),
     ],
+    [label(texts.joinVerifySettingsSectionBanDuration)],
     banDurRow,
     [
       Markup.button.callback(texts.joinVerifySettingsBackListBtn, 'jv:list'),
       Markup.button.callback(texts.groupSettingsBackBtn, 'gs:home'),
     ],
   ]);
+}
+
+function modesHas(g, mode) {
+  return new Set(g.joinVerifyModes || []).has(mode);
 }
 
 async function resolveOwnerAuth(ctx, config) {
