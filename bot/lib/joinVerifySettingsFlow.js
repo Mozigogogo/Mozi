@@ -2,11 +2,16 @@
 
 /**
  * /group → 新成员入群验证配置面板
- * 读写 POST /tg/stats/group/save、列表来自 listByTelegramId
+ * 写：POST /tg/stats/group/save
+ * 读：优先 GET /tg/stats/group/get，失败再退回 listByTelegramId
  */
 
 const { Markup } = require('telegraf');
-const { postTgStatsGroupSave, parseJoinVerifyFields } = require('./apis');
+const {
+  postTgStatsGroupSave,
+  getTgStatsGroupGet,
+  parseJoinVerifyFields,
+} = require('./apis');
 const { ensureTgUserToken } = require('./tgUserTokenCache');
 const { buildTelegramLoginOptsFromCtx } = require('./datainfoPoints');
 const { escapeHtml } = require('./telegramHtml');
@@ -18,6 +23,30 @@ const TIMEOUT_PRESETS = [60, 120, 180, 300];
 const MAX_FAIL_PRESETS = [1, 2, 3, 5];
 const BAN_DURATION_PRESETS = [600, 3600, 86400];
 const MODE_OPTIONS = ['button', 'quiz', 'captcha'];
+
+function jvSettingsLog(event, payload) {
+  const on = !/^0|false|no$/i.test(String(process.env.JOIN_VERIFY_LOG ?? '1').trim());
+  if (!on) return;
+  let body = '';
+  try {
+    body = payload === undefined ? '' : ` ${JSON.stringify(payload)}`;
+  } catch {
+    body = ` ${String(payload)}`;
+  }
+  console.log(`[JOIN_VERIFY_SETTINGS] ${new Date().toISOString()} ${event}${body}`);
+}
+
+/** HTTP 200 之外再看业务 code */
+function isSaveBusinessOk(saveRes) {
+  if (!saveRes?.ok) return false;
+  const json = saveRes.json;
+  if (!json || typeof json !== 'object') return true;
+  if (json.success === false || json.success === 0) return false;
+  if (json.success === true || json.success === 1) return true;
+  if (json.code == null) return true;
+  const code = Number(json.code);
+  return code === 0 || code === 200;
+}
 
 /**
  * @param {object[]} items
@@ -46,10 +75,6 @@ function modeLabel(mode, texts) {
   return texts?.joinVerifyModeLabelButton || '点击按钮';
 }
 
-/**
- * @param {object} texts
- * @param {object[]} groups
- */
 function buildJoinVerifyListText(texts, groups) {
   if (!groups.length) {
     return `${texts.joinVerifySettingsIntro}\n\n${texts.predictScheduleEmpty}`;
@@ -65,10 +90,6 @@ function buildJoinVerifyListText(texts, groups) {
   return `${texts.joinVerifySettingsIntro}\n\n${lines.join('\n')}`;
 }
 
-/**
- * @param {object} texts
- * @param {object[]} groups
- */
 function buildJoinVerifyListKeyboard(texts, groups) {
   const rows = groups.map((g) => {
     const title = String(g.groupTitle || g.groupId).slice(0, 18);
@@ -82,10 +103,6 @@ function buildJoinVerifyListKeyboard(texts, groups) {
   return Markup.inlineKeyboard(rows);
 }
 
-/**
- * @param {object} texts
- * @param {object} g
- */
 function buildJoinVerifyDetailText(texts, g) {
   const title = escapeHtml(g.groupTitle || String(g.groupId));
   const onOff = g.joinVerifyEnabled === 1 ? texts.joinVerifySettingsOn : texts.joinVerifySettingsOff;
@@ -107,10 +124,6 @@ function buildJoinVerifyDetailText(texts, g) {
   );
 }
 
-/**
- * @param {object} texts
- * @param {object} g
- */
 function buildJoinVerifyDetailKeyboard(texts, g) {
   const gid = g.groupId;
   const modes = new Set(g.joinVerifyModes || []);
@@ -171,19 +184,33 @@ async function resolveOwnerAuth(ctx, config) {
   return { ok: true, auth, authMissing: false };
 }
 
-/**
- * @param {import('telegraf').Context} ctx
- * @param {object} config
- * @param {string} auth
- * @param {object} patch
- */
 async function saveJoinVerifyPatch(ctx, config, auth, patch) {
+  jvSettingsLog('save.request', {
+    groupId: patch.groupId,
+    patch: {
+      joinVerifyEnabled: patch.joinVerifyEnabled,
+      joinVerifyMode: patch.joinVerifyMode,
+      joinVerifyTimeoutSec: patch.joinVerifyTimeoutSec,
+      joinVerifyMaxFail: patch.joinVerifyMaxFail,
+      joinVerifyBanEnabled: patch.joinVerifyBanEnabled,
+      joinVerifyBanDurationSec: patch.joinVerifyBanDurationSec,
+    },
+  });
   const saveRes = await postTgStatsGroupSave({
     apiBaseUrl: config.API_BASE_URL,
     auth,
     appUrl: config.APP_URL,
     path: config.TG_GROUP_SAVE_PATH,
     groups: [patch],
+  });
+  jvSettingsLog('save.response', {
+    groupId: patch.groupId,
+    httpOk: saveRes.ok,
+    httpStatus: saveRes.status,
+    businessOk: isSaveBusinessOk(saveRes),
+    apiCode: saveRes.json?.code ?? null,
+    apiMsg: saveRes.json?.msg || saveRes.json?.message || null,
+    textPreview: String(saveRes.text || '').slice(0, 400),
   });
   if (saveRes.ok && patch.groupId != null) {
     invalidateJoinVerifyConfigCache(patch.groupId);
@@ -192,11 +219,68 @@ async function saveJoinVerifyPatch(ctx, config, auth, patch) {
 }
 
 /**
- * @param {import('telegraf').Context} ctx
- * @param {object} config
- * @param {Function} getTexts
- * @param {{ edit?: boolean; skipLoading?: boolean }} [opts]
+ * 优先 GET /get，再退回 list
+ * @returns {Promise<object | null>}
  */
+async function loadJoinVerifyGroup(ctx, config, groupId) {
+  const authRes = await resolveOwnerAuth(ctx, config);
+  const auth = authRes.auth || config.MOZI_DETAIL_AUTH || '';
+
+  if (auth) {
+    try {
+      const getRes = await getTgStatsGroupGet({
+        apiBaseUrl: config.API_BASE_URL,
+        appUrl: config.APP_URL,
+        auth,
+        groupId,
+        path: config.TG_GROUP_GET_PATH || 'tg/stats/group/get',
+      });
+      jvSettingsLog('load.get', {
+        groupId: String(groupId),
+        httpOk: getRes.ok,
+        httpStatus: getRes.status,
+        hasGroup: Boolean(getRes.group),
+        joinVerifyEnabled: getRes.group?.joinVerifyEnabled ?? null,
+        joinVerifyMode: getRes.group?.joinVerifyMode ?? null,
+        rawKeys: getRes.group ? Object.keys(getRes.group).filter((k) => /join|verify/i.test(k)) : [],
+        textPreview: String(getRes.text || '').slice(0, 400),
+      });
+      if (getRes.ok && getRes.group) {
+        const jv = parseJoinVerifyFields(getRes.group);
+        return {
+          groupId: Number(getRes.group.groupId ?? groupId),
+          groupTitle:
+            String(getRes.group.groupTitle || getRes.group.title || '').trim() ||
+            `群 ${groupId}`,
+          ...jv,
+          _source: 'get',
+        };
+      }
+    } catch (err) {
+      jvSettingsLog('load.get_error', {
+        groupId: String(groupId),
+        message: err?.message || String(err),
+      });
+    }
+  }
+
+  const remote = await fetchOwnerGroupsFromApi(ctx, config);
+  const groups = normalizeJoinVerifyGroups(remote.items || []);
+  const g = groups.find((x) => String(x.groupId) === String(groupId)) || null;
+  jvSettingsLog('load.list_fallback', {
+    groupId: String(groupId),
+    listOk: remote.ok,
+    itemCount: (remote.items || []).length,
+    found: Boolean(g),
+    joinVerifyEnabled: g?.joinVerifyEnabled ?? null,
+    sampleKeys:
+      remote.items?.[0] != null
+        ? Object.keys(remote.items[0]).filter((k) => /join|verify|autoPublish/i.test(k))
+        : [],
+  });
+  return g ? { ...g, _source: 'list' } : null;
+}
+
 async function renderJoinVerifyListPanel(ctx, config, getTexts, opts = {}) {
   const uid = ctx.from?.id;
   if (uid == null) return;
@@ -224,6 +308,15 @@ async function renderJoinVerifyListPanel(ctx, config, getTexts, opts = {}) {
   }
 
   const groups = normalizeJoinVerifyGroups(remote.items);
+  jvSettingsLog('list.render', {
+    count: groups.length,
+    rows: groups.map((g) => ({
+      groupId: g.groupId,
+      title: g.groupTitle,
+      joinVerifyEnabled: g.joinVerifyEnabled,
+      mode: g.joinVerifyMode,
+    })),
+  });
   const text = buildJoinVerifyListText(texts, groups);
   const keyboard = buildJoinVerifyListKeyboard(texts, groups);
   const extra = { parse_mode: 'HTML', ...keyboard };
@@ -244,31 +337,32 @@ async function renderJoinVerifyListPanel(ctx, config, getTexts, opts = {}) {
 }
 
 /**
- * @param {import('telegraf').Context} ctx
- * @param {object} config
- * @param {Function} getTexts
- * @param {number | string} groupId
- * @param {{ edit?: boolean }} [opts]
+ * @param {{ edit?: boolean; overlay?: object }} [opts]
+ * overlay：保存成功后乐观覆盖（防止 list/get 尚未返回新字段时 UI 回弹）
  */
 async function renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, opts = {}) {
   const texts = getTexts(ctx.from?.language_code || 'en');
-  const remote = await fetchOwnerGroupsFromApi(ctx, config);
-  if (remote.authMissing) {
-    await ctx.answerCbQuery(texts.predictScheduleNeedLogin, { show_alert: true }).catch(() => {});
-    return;
-  }
-  if (!remote.ok && !remote.items.length) {
-    await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
-    return;
-  }
+  let g = await loadJoinVerifyGroup(ctx, config, groupId);
 
-  const groups = normalizeJoinVerifyGroups(remote.items);
-  const g = groups.find((x) => String(x.groupId) === String(groupId));
   if (!g) {
     await ctx.answerCbQuery(texts.joinVerifySettingsGroupNotFound, { show_alert: true }).catch(() => {});
     await renderJoinVerifyListPanel(ctx, config, getTexts, { edit: true, skipLoading: true });
     return;
   }
+
+  if (opts.overlay && typeof opts.overlay === 'object') {
+    const merged = { ...g, ...opts.overlay };
+    const parsed = parseJoinVerifyFields(merged);
+    g = { ...merged, ...parsed };
+  }
+
+  jvSettingsLog('detail.render', {
+    groupId: String(groupId),
+    source: g._source || null,
+    joinVerifyEnabled: g.joinVerifyEnabled,
+    joinVerifyMode: g.joinVerifyMode,
+    overlay: opts.overlay || null,
+  });
 
   const text = buildJoinVerifyDetailText(texts, g);
   const keyboard = buildJoinVerifyDetailKeyboard(texts, g);
@@ -302,24 +396,47 @@ async function handleJoinVerifyToggleEnabled(ctx, config, getTexts, groupId, ena
     await ctx.answerCbQuery(texts.predictScheduleNeedLogin, { show_alert: true }).catch(() => {});
     return;
   }
+
+  const patch = {
+    groupId: Number(groupId),
+    joinVerifyEnabled: enabled ? 1 : 0,
+  };
+
   try {
-    const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, {
-      groupId: Number(groupId),
-      joinVerifyEnabled: enabled ? 1 : 0,
-    });
-    if (!saveRes.ok) {
-      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, patch);
+    if (!isSaveBusinessOk(saveRes)) {
+      jvSettingsLog('toggle.enabled_failed', {
+        groupId: String(groupId),
+        enabled,
+        httpStatus: saveRes.status,
+        apiCode: saveRes.json?.code,
+      });
+      await ctx
+        .answerCbQuery(
+          `保存失败 HTTP ${saveRes.status}${saveRes.json?.code != null ? ` code=${saveRes.json.code}` : ''}`,
+          { show_alert: true },
+        )
+        .catch(() => {});
       return;
     }
   } catch (err) {
     tgGroupListLog('join_verify.save_error', { message: err?.message || String(err) });
+    jvSettingsLog('toggle.enabled_error', {
+      groupId: String(groupId),
+      message: err?.message || String(err),
+    });
     await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
     return;
   }
+
   await ctx
     .answerCbQuery(enabled ? texts.joinVerifySettingsEnabledToast : texts.joinVerifySettingsDisabledToast)
     .catch(() => {});
-  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, { edit: true });
+
+  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
+    edit: true,
+    overlay: { joinVerifyEnabled: enabled ? 1 : 0 },
+  });
 }
 
 async function handleJoinVerifyToggleMode(ctx, config, getTexts, groupId, mode) {
@@ -330,15 +447,13 @@ async function handleJoinVerifyToggleMode(ctx, config, getTexts, groupId, mode) 
     return;
   }
 
-  const remote = await fetchOwnerGroupsFromApi(ctx, config);
-  const groups = normalizeJoinVerifyGroups(remote.items || []);
-  const g = groups.find((x) => String(x.groupId) === String(groupId));
-  if (!g) {
+  const current = await loadJoinVerifyGroup(ctx, config, groupId);
+  if (!current) {
     await ctx.answerCbQuery(texts.joinVerifySettingsGroupNotFound, { show_alert: true }).catch(() => {});
     return;
   }
 
-  const set = new Set(g.joinVerifyModes || []);
+  const set = new Set(current.joinVerifyModes || []);
   if (set.has(mode)) {
     if (set.size <= 1) {
       await ctx.answerCbQuery(texts.joinVerifySettingsModeMinToast, { show_alert: true }).catch(() => {});
@@ -355,7 +470,7 @@ async function handleJoinVerifyToggleMode(ctx, config, getTexts, groupId, mode) 
       groupId: Number(groupId),
       joinVerifyMode: nextMode,
     });
-    if (!saveRes.ok) {
+    if (!isSaveBusinessOk(saveRes)) {
       await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
       return;
     }
@@ -365,7 +480,10 @@ async function handleJoinVerifyToggleMode(ctx, config, getTexts, groupId, mode) 
   }
 
   await ctx.answerCbQuery(texts.joinVerifySettingsSavedToast).catch(() => {});
-  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, { edit: true });
+  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
+    edit: true,
+    overlay: { joinVerifyMode: nextMode },
+  });
 }
 
 async function handleJoinVerifySetNumberField(ctx, config, getTexts, groupId, field, value, toastKey) {
@@ -378,7 +496,7 @@ async function handleJoinVerifySetNumberField(ctx, config, getTexts, groupId, fi
   const patch = { groupId: Number(groupId), [field]: Number(value) };
   try {
     const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, patch);
-    if (!saveRes.ok) {
+    if (!isSaveBusinessOk(saveRes)) {
       await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
       return;
     }
@@ -387,7 +505,10 @@ async function handleJoinVerifySetNumberField(ctx, config, getTexts, groupId, fi
     return;
   }
   await ctx.answerCbQuery(texts[toastKey] || texts.joinVerifySettingsSavedToast).catch(() => {});
-  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, { edit: true });
+  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
+    edit: true,
+    overlay: patch,
+  });
 }
 
 async function handleJoinVerifyToggleBan(ctx, config, getTexts, groupId, enabled) {
@@ -402,7 +523,7 @@ async function handleJoinVerifyToggleBan(ctx, config, getTexts, groupId, enabled
       groupId: Number(groupId),
       joinVerifyBanEnabled: enabled ? 1 : 0,
     });
-    if (!saveRes.ok) {
+    if (!isSaveBusinessOk(saveRes)) {
       await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
       return;
     }
@@ -411,7 +532,10 @@ async function handleJoinVerifyToggleBan(ctx, config, getTexts, groupId, enabled
     return;
   }
   await ctx.answerCbQuery(texts.joinVerifySettingsSavedToast).catch(() => {});
-  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, { edit: true });
+  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
+    edit: true,
+    overlay: { joinVerifyBanEnabled: enabled ? 1 : 0 },
+  });
 }
 
 module.exports = {
