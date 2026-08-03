@@ -14,7 +14,6 @@ const {
   handleGroupSettingsHome,
 } = require('../lib/groupSettingsFlow');
 const {
-  renderJoinVerifyListPanel,
   handleJoinVerifyOpenList,
   handleJoinVerifyOpenDetail,
   handleJoinVerifyToggleEnabled,
@@ -68,8 +67,7 @@ function registerPredictSchedule(bot, config, { getTexts }) {
 
   bot.action('gs:jv', async (ctx) => {
     try {
-      await ctx.answerCbQuery().catch(() => {});
-      await renderJoinVerifyListPanel(ctx, config, getTexts, { edit: true, skipLoading: true });
+      await handleJoinVerifyOpenList(ctx, config, getTexts);
     } catch {
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});

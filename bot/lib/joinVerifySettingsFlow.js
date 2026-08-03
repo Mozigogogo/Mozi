@@ -18,6 +18,7 @@ const { escapeHtml } = require('./telegramHtml');
 const { fetchOwnerGroupsFromApi } = require('./predictScheduleFlow');
 const { invalidateJoinVerifyConfigCache } = require('./joinVerifyConfig');
 const { tgGroupListLog } = require('./tgGroupListDebug');
+const { withTypingWhileAwaiting } = require('./telegramTypingPulse');
 
 const TIMEOUT_PRESETS = [60, 120, 180, 300];
 const MAX_FAIL_PRESETS = [1, 2, 3, 5];
@@ -183,7 +184,12 @@ function buildJoinVerifyDetailKeyboard(texts, g) {
 }
 
 function modesHas(g, mode) {
-  return new Set(g.joinVerifyModes || []).has(mode);
+  // 三选一：只认第一种模式为当前选中
+  const current =
+    (Array.isArray(g.joinVerifyModes) && g.joinVerifyModes[0]) ||
+    String(g.joinVerifyMode || 'button').split(',')[0].trim() ||
+    'button';
+  return current === mode;
 }
 
 async function resolveOwnerAuth(ctx, config) {
@@ -392,13 +398,17 @@ async function renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, opts 
 }
 
 async function handleJoinVerifyOpenList(ctx, config, getTexts) {
+  await withTypingWhileAwaiting(ctx, (async () => {
+    await renderJoinVerifyListPanel(ctx, config, getTexts, { edit: true, skipLoading: true });
+  })());
   await ctx.answerCbQuery().catch(() => {});
-  await renderJoinVerifyListPanel(ctx, config, getTexts, { edit: true, skipLoading: true });
 }
 
 async function handleJoinVerifyOpenDetail(ctx, config, getTexts, groupId) {
+  await withTypingWhileAwaiting(ctx, (async () => {
+    await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, { edit: true });
+  })());
   await ctx.answerCbQuery().catch(() => {});
-  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, { edit: true });
 }
 
 async function handleJoinVerifyToggleEnabled(ctx, config, getTexts, groupId, enabled) {
@@ -415,22 +425,35 @@ async function handleJoinVerifyToggleEnabled(ctx, config, getTexts, groupId, ena
   };
 
   try {
-    const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, patch);
-    if (!isSaveBusinessOk(saveRes)) {
-      jvSettingsLog('toggle.enabled_failed', {
-        groupId: String(groupId),
-        enabled,
-        httpStatus: saveRes.status,
-        apiCode: saveRes.json?.code,
-      });
+    await withTypingWhileAwaiting(ctx, (async () => {
+      const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, patch);
+      if (!isSaveBusinessOk(saveRes)) {
+        jvSettingsLog('toggle.enabled_failed', {
+          groupId: String(groupId),
+          enabled,
+          httpStatus: saveRes.status,
+          apiCode: saveRes.json?.code,
+        });
+        await ctx
+          .answerCbQuery(
+            `保存失败 HTTP ${saveRes.status}${saveRes.json?.code != null ? ` code=${saveRes.json.code}` : ''}`,
+            { show_alert: true },
+          )
+          .catch(() => {});
+        return;
+      }
+
       await ctx
         .answerCbQuery(
-          `保存失败 HTTP ${saveRes.status}${saveRes.json?.code != null ? ` code=${saveRes.json.code}` : ''}`,
-          { show_alert: true },
+          enabled ? texts.joinVerifySettingsEnabledToast : texts.joinVerifySettingsDisabledToast,
         )
         .catch(() => {});
-      return;
-    }
+
+      await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
+        edit: true,
+        overlay: { joinVerifyEnabled: enabled ? 1 : 0 },
+      });
+    })());
   } catch (err) {
     tgGroupListLog('join_verify.save_error', { message: err?.message || String(err) });
     jvSettingsLog('toggle.enabled_error', {
@@ -438,17 +461,7 @@ async function handleJoinVerifyToggleEnabled(ctx, config, getTexts, groupId, ena
       message: err?.message || String(err),
     });
     await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
-    return;
   }
-
-  await ctx
-    .answerCbQuery(enabled ? texts.joinVerifySettingsEnabledToast : texts.joinVerifySettingsDisabledToast)
-    .catch(() => {});
-
-  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
-    edit: true,
-    overlay: { joinVerifyEnabled: enabled ? 1 : 0 },
-  });
 }
 
 async function handleJoinVerifyToggleMode(ctx, config, getTexts, groupId, mode) {
@@ -459,43 +472,46 @@ async function handleJoinVerifyToggleMode(ctx, config, getTexts, groupId, mode) 
     return;
   }
 
-  const current = await loadJoinVerifyGroup(ctx, config, groupId);
-  if (!current) {
-    await ctx.answerCbQuery(texts.joinVerifySettingsGroupNotFound, { show_alert: true }).catch(() => {});
-    return;
-  }
-
-  const set = new Set(current.joinVerifyModes || []);
-  if (set.has(mode)) {
-    if (set.size <= 1) {
-      await ctx.answerCbQuery(texts.joinVerifySettingsModeMinToast, { show_alert: true }).catch(() => {});
-      return;
-    }
-    set.delete(mode);
-  } else {
-    set.add(mode);
-  }
-  const nextMode = [...set].join(',');
-
   try {
-    const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, {
-      groupId: Number(groupId),
-      joinVerifyMode: nextMode,
-    });
-    if (!isSaveBusinessOk(saveRes)) {
-      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
-      return;
-    }
+    await withTypingWhileAwaiting(ctx, (async () => {
+      const current = await loadJoinVerifyGroup(ctx, config, groupId);
+      if (!current) {
+        await ctx
+          .answerCbQuery(texts.joinVerifySettingsGroupNotFound, { show_alert: true })
+          .catch(() => {});
+        return;
+      }
+
+      const currentMode =
+        (Array.isArray(current.joinVerifyModes) && current.joinVerifyModes[0]) ||
+        String(current.joinVerifyMode || 'button').split(',')[0].trim() ||
+        'button';
+      if (currentMode === mode) {
+        await ctx
+          .answerCbQuery(texts.joinVerifySettingsModeAlreadyToast || texts.joinVerifySettingsModeMinToast)
+          .catch(() => {});
+        return;
+      }
+
+      const nextMode = mode;
+      const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, {
+        groupId: Number(groupId),
+        joinVerifyMode: nextMode,
+      });
+      if (!isSaveBusinessOk(saveRes)) {
+        await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+        return;
+      }
+
+      await ctx.answerCbQuery(texts.joinVerifySettingsSavedToast).catch(() => {});
+      await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
+        edit: true,
+        overlay: { joinVerifyMode: nextMode },
+      });
+    })());
   } catch {
     await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
-    return;
   }
-
-  await ctx.answerCbQuery(texts.joinVerifySettingsSavedToast).catch(() => {});
-  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
-    edit: true,
-    overlay: { joinVerifyMode: nextMode },
-  });
 }
 
 async function handleJoinVerifySetNumberField(ctx, config, getTexts, groupId, field, value, toastKey) {
@@ -507,20 +523,21 @@ async function handleJoinVerifySetNumberField(ctx, config, getTexts, groupId, fi
   }
   const patch = { groupId: Number(groupId), [field]: Number(value) };
   try {
-    const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, patch);
-    if (!isSaveBusinessOk(saveRes)) {
-      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
-      return;
-    }
+    await withTypingWhileAwaiting(ctx, (async () => {
+      const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, patch);
+      if (!isSaveBusinessOk(saveRes)) {
+        await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+        return;
+      }
+      await ctx.answerCbQuery(texts[toastKey] || texts.joinVerifySettingsSavedToast).catch(() => {});
+      await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
+        edit: true,
+        overlay: patch,
+      });
+    })());
   } catch {
     await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
-    return;
   }
-  await ctx.answerCbQuery(texts[toastKey] || texts.joinVerifySettingsSavedToast).catch(() => {});
-  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
-    edit: true,
-    overlay: patch,
-  });
 }
 
 async function handleJoinVerifyToggleBan(ctx, config, getTexts, groupId, enabled) {
@@ -531,23 +548,24 @@ async function handleJoinVerifyToggleBan(ctx, config, getTexts, groupId, enabled
     return;
   }
   try {
-    const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, {
-      groupId: Number(groupId),
-      joinVerifyBanEnabled: enabled ? 1 : 0,
-    });
-    if (!isSaveBusinessOk(saveRes)) {
-      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
-      return;
-    }
+    await withTypingWhileAwaiting(ctx, (async () => {
+      const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, {
+        groupId: Number(groupId),
+        joinVerifyBanEnabled: enabled ? 1 : 0,
+      });
+      if (!isSaveBusinessOk(saveRes)) {
+        await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+        return;
+      }
+      await ctx.answerCbQuery(texts.joinVerifySettingsSavedToast).catch(() => {});
+      await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
+        edit: true,
+        overlay: { joinVerifyBanEnabled: enabled ? 1 : 0 },
+      });
+    })());
   } catch {
     await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
-    return;
   }
-  await ctx.answerCbQuery(texts.joinVerifySettingsSavedToast).catch(() => {});
-  await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
-    edit: true,
-    overlay: { joinVerifyBanEnabled: enabled ? 1 : 0 },
-  });
 }
 
 module.exports = {

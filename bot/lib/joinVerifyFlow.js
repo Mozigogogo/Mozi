@@ -53,8 +53,9 @@ function mentionHtml(user) {
 }
 
 function pickMode(modes) {
+  // 三选一：只使用配置中的第一种模式
   const list = Array.isArray(modes) && modes.length ? modes : ['button'];
-  return list[Math.floor(Math.random() * list.length)];
+  return list[0];
 }
 
 /** 模式 B：20 以内加减，4 选项 */
