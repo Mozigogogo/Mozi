@@ -9,6 +9,7 @@ const {
   syncGroupStatsFromLeave,
   syncGroupStatsFromChatUpdate,
   syncGroupStatsFromMemberChange,
+  syncGroupStatsFromMigrate,
 } = require('../lib/tgGroupStats');
 const { tgGroupStatsLog } = require('../lib/tgGroupStatsLog');
 
@@ -42,6 +43,29 @@ function registerTgGroupStats(bot, config) {
     } catch (err) {
       tgGroupStatsLog('handler_error', {
         event: ctx.updateType || 'member_change',
+        message: err?.message || String(err),
+      });
+    }
+  });
+
+  // 普通群 → 超级群：旧 groupId 作废，需同步 leave/save，避免配置列表同名双条
+  bot.on('migrate_to_chat_id', async (ctx) => {
+    try {
+      await syncGroupStatsFromMigrate(ctx, config);
+    } catch (err) {
+      tgGroupStatsLog('handler_error', {
+        event: 'migrate_to_chat_id',
+        message: err?.message || String(err),
+      });
+    }
+  });
+
+  bot.on('migrate_from_chat_id', async (ctx) => {
+    try {
+      await syncGroupStatsFromMigrate(ctx, config);
+    } catch (err) {
+      tgGroupStatsLog('handler_error', {
+        event: 'migrate_from_chat_id',
         message: err?.message || String(err),
       });
     }

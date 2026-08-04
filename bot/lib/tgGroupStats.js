@@ -384,6 +384,61 @@ async function syncGroupStatsFromMemberChange(ctx, config) {
   });
 }
 
+/**
+ * 普通群升级为超级群：旧 chatId 失效，需 leave 旧 id、save 新 id，否则列表会出现同名两条。
+ * @param {import('telegraf').Context} ctx
+ * @param {object} config
+ */
+async function syncGroupStatsFromMigrate(ctx, config) {
+  const msg = ctx.message;
+  if (!msg) return;
+
+  const oldId = msg.migrate_from_chat_id != null ? Number(msg.migrate_from_chat_id) : null;
+  const newIdFromOld = msg.migrate_to_chat_id != null ? Number(msg.migrate_to_chat_id) : null;
+
+  // 旧群消息：migrate_to_chat_id = 新超级群 id；chat.id = 旧 id
+  // 新群消息：migrate_from_chat_id = 旧群 id；chat.id = 新 id
+  let oldChatId = null;
+  let newChatId = null;
+  if (Number.isFinite(newIdFromOld)) {
+    oldChatId = Number(ctx.chat?.id);
+    newChatId = newIdFromOld;
+  } else if (Number.isFinite(oldId)) {
+    oldChatId = oldId;
+    newChatId = Number(ctx.chat?.id);
+  } else {
+    return;
+  }
+
+  if (!Number.isFinite(oldChatId) || !Number.isFinite(newChatId) || oldChatId === newChatId) {
+    return;
+  }
+
+  tgGroupStatsLog('migrate_detected', {
+    oldChatId,
+    newChatId,
+    title: ctx.chat?.title ?? null,
+  });
+
+  clearScheduledResyncs(oldChatId);
+
+  const leaveRes = await postTgStatsGroupLeave({
+    apiBaseUrl: config.API_BASE_URL,
+    appUrl: config.APP_URL,
+    auth: config.MOZI_DETAIL_AUTH || '',
+    groups: [{ groupId: oldChatId }],
+    path: config.TG_GROUP_LEAVE_PATH,
+  });
+  tgGroupStatsLog('migrate_leave_old', {
+    oldChatId,
+    httpStatus: leaveRes.status,
+    ok: leaveRes.ok,
+  });
+  markScheduleGroupBotLeft(oldChatId);
+
+  await syncGroupStatsForChatId(ctx.telegram, config, newChatId, 'migrate_to_supergroup');
+}
+
 module.exports = {
   collectGroupStatsRow,
   syncGroupStatsForChatId,
@@ -391,6 +446,7 @@ module.exports = {
   syncGroupStatsFromLeave,
   syncGroupStatsFromChatUpdate,
   syncGroupStatsFromMemberChange,
+  syncGroupStatsFromMigrate,
   scheduleGroupStatsResyncAfterJoin,
   clearScheduledResyncs,
 };

@@ -66,10 +66,13 @@ function normalizeJoinVerifyGroups(items) {
     .map((item) => {
       const groupId = Number(item.groupId);
       if (!Number.isFinite(groupId)) return null;
+      // status=0：Bot 已退群 / 后端标记失效，列表里不展示（避免同名「幽灵群」）
+      if (item.status != null && Number(item.status) === 0) return null;
       const jv = parseJoinVerifyFields(item);
       return {
         groupId,
-        groupTitle: String(item.groupTitle || '').trim() || `群 ${groupId}`,
+        groupTitle: String(item.groupTitle || item.title || '').trim() || `群 ${groupId}`,
+        status: item.status == null ? null : Number(item.status),
         ...jv,
       };
     })
@@ -77,6 +80,53 @@ function normalizeJoinVerifyGroups(items) {
     .sort(
       (a, b) => String(a.groupTitle).localeCompare(String(b.groupTitle)) || a.groupId - b.groupId,
     );
+}
+
+/** 同名群在文案/按钮上加 ID 后缀，避免看起来像重复 */
+function displayTitleForGroup(g, groups) {
+  const base = String(g.groupTitle || g.groupId);
+  const sameNameCount = (groups || []).filter(
+    (x) => String(x.groupTitle || '') === String(g.groupTitle || ''),
+  ).length;
+  if (sameNameCount <= 1) return base.slice(0, 22);
+  const idHint = String(Math.abs(Number(g.groupId))).slice(-6);
+  return `${base.slice(0, 14)}·${idHint}`;
+}
+
+/**
+ * 同名时探测 Bot 是否仍在群内；不在则丢掉（升级超级群 / 删群后的旧 groupId）
+ * @param {import('telegraf').Telegram} telegram
+ * @param {object[]} groups
+ */
+async function dropUnreachableDuplicateTitles(telegram, groups) {
+  if (!telegram || !Array.isArray(groups) || groups.length < 2) return groups;
+
+  const titleCount = new Map();
+  for (const g of groups) {
+    const t = String(g.groupTitle || '');
+    titleCount.set(t, (titleCount.get(t) || 0) + 1);
+  }
+  const dupTitles = new Set([...titleCount.entries()].filter(([, n]) => n > 1).map(([t]) => t));
+  if (dupTitles.size === 0) return groups;
+
+  const kept = [];
+  for (const g of groups) {
+    if (!dupTitles.has(String(g.groupTitle || ''))) {
+      kept.push(g);
+      continue;
+    }
+    try {
+      await telegram.getChat(g.groupId);
+      kept.push(g);
+    } catch (err) {
+      jvSettingsLog('list.drop_unreachable', {
+        groupId: g.groupId,
+        groupTitle: g.groupTitle,
+        message: err?.message || String(err),
+      });
+    }
+  }
+  return kept;
 }
 
 function modeLabel(mode, texts) {
@@ -91,7 +141,7 @@ function buildJoinVerifyListText(texts, groups) {
   }
   const lines = groups.map((g) =>
     texts.joinVerifySettingsGroupLine(
-      escapeHtml(g.groupTitle),
+      escapeHtml(displayTitleForGroup(g, groups)),
       g.joinVerifyEnabled === 1,
       g.joinVerifyMode,
       g.joinVerifyTimeoutSec,
@@ -102,7 +152,7 @@ function buildJoinVerifyListText(texts, groups) {
 
 function buildJoinVerifyListKeyboard(texts, groups) {
   const rows = groups.map((g) => {
-    const title = String(g.groupTitle || g.groupId).slice(0, 18);
+    const title = displayTitleForGroup(g, groups).slice(0, 22);
     const mark = g.joinVerifyEnabled === 1 ? '✅' : '⬜';
     return [Markup.button.callback(`${mark} ${title}`, `jv:g:${g.groupId}`)];
   });
@@ -350,7 +400,10 @@ async function renderJoinVerifyListPanel(ctx, config, getTexts, opts = {}) {
     return;
   }
 
-  const groups = normalizeJoinVerifyGroups(remote.items);
+  const groups = await dropUnreachableDuplicateTitles(
+    ctx.telegram,
+    normalizeJoinVerifyGroups(remote.items),
+  );
   jvSettingsLog('list.render', {
     count: groups.length,
     rows: groups.map((g) => ({
