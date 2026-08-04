@@ -7,15 +7,17 @@ function sessionKey(chatId, userId) {
   return `${String(chatId)}:${String(userId)}`;
 }
 
+/**
+ * 取会话（不过期自动删除）。
+ * 过期判定留给 timeout 回调 / 按钮处理：若在 get 时因 expireAt 清掉 session，
+ * 会顺带 clearTimeout，导致超时踢人永远不会执行。
+ */
 function getJoinVerifySession(chatId, userId) {
-  const key = sessionKey(chatId, userId);
-  const session = sessions.get(key);
-  if (!session) return null;
-  if (Date.now() > session.expireAt) {
-    clearJoinVerifySession(chatId, userId);
-    return null;
-  }
-  return session;
+  return sessions.get(sessionKey(chatId, userId)) || null;
+}
+
+function isJoinVerifySessionExpired(session) {
+  return !session || Date.now() > Number(session.expireAt || 0);
 }
 
 function saveJoinVerifySession(chatId, userId, data) {
@@ -47,6 +49,7 @@ function hasJoinVerifySession(chatId, userId) {
 module.exports = {
   sessionKey,
   getJoinVerifySession,
+  isJoinVerifySessionExpired,
   saveJoinVerifySession,
   patchJoinVerifySession,
   clearJoinVerifySession,

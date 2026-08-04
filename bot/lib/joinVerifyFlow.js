@@ -12,6 +12,7 @@ const { fetchJoinVerifyConfig } = require('./joinVerifyConfig');
 const { buildCryptoCaptchaChallenge } = require('./joinVerifyCryptoQuiz');
 const {
   getJoinVerifySession,
+  isJoinVerifySessionExpired,
   saveJoinVerifySession,
   patchJoinVerifySession,
   clearJoinVerifySession,
@@ -466,7 +467,11 @@ async function failJoinVerify(telegram, config, getTexts, chatId, userId, reason
 }
 
 async function handleJoinVerifyTimeout(telegram, config, getTexts, chatId, userId) {
-  if (!getJoinVerifySession(chatId, userId)) return;
+  const session = getJoinVerifySession(chatId, userId);
+  if (!session) {
+    joinVerifyLog(config, 'timeout_skip_no_session', { chatId, userId });
+    return;
+  }
   await failJoinVerify(telegram, config, getTexts, chatId, userId, 'timeout');
 }
 
@@ -555,6 +560,13 @@ async function handleJoinVerifyCallback(ctx, config, getTexts) {
   const session = getJoinVerifySession(chatId, userId);
   if (!session) {
     await ctx.answerCbQuery(texts.joinVerifyExpired, { show_alert: true }).catch(() => {});
+    return { handled: true };
+  }
+
+  // 已过期：不允许再通过，走超时踢出（避免与 timer 竞态时漏踢）
+  if (isJoinVerifySessionExpired(session)) {
+    await ctx.answerCbQuery(texts.joinVerifyExpired, { show_alert: true }).catch(() => {});
+    await failJoinVerify(ctx.telegram, config, getTexts, chatId, userId, 'timeout');
     return { handled: true };
   }
 
