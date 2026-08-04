@@ -408,11 +408,25 @@ async function passJoinVerify(telegram, config, getTexts, chatId, userId) {
   const groupTitle = escapeHtml(session.groupTitle || String(chatId));
 
   try {
-    await telegram.sendMessage(
+    const welcomeMsg = await telegram.sendMessage(
       chatId,
       texts.joinVerifyPassedWelcomeHtml(mentionHtml(user), groupTitle),
       { parse_mode: 'HTML' },
     );
+    const welcomeMsgId = welcomeMsg?.message_id;
+    if (welcomeMsgId != null) {
+      joinVerifyLog(config, 'welcome_scheduled_delete', {
+        chatId,
+        userId,
+        welcomeMsgId,
+        delaySec: 60,
+      });
+      setTimeout(() => {
+        safeDeleteMessage(telegram, chatId, welcomeMsgId).then(() => {
+          joinVerifyLog(config, 'welcome_deleted', { chatId, userId, welcomeMsgId });
+        });
+      }, 60 * 1000);
+    }
   } catch (err) {
     joinVerifyLog(config, 'welcome_failed', {
       chatId,
