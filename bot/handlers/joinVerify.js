@@ -6,6 +6,7 @@
 
 const {
   handleNewChatMembersMessage,
+  handleLeftChatMemberMessage,
   handleChatMemberUpdate,
   handleJoinVerifyCallback,
 } = require('../lib/joinVerifyFlow');
@@ -21,6 +22,14 @@ function registerJoinVerify(bot, config, { getTexts }) {
       await handleNewChatMembersMessage(ctx, config, getTexts);
     } catch (err) {
       console.error('[JOIN_VERIFY] new_chat_members error', err?.message || err);
+    }
+  });
+
+  bot.on('left_chat_member', async (ctx) => {
+    try {
+      await handleLeftChatMemberMessage(ctx, config);
+    } catch (err) {
+      console.error('[JOIN_VERIFY] left_chat_member error', err?.message || err);
     }
   });
 

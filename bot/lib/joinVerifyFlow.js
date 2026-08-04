@@ -256,8 +256,19 @@ async function startJoinVerify(telegram, config, getTexts, chat, user, languageC
   const userId = user.id;
   const lockKey = `${chatId}:${userId}`;
 
-  if (hasJoinVerifySession(chatId, userId) || startingKeys.has(lockKey)) {
-    joinVerifyLog(config, 'skip_duplicate', { chatId, userId });
+  const existing = getJoinVerifySession(chatId, userId);
+  if (existing) {
+    if (!isJoinVerifySessionExpired(existing)) {
+      joinVerifyLog(config, 'skip_duplicate', { chatId, userId });
+      return;
+    }
+    // 过期残留（例如退群事件丢失）：清掉后允许重新开局
+    clearJoinVerifySession(chatId, userId);
+    joinVerifyLog(config, 'clear_stale_expired', { chatId, userId });
+  }
+
+  if (startingKeys.has(lockKey)) {
+    joinVerifyLog(config, 'skip_duplicate', { chatId, userId, reason: 'starting' });
     return;
   }
   startingKeys.add(lockKey);
@@ -580,6 +591,19 @@ async function handleJoinVerifyCallback(ctx, config, getTexts) {
   return { handled: true };
 }
 
+/**
+ * 未验证就退群：清掉进行中的 session，否则再进会被 skip_duplicate，不再发验证。
+ */
+async function cancelJoinVerifyOnLeave(telegram, config, chatId, userId) {
+  const session = getJoinVerifySession(chatId, userId);
+  if (!session) return;
+
+  const promptMessageId = session.promptMessageId;
+  clearJoinVerifySession(chatId, userId);
+  await safeDeleteMessage(telegram, chatId, promptMessageId);
+  joinVerifyLog(config, 'cancelled_left', { chatId, userId });
+}
+
 async function handleNewChatMembersMessage(ctx, config, getTexts) {
   const chat = ctx.chat;
   if (!isGroupChat(chat)) return;
@@ -599,6 +623,14 @@ async function handleNewChatMembersMessage(ctx, config, getTexts) {
   }
 }
 
+async function handleLeftChatMemberMessage(ctx, config) {
+  const chat = ctx.chat;
+  if (!isGroupChat(chat)) return;
+  const member = ctx.message?.left_chat_member;
+  if (!member?.id || member.is_bot) return;
+  await cancelJoinVerifyOnLeave(ctx.telegram, config, chat.id, member.id);
+}
+
 async function handleChatMemberUpdate(ctx, config, getTexts) {
   const upd = ctx.chatMember || ctx.update?.chat_member;
   if (!upd) return;
@@ -613,6 +645,17 @@ async function handleChatMemberUpdate(ctx, config, getTexts) {
 
   if (!user || user.is_bot) return;
   if (newStatus === 'administrator' || newStatus === 'creator') return;
+
+  // 验证中退群 / 被踢：取消进行中的验证（含 timer），允许再次入群时重新验证
+  const wasIn =
+    oldStatus === 'member' ||
+    oldStatus === 'restricted' ||
+    oldStatus === 'administrator';
+  const isOut = newStatus === 'left' || newStatus === 'kicked';
+  if (wasIn && isOut) {
+    await cancelJoinVerifyOnLeave(ctx.telegram, config, chat.id, user.id);
+    return;
+  }
 
   const wasOut = oldStatus === 'left' || oldStatus === 'kicked';
   const isIn = newStatus === 'member' || newStatus === 'restricted';
@@ -634,6 +677,7 @@ module.exports = {
   failJoinVerify,
   handleJoinVerifyCallback,
   handleNewChatMembersMessage,
+  handleLeftChatMemberMessage,
   handleChatMemberUpdate,
   buildChallenge,
   buildQuizChallenge,
