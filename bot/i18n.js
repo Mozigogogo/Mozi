@@ -342,7 +342,7 @@ const i18n = {
     joinVerifyFailToast: '验证失败，已达上限',
     joinVerifyRetryToast: (left) => `答错了，还可再试 ${left} 次`,
     joinVerifyPassedWelcomeHtml: (mention, groupTitle) =>
-      `🎉 欢迎 ${mention} 加入 <b>${groupTitle}</b>！\n\n可发送 <code>/help</code> 查看 Bot 功能，或私聊 Bot 发送 <code>/start</code> 打开 Mini App。`,
+      `🎉 欢迎 ${mention} 加入 <b>${groupTitle}</b>！`,
     joinVerifyFailedHtml: (mention) => `❌ ${mention} 验证失败，已移出本群。`,
     joinVerifyBannedHtml: (mention, sec) =>
       `❌ ${mention} 验证失败次数过多，已临时封禁 <b>${Math.ceil(sec / 60)}</b> 分钟。`,
@@ -806,7 +806,7 @@ const i18n = {
     joinVerifyFailToast: 'Verification failed (max attempts)',
     joinVerifyRetryToast: (left) => `Wrong answer. ${left} attempt(s) left`,
     joinVerifyPassedWelcomeHtml: (mention, groupTitle) =>
-      `🎉 Welcome ${mention} to <b>${groupTitle}</b>!\n\nSend <code>/help</code> to see bot commands, or DM the bot with <code>/start</code> to open the Mini App.`,
+      `🎉 Welcome ${mention} to <b>${groupTitle}</b>!`,
     joinVerifyFailedHtml: (mention) => `❌ ${mention} failed verification and was removed.`,
     joinVerifyBannedHtml: (mention, sec) =>
       `❌ ${mention} failed too many times and is temporarily banned for <b>${Math.ceil(sec / 60)}</b> min.`,
