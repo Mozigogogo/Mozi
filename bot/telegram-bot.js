@@ -63,7 +63,7 @@ initTgChatRegisterWatcher(bot, config);
 initGuessSettlementWatcher(bot, config);
 initPredictAutoPublishScheduler(bot, config);
 initCommandUsageFlushScheduler(config);
-registerTgGroupStats(bot, config);
+registerTgGroupStats(bot, config, i18nApi);
 
 const i18nApi = { getTexts };
 registerJoinVerify(bot, config, i18nApi);

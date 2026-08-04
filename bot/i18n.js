@@ -17,6 +17,13 @@ const i18n = {
       `• 设置为管理员\n` +
       `• 在机器人私聊中发送 <code>/start</code> 启动MiniApp。\n\n` +
       `<code>/help</code> 查看我的功能`,
+    groupBotAddedGuideHtml: (botUsername) =>
+      `👋 <b>欢迎使用@${botUsername}</b>\n\n` +
+      `1) 请将我设置为管理员，否则我无法回复命令，` +
+      `请至少赋予以下权限：\n` +
+      `- 删除消息\n` +
+      `- 封禁成员\n\n` +
+      `2) 在机器人私聊中发送 <code>/start</code> 打开 Mini App。`,
     openApp: '🚀 打开 MozInnovations',
     joinCommunity: '💬 加入社区',
     followX: '🐦 关注 X',
@@ -477,6 +484,13 @@ const i18n = {
       `• Promote it to admin\n` +
       `• Send <code>/start</code> in a private chat with the bot to launch the Mini App.\n\n` +
       `<code>/help</code> View all commands`,
+    groupBotAddedGuideHtml: (botUsername) =>
+      `👋 <b>Welcome @${botUsername} (admin reminder)</b>\n\n` +
+      `1) Please promote me to admin. Otherwise I may not be able to respond to commands. ` +
+      `Grant at least these permissions:\n` +
+      `- Delete messages\n` +
+      `- Ban members\n\n` +
+      `2) Send <code>/start</code> in a private chat with the bot to open the Mini App.`,
     openApp: '🚀 Open MozInnovations',
     joinCommunity: '💬 Join Community',
     followX: '🐦 Follow X',

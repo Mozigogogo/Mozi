@@ -12,12 +12,44 @@ const {
   syncGroupStatsFromMigrate,
 } = require('../lib/tgGroupStats');
 const { tgGroupStatsLog } = require('../lib/tgGroupStatsLog');
+const { parseBotJoinFromMyChatMember } = require('../lib/groupReferrer');
+const { buildMiniAppUrlWithInvite } = require('../lib/invite');
 
-function registerTgGroupStats(bot, config) {
+function registerTgGroupStats(bot, config, { getTexts } = {}) {
   bot.on('my_chat_member', async (ctx) => {
     try {
+      const join = parseBotJoinFromMyChatMember(ctx.myChatMember);
       await syncGroupStatsFromLeave(ctx, config);
       await syncGroupStatsFromJoin(ctx, config);
+
+      // Bot 真正“加入群”时发送管理提醒（带 Mini App 跳转按钮）
+      if (join && typeof getTexts === 'function') {
+        try {
+          const languageCode = ctx.from?.language_code || 'en';
+          const texts = getTexts(languageCode);
+          const appUrl = buildMiniAppUrlWithInvite(config.APP_URL);
+          const replyMarkup = {
+            inline_keyboard: [
+              [
+                {
+                  text: texts.openApp,
+                  web_app: { url: appUrl },
+                },
+              ],
+            ],
+          };
+
+          await ctx.telegram.sendMessage(join.chatId, texts.groupBotAddedGuideHtml(config.BOT_USERNAME), {
+            parse_mode: 'HTML',
+            reply_markup: replyMarkup,
+          });
+        } catch (err) {
+          tgGroupStatsLog('bot_added_send_guide_failed', {
+            chatId: join.chatId,
+            message: err?.message || String(err),
+          });
+        }
+      }
     } catch (err) {
       tgGroupStatsLog('handler_error', {
         event: 'my_chat_member',
