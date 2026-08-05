@@ -307,6 +307,9 @@ const WORD_FILTER_LOG = !/^0|false|no$/i.test(
   String(process.env.WORD_FILTER_LOG ?? '1').trim(),
 );
 
+/** 禁止群内发送任意链接（始终开启）；命中后走同一套封禁梯度（删消息/警告/禁言/踢出） */
+const WORD_FILTER_BLOCK_LINKS = true;
+
 /** 定时自动发布默认币种 */
 const PREDICT_AUTO_PUBLISH_SYMBOL = (
   process.env.PREDICT_AUTO_PUBLISH_SYMBOL || 'BTC'
@@ -382,6 +385,7 @@ module.exports = {
   WORD_FILTER_RESET_DAYS,
   WORD_FILTER_ENABLED,
   WORD_FILTER_LOG,
+  WORD_FILTER_BLOCK_LINKS,
   PREDICT_AUTO_PUBLISH_SYMBOL,
   PREDICT_AUTO_PUBLISH_TIME,
   PREDICT_AUTO_PUBLISH_ENABLED,

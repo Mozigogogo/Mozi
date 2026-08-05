@@ -11,6 +11,7 @@ const {
   postTgStatsGroupSave,
   getTgStatsGroupGet,
   parseJoinVerifyFields,
+  postTgStatsGroupLeave,
 } = require('./apis');
 const { ensureTgUserToken } = require('./tgUserTokenCache');
 const { buildTelegramLoginOptsFromCtx } = require('./datainfoPoints');
@@ -94,11 +95,14 @@ function displayTitleForGroup(g, groups) {
 }
 
 /**
- * 同名时探测 Bot 是否仍在群内；不在则丢掉（升级超级群 / 删群后的旧 groupId）
+ * 同名时：用 getChatMember 检查 Bot 是否真的在群里。
+ * getChat 对已退群的旧 groupId 在 Bot 曾是管理员时可能仍成功，不可信。
+ * 不在的旧 groupId 同时调 group/leave 让后端标废，下次拉列表就干净了。
  * @param {import('telegraf').Telegram} telegram
  * @param {object[]} groups
+ * @param {object} [config]
  */
-async function dropUnreachableDuplicateTitles(telegram, groups) {
+async function dropUnreachableDuplicateTitles(telegram, groups, config) {
   if (!telegram || !Array.isArray(groups) || groups.length < 2) return groups;
 
   const titleCount = new Map();
@@ -109,21 +113,63 @@ async function dropUnreachableDuplicateTitles(telegram, groups) {
   const dupTitles = new Set([...titleCount.entries()].filter(([, n]) => n > 1).map(([t]) => t));
   if (dupTitles.size === 0) return groups;
 
+  let botId = null;
+  try {
+    const me = await telegram.getMe();
+    botId = me?.id ?? null;
+  } catch {
+    /* ignore */
+  }
+
   const kept = [];
   for (const g of groups) {
     if (!dupTitles.has(String(g.groupTitle || ''))) {
       kept.push(g);
       continue;
     }
+    let inGroup = false;
     try {
-      await telegram.getChat(g.groupId);
+      if (botId != null) {
+        const member = await telegram.getChatMember(g.groupId, botId);
+        const status = member?.status;
+        inGroup = status === 'member' || status === 'administrator' || status === 'restricted';
+      } else {
+        await telegram.getChat(g.groupId);
+        inGroup = true;
+      }
+    } catch {
+      inGroup = false;
+    }
+
+    if (inGroup) {
       kept.push(g);
-    } catch (err) {
+    } else {
       jvSettingsLog('list.drop_unreachable', {
         groupId: g.groupId,
         groupTitle: g.groupTitle,
-        message: err?.message || String(err),
+        reason: 'bot_not_in_group',
       });
+      // 顺手调 leave 让后端标废，下次拉列表就不会再带这条
+      if (config) {
+        postTgStatsGroupLeave({
+          apiBaseUrl: config.API_BASE_URL,
+          appUrl: config.APP_URL,
+          auth: config.MOZI_DETAIL_AUTH || '',
+          path: config.TG_GROUP_LEAVE_PATH,
+          groups: [{ groupId: g.groupId }],
+        }).then((res) => {
+          jvSettingsLog('list.leave_stale', {
+            groupId: g.groupId,
+            ok: res.ok,
+            httpStatus: res.status,
+          });
+        }).catch((err) => {
+          jvSettingsLog('list.leave_stale_error', {
+            groupId: g.groupId,
+            message: err?.message || String(err),
+          });
+        });
+      }
     }
   }
   return kept;
@@ -412,6 +458,7 @@ async function renderJoinVerifyListPanel(ctx, config, getTexts, opts = {}) {
   const groups = await dropUnreachableDuplicateTitles(
     ctx.telegram,
     normalizeJoinVerifyGroups(remote.items),
+    config,
   );
   jvSettingsLog('list.render', {
     count: groups.length,

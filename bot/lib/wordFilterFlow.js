@@ -70,6 +70,57 @@ function messageText(ctx) {
   return ctx.message?.text || ctx.message?.caption || '';
 }
 
+function detectLinkFromEntities(ctx) {
+  const msg = ctx?.message;
+  const text = msg?.text || msg?.caption || '';
+  if (!String(text).trim()) return null;
+
+  const entities = msg?.entities || msg?.caption_entities;
+  if (!Array.isArray(entities) || !entities.length) return null;
+
+  for (const e of entities) {
+    if (!e || typeof e !== 'object') continue;
+    const type = e.type;
+    if (type === 'text_link' && e.url) return String(e.url);
+    if (type === 'url' && Number.isFinite(e.offset) && Number.isFinite(e.length)) {
+      return String(text).slice(e.offset, e.offset + e.length);
+    }
+  }
+  return null;
+}
+
+function detectLinkFromText(text) {
+  const raw = String(text || '');
+  if (!raw.trim()) return null;
+
+  // 优先匹配带 scheme 的 URL
+  const schemeMatch = raw.match(/\b(?:https?:\/\/|ftp:\/\/)[^\s<>()]+/i);
+  if (schemeMatch?.[0]) return schemeMatch[0];
+
+  // 再匹配常见短链/域名写法
+  const wwwMatch = raw.match(/\bwww\.[^\s<>()]+/i);
+  if (wwwMatch?.[0]) return wwwMatch[0];
+
+  const tMeMatch = raw.match(/\b(?:t\.me|telegram\.me)\/[^\s<>()]+/i);
+  if (tMeMatch?.[0]) return tMeMatch[0];
+
+  // 最后尝试匹配纯域名（带 TLD）
+  // 保守一点：要求至少有 / 或整体长度较长，减少误杀币对/缩写
+  const domainMatch = raw.match(/\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<>()]*)?\b/i);
+  if (domainMatch?.[0]) {
+    const v = domainMatch[0];
+    if (v.includes('/') || v.length >= 12) return v;
+  }
+
+  return null;
+}
+
+function detectAnyLink(ctx) {
+  const fromEntity = detectLinkFromEntities(ctx);
+  if (fromEntity) return fromEntity;
+  return detectLinkFromText(messageText(ctx));
+}
+
 async function isPrivilegedMember(telegram, chatId, userId) {
   try {
     const m = await telegram.getChatMember(chatId, userId);
@@ -201,14 +252,26 @@ async function handleGroupWordFilter(ctx, config, getTexts) {
 
   const chatId = chat.id;
   const userId = user.id;
-  const words = await fetchModerationKeywords(config, chatId);
-  if (!words.length) return { handled: false };
 
-  const hitWord = matchBannedWord(text, words);
+  // 1) 链接命中（任意链接禁止）
+  let hitWord = null;
+  const shouldBlockLinks = Boolean(config.WORD_FILTER_BLOCK_LINKS);
+  if (shouldBlockLinks) {
+    hitWord = detectAnyLink(ctx);
+  }
+
+  // 2) 关键词命中（如果没命中链接）
+  if (!hitWord) {
+    const words = await fetchModerationKeywords(config, chatId);
+    if (words.length) {
+      hitWord = matchBannedWord(text, words);
+    }
+  }
+
   if (!hitWord) return { handled: false };
 
   if (await isPrivilegedMember(ctx.telegram, chatId, userId)) {
-    wordFilterLog(config, 'skip_admin', { chatId, userId, word: hitWord });
+    wordFilterLog(config, 'skip_admin', { chatId, userId, word: String(hitWord).slice(0, 80) });
     return { handled: false };
   }
 
@@ -224,7 +287,7 @@ async function handleGroupWordFilter(ctx, config, getTexts) {
   wordFilterLog(config, 'hit', {
     chatId,
     userId,
-    word: hitWord,
+    word: String(hitWord).slice(0, 80),
     count,
     source,
     reportOk,
