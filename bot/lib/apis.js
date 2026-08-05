@@ -2464,6 +2464,177 @@ async function getModerationKeywordsList({
   }
 }
 
+function isModerationBizOk(json) {
+  if (json == null || typeof json !== 'object') return true;
+  if (json.success === false || json.success === 0) return false;
+  if (json.success === true || json.success === 1) return true;
+  if (json.code == null) return true;
+  const code = Number(json.code);
+  return code === 0 || code === 200;
+}
+
+/**
+ * POST /tg/stats/moderation/violation/report
+ * @param {{
+ *   apiBaseUrl: string;
+ *   groupId: string | number;
+ *   telegramId: string | number;
+ *   auth?: string;
+ *   appUrl?: string;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ */
+async function postModerationViolationReport({
+  apiBaseUrl,
+  groupId,
+  telegramId,
+  auth = '',
+  appUrl = '',
+  path = 'tg/stats/moderation/violation/report',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'tg/stats/moderation/violation/report').trim().replace(/^\/+/, '');
+  const url = `${base}/${rel}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'content-type': 'application/json',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+  if (rawAuth) headers.authentication = rawAuth;
+  if (app) headers.referer = `${app}/`;
+
+  const body = {
+    groupId: Number(groupId),
+    telegramId: String(telegramId),
+  };
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const data =
+      json && typeof json === 'object' && json.data && typeof json.data === 'object'
+        ? json.data
+        : null;
+    const out = {
+      ok: res.ok && isModerationBizOk(json),
+      status: res.status,
+      json,
+      text,
+      record: data,
+      errorMessage: res.ok ? null : text.slice(0, 300) || `HTTP ${res.status}`,
+    };
+    apiDebug('POST /tg/stats/moderation/violation/report →', {
+      groupId: body.groupId,
+      telegramId: body.telegramId,
+      httpStatus: res.status,
+      ok: out.ok,
+      recordId: data?.id ?? null,
+      bodyPreview: text.slice(0, 400),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
+ * GET /tg/stats/moderation/violation/count?groupId=&telegramId=
+ * 固定近 7 天窗口
+ * @param {{
+ *   apiBaseUrl: string;
+ *   groupId: string | number;
+ *   telegramId: string | number;
+ *   auth?: string;
+ *   appUrl?: string;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ */
+async function getModerationViolationCount({
+  apiBaseUrl,
+  groupId,
+  telegramId,
+  auth = '',
+  appUrl = '',
+  path = 'tg/stats/moderation/violation/count',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'tg/stats/moderation/violation/count').trim().replace(/^\/+/, '');
+  const params = new URLSearchParams({
+    groupId: String(groupId),
+    telegramId: String(telegramId),
+  });
+  const url = `${base}/${rel}?${params.toString()}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+  if (rawAuth) headers.authentication = rawAuth;
+  if (app) headers.referer = `${app}/`;
+
+  try {
+    const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const data =
+      json && typeof json === 'object' && json.data && typeof json.data === 'object'
+        ? json.data
+        : null;
+    const violationCount = Number(data?.violationCount);
+    const out = {
+      ok: res.ok && isModerationBizOk(json),
+      status: res.status,
+      json,
+      text,
+      violationCount: Number.isFinite(violationCount) ? Math.max(0, Math.floor(violationCount)) : null,
+      windowDays: data?.windowDays != null ? Number(data.windowDays) : 7,
+      errorMessage: res.ok ? null : text.slice(0, 300) || `HTTP ${res.status}`,
+    };
+    apiDebug('GET /tg/stats/moderation/violation/count →', {
+      groupId: String(groupId),
+      telegramId: String(telegramId),
+      httpStatus: res.status,
+      ok: out.ok,
+      violationCount: out.violationCount,
+      bodyPreview: text.slice(0, 400),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // --- POST /tg/stats/group/leave（Bot 上报退群）--------------------------------
 
 /**
@@ -4232,6 +4403,8 @@ module.exports = {
   getTgStatsGroupGet,
   getModerationKeywordsList,
   parseModerationKeywordsList,
+  postModerationViolationReport,
+  getModerationViolationCount,
   parseTgStatsGroupListItem,
   parseJoinVerifyFields,
   postTgStatsCommand,

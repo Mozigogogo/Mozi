@@ -262,6 +262,20 @@ const TG_MODERATION_KEYWORDS_LIST_PATH = (
   .trim()
   .replace(/^\/+/, '');
 
+/** POST 违规上报 */
+const TG_MODERATION_VIOLATION_REPORT_PATH = (
+  process.env.TG_MODERATION_VIOLATION_REPORT_PATH || 'tg/stats/moderation/violation/report'
+)
+  .trim()
+  .replace(/^\/+/, '');
+
+/** GET 近 7 天违规次数 */
+const TG_MODERATION_VIOLATION_COUNT_PATH = (
+  process.env.TG_MODERATION_VIOLATION_COUNT_PATH || 'tg/stats/moderation/violation/count'
+)
+  .trim()
+  .replace(/^\/+/, '');
+
 /** 违禁词列表进程内缓存 TTL（毫秒），默认 60s */
 const WORD_FILTER_KEYWORDS_CACHE_MS = Math.max(
   0,
@@ -275,6 +289,12 @@ const WORD_FILTER_MUTE_SEC = Math.max(
     31_536_000,
     parseInt(process.env.WORD_FILTER_MUTE_SEC || '86400', 10) || 86_400,
   ),
+);
+
+/** 违禁次数清零周期（天），默认 7；距上次违规满 N 天再犯从第 1 次重算 */
+const WORD_FILTER_RESET_DAYS = Math.max(
+  1,
+  Math.min(365, parseInt(process.env.WORD_FILTER_RESET_DAYS || '7', 10) || 7),
 );
 
 /** 违禁词过滤开关，默认开启；WORD_FILTER_ENABLED=0 关闭 */
@@ -355,8 +375,11 @@ module.exports = {
   JOIN_VERIFY_CONFIG_CACHE_MS,
   JOIN_VERIFY_LOG,
   TG_MODERATION_KEYWORDS_LIST_PATH,
+  TG_MODERATION_VIOLATION_REPORT_PATH,
+  TG_MODERATION_VIOLATION_COUNT_PATH,
   WORD_FILTER_KEYWORDS_CACHE_MS,
   WORD_FILTER_MUTE_SEC,
+  WORD_FILTER_RESET_DAYS,
   WORD_FILTER_ENABLED,
   WORD_FILTER_LOG,
   PREDICT_AUTO_PUBLISH_SYMBOL,
