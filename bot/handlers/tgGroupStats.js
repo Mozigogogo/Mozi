@@ -18,27 +18,40 @@ const { buildMiniAppUrlWithInvite } = require('../lib/invite');
 
 const BOT_JOIN_OLD = new Set(['left', 'kicked']);
 const BOT_JOIN_NEW = new Set(['member', 'administrator']);
+/** 已在群内的状态：升/降管理员不应再打招呼 */
+const BOT_ALREADY_IN = new Set(['member', 'administrator', 'restricted']);
 
-/** 同一群短时内只发一次打招呼（my_chat_member + new_chat_members 可能都到） */
-const recentGuideAt = new Map();
-const GUIDE_DEDUP_MS = 15_000;
+/**
+ * 打招呼冷却：进群发过后 N 分钟内同群不再发。
+ * 覆盖「设管理员时 Telegram 先踢再加」导致的二次进群事件。
+ */
+const greetedUntil = new Map();
+const GUIDE_COOLDOWN_MS = 10 * 60 * 1000;
 
-function shouldSendGuide(chatId) {
-  const key = String(chatId);
-  const now = Date.now();
-  const prev = recentGuideAt.get(key) || 0;
-  if (now - prev < GUIDE_DEDUP_MS) return false;
-  recentGuideAt.set(key, now);
+function markGuideSent(chatId) {
+  greetedUntil.set(String(chatId), Date.now() + GUIDE_COOLDOWN_MS);
+}
+
+function alreadyGreeted(chatId) {
+  const until = greetedUntil.get(String(chatId)) || 0;
+  if (Date.now() >= until) {
+    greetedUntil.delete(String(chatId));
+    return false;
+  }
   return true;
 }
 
-/** 仅判断 Bot 是否刚进群（不依赖拉群人 id） */
+/**
+ * 仅「从群外进入」才算刚进群。
+ * 排除：member → administrator（设为管理员）等已在群内的身份变更。
+ */
 function isBotJustJoined(mcm) {
   if (!mcm?.chat) return false;
   const chatType = mcm.chat.type;
   if (chatType !== 'group' && chatType !== 'supergroup') return false;
   const oldStatus = mcm.old_chat_member?.status;
   const newStatus = mcm.new_chat_member?.status;
+  if (BOT_ALREADY_IN.has(oldStatus)) return false;
   return BOT_JOIN_OLD.has(oldStatus) && BOT_JOIN_NEW.has(newStatus);
 }
 
@@ -69,10 +82,12 @@ async function sendBotAddedGuide(ctx, config, getTexts, chatId) {
     console.warn('[BOT_ADDED_GUIDE] skip: getTexts missing');
     return;
   }
-  if (!shouldSendGuide(chatId)) {
-    console.log('[BOT_ADDED_GUIDE] skip_dedup', { chatId });
+  if (alreadyGreeted(chatId)) {
+    console.log('[BOT_ADDED_GUIDE] skip_already_greeted', { chatId });
     return;
   }
+  // 先占位，避免 my_chat_member + new_chat_members 并发各发一次
+  markGuideSent(chatId);
 
   const languageCode = ctx.from?.language_code || 'zh';
   const texts = getTexts(languageCode);
@@ -120,14 +135,35 @@ async function sendBotAddedGuide(ctx, config, getTexts, chatId) {
 function registerTgGroupStats(bot, config, { getTexts } = {}) {
   bot.on('my_chat_member', async (ctx) => {
     try {
-      const join = parseBotJoinFromMyChatMember(ctx.myChatMember);
-      const justJoined = isBotJustJoined(ctx.myChatMember);
+      const mcm = ctx.myChatMember;
+      const oldStatus = mcm?.old_chat_member?.status;
+      const newStatus = mcm?.new_chat_member?.status;
+      const join = parseBotJoinFromMyChatMember(mcm);
+      const justJoined = isBotJustJoined(mcm);
+
+      console.log('[BOT_ADDED_GUIDE] my_chat_member', {
+        chatId: mcm?.chat?.id ?? null,
+        oldStatus,
+        newStatus,
+        justJoined,
+        alreadyIn: BOT_ALREADY_IN.has(oldStatus),
+      });
 
       await syncGroupStatsFromLeave(ctx, config);
       await syncGroupStatsFromJoin(ctx, config);
 
+      // 已在群内升为管理员：绝不打招呼
+      if (BOT_ALREADY_IN.has(oldStatus) && newStatus === 'administrator') {
+        console.log('[BOT_ADDED_GUIDE] skip_promote_admin', {
+          chatId: mcm?.chat?.id ?? null,
+          oldStatus,
+          newStatus,
+        });
+        return;
+      }
+
       if (justJoined) {
-        const chatId = ctx.myChatMember?.chat?.id ?? join?.chatId;
+        const chatId = mcm?.chat?.id ?? join?.chatId;
         if (chatId != null) {
           await sendBotAddedGuide(ctx, config, getTexts, chatId);
         } else {
