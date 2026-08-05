@@ -1,5 +1,5 @@
 /**
- * /group：群配置中心
+ * /config：群配置中心
  * - 定时推送 AI 信号卡（原逻辑保留）
  * - 新成员入群验证配置
  */
@@ -22,6 +22,7 @@ const {
   handleJoinVerifyWelcomeTextInput,
   handleJoinVerifySetNumberField,
   handleJoinVerifyToggleBan,
+  handleJoinVerifyToggleWelcome,
 } = require('../lib/joinVerifySettingsFlow');
 const { tgGroupListLog } = require('../lib/tgGroupListDebug');
 
@@ -47,7 +48,7 @@ function registerPredictSchedule(bot, config, { getTexts }) {
     }
   };
 
-  bot.command('group', runGroupCommand);
+  bot.command('config', runGroupCommand);
 
   // 加密答题问题文案输入（优先于其他私聊文本中间件）
   bot.on('text', async (ctx, next) => {
@@ -205,6 +206,15 @@ function registerPredictSchedule(bot, config, { getTexts }) {
   bot.action(/^jv:ban:(-?\d+):(0|1)$/, async (ctx) => {
     try {
       await handleJoinVerifyToggleBan(ctx, config, getTexts, ctx.match[1], ctx.match[2] === '1');
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^jv:we:(-?\d+):(0|1)$/, async (ctx) => {
+    try {
+      await handleJoinVerifyToggleWelcome(ctx, config, getTexts, ctx.match[1], ctx.match[2] === '1');
     } catch {
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});

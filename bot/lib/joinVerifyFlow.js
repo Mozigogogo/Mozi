@@ -352,6 +352,7 @@ async function startJoinVerifyInner(telegram, config, getTexts, chat, user, lang
     maxFail: groupCfg.joinVerifyMaxFail,
     banEnabled: groupCfg.joinVerifyBanEnabled,
     banDurationSec: groupCfg.joinVerifyBanDurationSec,
+    welcomeEnabled: groupCfg.welcomeEnabled === 1 ? 1 : 0,
     customPrompt: groupCfg.joinVerifyWelcomeText,
     promptMessageId: promptMsg.message_id,
     languageCode: lang,
@@ -383,6 +384,7 @@ async function startJoinVerifyInner(telegram, config, getTexts, chat, user, lang
     timeoutSec,
     maxFail: groupCfg.joinVerifyMaxFail,
     banEnabled: groupCfg.joinVerifyBanEnabled,
+    welcomeEnabled: groupCfg.welcomeEnabled === 1 ? 1 : 0,
   });
 }
 
@@ -406,36 +408,42 @@ async function passJoinVerify(telegram, config, getTexts, chatId, userId) {
   const texts = getTexts(session.languageCode || 'en');
   const user = session.userSnapshot || { id: userId };
   const groupTitle = escapeHtml(session.groupTitle || String(chatId));
+  // 缺省开启（兼容旧会话 / 未配置字段）
+  const welcomeEnabled = session.welcomeEnabled == null ? 1 : Number(session.welcomeEnabled) ? 1 : 0;
 
-  try {
-    const welcomeMsg = await telegram.sendMessage(
-      chatId,
-      texts.joinVerifyPassedWelcomeHtml(mentionHtml(user), groupTitle),
-      { parse_mode: 'HTML' },
-    );
-    const welcomeMsgId = welcomeMsg?.message_id;
-    if (welcomeMsgId != null) {
-      joinVerifyLog(config, 'welcome_scheduled_delete', {
+  if (welcomeEnabled === 1) {
+    try {
+      const welcomeMsg = await telegram.sendMessage(
+        chatId,
+        texts.joinVerifyPassedWelcomeHtml(mentionHtml(user), groupTitle),
+        { parse_mode: 'HTML' },
+      );
+      const welcomeMsgId = welcomeMsg?.message_id;
+      if (welcomeMsgId != null) {
+        joinVerifyLog(config, 'welcome_scheduled_delete', {
+          chatId,
+          userId,
+          welcomeMsgId,
+          delaySec: 60,
+        });
+        setTimeout(() => {
+          safeDeleteMessage(telegram, chatId, welcomeMsgId).then(() => {
+            joinVerifyLog(config, 'welcome_deleted', { chatId, userId, welcomeMsgId });
+          });
+        }, 60 * 1000);
+      }
+    } catch (err) {
+      joinVerifyLog(config, 'welcome_failed', {
         chatId,
         userId,
-        welcomeMsgId,
-        delaySec: 60,
+        message: err?.message || String(err),
       });
-      setTimeout(() => {
-        safeDeleteMessage(telegram, chatId, welcomeMsgId).then(() => {
-          joinVerifyLog(config, 'welcome_deleted', { chatId, userId, welcomeMsgId });
-        });
-      }, 60 * 1000);
     }
-  } catch (err) {
-    joinVerifyLog(config, 'welcome_failed', {
-      chatId,
-      userId,
-      message: err?.message || String(err),
-    });
+  } else {
+    joinVerifyLog(config, 'welcome_skipped', { chatId, userId, welcomeEnabled: 0 });
   }
 
-  joinVerifyLog(config, 'passed', { chatId, userId });
+  joinVerifyLog(config, 'passed', { chatId, userId, welcomeEnabled });
   return { ok: true };
 }
 

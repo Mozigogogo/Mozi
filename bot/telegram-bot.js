@@ -6,7 +6,7 @@
  * /ai、/chat、/bigorder：统一 POST 主栈 /ai/agent/stream（type=analyze|chat|bigorder）；/ai、/chat 成功后扣积分
  * 群内 @Bot 自然语言：POST /ai/agent/route（handlers/agentMention.js）
  * /price：handlers/price.js + lib/apis.js（GET /detail/header，默认 BTC，简报格式）
- * /predict、/group：handlers/predict.js、handlers/predictSchedule.js（/group 群配置中心：定时推送 + 入群验证；每日自动发布见 lib/predictAutoPublishScheduler.js）
+ * /predict、/config：handlers/predict.js、handlers/predictSchedule.js（/config 群配置中心：定时推送 + 入群验证；每日自动发布见 lib/predictAutoPublishScheduler.js）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
  * my_chat_member、/bind_ref：handlers/groupReferrer.js（入群自动绑定群主邀请码；/bind_ref 仅群主可重绑）
@@ -70,7 +70,7 @@ const i18nApi = { getTexts };
 registerTgGroupStats(bot, config, i18nApi);
 registerJoinVerify(bot, config, i18nApi);
 registerWordFilter(bot, config, i18nApi);
-/** /group 优先注册，避免私聊中间件网络请求拖慢或无响应 */
+/** /config 优先注册，避免私聊中间件网络请求拖慢或无响应 */
 registerPredictSchedule(bot, config, i18nApi);
 
 const registeredGate = createRequireMoziRegistered(config, i18nApi);

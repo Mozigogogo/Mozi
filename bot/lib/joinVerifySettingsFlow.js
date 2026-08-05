@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * /group → 新成员入群验证配置面板
+ * /config → 新成员入群验证配置面板
  * 写：POST /tg/stats/group/save
  * 读：优先 GET /tg/stats/group/get，失败再退回 listByTelegramId
  */
@@ -170,6 +170,8 @@ function buildJoinVerifyDetailText(texts, g) {
     g.joinVerifyBanEnabled === 1
       ? texts.joinVerifySettingsBanOn(g.joinVerifyBanDurationSec)
       : texts.joinVerifySettingsBanOff;
+  const welcomeOnOff =
+    g.welcomeEnabled === 1 ? texts.joinVerifySettingsOn : texts.joinVerifySettingsOff;
   const custom = g.joinVerifyWelcomeText
     ? escapeHtml(String(g.joinVerifyWelcomeText).slice(0, 80))
     : texts.joinVerifySettingsDefaultText;
@@ -181,6 +183,7 @@ function buildJoinVerifyDetailText(texts, g) {
     g.joinVerifyMaxFail,
     ban,
     custom,
+    welcomeOnOff,
   );
 }
 
@@ -245,6 +248,11 @@ function buildJoinVerifyDetailKeyboard(texts, g) {
     ],
     [label(texts.joinVerifySettingsSectionBanDuration)],
     banDurRow,
+    [label(texts.joinVerifySettingsSectionWelcome)],
+    [
+      Markup.button.callback(texts.joinVerifySettingsWelcomeEnableBtn, `jv:we:${gid}:1`),
+      Markup.button.callback(texts.joinVerifySettingsWelcomeDisableBtn, `jv:we:${gid}:0`),
+    ],
     [
       Markup.button.callback(texts.joinVerifySettingsBackListBtn, 'jv:list'),
       Markup.button.callback(texts.groupSettingsBackBtn, 'gs:home'),
@@ -281,6 +289,7 @@ async function saveJoinVerifyPatch(ctx, config, auth, patch) {
       joinVerifyMaxFail: patch.joinVerifyMaxFail,
       joinVerifyBanEnabled: patch.joinVerifyBanEnabled,
       joinVerifyBanDurationSec: patch.joinVerifyBanDurationSec,
+      welcomeEnabled: patch.welcomeEnabled,
       joinVerifyWelcomeText:
         patch.joinVerifyWelcomeText === undefined
           ? undefined
@@ -695,7 +704,7 @@ async function handleJoinVerifyWelcomeTextInput(ctx, config, getTexts) {
     return true;
   }
 
-  // 其他斜杠指令不拦截（如 /group）
+  // 其他斜杠指令不拦截（如 /config）
   if (raw.startsWith('/')) return false;
 
   if (!raw) {
@@ -808,6 +817,40 @@ async function handleJoinVerifyToggleBan(ctx, config, getTexts, groupId, enabled
   }
 }
 
+async function handleJoinVerifyToggleWelcome(ctx, config, getTexts, groupId, enabled) {
+  const texts = getTexts(ctx.from?.language_code || 'en');
+  const authRes = await resolveOwnerAuth(ctx, config);
+  if (!authRes.ok) {
+    await ctx.answerCbQuery(texts.predictScheduleNeedLogin, { show_alert: true }).catch(() => {});
+    return;
+  }
+  try {
+    await withTypingWhileAwaiting(ctx, (async () => {
+      const saveRes = await saveJoinVerifyPatch(ctx, config, authRes.auth, {
+        groupId: Number(groupId),
+        welcomeEnabled: enabled ? 1 : 0,
+      });
+      if (!isSaveBusinessOk(saveRes)) {
+        await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+        return;
+      }
+      await ctx
+        .answerCbQuery(
+          enabled
+            ? texts.joinVerifySettingsWelcomeEnabledToast
+            : texts.joinVerifySettingsWelcomeDisabledToast,
+        )
+        .catch(() => {});
+      await renderJoinVerifyDetailPanel(ctx, config, getTexts, groupId, {
+        edit: true,
+        overlay: { welcomeEnabled: enabled ? 1 : 0 },
+      });
+    })());
+  } catch {
+    await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+  }
+}
+
 module.exports = {
   renderJoinVerifyListPanel,
   renderJoinVerifyDetailPanel,
@@ -819,5 +862,6 @@ module.exports = {
   handleJoinVerifyWelcomeTextInput,
   handleJoinVerifySetNumberField,
   handleJoinVerifyToggleBan,
+  handleJoinVerifyToggleWelcome,
   normalizeJoinVerifyGroups,
 };

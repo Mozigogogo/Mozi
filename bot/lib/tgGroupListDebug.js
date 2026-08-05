@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * /group 群列表加载流程日志，标签 [tg/group]。
+ * /config 群列表加载流程日志，标签 [tg/group]。
  * 默认开启；TG_GROUP_LIST_LOG=0 关闭。TG_GROUP_LIST_DEBUG=1 或 BOT_DEBUG=1 打印更详细内容。
  */
 

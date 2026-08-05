@@ -257,7 +257,7 @@ const i18n = {
     predictListResultUp: '\n✅ 结果：涨',
     predictListResultDown: '\n✅ 结果：跌',
     predictSchedulePrivateOnly:
-      '请私聊本机器人发送 <code>/group</code>，用于管理群配置（定时推送 / 入群验证）。',
+      '请私聊本机器人发送 <code>/config</code>，用于管理群配置（定时推送 / 入群验证）。',
     predictScheduleLoading: '⏳ 正在加载你的群列表…',
     predictScheduleNeedLogin:
       '需要先完成 Mozi 账户绑定。请先 <code>/register</code> 或完成注册后再试。',
@@ -287,13 +287,14 @@ const i18n = {
       const status = enabled ? '已开启' : '已关闭';
       return `• <b>${title}</b> — ${status} · ${mode} · ${timeoutSec}s`;
     },
-    joinVerifySettingsDetailHtml: (title, onOff, mode, timeoutSec, maxFail, banLine, customText) =>
+    joinVerifySettingsDetailHtml: (title, onOff, mode, timeoutSec, maxFail, banLine, customText, welcomeOnOff) =>
       `🛡️ <b>${title}</b> · 入群验证\n\n` +
       `开关：<b>${onOff}</b>\n` +
       `模式：<code>${mode}</code>\n` +
       `超时：<b>${timeoutSec}</b> 秒\n` +
       `失败上限：<b>${maxFail}</b>\n` +
       `超限处置：${banLine}\n` +
+      `验证通过欢迎语：<b>${welcomeOnOff || '—'}</b>\n` +
       `验证文案：${customText}`,
     joinVerifySettingsOn: '已开启',
     joinVerifySettingsOff: '已关闭',
@@ -304,16 +305,21 @@ const i18n = {
     joinVerifySettingsDisableBtn: '关闭验证',
     joinVerifySettingsBanEnableBtn: '超限封禁·开',
     joinVerifySettingsBanDisableBtn: '超限封禁·关',
+    joinVerifySettingsWelcomeEnableBtn: '欢迎语·开',
+    joinVerifySettingsWelcomeDisableBtn: '欢迎语·关',
     joinVerifySettingsSectionSwitch: '验证开关',
     joinVerifySettingsSectionMode: '验证模式（三选一）',
     joinVerifySettingsSectionTimeout: '超时时间',
     joinVerifySettingsSectionMaxFail: '失败上限（次）',
     joinVerifySettingsSectionBan: '超限是否封禁',
     joinVerifySettingsSectionBanDuration: '封禁时长',
+    joinVerifySettingsSectionWelcome: '验证通过欢迎语',
     joinVerifySettingsNoopToast: '请点击下方选项进行设置',
     joinVerifySettingsBackListBtn: '« 返回列表',
     joinVerifySettingsEnabledToast: '已开启入群验证',
     joinVerifySettingsDisabledToast: '已关闭入群验证',
+    joinVerifySettingsWelcomeEnabledToast: '已开启验证通过欢迎语',
+    joinVerifySettingsWelcomeDisabledToast: '已关闭验证通过欢迎语',
     joinVerifySettingsSavedToast: '已保存',
     joinVerifySettingsModeMinToast: '请选择一种验证方式',
     joinVerifySettingsModeAlreadyToast: '已是当前验证模式',
@@ -377,7 +383,7 @@ const i18n = {
 📈 涨跌预测（免费）
 /predict        发起 24 小时涨跌竞猜（前 6 小时可下注；群内点按钮私聊 Bot，确认后发布到该群）
 /predict list   查看本群竞猜列表
-/group  群主：群配置（定时推送 AI 信号卡 / 新成员入群验证）
+/config  群主：群配置（定时推送 AI 信号卡 / 新成员入群验证）
 
 🔔 告警设置（免费）
 /alert          跳转 App 配置价格告警
@@ -733,7 +739,7 @@ const i18n = {
     predictListResultUp: '\n✅ Result: Up',
     predictListResultDown: '\n✅ Result: Down',
     predictSchedulePrivateOnly:
-      'DM this bot and send <code>/group</code> to manage group settings (scheduled push / join verification).',
+      'DM this bot and send <code>/config</code> to manage group settings (scheduled push / join verification).',
     predictScheduleLoading: '⏳ Loading your groups…',
     predictScheduleNeedLogin: 'Please bind your Mozi account first (<code>/register</code>), then try again.',
     predictScheduleFetchFailed: 'Could not load your groups. Please try again later.',
@@ -763,13 +769,14 @@ const i18n = {
       const status = enabled ? 'On' : 'Off';
       return `• <b>${title}</b> — ${status} · ${mode} · ${timeoutSec}s`;
     },
-    joinVerifySettingsDetailHtml: (title, onOff, mode, timeoutSec, maxFail, banLine, customText) =>
+    joinVerifySettingsDetailHtml: (title, onOff, mode, timeoutSec, maxFail, banLine, customText, welcomeOnOff) =>
       `🛡️ <b>${title}</b> · Join verification\n\n` +
       `Status: <b>${onOff}</b>\n` +
       `Mode: <code>${mode}</code>\n` +
       `Timeout: <b>${timeoutSec}</b>s\n` +
       `Max fails: <b>${maxFail}</b>\n` +
       `On max fails: ${banLine}\n` +
+      `Welcome after pass: <b>${welcomeOnOff || '—'}</b>\n` +
       `Prompt text: ${customText}`,
     joinVerifySettingsOn: 'On',
     joinVerifySettingsOff: 'Off',
@@ -780,16 +787,21 @@ const i18n = {
     joinVerifySettingsDisableBtn: 'Disable',
     joinVerifySettingsBanEnableBtn: 'Ban on fail · On',
     joinVerifySettingsBanDisableBtn: 'Ban on fail · Off',
+    joinVerifySettingsWelcomeEnableBtn: 'Welcome · On',
+    joinVerifySettingsWelcomeDisableBtn: 'Welcome · Off',
     joinVerifySettingsSectionSwitch: 'Verification switch',
     joinVerifySettingsSectionMode: 'Mode (pick one)',
     joinVerifySettingsSectionTimeout: 'Timeout',
     joinVerifySettingsSectionMaxFail: 'Max fails',
     joinVerifySettingsSectionBan: 'Ban on max fails',
     joinVerifySettingsSectionBanDuration: 'Ban duration',
+    joinVerifySettingsSectionWelcome: 'Welcome after pass',
     joinVerifySettingsNoopToast: 'Tap an option below to change settings',
     joinVerifySettingsBackListBtn: '« Back to list',
     joinVerifySettingsEnabledToast: 'Join verification enabled',
     joinVerifySettingsDisabledToast: 'Join verification disabled',
+    joinVerifySettingsWelcomeEnabledToast: 'Welcome after pass enabled',
+    joinVerifySettingsWelcomeDisabledToast: 'Welcome after pass disabled',
     joinVerifySettingsSavedToast: 'Saved',
     joinVerifySettingsModeMinToast: 'Please choose one verification mode',
     joinVerifySettingsModeAlreadyToast: 'Already the current mode',
@@ -854,7 +866,7 @@ const i18n = {
 📈 Up/down poll (free)
 /predict         Start a 24-hour poll (6 hours to bet; tap button to DM bot; publishes back to source group)
 /predict list    List polls in this group
-/group  Group owners: settings (scheduled AI push / join verification)
+/config  Group owners: settings (scheduled AI push / join verification)
 
 🔔 Alerts (free)
 /alert           Open app to set price alerts

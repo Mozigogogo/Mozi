@@ -1862,7 +1862,7 @@ async function postGroupReferrerBind({
   }
 }
 
-// --- GET /tg/stats/group/listByTelegramId（/group 群列表）----------------
+// --- GET /tg/stats/group/listByTelegramId（/config 群列表）----------------
 
 /**
  * @param {object | null} json
@@ -1884,7 +1884,7 @@ function parseTgStatsGroupListByTelegramId(json) {
 const JOIN_VERIFY_MODE_SET = new Set(['button', 'quiz', 'captcha']);
 
 /**
- * 解析 community.tg_group 入群验证平铺字段（7 个）
+ * 解析 community.tg_group 入群验证平铺字段
  * @param {object | null | undefined} raw
  */
 function parseJoinVerifyFields(raw) {
@@ -1937,6 +1937,11 @@ function parseJoinVerifyFields(raw) {
     joinVerifyWelcomeText = t || null;
   }
 
+  // 缺省开启：与历史行为一致（验证通过后发欢迎语）
+  const welcomeRaw = src.welcomeEnabled ?? src.welcome_enabled;
+  const welcomeEnabled =
+    welcomeRaw == null ? 1 : Number(welcomeRaw) === 1 || welcomeRaw === true ? 1 : 0;
+
   return {
     joinVerifyEnabled,
     joinVerifyMode: joinVerifyModes.join(','),
@@ -1946,6 +1951,7 @@ function parseJoinVerifyFields(raw) {
     joinVerifyBanEnabled,
     joinVerifyBanDurationSec,
     joinVerifyWelcomeText,
+    welcomeEnabled,
   };
 }
 
@@ -1980,6 +1986,9 @@ function appendJoinVerifySaveFields(item, row) {
   if (row.joinVerifyWelcomeText !== undefined) {
     item.joinVerifyWelcomeText =
       row.joinVerifyWelcomeText == null ? null : String(row.joinVerifyWelcomeText);
+  }
+  if (row.welcomeEnabled != null) {
+    item.welcomeEnabled = Number(row.welcomeEnabled) ? 1 : 0;
   }
 }
 

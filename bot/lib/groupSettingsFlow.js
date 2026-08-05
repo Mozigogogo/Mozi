@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * /group 群配置中心：入口菜单（定时推送 / 新成员验证）
+ * /config 群配置中心：入口菜单（定时推送 / 新成员验证）
  */
 
 const { Markup } = require('telegraf');
@@ -38,7 +38,7 @@ async function renderGroupSettingsHub(ctx, getTexts, opts = {}) {
 }
 
 /**
- * /group 命令入口 → 配置中心
+ * /config 命令入口 → 配置中心
  * @param {import('telegraf').Context} ctx
  * @param {object} _config
  * @param {Function} getTexts
