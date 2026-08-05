@@ -11,6 +11,7 @@ const {
   syncGroupStatsFromChatUpdate,
   syncGroupStatsFromMemberChange,
   syncGroupStatsFromMigrate,
+  leaveStaleSameTitleGroups,
 } = require('../lib/tgGroupStats');
 const { tgGroupStatsLog } = require('../lib/tgGroupStatsLog');
 const { parseBotJoinFromMyChatMember } = require('../lib/groupReferrer');
@@ -152,6 +153,18 @@ function registerTgGroupStats(bot, config, { getTexts } = {}) {
       await syncGroupStatsFromLeave(ctx, config);
       await syncGroupStatsFromJoin(ctx, config);
 
+      // 升管理员 / 群已升级成超级群但 migrate 丢失时：按同名旧 ID 补 leave
+      const chatId = mcm?.chat?.id;
+      const chatTitle = mcm?.chat?.title;
+      if (chatId != null && chatTitle) {
+        await leaveStaleSameTitleGroups(ctx.telegram, config, chatId, chatTitle).catch((err) => {
+          tgGroupStatsLog('handler_error', {
+            event: 'leave_stale_same_title',
+            message: err?.message || String(err),
+          });
+        });
+      }
+
       // 已在群内升为管理员：绝不打招呼
       if (BOT_ALREADY_IN.has(oldStatus) && newStatus === 'administrator') {
         console.log('[BOT_ADDED_GUIDE] skip_promote_admin', {
@@ -222,26 +235,27 @@ function registerTgGroupStats(bot, config, { getTexts } = {}) {
   });
 
   // 普通群 → 超级群：旧 groupId 作废，需同步 leave/save，避免配置列表同名双条
-  bot.on('migrate_to_chat_id', async (ctx) => {
+  // Telegraf 的 migrate_* 过滤器 + message 兜底（防止过滤器漏接）
+  const runMigrate = async (ctx, event) => {
     try {
       await syncGroupStatsFromMigrate(ctx, config);
     } catch (err) {
       tgGroupStatsLog('handler_error', {
-        event: 'migrate_to_chat_id',
+        event,
         message: err?.message || String(err),
       });
     }
-  });
+  };
 
-  bot.on('migrate_from_chat_id', async (ctx) => {
-    try {
-      await syncGroupStatsFromMigrate(ctx, config);
-    } catch (err) {
-      tgGroupStatsLog('handler_error', {
-        event: 'migrate_from_chat_id',
-        message: err?.message || String(err),
-      });
+  bot.on('migrate_to_chat_id', (ctx) => runMigrate(ctx, 'migrate_to_chat_id'));
+  bot.on('migrate_from_chat_id', (ctx) => runMigrate(ctx, 'migrate_from_chat_id'));
+
+  bot.on('message', async (ctx, next) => {
+    const msg = ctx.message;
+    if (msg?.migrate_to_chat_id != null || msg?.migrate_from_chat_id != null) {
+      await runMigrate(ctx, 'message_migrate_fallback');
     }
+    return next();
   });
 }
 

@@ -140,11 +140,31 @@ function listEnabledSchedules() {
   return Object.values(store.schedules).filter((row) => row && row.enabled);
 }
 
+/**
+ * 按群名找本地曾记录过的其他 groupId（用于普通群→超级群换 ID 后清理旧记录）
+ * @param {string} groupTitle
+ * @param {number | string} [excludeGroupId]
+ * @returns {object[]}
+ */
+function listScheduleGroupsByTitle(groupTitle, excludeGroupId) {
+  ensureLoaded();
+  const title = String(groupTitle || '').trim();
+  if (!title) return [];
+  const exclude = excludeGroupId == null ? null : String(excludeGroupId);
+  return Object.values(store.groups).filter((g) => {
+    if (!g) return false;
+    if (String(g.groupTitle || '').trim() !== title) return false;
+    if (exclude != null && String(g.groupId) === exclude) return false;
+    return true;
+  });
+}
+
 module.exports = {
   DEFAULT_PUBLISH_TIME,
   rememberScheduleGroup,
   markScheduleGroupBotLeft,
   listScheduleGroupsForOwner,
+  listScheduleGroupsByTitle,
   getLocalScheduleConfig,
   setLocalScheduleConfig,
   listEnabledSchedules,
