@@ -12,6 +12,7 @@
  * my_chat_member、/bind_ref：handlers/groupReferrer.js（入群自动绑定群主邀请码；/bind_ref 仅群主可重绑）
  * my_chat_member、群名/头像变更：handlers/tgGroupStats.js（POST /tg/stats/group/save 群档案；POST /tg/stats/group/leave 退群）
  * new_chat_members / chat_member：handlers/joinVerify.js（GET /tg/stats/group/get 读入群验证配置）
+ * 群消息违禁词：handlers/wordFilter.js（GET /tg/stats/moderation/keywords/list；1/2 警告、3 禁言、4 踢出）
  * 斜杠指令调用：middleware/tgCommandUsage.js（按窗口聚合 count，定时 POST /tg/stats/command；/register、/bind_ref、/start 除外）
  * /ai、/chat：未注册时 save 提问 + 群内「注册」按钮；注册成功后 on-registered 事件驱动群内重放；见 tgChatRegisterWatcher
  */
@@ -44,6 +45,7 @@ const { initGuessSettlementWatcher } = require('./lib/guessSettlementWatcher');
 const { initPredictAutoPublishScheduler, stopPredictAutoPublishScheduler } = require('./lib/predictAutoPublishScheduler');
 const { registerTgGroupStats } = require('./handlers/tgGroupStats');
 const { registerJoinVerify } = require('./handlers/joinVerify');
+const { registerWordFilter } = require('./handlers/wordFilter');
 const { createResumePendingAiChatOnPrivate } = require('./middleware/resumePendingAiChatOnPrivate');
 const { createTgCommandUsageMiddleware } = require('./middleware/tgCommandUsage');
 const {
@@ -63,10 +65,11 @@ initTgChatRegisterWatcher(bot, config);
 initGuessSettlementWatcher(bot, config);
 initPredictAutoPublishScheduler(bot, config);
 initCommandUsageFlushScheduler(config);
-registerTgGroupStats(bot, config, i18nApi);
 
 const i18nApi = { getTexts };
+registerTgGroupStats(bot, config, i18nApi);
 registerJoinVerify(bot, config, i18nApi);
+registerWordFilter(bot, config, i18nApi);
 /** /group 优先注册，避免私聊中间件网络请求拖慢或无响应 */
 registerPredictSchedule(bot, config, i18nApi);
 

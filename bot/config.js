@@ -255,6 +255,38 @@ const JOIN_VERIFY_LOG = !/^0|false|no$/i.test(
   String(process.env.JOIN_VERIFY_LOG ?? '1').trim(),
 );
 
+/** GET 违禁词列表，默认 tg/stats/moderation/keywords/list */
+const TG_MODERATION_KEYWORDS_LIST_PATH = (
+  process.env.TG_MODERATION_KEYWORDS_LIST_PATH || 'tg/stats/moderation/keywords/list'
+)
+  .trim()
+  .replace(/^\/+/, '');
+
+/** 违禁词列表进程内缓存 TTL（毫秒），默认 60s */
+const WORD_FILTER_KEYWORDS_CACHE_MS = Math.max(
+  0,
+  Math.min(600_000, parseInt(process.env.WORD_FILTER_KEYWORDS_CACHE_MS || '60000', 10) || 60_000),
+);
+
+/** 第 3 次违规禁言时长（秒），默认 24 小时 */
+const WORD_FILTER_MUTE_SEC = Math.max(
+  60,
+  Math.min(
+    31_536_000,
+    parseInt(process.env.WORD_FILTER_MUTE_SEC || '86400', 10) || 86_400,
+  ),
+);
+
+/** 违禁词过滤开关，默认开启；WORD_FILTER_ENABLED=0 关闭 */
+const WORD_FILTER_ENABLED = !/^0|false|no$/i.test(
+  String(process.env.WORD_FILTER_ENABLED ?? '1').trim(),
+);
+
+/** 违禁词过程日志，默认开启；WORD_FILTER_LOG=0 关闭 */
+const WORD_FILTER_LOG = !/^0|false|no$/i.test(
+  String(process.env.WORD_FILTER_LOG ?? '1').trim(),
+);
+
 /** 定时自动发布默认币种 */
 const PREDICT_AUTO_PUBLISH_SYMBOL = (
   process.env.PREDICT_AUTO_PUBLISH_SYMBOL || 'BTC'
@@ -322,6 +354,11 @@ module.exports = {
   TG_GROUP_GET_PATH,
   JOIN_VERIFY_CONFIG_CACHE_MS,
   JOIN_VERIFY_LOG,
+  TG_MODERATION_KEYWORDS_LIST_PATH,
+  WORD_FILTER_KEYWORDS_CACHE_MS,
+  WORD_FILTER_MUTE_SEC,
+  WORD_FILTER_ENABLED,
+  WORD_FILTER_LOG,
   PREDICT_AUTO_PUBLISH_SYMBOL,
   PREDICT_AUTO_PUBLISH_TIME,
   PREDICT_AUTO_PUBLISH_ENABLED,

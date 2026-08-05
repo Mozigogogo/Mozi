@@ -2351,6 +2351,119 @@ async function getTgStatsGroupGet({
   }
 }
 
+// --- GET /tg/stats/moderation/keywords/list（违禁词列表）----------------------
+
+/**
+ * 解析违禁词列表响应，兼容：
+ * - data: string[]
+ * - data: { words|keywords|list: string[] | {word|keyword|text}[] }
+ * - data: {word|keyword|text}[]
+ * @param {object | null} json
+ * @returns {string[]}
+ */
+function parseModerationKeywordsList(json) {
+  if (!json || typeof json !== 'object') return [];
+  const data = json.data !== undefined ? json.data : json;
+
+  const toWord = (item) => {
+    if (typeof item === 'string') return item.trim();
+    if (item && typeof item === 'object') {
+      const w = item.word ?? item.keyword ?? item.text ?? item.value ?? item.name;
+      return w != null ? String(w).trim() : '';
+    }
+    return '';
+  };
+
+  if (Array.isArray(data)) {
+    return [...new Set(data.map(toWord).filter(Boolean))];
+  }
+  if (data && typeof data === 'object') {
+    const arr = data.words ?? data.keywords ?? data.list ?? data.items;
+    if (Array.isArray(arr)) {
+      return [...new Set(arr.map(toWord).filter(Boolean))];
+    }
+  }
+  return [];
+}
+
+/**
+ * GET /tg/stats/moderation/keywords/list?groupId=
+ * @param {{
+ *   apiBaseUrl: string;
+ *   groupId?: string | number | null;
+ *   auth?: string;
+ *   appUrl?: string;
+ *   path?: string;
+ *   timeoutMs?: number;
+ * }} opts
+ * @returns {Promise<{ ok: boolean; status: number; json: object | null; text: string; words: string[]; errorMessage: string | null }>}
+ */
+async function getModerationKeywordsList({
+  apiBaseUrl,
+  groupId,
+  auth = '',
+  appUrl = '',
+  path = 'tg/stats/moderation/keywords/list',
+  timeoutMs = 15000,
+}) {
+  const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+  const app = String(appUrl || '').replace(/\/+$/, '');
+  const rel = String(path || 'tg/stats/moderation/keywords/list').trim().replace(/^\/+/, '');
+  const params = new URLSearchParams();
+  const gid = groupId == null ? '' : String(groupId).trim();
+  if (gid) params.set('groupId', gid);
+  const qs = params.toString();
+  const url = qs ? `${base}/${rel}?${qs}` : `${base}/${rel}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const headers = {
+    accept: 'application/json, text/plain, */*',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache',
+    'user-agent': DEFAULT_UA,
+  };
+  const rawAuth = String(auth || '').trim().replace(/^Bearer\s+/i, '');
+  if (rawAuth) headers.authentication = rawAuth;
+  if (app) headers.referer = `${app}/`;
+
+  try {
+    const res = await fetch(url, { method: 'GET', headers, signal: ctrl.signal });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+    const words = parseModerationKeywordsList(json);
+    const bizOk =
+      json == null ||
+      json.success === true ||
+      json.success === 1 ||
+      json.code == null ||
+      Number(json.code) === 0 ||
+      Number(json.code) === 200;
+    const out = {
+      ok: res.ok && bizOk,
+      status: res.status,
+      json,
+      text,
+      words,
+      errorMessage: res.ok ? null : text.slice(0, 300) || `HTTP ${res.status}`,
+    };
+    apiDebug('GET /tg/stats/moderation/keywords/list →', {
+      groupId: gid || null,
+      httpStatus: res.status,
+      ok: out.ok,
+      wordCount: words.length,
+      bodyPreview: text.slice(0, 400),
+    });
+    return out;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // --- POST /tg/stats/group/leave（Bot 上报退群）--------------------------------
 
 /**
@@ -4117,6 +4230,8 @@ module.exports = {
   postTgStatsGroupLeave,
   getTgStatsGroupListByTelegramId,
   getTgStatsGroupGet,
+  getModerationKeywordsList,
+  parseModerationKeywordsList,
   parseTgStatsGroupListItem,
   parseJoinVerifyFields,
   postTgStatsCommand,

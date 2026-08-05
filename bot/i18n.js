@@ -354,6 +354,11 @@ const i18n = {
     joinVerifyBannedHtml: (mention, sec) =>
       `❌ ${mention} 验证失败次数过多，已临时封禁 <b>${Math.ceil(sec / 60)}</b> 分钟。`,
     joinVerifyTimeoutHtml: (mention) => `⏰ ${mention} 验证超时，已移出本群。`,
+    wordFilterWarnHtml: (mention, count, max) =>
+      `${mention}: 请遵守群规 <b>${count}/${max}</b>`,
+    wordFilterMuteHtml: (mention, sec) =>
+      `${mention}: 多次违规，已禁言 <b>${Math.ceil(sec / 3600)}</b> 小时。`,
+    wordFilterKickHtml: (mention) => `${mention}: 多次违规，已移出本群。`,
     helpBody: `🤖   Mozi AI 行情助手 · 指令说明
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -825,6 +830,12 @@ const i18n = {
     joinVerifyBannedHtml: (mention, sec) =>
       `❌ ${mention} failed too many times and is temporarily banned for <b>${Math.ceil(sec / 60)}</b> min.`,
     joinVerifyTimeoutHtml: (mention) => `⏰ ${mention} timed out and was removed.`,
+    wordFilterWarnHtml: (mention, count, max) =>
+      `${mention}: Please follow group rules <b>${count}/${max}</b>`,
+    wordFilterMuteHtml: (mention, sec) =>
+      `${mention}: Repeated violations — muted for <b>${Math.ceil(sec / 3600)}</b> hour(s).`,
+    wordFilterKickHtml: (mention) =>
+      `${mention}: Repeated violations — removed from the group.`,
     helpBody: `🤖 Mozi AI · Commands
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
