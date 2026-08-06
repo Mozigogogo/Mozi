@@ -237,7 +237,11 @@ async function resolveViolationCount(config, groupId, telegramId) {
  * @returns {Promise<{ handled: boolean }>}
  */
 async function handleGroupWordFilter(ctx, config, getTexts) {
-  if (!config?.WORD_FILTER_ENABLED) return { handled: false };
+  // 链接禁止始终生效（不依赖违禁词开关 / 观察期）
+  const shouldBlockLinks = Boolean(config.WORD_FILTER_BLOCK_LINKS);
+  const keywordsEnabled = Boolean(config?.WORD_FILTER_ENABLED);
+  if (!shouldBlockLinks && !keywordsEnabled) return { handled: false };
+
   const chat = ctx.chat;
   if (!isGroupChat(chat)) return { handled: false };
 
@@ -253,15 +257,14 @@ async function handleGroupWordFilter(ctx, config, getTexts) {
   const chatId = chat.id;
   const userId = user.id;
 
-  // 1) 链接命中（任意链接禁止）
+  // 1) 链接命中（任意链接始终禁止，含观察期结束后）
   let hitWord = null;
-  const shouldBlockLinks = Boolean(config.WORD_FILTER_BLOCK_LINKS);
   if (shouldBlockLinks) {
     hitWord = detectAnyLink(ctx);
   }
 
   // 2) 关键词命中（如果没命中链接）
-  if (!hitWord) {
+  if (!hitWord && keywordsEnabled) {
     const words = await fetchModerationKeywords(config, chatId);
     if (words.length) {
       hitWord = matchBannedWord(text, words);
@@ -349,4 +352,5 @@ async function handleGroupWordFilter(ctx, config, getTexts) {
 module.exports = {
   handleGroupWordFilter,
   matchBannedWord,
+  resolveViolationCount,
 };

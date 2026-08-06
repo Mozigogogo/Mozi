@@ -257,7 +257,7 @@ const i18n = {
     predictListResultUp: '\n✅ 结果：涨',
     predictListResultDown: '\n✅ 结果：跌',
     predictSchedulePrivateOnly:
-      '请私聊本机器人发送 <code>/config</code>，用于管理群配置（定时推送 / 入群验证）。',
+      '请私聊本机器人发送 <code>/config</code>，用于管理群配置（定时推送 / 入群验证 / 防刷屏与观察期）。',
     predictScheduleLoading: '⏳ 正在加载你的群列表…',
     predictScheduleNeedLogin:
       '需要先完成 Mozi 账户绑定。请先 <code>/register</code> 或完成注册后再试。',
@@ -280,7 +280,91 @@ const i18n = {
       '⚙️ <b>群配置中心</b>\n\n选择要管理的功能（仅群主可用）：',
     groupSettingsScheduleBtn: '⏰ 定时推送 AI 信号卡',
     groupSettingsJoinVerifyBtn: '🛡️ 新成员入群验证',
+    groupSettingsFloodObserveBtn: '🚫 防刷屏与观察期',
     groupSettingsBackBtn: '« 返回',
+    floodObserveSettingsIntro:
+      '🚫 <b>防刷屏与观察期</b>\n\n选择群进入详细配置。防刷屏限制短时发消息频率；观察期限制新成员高风险消息类型。',
+    floodObserveSettingsGroupLine: (title, floodOn, observeOn) => {
+      const f = floodOn ? '防刷开' : '防刷关';
+      const o = observeOn ? '观察开' : '观察关';
+      return `• <b>${title}</b> — ${f} · ${o}`;
+    },
+    floodObserveSettingsDetailHtml: (
+      title,
+      floodOnOff,
+      windowSec,
+      maxMsg,
+      actionLabel,
+      muteSec,
+      observeOnOff,
+      observeHours,
+    ) =>
+      `🚫 <b>${title}</b> · 防刷屏与观察期\n\n` +
+      `<b>防刷屏</b>\n` +
+      `开关：<b>${floodOnOff}</b>\n` +
+      `窗口：<b>${windowSec}</b> 秒内最多 <b>${maxMsg}</b> 条\n` +
+      `前 3 次动作：<code>${actionLabel}</code>\n` +
+      `禁言时长：<b>${muteSec}</b> 秒（仅 delete_mute）\n` +
+      `第 4 次：始终踢出\n\n` +
+      `<b>新成员观察期</b>\n` +
+      `开关：<b>${observeOnOff}</b>\n` +
+      `时长：验证通过后 <b>${observeHours}</b> 小时\n` +
+      `期间仅允许文本/图片，禁止转发、贴纸/GIF、邀请等\n` +
+      `另：群内链接始终禁止（不限观察期）`,
+    floodObserveSettingsSavedToast: '已保存',
+    floodSettingsEnableBtn: '开启防刷屏',
+    floodSettingsDisableBtn: '关闭防刷屏',
+    floodSettingsSectionSwitch: '防刷屏开关',
+    floodSettingsSectionWindow: '统计窗口（秒）',
+    floodSettingsSectionMax: '窗口内最大条数',
+    floodSettingsSectionAction: '前 3 次触发动作',
+    floodSettingsSectionMute: '临时禁言时长',
+    floodSettingsActionDeleteMute: '删消息+临时禁言',
+    floodSettingsActionKick: '踢出群聊',
+    floodSettingsActionDeleteMuteBtn: '删+禁言',
+    floodSettingsActionKickBtn: '踢出',
+    floodSettingsEnabledToast: '已开启防刷屏',
+    floodSettingsDisabledToast: '已关闭防刷屏',
+    observeSettingsSectionSwitch: '观察期开关',
+    observeSettingsSectionDuration: '观察期时长（小时）',
+    observeSettingsEnableBtn: '开启观察期',
+    observeSettingsDisableBtn: '关闭观察期',
+    observeSettingsEnabledToast: '已开启观察期',
+    observeSettingsDisabledToast: '已关闭观察期',
+    observePeriodReason: {
+      forward: '转发消息',
+      sticker_gif: '贴纸/GIF',
+      link: '链接',
+      invite_link: '邀请链接',
+      video: '视频',
+      audio: '语音/音频',
+      contact: '名片',
+      poll_dice: '投票/骰子',
+      location: '位置',
+      document: '文件',
+      game: '游戏',
+      other: '该类型消息',
+      empty: '空消息',
+    },
+    observePeriodBlockHtml: (mention, reason, hoursLeft) => {
+      const reasonMap = {
+        forward: '转发消息',
+        sticker_gif: '贴纸/GIF',
+        link: '链接',
+        invite_link: '邀请链接',
+        video: '视频',
+        audio: '语音/音频',
+        contact: '名片',
+        poll_dice: '投票/骰子',
+        location: '位置',
+        document: '文件',
+        game: '游戏',
+        other: '该类型消息',
+        empty: '空消息',
+      };
+      const r = reasonMap[reason] || reason || '高风险消息';
+      return `${mention}: 观察期内禁止发送 <b>${r}</b>（约剩 <b>${hoursLeft}</b> 小时）。仅允许文本与图片。`;
+    },
     joinVerifySettingsIntro:
       '🛡️ <b>新成员入群验证</b>\n\n选择群进入详细配置。开启后，新成员需通过验证才能正常发言。',
     joinVerifySettingsGroupLine: (title, enabled, mode, timeoutSec) => {
@@ -365,6 +449,10 @@ const i18n = {
     wordFilterMuteHtml: (mention, sec) =>
       `${mention}: 多次违规，已禁言 <b>${Math.ceil(sec / 3600)}</b> 小时。`,
     wordFilterKickHtml: (mention) => `${mention}: 多次违规，已移出本群。`,
+    slowModeMuteHtml: (mention, windowSec, maxMessages, muteSec, count, maxWarn) =>
+      `${mention}: <b>${windowSec}</b> 秒内发送超过 <b>${maxMessages}</b> 条，超出已删，禁言 <b>${Math.ceil(muteSec / 60)}</b> 分钟（刷屏违规 <b>${count}/${maxWarn}</b>；满 4 次将踢出）。`,
+    slowModeKickHtml: (mention, count) =>
+      `${mention}: 刷屏/违规累计 <b>${count}</b> 次，已移出本群。`,
     helpBody: `🤖   Mozi AI 行情助手 · 指令说明
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -383,7 +471,7 @@ const i18n = {
 📈 涨跌预测（免费）
 /predict        发起 24 小时涨跌竞猜（前 6 小时可下注；群内点按钮私聊 Bot，确认后发布到该群）
 /predict list   查看本群竞猜列表
-/config  群主：群配置（定时推送 AI 信号卡 / 新成员入群验证）
+/config  群主：群配置（定时推送 / 入群验证 / 防刷屏与观察期）
 
 🔔 告警设置（免费）
 /alert          跳转 App 配置价格告警
@@ -739,7 +827,7 @@ const i18n = {
     predictListResultUp: '\n✅ Result: Up',
     predictListResultDown: '\n✅ Result: Down',
     predictSchedulePrivateOnly:
-      'DM this bot and send <code>/config</code> to manage group settings (scheduled push / join verification).',
+      'DM this bot and send <code>/config</code> to manage group settings (scheduled push / join verification / anti-flood & observe).',
     predictScheduleLoading: '⏳ Loading your groups…',
     predictScheduleNeedLogin: 'Please bind your Mozi account first (<code>/register</code>), then try again.',
     predictScheduleFetchFailed: 'Could not load your groups. Please try again later.',
@@ -762,7 +850,76 @@ const i18n = {
       '⚙️ <b>Group settings</b>\n\nChoose a feature to manage (group owners only):',
     groupSettingsScheduleBtn: '⏰ Scheduled AI signal push',
     groupSettingsJoinVerifyBtn: '🛡️ New member verification',
+    groupSettingsFloodObserveBtn: '🚫 Anti-flood & observe',
     groupSettingsBackBtn: '« Back',
+    floodObserveSettingsIntro:
+      '🚫 <b>Anti-flood & observe</b>\n\nPick a group to configure. Anti-flood limits burst messaging; observe restricts high-risk message types for new members.',
+    floodObserveSettingsGroupLine: (title, floodOn, observeOn) => {
+      const f = floodOn ? 'flood on' : 'flood off';
+      const o = observeOn ? 'observe on' : 'observe off';
+      return `• <b>${title}</b> — ${f} · ${o}`;
+    },
+    floodObserveSettingsDetailHtml: (
+      title,
+      floodOnOff,
+      windowSec,
+      maxMsg,
+      actionLabel,
+      muteSec,
+      observeOnOff,
+      observeHours,
+    ) =>
+      `🚫 <b>${title}</b> · Anti-flood & observe\n\n` +
+      `<b>Anti-flood</b>\n` +
+      `Status: <b>${floodOnOff}</b>\n` +
+      `Window: max <b>${maxMsg}</b> msgs / <b>${windowSec}</b>s\n` +
+      `Action (1–3): <code>${actionLabel}</code>\n` +
+      `Mute: <b>${muteSec}</b>s (delete_mute only)\n` +
+      `4th strike: always kick\n\n` +
+      `<b>New-member observe</b>\n` +
+      `Status: <b>${observeOnOff}</b>\n` +
+      `Duration: <b>${observeHours}</b>h after verify pass\n` +
+      `Only text/photos allowed; forwards, stickers/GIFs, invites blocked\n` +
+      `Also: links are always forbidden in groups (not only during observe)`,
+    floodObserveSettingsSavedToast: 'Saved',
+    floodSettingsEnableBtn: 'Enable anti-flood',
+    floodSettingsDisableBtn: 'Disable anti-flood',
+    floodSettingsSectionSwitch: 'Anti-flood switch',
+    floodSettingsSectionWindow: 'Window (seconds)',
+    floodSettingsSectionMax: 'Max messages in window',
+    floodSettingsSectionAction: 'Action for strikes 1–3',
+    floodSettingsSectionMute: 'Temp mute duration',
+    floodSettingsActionDeleteMute: 'delete + temp mute',
+    floodSettingsActionKick: 'kick',
+    floodSettingsActionDeleteMuteBtn: 'Del+mute',
+    floodSettingsActionKickBtn: 'Kick',
+    floodSettingsEnabledToast: 'Anti-flood enabled',
+    floodSettingsDisabledToast: 'Anti-flood disabled',
+    observeSettingsSectionSwitch: 'Observe switch',
+    observeSettingsSectionDuration: 'Observe duration (hours)',
+    observeSettingsEnableBtn: 'Enable observe',
+    observeSettingsDisableBtn: 'Disable observe',
+    observeSettingsEnabledToast: 'Observe enabled',
+    observeSettingsDisabledToast: 'Observe disabled',
+    observePeriodBlockHtml: (mention, reason, hoursLeft) => {
+      const reasonMap = {
+        forward: 'forwards',
+        sticker_gif: 'stickers/GIFs',
+        link: 'links',
+        invite_link: 'invite links',
+        video: 'videos',
+        audio: 'voice/audio',
+        contact: 'contacts',
+        poll_dice: 'polls/dice',
+        location: 'locations',
+        document: 'files',
+        game: 'games',
+        other: 'this message type',
+        empty: 'empty messages',
+      };
+      const r = reasonMap[reason] || reason || 'high-risk messages';
+      return `${mention}: During observe period, <b>${r}</b> are not allowed (~<b>${hoursLeft}</b>h left). Text and photos only.`;
+    },
     joinVerifySettingsIntro:
       '🛡️ <b>New member verification</b>\n\nPick a group to configure. When enabled, new members must verify before chatting.',
     joinVerifySettingsGroupLine: (title, enabled, mode, timeoutSec) => {
@@ -848,6 +1005,10 @@ const i18n = {
       `${mention}: Repeated violations — muted for <b>${Math.ceil(sec / 3600)}</b> hour(s).`,
     wordFilterKickHtml: (mention) =>
       `${mention}: Repeated violations — removed from the group.`,
+    slowModeMuteHtml: (mention, windowSec, maxMessages, muteSec, count, maxWarn) =>
+      `${mention}: more than <b>${maxMessages}</b> msgs in <b>${windowSec}</b>s — excess deleted, muted <b>${Math.ceil(muteSec / 60)}</b> min (flood <b>${count}/${maxWarn}</b>; kick at 4).`,
+    slowModeKickHtml: (mention, count) =>
+      `${mention}: flood/violations reached <b>${count}</b> — removed from the group.`,
     helpBody: `🤖 Mozi AI · Commands
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -866,7 +1027,7 @@ const i18n = {
 📈 Up/down poll (free)
 /predict         Start a 24-hour poll (6 hours to bet; tap button to DM bot; publishes back to source group)
 /predict list    List polls in this group
-/config  Group owners: settings (scheduled AI push / join verification)
+/config  Group owners: settings (scheduled push / join verification / anti-flood & observe)
 
 🔔 Alerts (free)
 /alert           Open app to set price alerts

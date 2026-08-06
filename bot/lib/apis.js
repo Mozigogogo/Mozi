@@ -1955,6 +1955,98 @@ function parseJoinVerifyFields(raw) {
   };
 }
 
+const FLOOD_ACTION_SET = new Set(['delete_mute', 'kick']);
+
+/**
+ * 解析防刷屏 + 新成员观察期字段
+ * @param {object | null | undefined} raw
+ */
+function parseFloodObserveFields(raw) {
+  const src = raw && typeof raw === 'object' ? raw : {};
+
+  const floodEnabledRaw = src.floodEnabled ?? src.flood_enabled ?? 0;
+  const floodEnabled = Number(floodEnabledRaw) === 1 || floodEnabledRaw === true ? 1 : 0;
+
+  let floodWindowSec = Math.floor(Number(src.floodWindowSec ?? src.flood_window_sec ?? 10));
+  if (!Number.isFinite(floodWindowSec) || floodWindowSec < 1) floodWindowSec = 10;
+  floodWindowSec = Math.min(600, floodWindowSec);
+
+  let floodMaxMessages = Math.floor(
+    Number(src.floodMaxMessages ?? src.flood_max_messages ?? 5),
+  );
+  if (!Number.isFinite(floodMaxMessages) || floodMaxMessages < 1) floodMaxMessages = 5;
+  floodMaxMessages = Math.min(100, floodMaxMessages);
+
+  let floodAction = String(src.floodAction ?? src.flood_action ?? 'delete_mute')
+    .trim()
+    .toLowerCase();
+  if (!FLOOD_ACTION_SET.has(floodAction)) floodAction = 'delete_mute';
+
+  let floodMuteDurationSec = Math.floor(
+    Number(src.floodMuteDurationSec ?? src.flood_mute_duration_sec ?? 300),
+  );
+  if (!Number.isFinite(floodMuteDurationSec) || floodMuteDurationSec < 60) {
+    floodMuteDurationSec = 300;
+  }
+  floodMuteDurationSec = Math.min(31_536_000, floodMuteDurationSec);
+
+  const observeEnabledRaw = src.observeEnabled ?? src.observe_enabled ?? 0;
+  const observeEnabled =
+    Number(observeEnabledRaw) === 1 || observeEnabledRaw === true ? 1 : 0;
+
+  let observeDurationHours = Math.floor(
+    Number(src.observeDurationHours ?? src.observe_duration_hours ?? 24),
+  );
+  if (!Number.isFinite(observeDurationHours) || observeDurationHours < 1) {
+    observeDurationHours = 24;
+  }
+  observeDurationHours = Math.min(24 * 30, observeDurationHours);
+
+  return {
+    floodEnabled,
+    floodWindowSec,
+    floodMaxMessages,
+    floodAction,
+    floodMuteDurationSec,
+    observeEnabled,
+    observeDurationHours,
+  };
+}
+
+/**
+ * @param {object} item
+ * @param {object} row
+ */
+function appendFloodObserveSaveFields(item, row) {
+  if (!row || typeof row !== 'object') return;
+  if (row.floodEnabled != null) {
+    item.floodEnabled = Number(row.floodEnabled) ? 1 : 0;
+  }
+  if (row.floodWindowSec != null) {
+    const n = Math.floor(Number(row.floodWindowSec));
+    if (Number.isFinite(n) && n >= 1) item.floodWindowSec = Math.min(600, n);
+  }
+  if (row.floodMaxMessages != null) {
+    const n = Math.floor(Number(row.floodMaxMessages));
+    if (Number.isFinite(n) && n >= 1) item.floodMaxMessages = Math.min(100, n);
+  }
+  if (row.floodAction != null) {
+    const a = String(row.floodAction).trim().toLowerCase();
+    if (FLOOD_ACTION_SET.has(a)) item.floodAction = a;
+  }
+  if (row.floodMuteDurationSec != null) {
+    const n = Math.floor(Number(row.floodMuteDurationSec));
+    if (Number.isFinite(n) && n >= 60) item.floodMuteDurationSec = Math.min(31_536_000, n);
+  }
+  if (row.observeEnabled != null) {
+    item.observeEnabled = Number(row.observeEnabled) ? 1 : 0;
+  }
+  if (row.observeDurationHours != null) {
+    const n = Math.floor(Number(row.observeDurationHours));
+    if (Number.isFinite(n) && n >= 1) item.observeDurationHours = Math.min(24 * 30, n);
+  }
+}
+
 /**
  * @param {object} item
  * @param {object} row
@@ -2010,6 +2102,7 @@ function parseTgStatsGroupListItem(raw) {
   const statusRaw = raw.status;
   const status = statusRaw == null || !Number.isFinite(Number(statusRaw)) ? null : Number(statusRaw);
   const joinVerify = parseJoinVerifyFields(raw);
+  const floodObserve = parseFloodObserveFields(raw);
   return {
     groupId,
     groupTitle: String(raw.groupTitle ?? raw.title ?? raw.group_title ?? '').trim(),
@@ -2020,6 +2113,7 @@ function parseTgStatsGroupListItem(raw) {
     autoPublishGuess,
     enabled: autoPublishGuess === 1,
     ...joinVerify,
+    ...floodObserve,
   };
 }
 
@@ -2208,6 +2302,7 @@ async function postTgStatsGroupSave({
         item.autoPublishGuess = Number(row.autoPublishGuess) ? 1 : 0;
       }
       appendJoinVerifySaveFields(item, row);
+      appendFloodObserveSaveFields(item, row);
       return item;
     })
     .filter((row) => Number.isFinite(row.groupId));
@@ -4416,6 +4511,7 @@ module.exports = {
   getModerationViolationCount,
   parseTgStatsGroupListItem,
   parseJoinVerifyFields,
+  parseFloodObserveFields,
   postTgStatsCommand,
   postTgChatSave,
   getTgChatGet,

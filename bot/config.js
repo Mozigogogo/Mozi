@@ -307,8 +307,39 @@ const WORD_FILTER_LOG = !/^0|false|no$/i.test(
   String(process.env.WORD_FILTER_LOG ?? '1').trim(),
 );
 
-/** 禁止群内发送任意链接（始终开启）；命中后走同一套封禁梯度（删消息/警告/禁言/踢出） */
+/** 禁止群内发送任意链接（始终开启，与观察期无关）；命中后走同一套封禁梯度（删消息/警告/禁言/踢出） */
 const WORD_FILTER_BLOCK_LINKS = true;
+
+/** 慢速模式开关，默认开启；SLOW_MODE_ENABLED=0 关闭 */
+const SLOW_MODE_ENABLED = !/^0|false|no$/i.test(
+  String(process.env.SLOW_MODE_ENABLED ?? '1').trim(),
+);
+
+/** 慢速模式时间窗（秒），默认 10 */
+const SLOW_MODE_WINDOW_SEC = Math.max(
+  1,
+  Math.min(600, parseInt(process.env.SLOW_MODE_WINDOW_SEC || '10', 10) || 10),
+);
+
+/** 时间窗内允许的最大消息数，默认 5；超过则删超出消息并禁言 */
+const SLOW_MODE_MAX_MESSAGES = Math.max(
+  1,
+  Math.min(100, parseInt(process.env.SLOW_MODE_MAX_MESSAGES || '5', 10) || 5),
+);
+
+/** 慢速模式违规临时禁言时长（秒），默认 5 分钟 */
+const SLOW_MODE_MUTE_SEC = Math.max(
+  60,
+  Math.min(
+    31_536_000,
+    parseInt(process.env.SLOW_MODE_MUTE_SEC || '300', 10) || 300,
+  ),
+);
+
+/** 慢速模式过程日志，默认开启；SLOW_MODE_LOG=0 关闭 */
+const SLOW_MODE_LOG = !/^0|false|no$/i.test(
+  String(process.env.SLOW_MODE_LOG ?? '1').trim(),
+);
 
 /** 定时自动发布默认币种 */
 const PREDICT_AUTO_PUBLISH_SYMBOL = (
@@ -386,6 +417,11 @@ module.exports = {
   WORD_FILTER_ENABLED,
   WORD_FILTER_LOG,
   WORD_FILTER_BLOCK_LINKS,
+  SLOW_MODE_ENABLED,
+  SLOW_MODE_WINDOW_SEC,
+  SLOW_MODE_MAX_MESSAGES,
+  SLOW_MODE_MUTE_SEC,
+  SLOW_MODE_LOG,
   PREDICT_AUTO_PUBLISH_SYMBOL,
   PREDICT_AUTO_PUBLISH_TIME,
   PREDICT_AUTO_PUBLISH_ENABLED,

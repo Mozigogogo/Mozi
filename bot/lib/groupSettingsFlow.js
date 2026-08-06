@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * /config 群配置中心：入口菜单（定时推送 / 新成员验证）
+ * /config 群配置中心：入口菜单（定时推送 / 新成员验证 / 防刷屏与观察期）
  */
 
 const { Markup } = require('telegraf');
@@ -13,6 +13,7 @@ function buildGroupSettingsHubKeyboard(texts) {
   return Markup.inlineKeyboard([
     [Markup.button.callback(texts.groupSettingsScheduleBtn, 'gs:ps')],
     [Markup.button.callback(texts.groupSettingsJoinVerifyBtn, 'gs:jv')],
+    [Markup.button.callback(texts.groupSettingsFloodObserveBtn, 'gs:fo')],
   ]);
 }
 

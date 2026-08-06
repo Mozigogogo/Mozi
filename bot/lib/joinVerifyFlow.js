@@ -292,6 +292,17 @@ async function startJoinVerifyInner(telegram, config, getTexts, chat, user, lang
   const groupCfg = await fetchJoinVerifyConfig(config, chatId);
   if (groupCfg.joinVerifyEnabled !== 1) {
     joinVerifyLog(config, 'skip_disabled', { chatId, userId });
+    // 未开启入群验证时，若开了观察期则直接开始
+    try {
+      const { maybeStartObservePeriod } = require('./observePeriodFlow');
+      await maybeStartObservePeriod(config, chatId, userId);
+    } catch (err) {
+      joinVerifyLog(config, 'observe_start_failed', {
+        chatId,
+        userId,
+        message: err?.message || String(err),
+      });
+    }
     return;
   }
 
@@ -441,6 +452,17 @@ async function passJoinVerify(telegram, config, getTexts, chatId, userId) {
     }
   } else {
     joinVerifyLog(config, 'welcome_skipped', { chatId, userId, welcomeEnabled: 0 });
+  }
+
+  try {
+    const { maybeStartObservePeriod } = require('./observePeriodFlow');
+    await maybeStartObservePeriod(config, chatId, userId);
+  } catch (err) {
+    joinVerifyLog(config, 'observe_start_failed', {
+      chatId,
+      userId,
+      message: err?.message || String(err),
+    });
   }
 
   joinVerifyLog(config, 'passed', { chatId, userId, welcomeEnabled });
@@ -618,12 +640,18 @@ async function handleJoinVerifyCallback(ctx, config, getTexts) {
  */
 async function cancelJoinVerifyOnLeave(telegram, config, chatId, userId) {
   const session = getJoinVerifySession(chatId, userId);
-  if (!session) return;
-
-  const promptMessageId = session.promptMessageId;
-  clearJoinVerifySession(chatId, userId);
-  await safeDeleteMessage(telegram, chatId, promptMessageId);
-  joinVerifyLog(config, 'cancelled_left', { chatId, userId });
+  if (session) {
+    const promptMessageId = session.promptMessageId;
+    clearJoinVerifySession(chatId, userId);
+    await safeDeleteMessage(telegram, chatId, promptMessageId);
+    joinVerifyLog(config, 'cancelled_left', { chatId, userId });
+  }
+  try {
+    const { clearObservePeriod } = require('./observePeriodStore');
+    clearObservePeriod(chatId, userId);
+  } catch {
+    /* ignore */
+  }
 }
 
 async function handleNewChatMembersMessage(ctx, config, getTexts) {

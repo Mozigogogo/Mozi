@@ -1,23 +1,31 @@
 'use strict';
 
 /**
- * 按群拉取入群验证配置：GET /tg/stats/group/get（带进程内 TTL 缓存）
+ * 按群拉取完整群管配置（入群验证 + 防刷屏 + 观察期）
+ * GET /tg/stats/group/get（进程内 TTL 缓存）
  */
 
-const { getTgStatsGroupGet, parseJoinVerifyFields } = require('./apis');
+const {
+  getTgStatsGroupGet,
+  parseJoinVerifyFields,
+  parseFloodObserveFields,
+} = require('./apis');
 
 /** @type {Map<string, { expireAt: number; config: object }>} */
 const cache = new Map();
 
-function defaultJoinVerifyConfig() {
-  return parseJoinVerifyFields({});
+function defaultGroupModerationConfig() {
+  return {
+    ...parseJoinVerifyFields({}),
+    ...parseFloodObserveFields({}),
+  };
 }
 
 /**
  * @param {object} config
  * @param {string | number} groupId
  */
-async function fetchJoinVerifyConfig(config, groupId) {
+async function fetchGroupModerationConfig(config, groupId) {
   const key = String(groupId);
   const ttl = Number(config.JOIN_VERIFY_CONFIG_CACHE_MS) || 0;
   if (ttl > 0) {
@@ -37,9 +45,9 @@ async function fetchJoinVerifyConfig(config, groupId) {
     });
     group = res.group;
   } catch (err) {
-    if (config.JOIN_VERIFY_LOG) {
+    if (config.JOIN_VERIFY_LOG || config.SLOW_MODE_LOG) {
       console.log(
-        `[JOIN_VERIFY] ${new Date().toISOString()} config_fetch_error ${JSON.stringify({
+        `[GROUP_MOD] ${new Date().toISOString()} config_fetch_error ${JSON.stringify({
           groupId: key,
           message: err?.message || String(err),
         })}`,
@@ -47,19 +55,38 @@ async function fetchJoinVerifyConfig(config, groupId) {
     }
   }
 
-  const joinCfg = group ? parseJoinVerifyFields(group) : defaultJoinVerifyConfig();
+  const modCfg = group
+    ? {
+        ...parseJoinVerifyFields(group),
+        ...parseFloodObserveFields(group),
+      }
+    : defaultGroupModerationConfig();
+
   if (ttl > 0) {
-    cache.set(key, { expireAt: Date.now() + ttl, config: joinCfg });
+    cache.set(key, { expireAt: Date.now() + ttl, config: modCfg });
   }
-  return joinCfg;
+  return modCfg;
+}
+
+/** @deprecated 兼容旧名 */
+async function fetchJoinVerifyConfig(config, groupId) {
+  return fetchGroupModerationConfig(config, groupId);
 }
 
 function invalidateJoinVerifyConfigCache(groupId) {
+  if (groupId == null) {
+    cache.clear();
+    return;
+  }
   cache.delete(String(groupId));
 }
 
+const invalidateGroupModerationConfigCache = invalidateJoinVerifyConfigCache;
+
 module.exports = {
+  fetchGroupModerationConfig,
   fetchJoinVerifyConfig,
   invalidateJoinVerifyConfigCache,
-  defaultJoinVerifyConfig,
+  invalidateGroupModerationConfigCache,
+  defaultGroupModerationConfig,
 };

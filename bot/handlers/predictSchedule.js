@@ -2,6 +2,7 @@
  * /config：群配置中心
  * - 定时推送 AI 信号卡（原逻辑保留）
  * - 新成员入群验证配置
+ * - 防刷屏 + 新成员观察期
  */
 
 const {
@@ -24,6 +25,14 @@ const {
   handleJoinVerifyToggleBan,
   handleJoinVerifyToggleWelcome,
 } = require('../lib/joinVerifySettingsFlow');
+const {
+  handleFloodObserveOpenList,
+  handleFloodObserveOpenDetail,
+  handleFloodToggleEnabled,
+  handleObserveToggleEnabled,
+  handleFloodSetNumberField,
+  handleFloodSetAction,
+} = require('../lib/floodObserveSettingsFlow');
 const { tgGroupListLog } = require('../lib/tgGroupListDebug');
 
 /**
@@ -82,6 +91,15 @@ function registerPredictSchedule(bot, config, { getTexts }) {
   bot.action('gs:jv', async (ctx) => {
     try {
       await handleJoinVerifyOpenList(ctx, config, getTexts);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action('gs:fo', async (ctx) => {
+    try {
+      await handleFloodObserveOpenList(ctx, config, getTexts);
     } catch {
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
@@ -231,6 +249,130 @@ function registerPredictSchedule(bot, config, { getTexts }) {
         'joinVerifyBanDurationSec',
         ctx.match[2],
         'joinVerifySettingsSavedToast',
+      );
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  // —— 防刷屏 + 观察期 ——
+  bot.action('fo:noop', async (ctx) => {
+    const texts = getTexts(ctx.from?.language_code || 'en');
+    await ctx.answerCbQuery(texts.joinVerifySettingsNoopToast || '请点击下方选项').catch(() => {});
+  });
+
+  bot.action('fo:list', async (ctx) => {
+    try {
+      await handleFloodObserveOpenList(ctx, config, getTexts);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action('fo:r', async (ctx) => {
+    try {
+      await handleFloodObserveOpenList(ctx, config, getTexts);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^fo:g:(-?\d+)$/, async (ctx) => {
+    try {
+      await handleFloodObserveOpenDetail(ctx, config, getTexts, ctx.match[1]);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^fo:fe:(-?\d+):(0|1)$/, async (ctx) => {
+    try {
+      await handleFloodToggleEnabled(ctx, config, getTexts, ctx.match[1], ctx.match[2] === '1');
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^fo:fw:(-?\d+):(\d+)$/, async (ctx) => {
+    try {
+      await handleFloodSetNumberField(
+        ctx,
+        config,
+        getTexts,
+        ctx.match[1],
+        'floodWindowSec',
+        ctx.match[2],
+      );
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^fo:fm:(-?\d+):(\d+)$/, async (ctx) => {
+    try {
+      await handleFloodSetNumberField(
+        ctx,
+        config,
+        getTexts,
+        ctx.match[1],
+        'floodMaxMessages',
+        ctx.match[2],
+      );
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^fo:fa:(-?\d+):(delete_mute|kick)$/, async (ctx) => {
+    try {
+      await handleFloodSetAction(ctx, config, getTexts, ctx.match[1], ctx.match[2]);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^fo:fmd:(-?\d+):(\d+)$/, async (ctx) => {
+    try {
+      await handleFloodSetNumberField(
+        ctx,
+        config,
+        getTexts,
+        ctx.match[1],
+        'floodMuteDurationSec',
+        ctx.match[2],
+      );
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^fo:oe:(-?\d+):(0|1)$/, async (ctx) => {
+    try {
+      await handleObserveToggleEnabled(ctx, config, getTexts, ctx.match[1], ctx.match[2] === '1');
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^fo:od:(-?\d+):(\d+)$/, async (ctx) => {
+    try {
+      await handleFloodSetNumberField(
+        ctx,
+        config,
+        getTexts,
+        ctx.match[1],
+        'observeDurationHours',
+        ctx.match[2],
       );
     } catch {
       const texts = getTexts(ctx.from?.language_code || 'en');
