@@ -78,21 +78,13 @@ function isInviteLink(urlOrText) {
 }
 
 /**
- * 观察期允许：文本 / 图片 / 贴纸 / GIF；限制转发、链接、邀请等高风险类型
+ * 观察期允许：文本 / 图片 / 贴纸 / GIF / 视频 / 语音；限制转发、链接、邀请等
  * @returns {{ allowed: boolean; reason: string | null }}
  */
 function classifyObserveMessage(msg) {
   if (!msg) return { allowed: false, reason: 'empty' };
 
   if (isForwardMessage(msg)) return { allowed: false, reason: 'forward' };
-  // 贴纸 / GIF 观察期内允许
-  if (isStickerOrGif(msg)) return { allowed: true, reason: null };
-  if (msg.video || msg.video_note) return { allowed: false, reason: 'video' };
-  if (msg.voice || msg.audio) return { allowed: false, reason: 'audio' };
-  if (msg.contact) return { allowed: false, reason: 'contact' };
-  if (msg.poll || msg.dice) return { allowed: false, reason: 'poll_dice' };
-  if (msg.location || msg.venue) return { allowed: false, reason: 'location' };
-  if (msg.game) return { allowed: false, reason: 'game' };
 
   const link = detectAnyLink(msg);
   if (link) {
@@ -100,14 +92,22 @@ function classifyObserveMessage(msg) {
     return { allowed: false, reason: 'link' };
   }
 
-  // document（非 gif）也不允许
+  if (isStickerOrGif(msg)) return { allowed: true, reason: null };
+  if (msg.video || msg.video_note) return { allowed: true, reason: null };
+  if (msg.voice || msg.audio) return { allowed: true, reason: null };
+  if (msg.contact) return { allowed: false, reason: 'contact' };
+  if (msg.poll || msg.dice) return { allowed: false, reason: 'poll_dice' };
+  if (msg.location || msg.venue) return { allowed: false, reason: 'location' };
+  if (msg.game) return { allowed: false, reason: 'game' };
+
+  // document（非 gif）不允许
   if (msg.document && !msg.photo) return { allowed: false, reason: 'document' };
 
   // 允许：纯文本
   if (msg.text && !msg.photo && !msg.video && !msg.document && !msg.animation && !msg.sticker) {
     return { allowed: true, reason: null };
   }
-  // 允许：图片（可带 caption，且 caption 无链接已在上面拦截）
+  // 允许：图片（可带 caption，链接已在上面拦截）
   if (msg.photo) return { allowed: true, reason: null };
 
   return { allowed: false, reason: 'other' };

@@ -309,7 +309,7 @@ const i18n = {
       `<b>新成员观察期</b>\n` +
       `开关：<b>${observeOnOff}</b>\n` +
       `时长：验证通过后 <b>${observeHours}</b> 小时\n` +
-      `期间允许文本/图片/贴纸/GIF，禁止转发、邀请等\n` +
+      `期间允许文本/图片/贴纸/GIF/视频/语音，禁止转发、邀请等\n` +
       `另：群内链接始终禁止（不限观察期）`,
     floodObserveSettingsSavedToast: '已保存',
     floodSettingsEnableBtn: '开启防刷屏',
@@ -363,7 +363,7 @@ const i18n = {
         empty: '空消息',
       };
       const r = reasonMap[reason] || reason || '高风险消息';
-      return `${mention}: 观察期内禁止发送 <b>${r}</b>（约剩 <b>${hoursLeft}</b> 小时）。允许文本、图片、贴纸/GIF。`;
+      return `${mention}: 观察期内禁止发送 <b>${r}</b>（约剩 <b>${hoursLeft}</b> 小时）。允许文本、图片、贴纸/GIF、视频、语音。`;
     },
     joinVerifySettingsIntro:
       '🛡️ <b>新成员入群验证</b>\n\n选择群进入详细配置。开启后，新成员需通过验证才能正常发言。',
@@ -879,7 +879,7 @@ const i18n = {
       `<b>New-member observe</b>\n` +
       `Status: <b>${observeOnOff}</b>\n` +
       `Duration: <b>${observeHours}</b>h after verify pass\n` +
-      `Text/photos/stickers/GIFs allowed; forwards and invites blocked\n` +
+      `Text/photos/stickers/GIFs/videos/voice allowed; forwards and invites blocked\n` +
       `Also: links are always forbidden in groups (not only during observe)`,
     floodObserveSettingsSavedToast: 'Saved',
     floodSettingsEnableBtn: 'Enable anti-flood',
@@ -918,7 +918,7 @@ const i18n = {
         empty: 'empty messages',
       };
       const r = reasonMap[reason] || reason || 'high-risk messages';
-      return `${mention}: During observe period, <b>${r}</b> are not allowed (~<b>${hoursLeft}</b>h left). Text, photos, stickers/GIFs are OK.`;
+      return `${mention}: During observe period, <b>${r}</b> are not allowed (~<b>${hoursLeft}</b>h left). Text, photos, stickers/GIFs, videos, and voice are OK.`;
     },
     joinVerifySettingsIntro:
       '🛡️ <b>New member verification</b>\n\nPick a group to configure. When enabled, new members must verify before chatting.',

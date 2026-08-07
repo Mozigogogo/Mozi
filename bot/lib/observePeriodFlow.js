@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * 新成员观察期运行时：限制链接/转发/邀请等，允许文本/图片/贴纸/GIF
+ * 新成员观察期运行时：限制链接/转发/邀请等，允许文本/图片/贴纸/GIF/视频/语音
  */
 
 const { escapeHtml } = require('./telegramHtml');
