@@ -23,12 +23,207 @@ const { tgGroupStatsLog } = require('./tgGroupStatsLog');
 /** @type {Map<string, ReturnType<typeof setTimeout>[]>} */
 const pendingResyncTimers = new Map();
 /** migrate leave+save 去重：同一 old→new 在短时间内只处理一次 */
-/** @type {Map<string, number>} */
+/** @type {Map<string, { at: number; leaveOk: boolean }>} */
 const recentMigrations = new Map();
 
 const MEMBER_COUNT_RETRY_DELAYS_MS = [0, 2000, 5000];
 const BOT_JOIN_RESYNC_DELAYS_MS = [8000, 20000];
 const MIGRATE_DEDUPE_MS = 60_000;
+
+/** 超级群 chat.id 形如 -100xxxxxxxxxx */
+function isTelegramSupergroupId(id) {
+  const n = Number(id);
+  return Number.isFinite(n) && n <= -1_000_000_000_000;
+}
+
+/**
+ * 升级超级群后，旧 basic groupId 仍可能被 getChatMember 当成“在群”。
+ * 用 getChat 看是否重定向到新 id；或 basic + 当前已是超级群 → 视为过期别名。
+ * @returns {Promise<{ stale: boolean; resolvedId: number | null; reason: string | null }>}
+ */
+async function probeStaleMigratedGroupId(telegram, candidateId, currentChatId) {
+  const cid = Number(candidateId);
+  const current = currentChatId == null ? null : Number(currentChatId);
+  if (!Number.isFinite(cid)) {
+    return { stale: false, resolvedId: null, reason: null };
+  }
+
+  // 同名：当前已是超级群，候选是普通群 id → 几乎一定是升级残留
+  if (
+    Number.isFinite(current) &&
+    isTelegramSupergroupId(current) &&
+    !isTelegramSupergroupId(cid) &&
+    cid !== current
+  ) {
+    return { stale: true, resolvedId: current, reason: 'basic_vs_supergroup' };
+  }
+
+  try {
+    const chat = await telegram.getChat(cid);
+    const resolved = Number(chat?.id);
+    if (!Number.isFinite(resolved)) {
+      return { stale: false, resolvedId: null, reason: null };
+    }
+    // getChat(旧id) 返回新超级群 id
+    if (resolved !== cid) {
+      return { stale: true, resolvedId: resolved, reason: 'getchat_redirect' };
+    }
+    if (Number.isFinite(current) && resolved === current && cid !== current) {
+      return { stale: true, resolvedId: resolved, reason: 'alias_of_current' };
+    }
+    return { stale: false, resolvedId: resolved, reason: null };
+  } catch {
+    // getChat 失败：交给调用方用 getChatMember / 不可达逻辑
+    return { stale: false, resolvedId: null, reason: 'getchat_failed' };
+  }
+}
+
+/**
+ * 同名群里选「最新」一条：超级群优先 → 更新/创建时间
+ * @param {object[]} siblings
+ */
+function pickNewestGroup(siblings) {
+  if (!Array.isArray(siblings) || !siblings.length) return null;
+  const score = (g) => {
+    const id = Number(g.groupId);
+    const superBoost = isTelegramSupergroupId(id) ? 1e18 : 0;
+    const time = Math.max(
+      Number(g.updatedAtMs) || 0,
+      Number(g.createdAtMs) || 0,
+    );
+    return superBoost + time;
+  };
+  return siblings.reduce((best, cur) => (score(cur) >= score(best) ? cur : best));
+}
+
+/**
+ * 列表同名去重：每个同名只保留最新一条，其余 leave 标废。
+ * @param {import('telegraf').Telegram} telegram
+ * @param {object[]} groups
+ * @param {object} [config]
+ * @param {(event: string, payload?: object) => void} [log]
+ */
+async function dropUnreachableDuplicateTitles(telegram, groups, config, log) {
+  const logger = typeof log === 'function' ? log : () => {};
+  if (!telegram || !Array.isArray(groups) || groups.length < 2) return groups;
+
+  const titleCount = new Map();
+  for (const g of groups) {
+    const t = String(g.groupTitle || '');
+    titleCount.set(t, (titleCount.get(t) || 0) + 1);
+  }
+  const dupTitles = new Set([...titleCount.entries()].filter(([, n]) => n > 1).map(([t]) => t));
+  if (dupTitles.size === 0) return groups;
+
+  let botId = null;
+  try {
+    const me = await telegram.getMe();
+    botId = me?.id ?? null;
+  } catch {
+    /* ignore */
+  }
+
+  const leaveStale = (groupId, reason) => {
+    logger('list.drop_unreachable', { groupId, reason });
+    if (!config) return;
+    postTgStatsGroupLeave({
+      apiBaseUrl: config.API_BASE_URL,
+      appUrl: config.APP_URL,
+      auth: config.MOZI_DETAIL_AUTH || '',
+      path: config.TG_GROUP_LEAVE_PATH,
+      groups: [{ groupId }],
+    })
+      .then((res) => {
+        logger('list.leave_stale', { groupId, ok: res.ok, httpStatus: res.status, reason });
+      })
+      .catch((err) => {
+        logger('list.leave_stale_error', {
+          groupId,
+          message: err?.message || String(err),
+          reason,
+        });
+      });
+    markScheduleGroupBotLeft(groupId);
+  };
+
+  /** @type {Map<string, number>} title → 保留的最新 groupId */
+  const newestByTitle = new Map();
+  for (const title of dupTitles) {
+    const siblings = groups.filter((x) => String(x.groupTitle || '') === title);
+    let winner = pickNewestGroup(siblings);
+
+    // 若最新是普通群、同名还有超级群：以超级群为准（升级后旧 id 绝不是最新）
+    const superSibling = siblings.find((x) => isTelegramSupergroupId(x.groupId));
+    if (superSibling && winner && !isTelegramSupergroupId(winner.groupId)) {
+      winner = superSibling;
+    }
+
+    // getChat：若「最新」id 会重定向到同簇另一 id，改留规范 id
+    if (winner && telegram) {
+      try {
+        const chat = await telegram.getChat(winner.groupId);
+        const resolved = Number(chat?.id);
+        if (Number.isFinite(resolved) && resolved !== Number(winner.groupId)) {
+          const match = siblings.find((x) => Number(x.groupId) === resolved);
+          if (match) {
+            winner = match;
+          } else if (!isTelegramSupergroupId(winner.groupId) && superSibling) {
+            winner = superSibling;
+          }
+          // 规范 id 不在列表时仍保留当前 winner，避免列表空掉
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    if (winner?.groupId != null) {
+      newestByTitle.set(title, Number(winner.groupId));
+      logger('list.keep_newest', {
+        title,
+        groupId: Number(winner.groupId),
+        candidates: siblings.map((x) => x.groupId),
+      });
+    }
+  }
+
+  const kept = [];
+  for (const g of groups) {
+    const title = String(g.groupTitle || '');
+    if (!dupTitles.has(title)) {
+      kept.push(g);
+      continue;
+    }
+
+    const gid = Number(g.groupId);
+    const newestId = newestByTitle.get(title);
+
+    if (newestId != null && gid !== newestId) {
+      leaveStale(gid, 'not_newest_same_title');
+      continue;
+    }
+
+    // 保留最新：再确认 bot 是否真在（真退群的幽灵也丢掉）
+    let inGroup = true;
+    if (botId != null) {
+      try {
+        const member = await telegram.getChatMember(gid, botId);
+        const status = member?.status;
+        inGroup = status === 'member' || status === 'administrator' || status === 'restricted';
+      } catch {
+        inGroup = false;
+      }
+    }
+
+    if (inGroup) {
+      kept.push(g);
+    } else {
+      leaveStale(gid, 'bot_not_in_group');
+    }
+  }
+
+  return kept;
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -349,18 +544,22 @@ async function applyGroupIdMigration(telegram, config, oldChatId, newChatId, rea
 
   const dedupeKey = `${oldChatId}->${newChatId}`;
   const now = Date.now();
-  const prevAt = recentMigrations.get(dedupeKey) || 0;
-  if (now - prevAt < MIGRATE_DEDUPE_MS) {
-    tgGroupStatsLog('migrate_dedupe_skip', { oldChatId, newChatId, reason, ageMs: now - prevAt });
+  const prev = recentMigrations.get(dedupeKey);
+  if (prev && now - prev.at < MIGRATE_DEDUPE_MS && prev.leaveOk) {
+    tgGroupStatsLog('migrate_dedupe_skip', {
+      oldChatId,
+      newChatId,
+      reason,
+      ageMs: now - prev.at,
+    });
     return { ok: true, reason: 'deduped' };
   }
-  recentMigrations.set(dedupeKey, now);
 
   tgGroupStatsLog('migrate_apply_start', { oldChatId, newChatId, reason });
 
   clearScheduledResyncs(oldChatId);
 
-  // 1) 先 leave 旧 groupId（后端标废）
+  // 1) 先 leave 旧 groupId（后端标废）— 即使短时重复也要重试失败的 leave
   let leaveOk = false;
   try {
     const leaveRes = await postTgStatsGroupLeave({
@@ -387,6 +586,7 @@ async function applyGroupIdMigration(telegram, config, oldChatId, newChatId, rea
     });
   }
   markScheduleGroupBotLeft(oldChatId);
+  recentMigrations.set(dedupeKey, { at: now, leaveOk });
 
   // 2) 再 save 新 groupId（进入新群档案）
   await syncGroupStatsForChatId(telegram, config, newChatId, reason);
@@ -422,21 +622,31 @@ async function leaveStaleSameTitleGroups(telegram, config, currentChatId, groupT
     const oldId = Number(row.groupId);
     if (!Number.isFinite(oldId) || oldId === Number(currentChatId)) continue;
 
-    let inGroup = false;
-    try {
-      const member = await telegram.getChatMember(oldId, botId);
-      const status = member?.status;
-      inGroup = status === 'member' || status === 'administrator' || status === 'restricted';
-    } catch {
-      inGroup = false;
+    const probe = await probeStaleMigratedGroupId(telegram, oldId, currentChatId);
+    let shouldLeave = probe.stale;
+
+    if (!shouldLeave) {
+      let inGroup = false;
+      try {
+        const member = await telegram.getChatMember(oldId, botId);
+        const status = member?.status;
+        inGroup = status === 'member' || status === 'administrator' || status === 'restricted';
+      } catch {
+        inGroup = false;
+      }
+      // getChatMember 在升级别名上会误报「仍在群」；仅当探测未判定为别名时才信它
+      if (inGroup) continue;
+      shouldLeave = true;
     }
 
-    if (inGroup) continue;
+    if (!shouldLeave) continue;
 
     tgGroupStatsLog('stale_same_title_leave', {
       currentChatId: Number(currentChatId),
       oldChatId: oldId,
       groupTitle: title,
+      reason: probe.reason || 'bot_not_in_group',
+      resolvedId: probe.resolvedId,
     });
 
     try {
@@ -584,6 +794,10 @@ module.exports = {
   syncGroupStatsFromMigrate,
   applyGroupIdMigration,
   leaveStaleSameTitleGroups,
+  pickNewestGroup,
+  dropUnreachableDuplicateTitles,
+  isTelegramSupergroupId,
+  probeStaleMigratedGroupId,
   scheduleGroupStatsResyncAfterJoin,
   clearScheduledResyncs,
 };

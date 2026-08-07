@@ -11,7 +11,6 @@ const {
   postTgStatsGroupSave,
   getTgStatsGroupGet,
   parseFloodObserveFields,
-  postTgStatsGroupLeave,
 } = require('./apis');
 const { ensureTgUserToken } = require('./tgUserTokenCache');
 const { buildTelegramLoginOptsFromCtx } = require('./datainfoPoints');
@@ -19,6 +18,7 @@ const { escapeHtml } = require('./telegramHtml');
 const { fetchOwnerGroupsFromApi } = require('./predictScheduleFlow');
 const { invalidateGroupModerationConfigCache } = require('./joinVerifyConfig');
 const { withTypingWhileAwaiting } = require('./telegramTypingPulse');
+const { dropUnreachableDuplicateTitles } = require('./tgGroupStats');
 
 const WINDOW_PRESETS = [5, 10, 30, 60];
 const MAX_MSG_PRESETS = [3, 5, 8, 10];
@@ -59,6 +59,8 @@ function normalizeFloodObserveGroups(items) {
         groupId,
         groupTitle: String(item.groupTitle || item.title || '').trim() || `群 ${groupId}`,
         status: item.status == null ? null : Number(item.status),
+        updatedAtMs: item.updatedAtMs ?? null,
+        createdAtMs: item.createdAtMs ?? null,
         ...fo,
       };
     })
@@ -76,60 +78,6 @@ function displayTitleForGroup(g, groups) {
   if (sameNameCount <= 1) return base.slice(0, 22);
   const idHint = String(Math.abs(Number(g.groupId))).slice(-6);
   return `${base.slice(0, 14)}·${idHint}`;
-}
-
-async function dropUnreachableDuplicateTitles(telegram, groups, config) {
-  if (!telegram || !Array.isArray(groups) || groups.length < 2) return groups;
-
-  const titleCount = new Map();
-  for (const g of groups) {
-    const t = String(g.groupTitle || '');
-    titleCount.set(t, (titleCount.get(t) || 0) + 1);
-  }
-  const dupTitles = new Set([...titleCount.entries()].filter(([, n]) => n > 1).map(([t]) => t));
-  if (dupTitles.size === 0) return groups;
-
-  let botId = null;
-  try {
-    const me = await telegram.getMe();
-    botId = me?.id ?? null;
-  } catch {
-    /* ignore */
-  }
-
-  const kept = [];
-  for (const g of groups) {
-    if (!dupTitles.has(String(g.groupTitle || ''))) {
-      kept.push(g);
-      continue;
-    }
-    let inGroup = false;
-    try {
-      if (botId != null) {
-        const member = await telegram.getChatMember(g.groupId, botId);
-        const status = member?.status;
-        inGroup = status === 'member' || status === 'administrator' || status === 'restricted';
-      } else {
-        await telegram.getChat(g.groupId);
-        inGroup = true;
-      }
-    } catch {
-      inGroup = false;
-    }
-
-    if (inGroup) {
-      kept.push(g);
-    } else if (config) {
-      postTgStatsGroupLeave({
-        apiBaseUrl: config.API_BASE_URL,
-        appUrl: config.APP_URL,
-        auth: config.MOZI_DETAIL_AUTH || '',
-        path: config.TG_GROUP_LEAVE_PATH,
-        groups: [{ groupId: g.groupId }],
-      }).catch(() => {});
-    }
-  }
-  return kept;
 }
 
 function floodActionLabel(action, texts) {
@@ -348,6 +296,7 @@ async function renderFloodObserveListPanel(ctx, config, getTexts, opts = {}) {
     ctx.telegram,
     normalizeFloodObserveGroups(remote.items),
     config,
+    foSettingsLog,
   );
   const text = buildFloodObserveListText(texts, groups);
   const keyboard = buildFloodObserveListKeyboard(texts, groups);

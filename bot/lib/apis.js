@@ -2103,6 +2103,22 @@ function parseTgStatsGroupListItem(raw) {
   const status = statusRaw == null || !Number.isFinite(Number(statusRaw)) ? null : Number(statusRaw);
   const joinVerify = parseJoinVerifyFields(raw);
   const floodObserve = parseFloodObserveFields(raw);
+
+  const toMs = (v) => {
+    if (v == null || v === '') return null;
+    if (typeof v === 'number' && Number.isFinite(v)) {
+      return v < 1e12 ? Math.floor(v * 1000) : Math.floor(v);
+    }
+    const t = Date.parse(String(v));
+    return Number.isFinite(t) ? t : null;
+  };
+  const updatedAtMs = toMs(
+    raw.updatedAt ?? raw.updated_at ?? raw.updateTime ?? raw.update_time ?? raw.gmtModified,
+  );
+  const createdAtMs = toMs(
+    raw.createdAt ?? raw.created_at ?? raw.createTime ?? raw.create_time ?? raw.gmtCreate,
+  );
+
   return {
     groupId,
     groupTitle: String(raw.groupTitle ?? raw.title ?? raw.group_title ?? '').trim(),
@@ -2112,6 +2128,8 @@ function parseTgStatsGroupListItem(raw) {
     status,
     autoPublishGuess,
     enabled: autoPublishGuess === 1,
+    updatedAtMs,
+    createdAtMs,
     ...joinVerify,
     ...floodObserve,
   };

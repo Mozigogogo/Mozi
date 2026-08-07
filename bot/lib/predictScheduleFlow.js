@@ -8,6 +8,7 @@ const { escapeHtml } = require('./telegramHtml');
 const { DEFAULT_PUBLISH_TIME } = require('./predictScheduleStore');
 const { tgGroupListLog, tgGroupListDebug } = require('./tgGroupListDebug');
 const { jwtPreview } = require('./debugLog');
+const { dropUnreachableDuplicateTitles } = require('./tgGroupStats');
 
 /**
  * @param {import('telegraf').Context} ctx
@@ -105,12 +106,16 @@ function normalizeScheduleGroups(items) {
     .map((item) => {
       const groupId = Number(item.groupId);
       if (!Number.isFinite(groupId)) return null;
+      // status=0：已 leave / 失效，不展示
+      if (item.status != null && Number(item.status) === 0) return null;
       return {
         groupId,
         groupTitle: String(item.groupTitle || '').trim() || `群 ${groupId}`,
         enabled: Boolean(item.enabled),
         publishTime: DEFAULT_PUBLISH_TIME,
         autoPublishGuess: item.autoPublishGuess === 1 ? 1 : 0,
+        updatedAtMs: item.updatedAtMs ?? null,
+        createdAtMs: item.createdAtMs ?? null,
       };
     })
     .filter(Boolean)
@@ -204,7 +209,12 @@ async function renderSchedulePanel(ctx, config, getTexts, opts = {}) {
     return;
   }
 
-  const groups = normalizeScheduleGroups(remote.items);
+  const groups = await dropUnreachableDuplicateTitles(
+    ctx.telegram,
+    normalizeScheduleGroups(remote.items),
+    config,
+    tgGroupListLog,
+  );
   const publishTime = DEFAULT_PUBLISH_TIME;
   const text = buildSchedulePanelText(texts, groups, publishTime);
   const keyboard = buildSchedulePanelKeyboard(texts, groups);
