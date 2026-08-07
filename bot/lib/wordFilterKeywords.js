@@ -79,8 +79,19 @@ function invalidateModerationKeywordsCache(groupId) {
   cache.delete(String(groupId));
 }
 
+function escapeRegExp(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** 纯拉丁字母/数字词：必须整词命中（避免 btc 误杀 BT） */
+function isAsciiWordKeyword(word) {
+  return /^[a-z0-9]+$/i.test(word);
+}
+
 /**
- * 子串匹配（大小写不敏感）
+ * 违禁词匹配（大小写不敏感）
+ * - 纯英文/数字词（如 BT、xjp）：整词命中，btc 不触发 BT
+ * - 中文或中英混合：仍用子串匹配
  * @param {string} text
  * @param {string[]} words
  * @returns {string | null} 命中的第一个词
@@ -92,7 +103,13 @@ function matchBannedWord(text, words) {
   for (const w of words) {
     const word = String(w || '').trim();
     if (!word) continue;
-    if (lower.includes(word.toLowerCase())) return word;
+    const wordLower = word.toLowerCase();
+    if (isAsciiWordKeyword(word)) {
+      const re = new RegExp(`\\b${escapeRegExp(wordLower)}\\b`, 'i');
+      if (re.test(raw)) return word;
+      continue;
+    }
+    if (lower.includes(wordLower)) return word;
   }
   return null;
 }
