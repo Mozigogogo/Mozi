@@ -24,22 +24,65 @@ const BOT_ALREADY_IN = new Set(['member', 'administrator', 'restricted']);
 
 /**
  * 打招呼冷却：进群发过后 N 分钟内同群不再发。
- * 覆盖「设管理员时 Telegram 先踢再加」导致的二次进群事件。
+ * - 按 chatId：覆盖 my_chat_member + new_chat_members 并发
+ * - 按群名：覆盖「升管理员 → 普通群变超级群换 ID」导致的二次进群
+ * - migrate 时把冷却迁到新 ID，避免 migrate 晚于 my_chat_member 时漏拦
  */
 const greetedUntil = new Map();
+const greetedByTitleUntil = new Map();
 const GUIDE_COOLDOWN_MS = 10 * 60 * 1000;
 
-function markGuideSent(chatId) {
-  greetedUntil.set(String(chatId), Date.now() + GUIDE_COOLDOWN_MS);
+function titleKey(title) {
+  return String(title || '')
+    .trim()
+    .toLowerCase();
 }
 
-function alreadyGreeted(chatId) {
-  const until = greetedUntil.get(String(chatId)) || 0;
-  if (Date.now() >= until) {
-    greetedUntil.delete(String(chatId));
-    return false;
+function markGuideSent(chatId, title) {
+  const until = Date.now() + GUIDE_COOLDOWN_MS;
+  if (chatId != null) greetedUntil.set(String(chatId), until);
+  const tk = titleKey(title);
+  if (tk) greetedByTitleUntil.set(tk, until);
+}
+
+function alreadyGreeted(chatId, title) {
+  const now = Date.now();
+  const idUntil = greetedUntil.get(String(chatId)) || 0;
+  if (idUntil > now) return true;
+  if (idUntil) greetedUntil.delete(String(chatId));
+
+  const tk = titleKey(title);
+  if (tk) {
+    const titleUntil = greetedByTitleUntil.get(tk) || 0;
+    if (titleUntil > now) {
+      // 同名近期已打过招呼（常见于升超级群换 ID）：同步记到新 ID
+      if (chatId != null) greetedUntil.set(String(chatId), titleUntil);
+      return true;
+    }
+    if (titleUntil) greetedByTitleUntil.delete(tk);
   }
-  return true;
+  return false;
+}
+
+/**
+ * 普通群 → 超级群：新 chatId 视为同一群，继承/写入冷却，禁止再发招呼。
+ */
+function transferGuideOnMigrate(oldChatId, newChatId, title) {
+  const now = Date.now();
+  const oldUntil = greetedUntil.get(String(oldChatId)) || 0;
+  const tk = titleKey(title);
+  const titleUntil = tk ? greetedByTitleUntil.get(tk) || 0 : 0;
+  // 至少再冷却一整段：migrate 本身就说明 Bot 早已在群里
+  const until = Math.max(oldUntil, titleUntil, now + GUIDE_COOLDOWN_MS);
+  if (newChatId != null) greetedUntil.set(String(newChatId), until);
+  if (oldChatId != null) greetedUntil.delete(String(oldChatId));
+  if (tk) greetedByTitleUntil.set(tk, until);
+  console.log('[BOT_ADDED_GUIDE] migrate_transfer_cooldown', {
+    oldChatId,
+    newChatId,
+    title: title || null,
+    untilMs: until - now,
+  });
 }
 
 /**
@@ -83,12 +126,13 @@ async function sendBotAddedGuide(ctx, config, getTexts, chatId) {
     console.warn('[BOT_ADDED_GUIDE] skip: getTexts missing');
     return;
   }
-  if (alreadyGreeted(chatId)) {
-    console.log('[BOT_ADDED_GUIDE] skip_already_greeted', { chatId });
+  const title = ctx.chat?.title || ctx.myChatMember?.chat?.title || '';
+  if (alreadyGreeted(chatId, title)) {
+    console.log('[BOT_ADDED_GUIDE] skip_already_greeted', { chatId, title: title || null });
     return;
   }
   // 先占位，避免 my_chat_member + new_chat_members 并发各发一次
-  markGuideSent(chatId);
+  markGuideSent(chatId, title);
 
   const languageCode = ctx.from?.language_code || 'zh';
   const texts = getTexts(languageCode);
@@ -172,13 +216,15 @@ function registerTgGroupStats(bot, config, { getTexts } = {}) {
           oldStatus,
           newStatus,
         });
+        // 升管理员常伴随升级超级群：先按当前群名占位，挡住随后新 ID 的「假进群」
+        if (chatId != null) markGuideSent(chatId, chatTitle);
         return;
       }
 
       if (justJoined) {
-        const chatId = mcm?.chat?.id ?? join?.chatId;
-        if (chatId != null) {
-          await sendBotAddedGuide(ctx, config, getTexts, chatId);
+        const guideChatId = mcm?.chat?.id ?? join?.chatId;
+        if (guideChatId != null) {
+          await sendBotAddedGuide(ctx, config, getTexts, guideChatId);
         } else {
           console.warn('[BOT_ADDED_GUIDE] skip: no chatId', {
             joinParsed: Boolean(join),
@@ -235,9 +281,29 @@ function registerTgGroupStats(bot, config, { getTexts } = {}) {
   });
 
   // 普通群 → 超级群：旧 groupId 作废，需同步 leave/save，避免配置列表同名双条
-  // Telegraf 的 migrate_* 过滤器 + message 兜底（防止过滤器漏接）
+  // 同时迁移打招呼冷却，避免换 ID 后再发一次欢迎语
   const runMigrate = async (ctx, event) => {
     try {
+      const msg = ctx.message || ctx.channelPost;
+      const oldId = msg?.migrate_from_chat_id != null ? Number(msg.migrate_from_chat_id) : null;
+      const newIdFromOld = msg?.migrate_to_chat_id != null ? Number(msg.migrate_to_chat_id) : null;
+      let oldChatId = null;
+      let newChatId = null;
+      if (Number.isFinite(newIdFromOld)) {
+        oldChatId = Number(ctx.chat?.id);
+        newChatId = newIdFromOld;
+      } else if (Number.isFinite(oldId)) {
+        oldChatId = oldId;
+        newChatId = Number(ctx.chat?.id);
+      }
+      if (
+        Number.isFinite(oldChatId) &&
+        Number.isFinite(newChatId) &&
+        oldChatId !== newChatId
+      ) {
+        transferGuideOnMigrate(oldChatId, newChatId, ctx.chat?.title);
+      }
+
       await syncGroupStatsFromMigrate(ctx, config);
     } catch (err) {
       tgGroupStatsLog('handler_error', {
@@ -259,4 +325,9 @@ function registerTgGroupStats(bot, config, { getTexts } = {}) {
   });
 }
 
-module.exports = { registerTgGroupStats };
+module.exports = {
+  registerTgGroupStats,
+  transferGuideOnMigrate,
+  markGuideSent,
+  alreadyGreeted,
+};
