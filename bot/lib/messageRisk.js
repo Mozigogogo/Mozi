@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * 高风险消息类型识别：转发 / 贴纸 GIF / 链接 / 邀请 等
+ * 高风险消息类型识别：转发 / 链接 / 邀请 等
  */
 
 function messageText(msg) {
@@ -78,14 +78,15 @@ function isInviteLink(urlOrText) {
 }
 
 /**
- * 观察期仅允许：纯文本 / 图片（非转发）
+ * 观察期允许：文本 / 图片 / 贴纸 / GIF；限制转发、链接、邀请等高风险类型
  * @returns {{ allowed: boolean; reason: string | null }}
  */
 function classifyObserveMessage(msg) {
   if (!msg) return { allowed: false, reason: 'empty' };
 
   if (isForwardMessage(msg)) return { allowed: false, reason: 'forward' };
-  if (isStickerOrGif(msg)) return { allowed: false, reason: 'sticker_gif' };
+  // 贴纸 / GIF 观察期内允许
+  if (isStickerOrGif(msg)) return { allowed: true, reason: null };
   if (msg.video || msg.video_note) return { allowed: false, reason: 'video' };
   if (msg.voice || msg.audio) return { allowed: false, reason: 'audio' };
   if (msg.contact) return { allowed: false, reason: 'contact' };
