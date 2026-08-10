@@ -1019,6 +1019,41 @@
   min-height: calc(100vh - 64px);
 }
 
+/* AI 问答：Content 锁死视口，避免空态因高度算多出现整页滚动 */
+.contentAi {
+  --pc-ai-header: 64PX;
+  height: calc(100vh - var(--pc-ai-header));
+  max-height: calc(100vh - var(--pc-ai-header));
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.contentWrapperAi {
+  flex: 1 1 auto;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.contentMainAi {
+  flex: 1 1 0%;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  padding: 24PX;
+  padding-bottom: 64PX; /* 与固定底部公告条错开 */
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 /* 币种详情：主内容 + 底部占位（与固定横幅错开） */
 .contentWrapperDetail {
   flex: 1 1 auto;
@@ -1164,6 +1199,11 @@
     padding-bottom: 64PX;
   }
 
+  .contentMainAi {
+    padding: 16PX;
+    padding-bottom: 64PX;
+  }
+
   .pcWatchlistBody {
     max-height: calc(4 * @pc-watchlist-row-approx + 3 * @pc-watchlist-row-gap);
   }
@@ -1233,10 +1273,19 @@
     min-height: calc(100vh - 56px);
   }
 
+  .contentAi {
+    --pc-ai-header: 56PX;
+  }
+
   .contentMain:not(.contentMainFlush) {
     padding: 12px;
     padding-bottom: 56PX;
     min-height: calc(100vh - 56px);
+  }
+
+  .contentMainAi {
+    padding: 12PX;
+    padding-bottom: 56PX;
   }
 
   .contentWrapperDetail {

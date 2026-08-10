@@ -70,7 +70,11 @@
     --pc-chat-rail-gutter: 5.5%;
     @pc-msg-avatar-slot: 50PX;
 
-    height: calc(100vh - 120PX); // Use PX to avoid scaling. 64px header + 24px padding + 32px bottom gap
+    /* 由 PCLayout.contentMainAi 提供可用高度，填满即可，避免再按 100vh 估算导致溢出滚动 */
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
     background: transparent;
     background-image: none;
     padding-bottom: 0;
@@ -942,6 +946,12 @@
     
     &::-webkit-scrollbar {
       display: none;
+    }
+
+    /* 空态：禁止滚动（欢迎区 + 建议按钮不应出现滚动条） */
+    &.chatScrollEmpty {
+      overflow-y: hidden;
+      overscroll-behavior: none;
     }
   }
 

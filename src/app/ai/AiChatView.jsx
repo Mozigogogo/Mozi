@@ -1148,7 +1148,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   // 右上角 “AI Assistant Pro” 升级胶囊：只在空状态展示，开始对话后隐藏
   // 放在这里是为了确保 `isBootstrappingUserData` / `isStreaming` 已初始化
   const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isBusy && !isLoadingHistory;
-  const isMobileEmpty = !isPC && showUpgradePill;
+  const isChatEmpty = showUpgradePill;
   const alphaAlertCount = scanCache?.signalCount ?? 3;
   
   // 检查登录状态
@@ -1868,7 +1868,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
           </div>
         ) : null}
         <div
-          className={`${styles.chatScroll} ${isMobileEmpty ? styles.chatScrollEmpty : ''}`}
+          className={`${styles.chatScroll} ${isChatEmpty ? styles.chatScrollEmpty : ''}`}
           ref={scrollRef}
         >
           {messages.length === 0 && !isBootstrappingUserData && !isBusy && !isLoadingHistory && (
