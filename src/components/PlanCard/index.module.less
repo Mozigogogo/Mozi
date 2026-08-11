@@ -611,6 +611,119 @@
   }
 }
 
+.planCardCompact {
+  padding: 14PX 12PX;
+  border-radius: 20PX;
+
+  .title {
+    margin-bottom: 4PX;
+    font-size: 16PX;
+  }
+
+  .description {
+    margin-bottom: 4PX;
+    font-size: 11PX;
+  }
+
+  .priceSection {
+    margin-bottom: 4PX;
+  }
+
+  .price {
+    .currency {
+      font-size: 14PX;
+    }
+
+    .amount {
+      font-size: 28PX;
+    }
+
+    .period {
+      font-size: 12PX;
+    }
+  }
+
+  .divider {
+    margin: 6PX 0;
+  }
+
+  .highlightCard {
+    padding: 10PX 12PX;
+    margin-bottom: 8PX;
+    border-radius: 10PX;
+  }
+
+  .highlightMain {
+    font-size: 18PX;
+  }
+
+  .highlightSubtitle,
+  .highlightLabel {
+    font-size: 11PX;
+  }
+
+  .tierSelectWrap {
+    margin-bottom: 8PX;
+  }
+
+  .tierSelectLabel {
+    margin-bottom: 4PX;
+    font-size: 11PX;
+  }
+
+  .tierSelectTrigger {
+    padding: 8PX 10PX;
+    border-radius: 10PX;
+  }
+
+  .tierSelectTitle {
+    font-size: 12PX;
+  }
+
+  .tierSelectSubtitle {
+    font-size: 11PX;
+  }
+
+  .features {
+    margin-bottom: 8PX;
+
+    .featureItem {
+      gap: 8PX;
+      padding: 4PX 0;
+
+      .featureIcon {
+        width: 24PX;
+        height: 24PX;
+      }
+
+      .featureText {
+        font-size: 13PX;
+        line-height: 20PX;
+      }
+
+      .featureMetaText {
+        font-size: 12PX;
+        line-height: 18PX;
+      }
+    }
+  }
+
+  &.planCardPro {
+    .tierSelectTrigger {
+      height: 52PX;
+    }
+  }
+
+  .button,
+  &.planCardFree .button,
+  &.planCardLite .button,
+  &.planCardPro .button {
+    height: 36PX;
+    font-size: 13PX;
+    border-radius: 8PX;
+  }
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .planCard {

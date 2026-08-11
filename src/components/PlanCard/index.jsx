@@ -52,6 +52,7 @@ const PlanCard = ({
   description = '',
   disabled = false,
   fullWidth = false,
+  compact = false,
 }) => {
   const { t } = useTranslation();
 
@@ -269,7 +270,7 @@ const PlanCard = ({
     <div
       className={`${styles.planCard} ${isPopular ? styles.popular : ''} ${
         styles[`planCard${title}`] || ''
-      }`}
+      } ${compact ? styles.planCardCompact : ''}`}
       style={{
         '--accent-color': accentColor,
         ...(fullWidth ? { maxWidth: 'none' } : {}),

@@ -36,6 +36,7 @@ function PCSubscribeContent() {
         planCardsClassName={styles.planCardsContainer}
         preferredPurchaseMethod="ARBITRUM"
         fullWidthCards
+        compactCards
       />
     </div>
   );

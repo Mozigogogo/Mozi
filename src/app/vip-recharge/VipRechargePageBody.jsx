@@ -23,6 +23,7 @@ export default function VipRechargePageBody({
   onTabsNode,
   preferredPurchaseMethod,
   fullWidthCards = false,
+  compactCards = false,
 }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('monthly');
@@ -268,6 +269,7 @@ export default function VipRechargePageBody({
           plans={planCardsWithHandlers[activeTab] || []}
           loading={preparingPurchase}
           fullWidth={fullWidthCards}
+          compact={compactCards}
         />
       </div>
     </div>

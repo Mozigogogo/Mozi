@@ -4,13 +4,13 @@ import React from 'react';
 import { Spin } from 'antd';
 import PlanCard from '@/components/PlanCard';
 
-export default function VipRechargePlanCards({ plans = [], loading = false, fullWidth = false }) {
+export default function VipRechargePlanCards({ plans = [], loading = false, fullWidth = false, compact = false }) {
   const wrapperStyle = fullWidth
     ? {
         display: 'grid',
         width: '100%',
         gridTemplateColumns: `repeat(${Math.max(plans.length, 1)}, minmax(0, 1fr))`,
-        gap: '16px',
+        gap: compact ? '12px' : '16px',
         alignItems: 'stretch',
       }
     : {
@@ -41,6 +41,7 @@ export default function VipRechargePlanCards({ plans = [], loading = false, full
             disabled={plan.disabled}
             onSubscribe={plan.onSubscribe}
             fullWidth={fullWidth}
+            compact={compact}
           />
         ))}
       </div>
