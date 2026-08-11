@@ -11,16 +11,33 @@
 /* PC端样式 */
 .pcCard {
   padding: 12PX;
-  border-radius: 32PX;
-  box-shadow: 0 2PX 8PX rgba(0, 0, 0, 0.06);
+  border-radius: 0;
+  box-shadow: none;
+  border-top: 1PX solid #f0f0f0;
+  border-bottom: none;
   min-height: 200PX;
   overflow: hidden;
+  margin: 0;
+  transition: background-color 0.2s;
+
+  &:first-child {
+    border-top: none;
+  }
+
+  &:hover {
+    background-color: #f7f8fa;
+    box-shadow: none;
+  }
 }
 
 .pcCard.qaCardTemplate {
   padding-left: 30PX;
   padding-top: 20PX;
   padding-right: 20PX;
+}
+
+.pcCard.discoverCardTemplate {
+  padding: 12PX 16PX 12PX 28PX;
 }
 
 /* 移动端样式 */

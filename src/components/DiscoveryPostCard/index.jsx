@@ -143,7 +143,13 @@ export default function DiscoveryPostCard({
 
   return (
     <div 
-      className={`${styles.discoveryCard} ${isPC ? styles.pcCard : styles.mobileCard} ${contentTemplate === 'titleDesc' ? styles.qaCardTemplate : ''}`} 
+      className={`${styles.discoveryCard} ${isPC ? styles.pcCard : styles.mobileCard} ${
+        contentTemplate === 'titleDesc'
+          ? styles.qaCardTemplate
+          : isPC
+            ? styles.discoverCardTemplate
+            : ''
+      }`} 
       onClick={() => onPostClick?.(post.id)}
     >
       {/* 右上角装饰图标 */}

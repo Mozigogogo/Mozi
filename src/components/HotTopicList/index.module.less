@@ -3,7 +3,7 @@
   border-radius: 20px 20px 0 0; /* 40rpx ÷ 2 = 20px */
   overflow: hidden;
   background: #fff;
-  min-height: calc(100vh - 200px); /* 确保有足够高度，但不需要100vh */
+  min-height: calc(100vh - 200px); /* 仅移动端需要；PC 的 .pcMode 会覆盖 */
   margin-top: 0; /* 紧贴搜索栏 */
   margin-left: -12px; /* 抵消 contentList 的左padding */
   margin-right: -12px; /* 抵消 contentList 的右padding */
@@ -149,18 +149,21 @@
 
 /* PC端样式 */
 .pcMode {
-  border-radius: 28PX;
+  border-radius: 0;
   margin: 0;
   padding: 18PX 0 0;
-  flex: 1; /* 占据父容器的全部空间 */
-  min-height: 0;
+  flex: 1 1 auto;
+  /* 覆盖移动端 .hotTopics 的 calc(100vh - 200px)，避免社区页首屏大片空白 */
+  min-height: 0 !important;
   height: 100%;
-  display: flex !important; /* 强制使用flex布局 */
+  max-height: none;
+  display: flex !important;
   flex-direction: column !important;
   background: #FFFFFF;
   box-shadow:
     0PX 1PX 2PX -1PX rgba(0, 0, 0, 0.08),
     0PX 8PX 24PX rgba(15, 23, 42, 0.04);
+  padding-bottom: 0 !important;
 
   .pcHeader {
     display: flex;
@@ -228,8 +231,9 @@
   }
 
   .pcScrollArea {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
+    height: auto;
     overflow-y: auto;
     overflow-x: hidden;
 
@@ -315,8 +319,9 @@
   }
   
   .loadingMore {
-    padding: 20PX 0;
-    flex: 1 !important; /* 强制占满剩余空间 */
+    padding: 24PX 0;
+    flex: 1 1 auto !important;
+    min-height: 160PX;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;

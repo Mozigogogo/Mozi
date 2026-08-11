@@ -1,13 +1,33 @@
 .pcCommunityContent {
   padding: 0;
+  /* 顶栏64 + 内容上边距24 + 底栏预留64 + 顶部栏约54 */
+  --pc-community-section-height: calc(100vh - 206PX);
+  --pc-community-radius: 12PX;
+}
+
+.mainPanel {
+  border-radius: var(--pc-community-radius);
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #eef1f5;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 0;
+  min-width: 0;
 }
 
 .topCapsuleTabs {
-  margin-bottom: 16PX;
+  flex-shrink: 0;
+  margin-bottom: 0;
 }
 
-.leftTopComposer {
-  margin-bottom: 16PX;
+.topFlashTicker {
+  flex: 1;
+  min-width: 0;
 }
 
 .pcCommunityContent {
@@ -33,12 +53,28 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 200PX;
     width: 100%;
-    background: #FFFFFF;
-    border-radius: 8PX;
-    padding: 40PX 20PX;
-    grid-column: 1 / -1; /* 占满整个grid的宽度 */
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    background: #fff;
+    border-radius: 0;
+    padding: 24PX 12PX;
+    box-sizing: border-box;
+    grid-column: 1 / -1;
+  }
+
+  .loadingInner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8PX;
+  }
+
+  .loadingText {
+    font-size: 14PX;
+    color: #999;
   }
 
   .questionSection {
@@ -323,27 +359,74 @@
 }
 
 .coinHotTopicSection {
-  max-height: 1200PX; /* 固定最小高度 */
-  // height: auto; /* 允许内容撑开 */
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  height: var(--pc-community-section-height);
+  min-height: var(--pc-community-section-height);
+  max-height: var(--pc-community-section-height);
+  border-radius: 0;
+  overflow: hidden;
+  background: #fff;
+  border-top: 1px solid #eef1f5;
 }
 
 .leftContentWrapper {
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  background: #fff;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.leftScrollArea {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+
+  &::-webkit-scrollbar {
+    width: 6PX;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 3PX;
+
+    &:hover {
+      background: #bfbfbf;
+    }
+  }
+}
+
+.leftTopComposer {
+  margin-bottom: 0;
+  flex: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .leftPanelContainer {
-  flex: 1;
+  flex: none;
   min-height: 0;
+  height: auto;
   display: flex;
   flex-direction: column;
   background: rgba(255, 255, 255, 1);
-  border-radius: 32PX;
+  border-radius: 0;
   border-top: 1PX solid rgba(243, 244, 246, 1);
-  box-shadow:
-    0PX 1PX 2PX -1PX rgba(0, 0, 0, 0.1),
-    0PX 1PX 3PX 0PX rgba(0, 0, 0, 0.1);
+  box-shadow: none;
   padding: 12PX 12PX 10PX;
 }
 
@@ -355,43 +438,38 @@
 }
 
 .leftContentHeader {
-  flex-shrink: 0; /* 固定在顶部，不参与滚动 */
+  flex-shrink: 0;
+  padding-bottom: 4PX;
 }
 
 .leftContentMain {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0; /* 允许flex子元素缩小 */
-  
-  /* 自定义滚动条样式 */
-  &::-webkit-scrollbar {
-    width: 6PX;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #d9d9d9;
-    border-radius: 3PX;
-    
-    &:hover {
-      background: #bfbfbf;
-    }
-  }
+  flex: none;
+  min-height: 0;
+  height: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
 }
 
-.leftPagination {
-  flex-shrink: 0;
-  margin-top: 10PX;
-  padding-top: 10PX;
+.leftPanelDiscover {
+  flex: none;
 }
 
 .coinPostsList {
   display: flex;
   flex-direction: column;
-  gap: 12PX;
+  gap: 0;
+}
+
+.leftLoadMoreHint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8PX;
+  padding: 16PX 12PX 24PX;
+  font-size: 13PX;
+  color: #999;
+  border: none;
 }
 
 .discoveryPostsGrid {
@@ -409,10 +487,14 @@
 .rightContentWrapper {
   display: flex;
   flex-direction: column;
-  height: 100%; /* 与左侧高度一致 */
-  position: relative; /* 为绝对定位的按钮提供参照 */
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: #fff;
   
-  /* 确保SectionTitle不占用flex空间 */
   > :first-child {
     flex-shrink: 0;
   }
@@ -423,55 +505,46 @@
   flex-shrink: 0;
 }
 
-.flashNewsWrapper {
-  margin-bottom: 12PX;
-  flex-shrink: 0;
-}
-
 .hotTopicsScrollContainer {
-  flex: 1;
+  flex: 1 1 auto;
   overflow: hidden;
-  min-height: 0; /* 关键：允许flex子元素缩小到内容以下 */
+  min-height: 0;
+  height: 100%;
 }
 
 @media (max-width: 1280PX) {
-  .topCapsuleTabs,
+  .topBar {
+    margin-bottom: 0;
+    gap: 0;
+  }
+
   .leftTopComposer {
-    margin-bottom: 12PX;
+    margin-bottom: 0;
   }
 
   .leftPanelContainer {
-    border-radius: 24PX;
+    border-radius: 0;
     padding: 10PX 10PX 8PX;
-  }
-
-  .flashNewsWrapper {
-    margin-bottom: 10PX;
   }
 }
 
 @media (max-width: 1024PX) {
-  .topCapsuleTabs,
+  .topBar {
+    margin-bottom: 0;
+    gap: 0;
+  }
+
   .leftTopComposer {
-    margin-bottom: 8PX;
+    margin-bottom: 0;
   }
 
   .leftPanelContainer {
-    border-radius: 18PX;
+    border-radius: 0;
     padding: 8PX 8PX 6PX;
   }
 
   .coinPostsList,
   .discoveryPostsGrid {
-    gap: 8PX;
-  }
-
-  .leftPagination {
-    margin-top: 8PX;
-    padding-top: 8PX;
-  }
-
-  .flashNewsWrapper {
-    margin-bottom: 8PX;
+    gap: 0;
   }
 }

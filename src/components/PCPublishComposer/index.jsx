@@ -160,6 +160,7 @@ export default function PCPublishComposer({
           onChange={(e) => setContent(e.target.value)}
           placeholder={composerPlaceholder}
           maxLength={500}
+          rows={1}
         />
 
         {images.length > 0 && (

@@ -1,6 +1,6 @@
 .card {
   background: #fff;
-  border-radius: 20px;
+  border-radius: 0;
   padding: 14px 16px 10px;
 }
 
@@ -69,6 +69,17 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  max-height: 420px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: auto;
+
+  /* 与首页热聊话题一致：隐藏滚动条，滚动更干净 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .skeletonItem {
@@ -264,6 +275,16 @@
   display: flex;
   justify-content: center;
   padding-top: 8px;
+}
+
+.loadMoreHint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 0 6px;
+  color: #8c98ab;
+  font-size: 12px;
 }
 
 .loadingWrap {

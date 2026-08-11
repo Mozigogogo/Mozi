@@ -121,24 +121,26 @@
 /* PC端样式 */
 .pcContainer {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16PX;
-  padding: 12PX 16PX;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8PX;
+  margin-bottom: 10PX;
+  padding: 8PX 12PX;
   background: rgba(248, 249, 250, 1);
   border: 1px solid rgba(243, 244, 246, 1);
-  border-radius: 16PX;
+  border-radius: 12PX;
 }
 
 .pcLeftContent {
   display: flex;
   align-items: center;
-  flex: 1;
-  margin-right: 12PX;
+  flex: none;
+  margin-right: 0;
+  gap: 8PX;
 }
 
 .pcQuestion {
-  font-size: 16PX;
+  font-size: 14PX;
   color: #333;
   font-weight: 500;
 }
@@ -146,11 +148,12 @@
 .pcIndicatorWrapper {
   display: flex;
   align-items: center;
-  gap: 12PX;
+  width: 100%;
+  gap: 8PX;
 }
 
 .pcParticipants {
-  font-size: 14PX;
+  font-size: 12PX;
   color: #999;
   white-space: nowrap;
 }
@@ -160,32 +163,30 @@
 }
 
 .pcIndicator {
-  height: 36PX;
-  border-radius: 8PX;
-  flex: 0 0 480PX;
-  width: 480PX;
+  height: 28PX;
+  border-radius: 6PX;
+  flex: 1;
+  width: 100%;
 }
 
 .pcBullSide {
-  border-radius: 8PX 0 0 8PX;
-  min-width: 80PX;
-  // PC端间隙 - 偏移量6PX
-  clip-path: polygon(0 0, 100% 0, calc(100% - 10PX) 100%, 0 100%);
+  border-radius: 6PX 0 0 6PX;
+  min-width: 56PX;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 8PX) 100%, 0 100%);
   
   .label {
-    font-size: 16PX;
+    font-size: 13PX;
     font-weight: 600;
   }
 }
 
 .pcBearSide {
-  border-radius: 0 8PX 8PX 0;
-  min-width: 80PX;
-  // PC端间隙 - 偏移量6PX
-  clip-path: polygon(10PX 0, 100% 0, 100% 100%, 0 100%);
+  border-radius: 0 6PX 6PX 0;
+  min-width: 56PX;
+  clip-path: polygon(8PX 0, 100% 0, 100% 100%, 0 100%);
   
   .label {
-    font-size: 16PX;
+    font-size: 13PX;
     font-weight: 600;
   }
 }
@@ -210,10 +211,11 @@
     margin-bottom: 12PX;
     padding: 10PX 12PX;
     border-radius: 12PX;
+    gap: 10PX;
   }
 
   .pcLeftContent {
-    margin-right: 10PX;
+    margin-right: 0;
   }
 
   .pcQuestion {
@@ -230,8 +232,8 @@
 
   .pcIndicator {
     height: 32PX;
-    flex: 0 0 380PX;
-    width: 380PX;
+    flex: 1;
+    width: 100%;
   }
 
   .pcBullSide,
@@ -251,10 +253,11 @@
     margin-bottom: 8PX;
     padding: 8PX 10PX;
     border-radius: 10PX;
+    gap: 8PX;
   }
 
   .pcLeftContent {
-    margin-right: 8PX;
+    margin-right: 0;
   }
 
   .pcQuestion {
@@ -271,8 +274,8 @@
 
   .pcIndicator {
     height: 28PX;
-    flex: 0 0 300PX;
-    width: 300PX;
+    flex: 1;
+    width: 100%;
     border-radius: 6PX;
   }
 

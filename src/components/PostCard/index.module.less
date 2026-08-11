@@ -13,15 +13,23 @@
 
 /* PC端样式 */
 .pcPostItem {
-  border-radius: 12PX;
+  border-radius: 0;
   padding: 14PX 16PX 14PX 24PX;
-  margin: 0 0 12PX 0;
+  margin: 0;
+  border: none;
+  border-top: 1PX solid #f0f0f0;
   cursor: pointer;
-  transition: box-shadow 0.3s;
+  transition: background-color 0.2s;
   box-sizing: border-box;
+  background: #fff;
+  
+  &:first-child {
+    border-top: none;
+  }
   
   &:hover {
-    box-shadow: 0 4PX 12PX rgba(0, 0, 0, 0.08);
+    background-color: #f7f8fa;
+    box-shadow: none;
   }
   
   .postWatermark {

@@ -10,7 +10,6 @@ import { Interface } from '@/utils/constants';
 import SectionTitle from '@/components/SectionTitle';
 import PostCard from '@/components/PostCard';
 import DiscoveryPostCard from '@/components/DiscoveryPostCard';
-import SplitLayout from '@/components/SplitLayout';
 import CoinTabBar from '@/components/CoinTabBar';
 import BullBearIndicator from '@/components/BullBearIndicator';
 import HotTopicSearchBar from '@/components/HotTopicSearchBar';
@@ -18,8 +17,7 @@ import HotTopicList from '@/components/HotTopicList';
 import PCTopicSearchModal from '@/components/PCTopicSearchModal';
 import PCCapsuleTabs from '@/components/PCCapsuleTabs';
 import PCPublishComposer from '@/components/PCPublishComposer';
-import PCFlashNewsCard from '@/components/PCFlashNewsCard';
-import PCPagination from '@/components/PCPagination';
+import PCFlashNewsTicker from '@/components/PCFlashNewsTicker';
 import PostDetailModal from '@/components/PostDetailModal';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
 import { jump2Detail } from '@/utils/core';
@@ -46,13 +44,17 @@ export default function PCCommunityContent() {
   ];
   const [flashNewsItems, setFlashNewsItems] = useState([]);
   const [flashNewsLoading, setFlashNewsLoading] = useState(false);
+  const [flashNewsLoadingMore, setFlashNewsLoadingMore] = useState(false);
   const [flashNewsPage, setFlashNewsPage] = useState(1);
   const [flashNewsTotal, setFlashNewsTotal] = useState(0);
-  const FLASH_NEWS_PAGE_SIZE = 3;
+  const [flashNewsHasMore, setFlashNewsHasMore] = useState(true);
+  const FLASH_NEWS_PAGE_SIZE = 15;
   
   const [coinPosts, setCoinPosts] = useState([]); // 币种帖子
   const [coinPostsPage, setCoinPostsPage] = useState(1);
   const [coinPostsTotal, setCoinPostsTotal] = useState(0);
+  const [coinPostsHasMore, setCoinPostsHasMore] = useState(true);
+  const [coinPostsLoadingMore, setCoinPostsLoadingMore] = useState(false);
   const [likedPosts, setLikedPosts] = useState({});
   const [dislikedPosts, setDislikedPosts] = useState({});
   const [coinLoading, setCoinLoading] = useState(false); // 币种帖子加载状态
@@ -81,6 +83,11 @@ export default function PCCommunityContent() {
   const [shareModalPost, setShareModalPost] = useState(null);
   // 解决 all/coin/discover/qa 四个 tab 快速切换导致的请求竞态
   const coinPostsRequestIdRef = useRef(0);
+  const coinPostsLoadMoreRef = useRef(false);
+  const coinLoadingRef = useRef(false);
+  const coinPostsHasMoreRef = useRef(true);
+  const coinPostsPageRef = useRef(1);
+  const leftScrollAreaRef = useRef(null);
   const hotTopicsPanelRef = useRef(null);
 
   useEffect(() => {
@@ -181,9 +188,15 @@ export default function PCCommunityContent() {
   };
 
   // 获取快讯（与移动端一致：/posts?userType=virtual）
-  const fetchFlashNews = async (nextPage = flashNewsPage, force = false) => {
-    if (flashNewsLoading && !force) return;
-    setFlashNewsLoading(true);
+  const fetchFlashNews = async (nextPage = 1, { force = false, append = false } = {}) => {
+    if (append) {
+      if (flashNewsLoadingMore || flashNewsLoading || !flashNewsHasMore) return;
+      setFlashNewsLoadingMore(true);
+    } else {
+      if (flashNewsLoading && !force) return;
+      setFlashNewsLoading(true);
+    }
+
     try {
       const res = await request({
         url: Interface.POSTS_API,
@@ -196,7 +209,8 @@ export default function PCCommunityContent() {
       });
       const list = res?.data?.data || [];
       const total = res?.data?.total ?? 0;
-      setFlashNewsTotal(Number.isFinite(Number(total)) ? Number(total) : 0);
+      const totalNum = Number.isFinite(Number(total)) ? Number(total) : 0;
+      setFlashNewsTotal(totalNum);
       setFlashNewsPage(nextPage);
 
       const mapped = list.slice(0, FLASH_NEWS_PAGE_SIZE).map((item) => {
@@ -219,68 +233,34 @@ export default function PCCommunityContent() {
           isLiked: Boolean(item?.isLikedByCurrentUser ?? item?.isLiked),
         };
       });
-      setFlashNewsItems(mapped);
+
+      setFlashNewsItems((prev) => {
+        if (!append) return mapped;
+        const seen = new Set(prev.map((row) => String(row.id)));
+        const merged = [...prev];
+        mapped.forEach((row) => {
+          if (!seen.has(String(row.id))) merged.push(row);
+        });
+        return merged;
+      });
+
+      setFlashNewsHasMore(
+        mapped.length > 0 && nextPage * FLASH_NEWS_PAGE_SIZE < totalNum
+      );
     } catch (e) {
       console.error('获取快讯失败:', e);
       message.error(t('pcCommunity.errors.fetchFlashNewsFailed'));
-      setFlashNewsItems([]);
-      setFlashNewsTotal(0);
-    } finally {
-      setFlashNewsLoading(false);
-    }
-  };
-
-  // 24H 快讯点赞
-  const handleFlashNewsLike = async (item) => {
-    const postId = item?.id;
-    if (!postId) return;
-    const isLiked = Boolean(item?.isLiked);
-    const url = isLiked ? `${Interface.POSTS_UNLIKE}/${postId}` : `${Interface.POSTS_LIKE}/${postId}`;
-
-    setFlashNewsItems((prev) =>
-      prev.map((row) => {
-        if (String(row.id) !== String(postId)) return row;
-        return {
-          ...row,
-          isLiked: !isLiked,
-          likeCount: isLiked
-            ? Math.max(0, (row.likeCount || 0) - 1)
-            : (row.likeCount || 0) + 1,
-        };
-      })
-    );
-    setLikedPosts((prev) => ({ ...prev, [postId]: !isLiked }));
-
-    try {
-      const res = await request({ url, method: 'GET' });
-      const ok = res?.success === true || res?.code === 0;
-      if (!ok) throw res;
-
-      if (!isLiked) {
-        try {
-          await request({
-            url: Interface.TASK_COMPLETE,
-            method: 'POST',
-            data: { taskCode: 'DAILY_LIKE' },
-          });
-        } catch (taskError) {
-          console.error('每日点赞任务上报失败:', taskError);
-        }
+      if (!append) {
+        setFlashNewsItems([]);
+        setFlashNewsTotal(0);
+        setFlashNewsHasMore(false);
       }
-    } catch (error) {
-      console.error('快讯点赞失败:', error);
-      setFlashNewsItems((prev) =>
-        prev.map((row) => {
-          if (String(row.id) !== String(postId)) return row;
-          return {
-            ...row,
-            isLiked,
-            likeCount: item.likeCount ?? 0,
-          };
-        })
-      );
-      setLikedPosts((prev) => ({ ...prev, [postId]: isLiked }));
-      message.error(getBackendErrorMsg(error) || t('common.operationFailed'));
+    } finally {
+      if (append) {
+        setFlashNewsLoadingMore(false);
+      } else {
+        setFlashNewsLoading(false);
+      }
     }
   };
 
@@ -305,10 +285,44 @@ export default function PCCommunityContent() {
     return hit == null ? '' : String(hit).trim();
   };
 
+  const formatCoinPostItem = (item) => ({
+    id: item.id,
+    avatar: item.avatar || '/default-avatar.png',
+    username: item.nickName || t('myNotices.anonymousUser'),
+    title: item.title,
+    content: item.content,
+    category: item.category,
+    categoryLabel: item.category,
+    commentCount: item.commentCnt || 0,
+    likeCount: item.likeCnt || 0,
+    dislikeCount: item.dislikeCnt ?? item.unlikeCnt ?? item.dislikeCount ?? 0,
+    userId: extractPostUserId(item),
+    tags: item.tags || [],
+    topics: item.topics || [],
+    isLiked: item.isLikedByCurrentUser || false,
+    isDisliked: item.isDislikedByCurrentUser || item.isUnlikedByCurrentUser || false,
+    createTime: item.updatedAt?.replace('T', ' ') || '',
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    images: item.images || []
+  });
+
   // 获取左侧帖子（全部 / 币种 / 发现好币 / 不懂就问）
-  const fetchCoinPosts = async (coin, nextPage = 1, tabKey = activeCapsuleTab) => {
-    const requestId = ++coinPostsRequestIdRef.current;
-    setCoinLoading(true);
+  const fetchCoinPosts = async (coin, nextPage = 1, tabKey = activeCapsuleTab, { append = false } = {}) => {
+    if (append) {
+      if (coinPostsLoadMoreRef.current || coinLoadingRef.current || !coinPostsHasMoreRef.current) return;
+    }
+
+    const requestId = append ? coinPostsRequestIdRef.current : ++coinPostsRequestIdRef.current;
+
+    if (append) {
+      coinPostsLoadMoreRef.current = true;
+      setCoinPostsLoadingMore(true);
+    } else {
+      coinLoadingRef.current = true;
+      setCoinLoading(true);
+    }
+
     try {
       const requestData = {
         page: nextPage,
@@ -333,49 +347,71 @@ export default function PCCommunityContent() {
 
       // 仅允许最后一次请求回写，旧请求结果直接丢弃
       if (requestId !== coinPostsRequestIdRef.current) return;
-      
-      if (response?.data?.data?.length > 0) {
+
+      const list = response?.data?.data || [];
+
+      if (list.length > 0) {
         const totalRaw = response?.data?.total;
-        const total = Number.isFinite(Number(totalRaw)) ? Number(totalRaw) : response?.data?.data?.length || 0;
+        const total = Number.isFinite(Number(totalRaw)) ? Number(totalRaw) : list.length;
+        const formattedData = list.map(formatCoinPostItem);
+
         setCoinPostsTotal(total);
         setCoinPostsPage(nextPage);
-
-        const formattedData = response.data.data.map(item => ({
-          id: item.id,
-          avatar: item.avatar || '/default-avatar.png',
-          username: item.nickName || t('myNotices.anonymousUser'),
-          title: item.title,
-          content: item.content,
-          category: item.category,
-          categoryLabel: item.category,
-          commentCount: item.commentCnt || 0,
-          likeCount: item.likeCnt || 0,
-          dislikeCount: item.dislikeCnt ?? item.unlikeCnt ?? item.dislikeCount ?? 0,
-          userId: extractPostUserId(item),
-          tags: item.tags || [],
-          topics: item.topics || [],
-          isLiked: item.isLikedByCurrentUser || false,
-          isDisliked: item.isDislikedByCurrentUser || item.isUnlikedByCurrentUser || false,
-          createTime: item.updatedAt?.replace('T', ' ') || '',
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt,
-          images: item.images || []
-        }));
-        
-        setCoinPosts(formattedData);
-      } else {
+        coinPostsPageRef.current = nextPage;
+        setCoinPosts((prev) => {
+          if (!append) return formattedData;
+          const seen = new Set(prev.map((row) => String(row.id)));
+          const merged = [...prev];
+          formattedData.forEach((row) => {
+            if (!seen.has(String(row.id))) merged.push(row);
+          });
+          return merged;
+        });
+        setCoinPostsHasMore(formattedData.length > 0 && nextPage * COIN_POST_PAGE_SIZE < total);
+        coinPostsHasMoreRef.current = formattedData.length > 0 && nextPage * COIN_POST_PAGE_SIZE < total;
+      } else if (!append) {
         setCoinPosts([]);
         setCoinPostsTotal(0);
         setCoinPostsPage(nextPage);
+        coinPostsPageRef.current = nextPage;
+        setCoinPostsHasMore(false);
+        coinPostsHasMoreRef.current = false;
+      } else {
+        setCoinPostsPage(nextPage);
+        coinPostsPageRef.current = nextPage;
+        setCoinPostsHasMore(false);
+        coinPostsHasMoreRef.current = false;
       }
     } catch (error) {
       console.error('获取币种帖子失败:', error);
       if (requestId !== coinPostsRequestIdRef.current) return;
-      setCoinPosts([]);
-      setCoinPostsTotal(0);
+      if (!append) {
+        setCoinPosts([]);
+        setCoinPostsTotal(0);
+        setCoinPostsHasMore(false);
+        coinPostsHasMoreRef.current = false;
+      }
     } finally {
       if (requestId !== coinPostsRequestIdRef.current) return;
-      setCoinLoading(false);
+      if (append) {
+        coinPostsLoadMoreRef.current = false;
+        setCoinPostsLoadingMore(false);
+      } else {
+        coinLoadingRef.current = false;
+        setCoinLoading(false);
+      }
+    }
+  };
+
+  const loadMoreCoinPosts = () => {
+    if (coinPostsLoadMoreRef.current || coinLoadingRef.current || !coinPostsHasMoreRef.current) return;
+    fetchCoinPosts(selectedCoin, coinPostsPageRef.current + 1, activeCapsuleTab, { append: true });
+  };
+
+  const handleLeftScroll = (event) => {
+    const { scrollTop, scrollHeight, clientHeight } = event.target;
+    if (scrollHeight - scrollTop - clientHeight < 120) {
+      loadMoreCoinPosts();
     }
   };
 
@@ -1140,18 +1176,15 @@ export default function PCCommunityContent() {
 
   // 币种或顶部tab切换时重新加载
   useEffect(() => {
+    leftScrollAreaRef.current?.scrollTo({ top: 0 });
+    setCoinPostsHasMore(true);
+    coinPostsHasMoreRef.current = true;
+    coinPostsPageRef.current = 1;
     fetchCoinPosts(selectedCoin, 1, activeCapsuleTab);
     if (activeCapsuleTab === 'coin') {
       fetchVoteData(selectedCoin);
     }
   }, [selectedCoin, activeCapsuleTab]);
-
-  const coinPostsTotalPages = Math.max(1, Math.ceil((coinPostsTotal || 0) / COIN_POST_PAGE_SIZE));
-  const handleCoinPostsPageChange = (targetPage) => {
-    const safePage = Math.max(1, Math.min(targetPage, coinPostsTotalPages));
-    if (safePage === coinPostsPage || coinLoading) return;
-    fetchCoinPosts(selectedCoin, safePage);
-  };
 
   const handlePostDeleted = async () => {
     await fetchCoinPosts(selectedCoin, 1, activeCapsuleTab);
@@ -1159,32 +1192,45 @@ export default function PCCommunityContent() {
 
   return (
     <div className={styles.pcCommunityContent}>
-      <div className={styles.topCapsuleTabs}>
-        <PCCapsuleTabs
-          items={capsuleTabItems}
-          activeKey={activeCapsuleTab}
-          onChange={setActiveCapsuleTab}
-        />
-      </div>
+      <div className={styles.mainPanel}>
+        <div className={styles.topBar}>
+          <div className={styles.topCapsuleTabs}>
+            <PCCapsuleTabs
+              items={capsuleTabItems}
+              activeKey={activeCapsuleTab}
+              onChange={setActiveCapsuleTab}
+            />
+          </div>
+          <div className={styles.topFlashTicker}>
+            <PCFlashNewsTicker
+              items={flashNewsItems}
+              loading={flashNewsLoading}
+              onItemClick={(item) => goToPostDetail(item?.id)}
+            />
+          </div>
+        </div>
 
-      {/* 币种、热门榜单 */}
-      {/* 60/40 分栏 */}
-      <SplitLayout
-        className={styles.coinHotTopicSection}
-        leftContent={
-          <div className={styles.leftContentWrapper}>
+        {/* 币种、热门榜单：左右等高，加载态铺满左侧内容区并居中 */}
+        <div className={styles.coinHotTopicSection}>
+        <div className={styles.leftContentWrapper}>
+          <div
+            ref={leftScrollAreaRef}
+            className={styles.leftScrollArea}
+            onScroll={handleLeftScroll}
+          >
             <div className={styles.leftTopComposer}>
               <PCPublishComposer onPublish={() => fetchCoinPosts(selectedCoin, 1, activeCapsuleTab)} />
             </div>
             <div
-              className={`${styles.leftPanelContainer} ${isDiscoveryLikeTab ? styles.leftPanelPlain : ''}`}
+              className={`${styles.leftPanelContainer} ${isDiscoveryLikeTab ? styles.leftPanelPlain : ''} ${
+                isDiscoveryLikeTab ? styles.leftPanelDiscover : ''
+              }`}
             >
-              {/* 不懂就问模块标题 + 币种标签栏 - 固定在顶部 */}
               <div className={styles.leftContentHeader}>
                 {activeCapsuleTab === 'coin' ? (
                   <>
-                    <SectionTitle 
-                      title="" 
+                    <SectionTitle
+                      title=""
                       showMore={false}
                       extra={
                         <CoinTabBar
@@ -1197,8 +1243,6 @@ export default function PCCommunityContent() {
                         />
                       }
                     />
-                    
-                    {/* 看涨看跌投票组件 - 固定在顶部 */}
                     <BullBearIndicator
                       upCount={voteData.upCount}
                       downCount={voteData.downCount}
@@ -1213,144 +1257,110 @@ export default function PCCommunityContent() {
                   </>
                 ) : null}
               </div>
-              
-              {/* 币种相关帖子列表 - 可滚动区域 */}
+
               <div className={styles.leftContentMain}>
-                {coinLoading ? (
-                  <div className={styles.loadingContainer}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: '8PX',
-                      }}
-                    >
-                      <SpinLoading color="#00b578" style={{ '--size': '24PX' }} />
-                      <span style={{ fontSize: '14PX', color: '#999' }}>
-                        {t('community.actions.loading')}
-                      </span>
-                    </div>
+              {coinLoading ? (
+                <div className={styles.loadingContainer}>
+                  <div className={styles.loadingInner}>
+                    <SpinLoading color="#00b578" style={{ '--size': '24PX' }} />
+                    <span className={styles.loadingText}>
+                      {t('community.actions.loading')}
+                    </span>
                   </div>
-                ) : coinPosts.length > 0 ? (
-                  <div
-                    className={`${styles.coinPostsList} ${isDiscoveryLikeTab ? styles.discoveryPostsGrid : ''}`}
-                  >
-                    {coinPosts.map(post => (
-                      isCoinStyleTab ? (
-                        <PostCard
-                          key={post.id}
-                          post={post}
-                          onPostClick={goToPostDetail}
-                          onUserClick={goToUserPage}
-                          onLikeClick={(postId) => toggleLike(null, postId)}
-                          onShareClick={handleShare}
-                          onTagClick={(tagName) => jump2Detail(tagName)}
-                          onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
-                          isLiked={post.isLiked || likedPosts[post.id]}
-                          formatTimeAgo={formatTimeAgo}
-                          isPC={true}
-                          showFooterDivider={false}
-                          onDeletePost={handlePostDeleted}
-                        />
-                      ) : (
-                        <DiscoveryPostCard
-                          key={post.id}
-                          post={post}
-                          onPostClick={goToPostDetail}
-                          onUserClick={goToUserPage}
-                          onLikeClick={(postId) => toggleLike(null, postId)}
-                          onDislikeClick={(postId) => toggleDislike(null, postId)}
-                          onShareClick={handleShare}
-                          isLiked={post.isLiked || likedPosts[post.id]}
-                          isDisliked={post.isDisliked || dislikedPosts[post.id]}
-                          formatTimeAgo={formatTimeAgo}
-                          isPC={true}
-                          showDislike={activeCapsuleTab === 'discover'}
-                          contentTemplate={activeCapsuleTab === 'qa' ? 'titleDesc' : 'coinInfo'}
-                          badgeLabel={activeCapsuleTab === 'qa' ? t('community.tabs.question') : ''}
-                          onDeletePost={handlePostDeleted}
-                        />
-                      )
-                    ))}
+                </div>
+              ) : coinPosts.length > 0 ? (
+                <>
+                <div className={styles.coinPostsList}>
+                  {coinPosts.map(post => (
+                    isCoinStyleTab ? (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        onPostClick={goToPostDetail}
+                        onUserClick={goToUserPage}
+                        onLikeClick={(postId) => toggleLike(null, postId)}
+                        onShareClick={handleShare}
+                        onTagClick={(tagName) => jump2Detail(tagName)}
+                        onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
+                        isLiked={post.isLiked || likedPosts[post.id]}
+                        formatTimeAgo={formatTimeAgo}
+                        isPC={true}
+                        showFooterDivider={false}
+                        onDeletePost={handlePostDeleted}
+                      />
+                    ) : (
+                      <DiscoveryPostCard
+                        key={post.id}
+                        post={post}
+                        onPostClick={goToPostDetail}
+                        onUserClick={goToUserPage}
+                        onLikeClick={(postId) => toggleLike(null, postId)}
+                        onDislikeClick={(postId) => toggleDislike(null, postId)}
+                        onShareClick={handleShare}
+                        isLiked={post.isLiked || likedPosts[post.id]}
+                        isDisliked={post.isDisliked || dislikedPosts[post.id]}
+                        formatTimeAgo={formatTimeAgo}
+                        isPC={true}
+                        showDislike={activeCapsuleTab === 'discover'}
+                        contentTemplate={activeCapsuleTab === 'qa' ? 'titleDesc' : 'coinInfo'}
+                        badgeLabel={activeCapsuleTab === 'qa' ? t('community.tabs.question') : ''}
+                        onDeletePost={handlePostDeleted}
+                      />
+                    )
+                  ))}
+                </div>
+                {coinPostsLoadingMore ? (
+                  <div className={styles.leftLoadMoreHint}>
+                    <SpinLoading color="#00b578" style={{ '--size': '20PX' }} />
+                    <span>{t('common.loading')}</span>
                   </div>
-                ) : (
-                  <Empty
-                    description={
-                      activeCapsuleTab === 'qa'
-                        ? t('pcCommunity.emptyQaPosts')
-                        : activeCapsuleTab === 'all'
-                          ? t('community.actions.noPosts')
-                          : t('pcCommunity.emptyCoinPosts', { coin: selectedCoin })
-                    }
-                  />
-                )}
-              </div>
-              {(activeCapsuleTab === 'qa' || activeCapsuleTab === 'all' || coinPostsTotalPages > 1) && (
-                <PCPagination
-                  className={styles.leftPagination}
-                  current={coinPostsPage}
-                  total={coinPostsTotal}
-                  pageSize={COIN_POST_PAGE_SIZE}
-                  loading={coinLoading}
-                  onChange={handleCoinPostsPageChange}
-                  alwaysShow={activeCapsuleTab === 'qa' || activeCapsuleTab === 'all'}
+                ) : null}
+                {!coinPostsHasMore && coinPosts.length > 0 && !coinPostsLoadingMore ? (
+                  <div className={styles.leftLoadMoreHint}>{t('common.noMore')}</div>
+                ) : null}
+                </>
+              ) : (
+                <Empty
+                  description={
+                    activeCapsuleTab === 'qa'
+                      ? t('pcCommunity.emptyQaPosts')
+                      : activeCapsuleTab === 'all'
+                        ? t('community.actions.noPosts')
+                        : t('pcCommunity.emptyCoinPosts', { coin: selectedCoin })
+                  }
                 />
               )}
-              
+            </div>
             </div>
           </div>
-        }
-        rightContent={
-          <div className={styles.rightContentWrapper}>
-            <div className={styles.flashNewsWrapper}>
-              <PCFlashNewsCard
-                items={flashNewsItems}
-                loading={flashNewsLoading}
-                onRefresh={() => fetchFlashNews(1, true)}
-                onItemClick={(item) => goToPostDetail(item?.id)}
-                onLikeClick={handleFlashNewsLike}
-                onShareClick={(item) => {
-                  openShareModal({
-                    id: item?.id,
-                    title: item?.title,
-                    content: item?.desc,
-                  });
-                }}
-                page={flashNewsPage}
-                pageSize={FLASH_NEWS_PAGE_SIZE}
-                total={flashNewsTotal}
-                onPageChange={(p) => fetchFlashNews(p)}
-              />
-            </div>
-            <div
-              ref={hotTopicsPanelRef}
-              className={styles.hotTopicsScrollContainer}
-            >
-              <HotTopicList
-                topics={hotTopics}
-                loading={hotTopicsLoading}
-                allLoaded={false}
-                pullRefresh={false}
-                onTopicClick={openTopicInDetailModal}
-                onCreateTopic={goToPostPage}
-                nov1Icon={nov1Icon}
-                nov2Icon={nov2Icon}
-                nov3Icon={nov3Icon}
-                hotIcon={hotIcon}
-                isPC={true}
-                page={hotTopicsPage}
-                pageSize={HOT_TOPICS_PAGE_SIZE}
-                total={hotTopicsTotal}
-                onPageChange={(p) => fetchHotTopics(p, searchKeyword)}
-              />
-            </div>
+        </div>
+
+        <div className={styles.rightContentWrapper}>
+          <div
+            ref={hotTopicsPanelRef}
+            className={styles.hotTopicsScrollContainer}
+          >
+            <HotTopicList
+              topics={hotTopics}
+              loading={hotTopicsLoading}
+              allLoaded={false}
+              pullRefresh={false}
+              onTopicClick={openTopicInDetailModal}
+              onCreateTopic={goToPostPage}
+              nov1Icon={nov1Icon}
+              nov2Icon={nov2Icon}
+              nov3Icon={nov3Icon}
+              hotIcon={hotIcon}
+              isPC={true}
+              page={hotTopicsPage}
+              pageSize={HOT_TOPICS_PAGE_SIZE}
+              total={hotTopicsTotal}
+              onPageChange={(p) => fetchHotTopics(p, searchKeyword)}
+            />
           </div>
-        }
-        leftWidth={60}
-        gap={20}
-      />
+        </div>
+      </div>
+      </div>
       <PostDetailModal
         open={detailModalOpen}
         onClose={() => {

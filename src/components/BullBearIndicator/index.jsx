@@ -66,10 +66,13 @@ const BullBearIndicator = ({
 
   return (
     <div className={`${styles.container} ${isPC ? styles.pcContainer : ''}`}>
-      {/* PC端左侧文本 */}
+      {/* PC端：问题 + 参与人数 */}
       {isPC && (
         <div className={styles.pcLeftContent}>
           <span className={styles.pcQuestion}>{questionText}</span>
+          {showParticipants && (
+            <span className={styles.pcParticipants}>{displayCount}</span>
+          )}
         </div>
       )}
       
@@ -80,11 +83,6 @@ const BullBearIndicator = ({
       
       {/* 指示器容器 */}
       <div className={isPC ? styles.pcIndicatorWrapper : ''}>
-        {/* PC端参与人数（在投票条左侧） */}
-        {isPC && (
-          <span className={styles.pcParticipants}>{displayCount}</span>
-        )}
-        
         {/* 指示器 */}
         <div className={`${styles.indicator} ${isPC ? styles.pcIndicator : ''} ${disabled ? styles.disabled : ''}`}>
           <div 

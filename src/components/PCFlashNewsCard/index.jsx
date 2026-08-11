@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   EllipsisOutlined,
   HeartFilled,
@@ -9,7 +9,6 @@ import {
   ReloadOutlined,
   ShareAltOutlined,
 } from '@ant-design/icons';
-import PCPagination from '@/components/PCPagination';
 import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
@@ -113,25 +112,86 @@ function SkeletonItem() {
 export default function PCFlashNewsCard({
   items = [],
   loading = false,
+  loadingMore = false,
+  hasMore = false,
   onRefresh,
+  onLoadMore,
   onItemClick,
   onLikeClick,
   onShareClick,
-  page = 1,
-  pageSize = 3,
-  total = 0,
-  onPageChange,
+  skeletonCount = 3,
 }) {
   const { t } = useTranslation();
   const listRef = useRef(null);
-  const [lockedListHeight, setLockedListHeight] = useState(null);
+  const isFetchingRef = useRef(false);
+  const hasMoreRef = useRef(hasMore);
+  const onLoadMoreRef = useRef(onLoadMore);
+  const scrollAccumulatorRef = useRef(0);
+  const animationFrameRef = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
   const hasItems = items.length > 0;
 
-  useLayoutEffect(() => {
-    if (!loading && listRef.current) {
-      setLockedListHeight(listRef.current.offsetHeight);
+  hasMoreRef.current = hasMore;
+  onLoadMoreRef.current = onLoadMore;
+
+  useEffect(() => {
+    isFetchingRef.current = Boolean(loadingMore);
+  }, [loadingMore]);
+
+  const tryLoadMore = () => {
+    const list = listRef.current;
+    if (!list || !hasMoreRef.current || isFetchingRef.current) return;
+    if (list.scrollTop + list.clientHeight < list.scrollHeight - 150) return;
+    isFetchingRef.current = true;
+    onLoadMoreRef.current?.();
+  };
+
+  // 内容未撑满可视区域时继续加载
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || loading || loadingMore || !hasMore || items.length === 0) return;
+    if (list.scrollHeight <= list.clientHeight + 40) {
+      isFetchingRef.current = true;
+      onLoadMoreRef.current?.();
     }
-  }, [loading, items, pageSize, page]);
+  }, [items.length, loading, loadingMore, hasMore]);
+
+  // 与首页热聊话题一致的 rAF 平滑自动滚动
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || loading || isHovered || items.length === 0) {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      return undefined;
+    }
+
+    const animateScroll = () => {
+      if (!list) return;
+
+      // 0.5px/frame ≈ 30px/s，与首页热聊话题一致
+      scrollAccumulatorRef.current += 0.5;
+
+      if (scrollAccumulatorRef.current >= 1) {
+        const pixelsToScroll = Math.floor(scrollAccumulatorRef.current);
+        list.scrollTop += pixelsToScroll;
+        scrollAccumulatorRef.current -= pixelsToScroll;
+        tryLoadMore();
+      }
+
+      animationFrameRef.current = requestAnimationFrame(animateScroll);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animateScroll);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [items.length, loading, isHovered]);
 
   return (
     <div className={styles.card}>
@@ -161,7 +221,9 @@ export default function PCFlashNewsCard({
       <div
         ref={listRef}
         className={styles.list}
-        style={loading && lockedListHeight ? { minHeight: `${lockedListHeight}px` } : undefined}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onScroll={tryLoadMore}
       >
         {hasItems ? (
           items.map((item) => (
@@ -175,13 +237,24 @@ export default function PCFlashNewsCard({
           ))
         ) : loading ? (
           <>
-            {Array.from({ length: pageSize }).map((_, idx) => (
+            {Array.from({ length: skeletonCount }).map((_, idx) => (
               <SkeletonItem key={idx} />
             ))}
           </>
         ) : (
           <div className={styles.emptyWrap}>{t('pcCommunity.noFlashNews')}</div>
         )}
+
+        {loadingMore ? (
+          <div className={styles.loadMoreHint}>
+            <span className={styles.spinner} aria-hidden />
+            <span className={styles.loadingText}>{t('common.loading')}</span>
+          </div>
+        ) : null}
+
+        {hasItems && !hasMore && !loadingMore ? (
+          <div className={styles.loadMoreHint}>{t('common.noMore')}</div>
+        ) : null}
 
         {loading && hasItems ? (
           <div className={styles.loadingOverlay}>
@@ -190,15 +263,6 @@ export default function PCFlashNewsCard({
           </div>
         ) : null}
       </div>
-
-      <PCPagination
-        className={styles.paginationWrap}
-        current={page}
-        total={total}
-        pageSize={pageSize}
-        loading={loading}
-        onChange={onPageChange}
-      />
     </div>
   );
 }
