@@ -62,7 +62,36 @@ import {
   createTickerChannel,
   createKlineChannel,
 } from '../../utils/websocketProtocol';
+import {
+  US_STOCK_USE_MOCK,
+  getMockUsStockHeader,
+  getMockUsStockKline,
+  getMockUsStockExchangePrice,
+  getMockUsStockPage,
+} from '@/utils/usStockMockData';
 import styles from './page.module.less';
+
+/** 美股跨所行情字段 → 与币种市场列表对齐 */
+function normalizeStockExchangeRow(item) {
+  if (!item || typeof item !== 'object') return null;
+  const exchange = item.exchange || item.exchanges || '';
+  if (!exchange) return null;
+  let price24h = item.price_change_percent ?? item.price24h ?? '';
+  if (price24h !== '' && price24h != null && !String(price24h).includes('%')) {
+    price24h = `${price24h}%`;
+  }
+  return {
+    exchanges: exchange,
+    url: item.logo || item.url || '',
+    last: item.last,
+    price24h,
+    vol: item.volume ?? item.vol,
+    usd: item.quote_volume ?? item.usd,
+    note: item.note,
+    instrument: item.instrument,
+    issuance: item.issuance,
+  };
+}
 
 const PC_MEDIA_QUERY = '(min-width: 1024px)';
 
@@ -124,6 +153,7 @@ export default function DetailPage() {
   const symbol = searchParams.get('symbol') || '';
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
   const fromTgAlert = searchParams.get('from') === 'tg_alert';
+  const isUsStock = searchParams.get('type') === 'usStock';
   const { t, i18n } = useTranslation();
 
   const headerFieldLabel = (key) => {
@@ -1018,13 +1048,18 @@ export default function DetailPage() {
     
     if (!silent) setLoading(true);
     try {
-      const response = await request({
-        url: Interface.coin_info,
-        data: { symbol }
-      });
+      let coinData = null;
+      if (isUsStock && US_STOCK_USE_MOCK) {
+        coinData = getMockUsStockHeader(symbol);
+      } else {
+        const response = await request({
+          url: isUsStock ? Interface.stock_info : Interface.coin_info,
+          data: { symbol }
+        });
+        coinData = response?.data || null;
+      }
       
-      if (response?.data) {
-        const coinData = response.data;
+      if (coinData) {
         let favorite = Boolean(
           coinData.isSelfSelected ?? coinData.isFavorite ?? coinData.favorite ?? fromFavorite
         );
@@ -1071,7 +1106,7 @@ export default function DetailPage() {
         setCoinInfoRight(headerInfoRight);
       }
     } catch (error) {
-      console.error('获取币种信息失败:', error);
+      console.error(isUsStock ? '获取美股信息失败:' : '获取币种信息失败:', error);
     } finally {
       setLoading(false);
       setIsInitialLoad(false);
@@ -1188,52 +1223,35 @@ export default function DetailPage() {
     };
   };
 
-  // 获取K线数据（仅在WebSocket失败时使用）
-  const fetchKlineData = async ({ silent = false } = {}) => {
+  // 获取K线数据（仅在WebSocket失败时使用；force 用于美股 mock 首屏）
+  const fetchKlineData = async ({ silent = false, force = false } = {}) => {
     if (!symbol) return;
     
     // 只有在允许使用HTTP降级时才执行
-    if (!useHttpFallbackRef.current) {
+    if (!force && !useHttpFallbackRef.current) {
       return;
     }
     
     if (!silent) setKlineLoading(true);
     
     try {
+      const lineUrl = isUsStock ? Interface.stock_line : Interface.coin_line;
+      const fetchOne = async (type) => {
+        if (isUsStock && US_STOCK_USE_MOCK) {
+          return { data: getMockUsStockKline(symbol, type) };
+        }
+        return request({
+          url: lineUrl,
+          data: { symbol, type },
+        });
+      };
+
       // 并行获取四个时间维度的K线数据
       const [hourData, dayData, weekData, monthData] = await Promise.all([
-        // 小时线 (type: 1)
-        request({
-          url: Interface.coin_line,
-          data: {
-            symbol,
-            type: 1
-          }
-        }),
-        // 日线 (type: 2)
-        request({
-          url: Interface.coin_line,
-          data: {
-            symbol,
-            type: 2
-          }
-        }),
-        // 周线 (type: 3)
-        request({
-          url: Interface.coin_line,
-          data: {
-            symbol,
-            type: 3
-          }
-        }),
-        // 月线 (type: 4)
-        request({
-          url: Interface.coin_line,
-          data: {
-            symbol,
-            type: 4
-          }
-        })
+        fetchOne(1),
+        fetchOne(2),
+        fetchOne(3),
+        fetchOne(4),
       ]);
 
       // 更新K线数据
@@ -1256,18 +1274,36 @@ export default function DetailPage() {
     
     if (!silent) setMarketLoading(true);
     try {
-      const response = await request({
-        url: Interface.COIN_MARKET,
-        data: { symbol }
-      });
-      
-      if (response?.data && response.data.length > 0) {
-        // 处理市场数据，转换为MoziGrid需要的格式（单位对齐套利专区）
-        marketRawRef.current = response.data;
-        setMarketData(response.data.map(mapMarketRow));
-      } else if (!silent) {
-        marketRawRef.current = [];
-        setMarketData([]);
+      if (isUsStock) {
+        let payload = null;
+        if (US_STOCK_USE_MOCK) {
+          payload = getMockUsStockExchangePrice(symbol);
+        } else {
+          const response = await request({
+            url: Interface.STOCK_MARKET,
+            data: { underlying: symbol },
+          });
+          payload = response?.data || null;
+        }
+        const rows = Array.isArray(payload?.exchanges)
+          ? payload.exchanges.map(normalizeStockExchangeRow).filter(Boolean)
+          : [];
+        marketRawRef.current = rows;
+        setMarketData(rows.map(mapMarketRow));
+      } else {
+        const response = await request({
+          url: Interface.COIN_MARKET,
+          data: { symbol }
+        });
+        
+        if (response?.data && response.data.length > 0) {
+          // 处理市场数据，转换为MoziGrid需要的格式（单位对齐套利专区）
+          marketRawRef.current = response.data;
+          setMarketData(response.data.map(mapMarketRow));
+        } else if (!silent) {
+          marketRawRef.current = [];
+          setMarketData([]);
+        }
       }
     } catch (error) {
       console.error('获取市场数据失败:', error);
@@ -1280,7 +1316,7 @@ export default function DetailPage() {
     }
   };
 
-  // 右侧顶部走马灯：与发现页行情表一致，取 /discovery/coin 市值榜前 10
+  // 右侧顶部走马灯：币种用 /discovery/coin，美股用 /stock/discovery/list，取前 10
   useEffect(() => {
     let alive = true;
     /** 与发现页「24H价格变化%」列一致，保留正负号 */
@@ -1306,20 +1342,27 @@ export default function DetailPage() {
     const loadHotCoins = async ({ silent = false } = {}) => {
       if (alive && !silent) setRightHotTickerLoading(true);
       try {
-        const res = await request({
-          url: Interface.find_coin,
-          data: { pageNo: 1, pageSize: 10 },
-        });
-        const listRaw = res?.data;
-        const list = Array.isArray(listRaw?.list)
-          ? listRaw.list
-          : Array.isArray(listRaw)
-            ? listRaw
-            : Array.isArray(listRaw?.data)
-              ? listRaw.data
-              : Array.isArray(listRaw?.items)
-                ? listRaw.items
-                : [];
+        let list = [];
+        if (isUsStock && US_STOCK_USE_MOCK) {
+          list = getMockUsStockPage({ pageNo: 1, pageSize: 10 }).list;
+        } else {
+          const res = await request({
+            url: isUsStock ? Interface.find_stock : Interface.find_coin,
+            data: isUsStock
+              ? { pageNo: 1, pageSize: 10, sortField: 'totalVolume', sortOrder: 'desc' }
+              : { pageNo: 1, pageSize: 10 },
+          });
+          const listRaw = res?.data;
+          list = Array.isArray(listRaw?.list)
+            ? listRaw.list
+            : Array.isArray(listRaw)
+              ? listRaw
+              : Array.isArray(listRaw?.data)
+                ? listRaw.data
+                : Array.isArray(listRaw?.items)
+                  ? listRaw.items
+                  : [];
+        }
         const mapped = list
           .map((item) => {
             const symbol = String(
@@ -1355,7 +1398,7 @@ export default function DetailPage() {
       alive = false;
       clearInterval(timer);
     };
-  }, []);
+  }, [isUsStock]);
 
   // PC 右下角社区：按 symbol 拉取（不传 userType，与弹幕互不影响）
   // 首次 surface boot 完成后再拉，减轻首屏 DOM/网络竞争
@@ -1528,9 +1571,12 @@ export default function DetailPage() {
     ]
   );
 
-  // 获取投资回报率（ROI）数据
+  // 获取投资回报率（ROI）数据（美股首期暂缓对接）
   const fetchROIData = async ({ silent = false } = {}) => {
-    if (!symbol) return;
+    if (!symbol || isUsStock) {
+      if (!silent) setRoiLoading(false);
+      return;
+    }
     if (!silent) setRoiLoading(true);
     try {
       const response = await request({
@@ -1771,9 +1817,9 @@ ${coinInfo.name || symbol} (${symbol})
     
     // 立即获取一次数据（已有数据则静默刷新，避免整页闪 loading）
     fetchCoinInfo({ silent: true });
-    fetchKlineData({ silent: true });
+    fetchKlineData({ silent: true, force: true });
     fetchMarketData({ silent: true });
-    fetchROIData({ silent: true });
+    if (!isUsStock) fetchROIData({ silent: true });
     
     // 设置轮询
     if (pollingTimerRef.current) {
@@ -1782,9 +1828,9 @@ ${coinInfo.name || symbol} (${symbol})
     pollingTimerRef.current = setInterval(() => {
       if (needLoop.current && useHttpFallbackRef.current) {
         fetchCoinInfo({ silent: true });
-        fetchKlineData({ silent: true });
+        fetchKlineData({ silent: true, force: true });
         fetchMarketData({ silent: true });
-        fetchROIData({ silent: true });
+        if (!isUsStock) fetchROIData({ silent: true });
       }
     }, LOOPTIME);
   };
@@ -1820,7 +1866,7 @@ ${coinInfo.name || symbol} (${symbol})
       setIsInitialLoad(false);
       notifyRouteBootReady();
       Toast.show({
-        content: '币种信息不存在',
+        content: isUsStock ? '股票信息不存在' : '币种信息不存在',
         position: 'bottom',
       });
       return undefined;
@@ -1839,6 +1885,11 @@ ${coinInfo.name || symbol} (${symbol})
     fetchCoinInfo();
     fetchMarketData();
     fetchROIData();
+    // 美股 mock：WS 无真实推送时用 HTTP/mock 灌 K 线
+    if (isUsStock && US_STOCK_USE_MOCK) {
+      useHttpFallbackRef.current = true;
+      fetchKlineData({ force: true });
+    }
     
     // 获取用户告警配置
     fetchUserAlertConfig();
@@ -1875,7 +1926,22 @@ ${coinInfo.name || symbol} (${symbol})
       }
       
       // 停止HTTP降级模式（如果已启动）
-      stopHttpFallback();
+      // 美股 mock 无真实推送时保留 HTTP；正式美股跨所价格仍需 HTTP 轮询
+      if (isUsStock && US_STOCK_USE_MOCK) {
+        // keep fallback polling
+      } else {
+        stopHttpFallback();
+        if (isUsStock) {
+          if (pollingTimerRef.current) {
+            clearInterval(pollingTimerRef.current);
+          }
+          pollingTimerRef.current = setInterval(() => {
+            if (needLoop.current) {
+              fetchMarketData({ silent: true });
+            }
+          }, LOOPTIME);
+        }
+      }
       
       // 订阅 Ticker 数据（实时价格）
       const tickerChannel = createTickerChannel([symbol], 5000);
@@ -2312,8 +2378,13 @@ ${coinInfo.name || symbol} (${symbol})
         })
       );
       
-      // 5. 更新市场数据（如果存在）
-      if (exchangesPriceData && Array.isArray(exchangesPriceData) && exchangesPriceData.length > 0) {
+      // 5. 更新市场数据（币种可走 WS；美股跨所价格仅 HTTP，忽略 exchangesPriceData）
+      if (
+        !isUsStock &&
+        exchangesPriceData &&
+        Array.isArray(exchangesPriceData) &&
+        exchangesPriceData.length > 0
+      ) {
         marketRawRef.current = exchangesPriceData;
         setMarketData(exchangesPriceData.map(mapMarketRow));
       }
@@ -2453,7 +2524,7 @@ ${coinInfo.name || symbol} (${symbol})
         wsRef.current = null;
       }
     };
-  }, [symbol]);
+  }, [symbol, isUsStock]);
 
   useEffect(() => {
     // 仅在尚未收到真实大单数据时使用 mock，避免覆盖 WS 数据
@@ -2696,6 +2767,8 @@ ${coinInfo.name || symbol} (${symbol})
 
   // 渲染投资回报率（ROI）
   const renderROI = () => {
+    if (isUsStock) return null;
+
     if (roiLoading) {
       return (
         <MoziCard
@@ -3335,9 +3408,11 @@ ${coinInfo.name || symbol} (${symbol})
                   <div ref={marketRef} className={styles.pcRoiSideMarket}>
                     {renderMarket()}
                   </div>
-                  <div ref={roiRef} className={styles.pcRoiSideRoi}>
-                    {renderROI()}
-                  </div>
+                  {!isUsStock ? (
+                    <div ref={roiRef} className={styles.pcRoiSideRoi}>
+                      {renderROI()}
+                    </div>
+                  ) : null}
                 </div>
               }
               statColumns={[
@@ -3462,7 +3537,7 @@ ${coinInfo.name || symbol} (${symbol})
         <TabBar className={styles.tabContainer} activeKey={activeTab} onChange={handleTabChange}>
           <TabBar.Item key="chart" title={t('detail.tabs.chart')} />
           <TabBar.Item key="market" title={t('detail.tabs.market')} />
-          <TabBar.Item key="roi" title={t('detail.tabs.roi')} />
+          {!isUsStock ? <TabBar.Item key="roi" title={t('detail.tabs.roi')} /> : null}
         </TabBar>
 
         <div ref={chartRef} className={styles.chartSection}>
@@ -3476,9 +3551,11 @@ ${coinInfo.name || symbol} (${symbol})
           <div className={styles.marketBox}>{renderMarket()}</div>
         </div>
 
-        <div ref={roiRef} className={styles.roiSection}>
-          {renderROI()}
-        </div>
+        {!isUsStock ? (
+          <div ref={roiRef} className={styles.roiSection}>
+            {renderROI()}
+          </div>
+        ) : null}
 
         <div className={styles.footerList}>
           <div className={styles.footerLeft}>

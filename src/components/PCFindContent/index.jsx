@@ -21,6 +21,7 @@ import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import { savePcAiNav } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
 import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
+import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, getMockUsStockPage, sortUsStockByVolume } from '@/utils/usStockMockData';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 import styles from './index.module.less';
 
@@ -30,6 +31,9 @@ const RANK_COMMENT_ICON = '/icons/pc/comment_toolbar.svg';
 /** 行情表 7 列宽比例（与表头 grid 一致；后两列为操作按钮，略窄） */
 const MARKET_TABLE_COL_WIDTHS = ['17.5%', '17.5%', '17.5%', '14.25%', '14.25%', '9.5%', '9.5%'];
 const MARKET_TABLE_COL_TEMPLATE = MARKET_TABLE_COL_WIDTHS.join(' ');
+/** 美股行情表 5 列宽比例（无大单侦测、交易雷达） */
+const US_STOCK_TABLE_COL_WIDTHS = ['20%', '20%', '20%', '20%', '20%'];
+const US_STOCK_TABLE_COL_TEMPLATE = US_STOCK_TABLE_COL_WIDTHS.join(' ');
 const MARKET_TABLE_SKELETON_ROWS = 10;
 
 const MARKET_TRADING_RADAR_ICON =
@@ -136,7 +140,10 @@ export default function PCFindContent() {
     });
   }, [activeTab, marketViewMode, isCalendarViewOpen]);
   const [loading, setLoading] = useState(false);
+  const [usStockLoading, setUsStockLoading] = useState(false);
+  const [usStockVolumeSort, setUsStockVolumeSort] = useState('desc');
   const [marketData, setMarketData] = useState([]);
+  const [usStockData, setUsStockData] = useState([]);
   const [selfData, setSelfData] = useState([]);
   const [calendarEventDates, setCalendarEventDates] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
@@ -144,6 +151,19 @@ export default function PCFindContent() {
   const [newListingsLoading, setNewListingsLoading] = useState(false);
   const [calendarCurrentMonth, setCalendarCurrentMonth] = useState(new Date());
   const [calendarSelectedDate, setCalendarSelectedDate] = useState(new Date());
+
+  // 请求序号：丢弃过期响应，避免轮询/切 Tab 竞态覆盖
+  const marketReqSeqRef = useRef(0);
+  const usStockReqSeqRef = useRef(0);
+  const rankReqSeqRef = useRef({
+    exchange: 0,
+    up: 0,
+    down: 0,
+    wave: 0,
+    volume: 0,
+    new: 0,
+    surge: 0,
+  });
   
   // 排行榜数据状态
   const [exchangeData, setExchangeData] = useState({ exchangeArr: [], exchangeSelect: [], topName: '' });
@@ -229,6 +249,8 @@ export default function PCFindContent() {
       }
     } else if (tab === 'market') {
       setActiveTab('market');
+    } else if (tab === 'usStock' && SHOW_US_STOCK_TAB) {
+      setActiveTab('usStock');
     }
   }, [searchParams]);
 
@@ -257,13 +279,22 @@ export default function PCFindContent() {
     [router]
   );
 
-  // 表格列配置 - 行情
-  const marketColumns = [
+  const formatMarketListItem = (item) => ({
+    key: item.symbol,
+    symbol: item.symbol,
+    url: item.url,
+    totalVolume: item.totalVolume,
+    currentPrice: item.currentPrice,
+    priceChange24h: item.priceChange24h,
+    priceChangePercentage24h: item.priceChangePercentage24h,
+  });
+
+  const buildBaseMarketColumns = (colWidths) => [
     {
       title: t('home.columns.symbol'),
       dataIndex: 'symbol',
       key: 'symbol',
-      width: MARKET_TABLE_COL_WIDTHS[0],
+      width: colWidths[0],
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <CoinSymbolIcon symbol={text} url={record.url || record.img} size={24} />
@@ -276,30 +307,30 @@ export default function PCFindContent() {
       dataIndex: 'currentPrice',
       key: 'currentPrice',
       align: 'right',
-      width: MARKET_TABLE_COL_WIDTHS[1],
+      width: colWidths[1],
     },
     {
       title: t('detail.market.amount24h', { defaultValue: '24H成交额' }),
       dataIndex: 'totalVolume',
       key: 'totalVolume',
       align: 'right',
-      width: MARKET_TABLE_COL_WIDTHS[2],
+      width: colWidths[2],
     },
     {
       title: t('discover.columns.change24hValue'),
       dataIndex: 'priceChange24h',
       key: 'priceChange24h',
       align: 'right',
-      width: MARKET_TABLE_COL_WIDTHS[3],
+      width: colWidths[3],
       render: (value) => {
         const isNegative = value?.toString().includes('-');
         return (
-          <span style={{ 
+          <span style={{
             fontFamily: 'Microsoft YaHei',
             fontWeight: 400,
             fontSize: '14px',
             color: isNegative ? '#FA5F5F' : '#11B787',
-            lineHeight: '23px'
+            lineHeight: '23px',
           }}>
             {value}
           </span>
@@ -311,7 +342,7 @@ export default function PCFindContent() {
       dataIndex: 'priceChangePercentage24h',
       key: 'priceChangePercentage24h',
       align: 'right',
-      width: MARKET_TABLE_COL_WIDTHS[4],
+      width: colWidths[4],
       render: (value) => {
         const isNegative = value?.toString().includes('-');
         const display =
@@ -321,7 +352,7 @@ export default function PCFindContent() {
               ? String(value).trim()
               : `${value}%`;
         return (
-          <div style={{ 
+          <div style={{
             width: '82px',
             height: '32px',
             background: isNegative ? '#FA5F5F' : '#11B787',
@@ -331,13 +362,16 @@ export default function PCFindContent() {
             justifyContent: 'center',
             color: '#FFFFFF',
             fontSize: '14px',
-            fontWeight: 500
+            fontWeight: 500,
           }}>
             {display}
           </div>
         );
       },
     },
+  ];
+
+  const marketActionColumns = [
     {
       title: t('addAlarm.bigOrderDetect'),
       key: 'bigOrderDetect',
@@ -379,6 +413,12 @@ export default function PCFindContent() {
       ),
     },
   ];
+
+  // 表格列配置 - 加密行情（含操作列）
+  const marketColumns = [...buildBaseMarketColumns(MARKET_TABLE_COL_WIDTHS), ...marketActionColumns];
+
+  // 表格列配置 - 美股行情（无操作列）
+  const usStockColumns = buildBaseMarketColumns(US_STOCK_TABLE_COL_WIDTHS);
 
   // 表格列配置 - 自选
   const selfColumns = [
@@ -427,32 +467,167 @@ export default function PCFindContent() {
 
 
 
-  // 获取行情数据
-  const fetchMarketData = async () => {
-    setLoading(true);
+  // 获取加密行情数据
+  const fetchMarketData = async ({ silent = false } = {}) => {
+    const seq = ++marketReqSeqRef.current;
+    if (!silent) setLoading(true);
     try {
       const res = await request({
         url: Interface.find_coin,
         data: { pageNo: 1, pageSize: 20 }
       });
+      if (seq !== marketReqSeqRef.current) return;
       
       if (res?.data?.list) {
-        setMarketData(res.data.list.map(item => ({
-          key: item.symbol,
-          symbol: item.symbol,
-          url: item.url,
-          totalVolume: item.totalVolume,
-          currentPrice: item.currentPrice,
-          priceChange24h: item.priceChange24h,
-          priceChangePercentage24h: item.priceChangePercentage24h,
-        })));
+        setMarketData(res.data.list.map(formatMarketListItem));
       }
     } catch (error) {
+      if (seq !== marketReqSeqRef.current) return;
       console.error('获取行情数据失败:', error);
     } finally {
-      setLoading(false);
+      if (seq === marketReqSeqRef.current && !silent) setLoading(false);
     }
   };
+
+  // 获取美股行情数据
+  const fetchUsStockData = async (volumeSort = usStockVolumeSort, { silent = false } = {}) => {
+    const seq = ++usStockReqSeqRef.current;
+    if (!silent) setUsStockLoading(true);
+    try {
+      if (US_STOCK_USE_MOCK) {
+        if (seq !== usStockReqSeqRef.current) return;
+        const mockPage = getMockUsStockPage({ pageNo: 1, pageSize: 20, sortOrder: volumeSort });
+        setUsStockData(mockPage.list.map(formatMarketListItem));
+        return;
+      }
+
+      const res = await request({
+        url: Interface.find_stock,
+        data: {
+          pageNo: 1,
+          pageSize: 20,
+          sortField: 'totalVolume',
+          sortOrder: volumeSort,
+        },
+      });
+
+      if (seq !== usStockReqSeqRef.current) return;
+      if (res?.data?.list) {
+        setUsStockData(res.data.list.map(formatMarketListItem));
+      }
+    } catch (error) {
+      if (seq !== usStockReqSeqRef.current) return;
+      console.error('获取美股行情数据失败:', error);
+    } finally {
+      if (seq === usStockReqSeqRef.current && !silent) setUsStockLoading(false);
+    }
+  };
+
+  const handleUsStockVolumeSort = useCallback(() => {
+    setUsStockVolumeSort((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+  }, []);
+
+  const sortedUsStockData = useMemo(() => {
+    if (!US_STOCK_USE_MOCK) return usStockData;
+    return sortUsStockByVolume(usStockData, usStockVolumeSort);
+  }, [usStockData, usStockVolumeSort]);
+
+  useEffect(() => {
+    if (activeTab !== 'usStock' || US_STOCK_USE_MOCK) return;
+    fetchUsStockData(usStockVolumeSort);
+  }, [usStockVolumeSort]);
+
+  // 加密行情列表：每 5 秒静默刷新（等上次完成再发，避免堆积）
+  useEffect(() => {
+    if (activeTab !== 'market') return undefined;
+    let cancelled = false;
+    let timerId;
+    const loop = async () => {
+      await fetchMarketData({ silent: true });
+      if (!cancelled) timerId = setTimeout(loop, 5000);
+    };
+    timerId = setTimeout(loop, 5000);
+    return () => {
+      cancelled = true;
+      clearTimeout(timerId);
+      marketReqSeqRef.current += 1;
+    };
+  }, [activeTab]);
+
+  // 美股行情列表：每 5 秒静默刷新
+  useEffect(() => {
+    if (activeTab !== 'usStock') return undefined;
+    let cancelled = false;
+    let timerId;
+    const loop = async () => {
+      await fetchUsStockData(usStockVolumeSort, { silent: true });
+      if (!cancelled) timerId = setTimeout(loop, 5000);
+    };
+    timerId = setTimeout(loop, 5000);
+    return () => {
+      cancelled = true;
+      clearTimeout(timerId);
+      usStockReqSeqRef.current += 1;
+    };
+  }, [activeTab, usStockVolumeSort]);
+
+  // 排行榜：当前子榜每 5 秒静默刷新
+  useEffect(() => {
+    if (activeTab !== 'rank') return undefined;
+
+    let cancelled = false;
+    let timerId;
+
+    const refreshActiveRank = async () => {
+      switch (rankActiveType) {
+        case 'exchange':
+          await loadExchangeData(true);
+          break;
+        case 'up':
+          await loadPriceData(true);
+          break;
+        case 'down':
+          await loadDownData(true);
+          break;
+        case 'wave':
+          await loadWaveData(true);
+          break;
+        case 'volume':
+          await loadTradeData(true);
+          break;
+        case 'new':
+          await loadXinbiData(true);
+          break;
+        case 'surge':
+          await loadUpTradeData(true);
+          break;
+        default:
+          break;
+      }
+    };
+
+    const loop = async () => {
+      await refreshActiveRank();
+      if (!cancelled) timerId = setTimeout(loop, 5000);
+    };
+    timerId = setTimeout(loop, 5000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timerId);
+      if (rankReqSeqRef.current[rankActiveType] != null) {
+        rankReqSeqRef.current[rankActiveType] += 1;
+      }
+    };
+  }, [
+    activeTab,
+    rankActiveType,
+    pricePickIndex,
+    downPickIndex,
+    wavePickIndex,
+    tradePickIndex,
+    upTradePickIndex,
+  ]);
 
   // 获取自选数据
   const fetchSelfData = async () => {
@@ -490,6 +665,7 @@ export default function PCFindContent() {
 
   // 获取排行榜数据
   const loadExchangeData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.exchange;
     if (!silent) setExchangeLoading(true);
     try {
       const exchangeSpot = await request({
@@ -501,8 +677,10 @@ export default function PCFindContent() {
         data: { type: 'Futures' }
       });
 
+      if (seq !== rankReqSeqRef.current.exchange) return;
+
       if (isEmpty(exchangeSpot?.data) && isEmpty(exchangeFutures?.data)) {
-        setExchangeLoading(false);
+        if (!silent) setExchangeLoading(false);
         return;
       }
 
@@ -549,19 +727,23 @@ export default function PCFindContent() {
       if (exchangeArr.current[0]) exchangeSelect.push(t('discover.exchange.types.spot'));
       if (exchangeArr.current[1]) exchangeSelect.push(t('discover.exchange.types.futures'));
 
+      if (seq !== rankReqSeqRef.current.exchange) return;
+
       setExchangeData({
         exchangeArr: exchangeArr.current[0] || [],
         exchangeSelect,
         topName: exchangeTopNames.current[0] || ''
       });
-      setExchangeLoading(false);
+      if (!silent) setExchangeLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.exchange) return;
       console.error('加载交易所排行榜失败:', error);
-      setExchangeLoading(false);
+      if (!silent) setExchangeLoading(false);
     }
   };
 
   const loadPriceData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.up;
     if (!silent) setPriceLoading(true);
     try {
       const dim = priceDimArr[pricePickIndex];
@@ -569,6 +751,7 @@ export default function PCFindContent() {
         url: Interface.price_change,
         data: { dim }
       });
+      if (seq !== rankReqSeqRef.current.up) return;
       if (!isEmpty(response?.data)) {
         const formattedData = response.data.slice(0, 50).map(item => ({
           symbol: item.symbol,
@@ -583,14 +766,16 @@ export default function PCFindContent() {
           priceSelect: pricePickArr
         });
       }
-      setPriceLoading(false);
+      if (!silent) setPriceLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.up) return;
       console.error('加载涨幅榜失败:', error);
-      setPriceLoading(false);
+      if (!silent) setPriceLoading(false);
     }
   };
 
   const loadDownData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.down;
     if (!silent) setDownLoading(true);
     try {
       const dim = downDimArr[downPickIndex];
@@ -598,6 +783,7 @@ export default function PCFindContent() {
         url: Interface.PRICE_DOWNCHANGE,
         data: { dim }
       });
+      if (seq !== rankReqSeqRef.current.down) return;
       if (!isEmpty(response?.data)) {
         const formattedData = response.data.slice(0, 50).map(item => ({
           symbol: item.symbol,
@@ -612,14 +798,16 @@ export default function PCFindContent() {
           downSelect: downPickArr
         });
       }
-      setDownLoading(false);
+      if (!silent) setDownLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.down) return;
       console.error('加载跌幅榜失败:', error);
-      setDownLoading(false);
+      if (!silent) setDownLoading(false);
     }
   };
 
   const loadWaveData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.wave;
     if (!silent) setWaveLoading(true);
     try {
       const dim = waveDimArr[wavePickIndex];
@@ -627,6 +815,7 @@ export default function PCFindContent() {
         url: Interface.price_wave,
         data: { dim }
       });
+      if (seq !== rankReqSeqRef.current.wave) return;
       if (!isEmpty(response?.data)) {
         const formattedData = response.data.slice(0, 50).map(item => ({
           symbol: item.symbol,
@@ -641,14 +830,16 @@ export default function PCFindContent() {
           waveSelect: wavePickArr
         });
       }
-      setWaveLoading(false);
+      if (!silent) setWaveLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.wave) return;
       console.error('加载波幅榜失败:', error);
-      setWaveLoading(false);
+      if (!silent) setWaveLoading(false);
     }
   };
 
   const loadTradeData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.volume;
     if (!silent) setTradeLoading(true);
     try {
       const intervals = tradeIntervalsArr[tradePickIndex];
@@ -656,6 +847,7 @@ export default function PCFindContent() {
         url: Interface.coin_trade,
         data: { intervals }
       });
+      if (seq !== rankReqSeqRef.current.volume) return;
       if (!isEmpty(response?.data)) {
         const formattedData = response.data.slice(0, 50).map(item => ({
           symbol: item.symbol,
@@ -670,20 +862,23 @@ export default function PCFindContent() {
           tradeSelect: tradePickArr
         });
       }
-      setTradeLoading(false);
+      if (!silent) setTradeLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.volume) return;
       console.error('加载成交额榜失败:', error);
-      setTradeLoading(false);
+      if (!silent) setTradeLoading(false);
     }
   };
 
   const loadXinbiData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.new;
     if (!silent) setXinbiLoading(true);
     try {
       const response = await request({
         url: Interface.NEW_COIN,
         data: {}
       });
+      if (seq !== rankReqSeqRef.current.new) return;
       if (response?.data) {
         const formattedData = response.data.slice(0, 50).map(item => ({
           symbol: item.symbol,
@@ -695,14 +890,16 @@ export default function PCFindContent() {
         }));
         setXinbiData(prev => ({ ...prev, xinbiArr: formattedData }));
       }
-      setXinbiLoading(false);
+      if (!silent) setXinbiLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.new) return;
       console.error('加载新币榜失败:', error);
-      setXinbiLoading(false);
+      if (!silent) setXinbiLoading(false);
     }
   };
 
   const loadUpTradeData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.surge;
     if (!silent) setUpTradeLoading(true);
     try {
       let intervals = upTradeIntervalsArr[upTradePickIndex];
@@ -710,6 +907,7 @@ export default function PCFindContent() {
         url: Interface.PRICE_UPTRADE,
         data: { intervals }
       });
+      if (seq !== rankReqSeqRef.current.surge) return;
       if (!isEmpty(response?.data)) {
         const formattedData = response.data.slice(0, 50).map(item => ({
           symbol: item.symbol,
@@ -724,10 +922,11 @@ export default function PCFindContent() {
           upTradeSelect: upTradePickArr
         });
       }
-      setUpTradeLoading(false);
+      if (!silent) setUpTradeLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.surge) return;
       console.error('加载飙升榜失败:', error);
-      setUpTradeLoading(false);
+      if (!silent) setUpTradeLoading(false);
     }
   };
 
@@ -781,6 +980,8 @@ export default function PCFindContent() {
     }
     if (key === 'market') {
       fetchMarketData();
+    } else if (key === 'usStock') {
+      fetchUsStockData();
     } else if (key === 'self') {
       fetchSelfData();
     }
@@ -947,9 +1148,136 @@ export default function PCFindContent() {
 
   const tabs = [
     { key: 'market', label: t('discover.tabs.market') },
+    ...(SHOW_US_STOCK_TAB ? [{ key: 'usStock', label: t('discover.tabs.usStock') }] : []),
     // { key: 'self', label: t('discover.tabs.self') }, // 隐藏自选tab
     { key: 'rank', label: t('discover.tabs.rank') },
-  ];
+  ].map((tab) => ({
+    ...tab,
+    label: (
+      <span className={styles.tabLabel} data-text={tab.label}>
+        {tab.label}
+      </span>
+    ),
+  }));
+
+  const renderMarketTablePanel = ({
+    includeActions,
+    colTemplate,
+    columns,
+    dataSource,
+    isLoading,
+    tableKey,
+    volumeSortOrder,
+    onVolumeSortToggle,
+    onRowClick,
+  }) => (
+    <>
+      <div
+        className={styles.marketTableHeader}
+        style={{ gridTemplateColumns: colTemplate }}
+      >
+        <div className={styles.marketTableHeaderCell}>{t('home.columns.symbol')}</div>
+        <div className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight}`}>
+          {t('home.columns.lastPrice')}
+        </div>
+        <div className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight}`}>
+          {volumeSortOrder != null && onVolumeSortToggle ? (
+            <button
+              type="button"
+              className={`${styles.marketTableHeaderSort} ${styles.marketTableHeaderSortActive}`}
+              onClick={onVolumeSortToggle}
+              aria-label={t('detail.market.amount24h', { defaultValue: '24H成交额' })}
+            >
+              <span>{t('detail.market.amount24h', { defaultValue: '24H成交额' })}</span>
+              <i
+                className={`${styles.sortArrows} ${styles.sortArrowsActive} ${
+                  volumeSortOrder === 'asc' ? styles.sortAsc : styles.sortDesc
+                }`}
+              />
+            </button>
+          ) : (
+            t('detail.market.amount24h', { defaultValue: '24H成交额' })
+          )}
+        </div>
+        <div className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight}`}>
+          {t('discover.columns.change24hValue')}
+        </div>
+        <div
+          className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight} ${styles.marketTableHeaderCellShiftRight}`}
+        >
+          {t('discover.columns.change24hPercent')}
+        </div>
+        {includeActions && (
+          <>
+            <div
+              className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellCenter} ${styles.marketTableHeaderCellShiftRight}`}
+            >
+              {t('addAlarm.bigOrderDetect')}
+            </div>
+            <div
+              className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellCenter} ${styles.marketTableHeaderCellShiftRight}`}
+            >
+              {t('pcCoinDetail.tradingRadar')}
+            </div>
+          </>
+        )}
+      </div>
+      <div className={styles.marketTableBody}>
+        {isLoading ? (
+          <div className={styles.marketTableSkeleton} aria-busy="true" aria-label={t('common.loading')}>
+            {Array.from({ length: MARKET_TABLE_SKELETON_ROWS }).map((_, idx) => (
+              <div
+                key={idx}
+                className={styles.marketTableSkeletonRow}
+                style={{ gridTemplateColumns: colTemplate }}
+              >
+                <div className={styles.marketTableSkeletonSymbol}>
+                  <SkeletonCircle size={24} />
+                  <SkeletonElement width={72} height={14} borderRadius={6} />
+                </div>
+                <div className={styles.marketTableSkeletonRight}>
+                  <SkeletonElement width={88} height={14} borderRadius={6} />
+                </div>
+                <div className={styles.marketTableSkeletonRight}>
+                  <SkeletonElement width={72} height={14} borderRadius={6} />
+                </div>
+                <div className={styles.marketTableSkeletonRight}>
+                  <SkeletonElement width={64} height={14} borderRadius={6} />
+                </div>
+                <div className={styles.marketTableSkeletonRight}>
+                  <SkeletonElement width={56} height={14} borderRadius={6} />
+                </div>
+                {includeActions && (
+                  <>
+                    <div className={styles.marketTableSkeletonCenter}>
+                      <SkeletonElement width={72} height={28} borderRadius={8} />
+                    </div>
+                    <div className={styles.marketTableSkeletonCenter}>
+                      <SkeletonElement width={72} height={28} borderRadius={8} />
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Table
+            key={tableKey}
+            className={styles.marketTable}
+            tableLayout="fixed"
+            showHeader={false}
+            columns={columns}
+            dataSource={dataSource}
+            pagination={{ pageSize: 20 }}
+            onRow={(record) => ({
+              onClick: () => (onRowClick ? onRowClick(record) : jump2Detail(record.symbol)),
+              style: { cursor: 'pointer' },
+            })}
+          />
+        )}
+      </div>
+    </>
+  );
 
   return (
     <div className={styles.pcFindContent}>
@@ -958,7 +1286,8 @@ export default function PCFindContent() {
         onChange={handleTabChange}
         onTabClick={handleTabClick}
         items={tabs}
-        className={styles.mainTabs}
+        animated={{ inkBar: false, tabPane: false }}
+        className={`${styles.mainTabs} ${activeTab !== 'market' ? styles.mainTabsCompact : ''}`}
       />
 
       {activeTab === 'market' && (
@@ -974,9 +1303,9 @@ export default function PCFindContent() {
 
 
       <Card
-        className={`${styles.contentCard} ${activeTab === 'market' ? styles.marketContentCard : ''} ${
-          isCalendarViewOpen ? styles.marketContentCardCalendar : ''
-        }`}
+        className={`${styles.contentCard} ${activeTab === 'market' || activeTab === 'usStock' ? styles.marketContentCard : ''} ${
+          activeTab === 'usStock' || activeTab === 'rank' ? styles.contentCardCompact : ''
+        } ${isCalendarViewOpen ? styles.marketContentCardCalendar : ''}`}
       >
         {/* 排行榜tab不需要外层loading，每个卡片有独立loading状态 */}
         {activeTab === 'rank' ? (
@@ -1408,90 +1737,15 @@ export default function PCFindContent() {
           </>
         ) : (
           <>
-            {activeTab === 'market' && !isCalendarViewOpen && (
-              <>
-                <div
-                  className={styles.marketTableHeader}
-                  style={{ gridTemplateColumns: MARKET_TABLE_COL_TEMPLATE }}
-                >
-                  <div className={styles.marketTableHeaderCell}>{t('home.columns.symbol')}</div>
-                  <div className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight}`}>
-                    {t('home.columns.lastPrice')}
-                  </div>
-                  <div className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight}`}>
-                    {t('detail.market.amount24h', { defaultValue: '24H成交额' })}
-                  </div>
-                  <div className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight}`}>
-                    {t('discover.columns.change24hValue')}
-                  </div>
-                  <div
-                    className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellRight} ${styles.marketTableHeaderCellShiftRight}`}
-                  >
-                    {t('discover.columns.change24hPercent')}
-                  </div>
-                  <div
-                    className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellCenter} ${styles.marketTableHeaderCellShiftRight}`}
-                  >
-                    {t('addAlarm.bigOrderDetect')}
-                  </div>
-                  <div
-                    className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellCenter} ${styles.marketTableHeaderCellShiftRight}`}
-                  >
-                    {t('pcCoinDetail.tradingRadar')}
-                  </div>
-                </div>
-                <div className={styles.marketTableBody}>
-                  {loading ? (
-                    <div className={styles.marketTableSkeleton} aria-busy="true" aria-label={t('common.loading')}>
-                      {Array.from({ length: MARKET_TABLE_SKELETON_ROWS }).map((_, idx) => (
-                        <div
-                          key={idx}
-                          className={styles.marketTableSkeletonRow}
-                          style={{ gridTemplateColumns: MARKET_TABLE_COL_TEMPLATE }}
-                        >
-                          <div className={styles.marketTableSkeletonSymbol}>
-                            <SkeletonCircle size={24} />
-                            <SkeletonElement width={72} height={14} borderRadius={6} />
-                          </div>
-                          <div className={styles.marketTableSkeletonRight}>
-                            <SkeletonElement width={88} height={14} borderRadius={6} />
-                          </div>
-                          <div className={styles.marketTableSkeletonRight}>
-                            <SkeletonElement width={72} height={14} borderRadius={6} />
-                          </div>
-                          <div className={styles.marketTableSkeletonRight}>
-                            <SkeletonElement width={64} height={14} borderRadius={6} />
-                          </div>
-                          <div className={styles.marketTableSkeletonRight}>
-                            <SkeletonElement width={56} height={14} borderRadius={6} />
-                          </div>
-                          <div className={styles.marketTableSkeletonCenter}>
-                            <SkeletonElement width={72} height={28} borderRadius={8} />
-                          </div>
-                          <div className={styles.marketTableSkeletonCenter}>
-                            <SkeletonElement width={72} height={28} borderRadius={8} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <Table
-                      key="market-table"
-                      className={styles.marketTable}
-                      tableLayout="fixed"
-                      showHeader={false}
-                      columns={marketColumns}
-                      dataSource={marketData}
-                      pagination={{ pageSize: 20 }}
-                      onRow={(record) => ({
-                        onClick: () => jump2Detail(record.symbol),
-                        style: { cursor: 'pointer' },
-                      })}
-                    />
-                  )}
-                </div>
-              </>
-            )}
+            {activeTab === 'market' && !isCalendarViewOpen &&
+              renderMarketTablePanel({
+                includeActions: true,
+                colTemplate: MARKET_TABLE_COL_TEMPLATE,
+                columns: marketColumns,
+                dataSource: marketData,
+                isLoading: loading,
+                tableKey: 'market-table',
+              })}
 
             {activeTab === 'self' && (
               <Spin spinning={loading}>
@@ -1506,6 +1760,20 @@ export default function PCFindContent() {
                 />
               </Spin>
             )}
+
+            {SHOW_US_STOCK_TAB && activeTab === 'usStock' &&
+              renderMarketTablePanel({
+                includeActions: false,
+                colTemplate: US_STOCK_TABLE_COL_TEMPLATE,
+                columns: usStockColumns,
+                dataSource: sortedUsStockData,
+                isLoading: usStockLoading,
+                tableKey: 'us-stock-table',
+                volumeSortOrder: usStockVolumeSort,
+                onVolumeSortToggle: handleUsStockVolumeSort,
+                onRowClick: (record) => jump2Detail(record.symbol, false, { type: 'usStock' }),
+              })}
+
             {isCalendarViewOpen && (
               <div key="market-calendar" className={styles.pcCalendarView}>
                 <div className={styles.pcCalendarMain}>

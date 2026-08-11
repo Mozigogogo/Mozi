@@ -103,6 +103,8 @@ export const Interface = {
   // 发现
   // 行情
   find_coin: '/discovery/coin',
+  // 美股行情
+  find_stock: '/stock/discovery/list',
   // 热门交易所
   hot_exchange: '/discovery/exchangerank',
   // 涨幅
@@ -137,6 +139,11 @@ export const Interface = {
   AI_COIN: '/detail/kline/ai',
   // 投资回报率（ROI）
   RETURN_INVESTMENT: '/easy/getReturnInvestment',
+
+  // 美股详情
+  stock_info: '/stock/detail/header',
+  stock_line: '/stock/detail/kline',
+  STOCK_MARKET: '/stock/detail/exchangeprice',
 
   // 搜索页
   // 币种是否有效

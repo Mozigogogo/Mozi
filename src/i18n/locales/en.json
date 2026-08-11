@@ -359,7 +359,8 @@
   "discover": {
     "tabs": {
       "self": "Favorites",
-      "market": "Market",
+      "market": "Crypto Market",
+      "usStock": "US Stocks",
       "rank": "Rankings"
     },
     "columns": {

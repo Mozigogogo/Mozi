@@ -213,12 +213,14 @@ export const handleVipPurchase = async (planId, t) => {
 // 页面跳转函数
 
 // 跳转到详情页
-export const jump2Detail = (symbol, fromFavorite = false) => {
-  const url = fromFavorite 
-    ? `/detail?symbol=${symbol}&fromFavorite=1`
-    : `/detail?symbol=${symbol}`;
+// type: 'usStock' 时走美股详情接口（见 docs/us-stock-detail-api.md）
+export const jump2Detail = (symbol, fromFavorite = false, { type } = {}) => {
+  const params = new URLSearchParams();
+  params.set('symbol', String(symbol || ''));
+  if (fromFavorite) params.set('fromFavorite', '1');
+  if (type) params.set('type', type);
   // 不走全屏 LogoLoading；详情页内用内容区骨架遮罩即可
-  navigateToOrReload(url, { symbol });
+  navigateToOrReload(`/detail?${params.toString()}`, { symbol });
 };
 
 // 跳转到市场页

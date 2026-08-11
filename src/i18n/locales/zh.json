@@ -359,7 +359,8 @@
   "discover": {
     "tabs": {
       "self": "自选",
-      "market": "行情",
+      "market": "加密行情",
+      "usStock": "美股行情",
       "rank": "排行榜"
     },
     "columns": {

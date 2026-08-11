@@ -25,6 +25,7 @@ import { FindEvents } from '../../utils/amplitude';
 import styles from './page.module.less';
 import { useTranslation } from 'react-i18next';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
+import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, getMockUsStockPage } from '@/utils/usStockMockData';
 
 // 过滤交易所名称中的.com，避免文字过长溢出
 const sanitizeExchangeName = (name) => {
@@ -73,7 +74,7 @@ export default function FindPage() {
   const { t } = useTranslation();
   const { track } = useAmplitude('Find');
   const tabFromUrl = searchParams.get('tab');
-  const RANK_LOOPTIME = 6000;
+  const RANK_LOOPTIME = 5000;
   
   // 状态定义
   const [pageActiveKey, setPageActiveKey] = useState(tabFromUrl || 'market');
@@ -84,8 +85,29 @@ const [marketData, setMarketData] = useState([]);
 const [marketHasMore, setMarketHasMore] = useState(true);
 const marketPageNo = useRef(1);
 const marketPageSize = 8;
+const [usStockData, setUsStockData] = useState([]);
+const [usStockLoading, setUsStockLoading] = useState(true);
+const [usStockHasMore, setUsStockHasMore] = useState(true);
+const [isUsStockLoadingMore, setIsUsStockLoadingMore] = useState(false);
+const [isUsStockError, setUsStockError] = useState(false);
+const usStockPageNo = useRef(1);
+const usStockPageSize = 8;
+const usStockLoadingTimerRef = useRef(null);
 const [isLoadingMore, setIsLoadingMore] = useState(false);
 const loadingTimerRef = useRef(null);
+
+  // 请求序号：丢弃过期响应，避免轮询/切 Tab 竞态覆盖
+  const marketReqSeqRef = useRef(0);
+  const usStockReqSeqRef = useRef(0);
+  const rankReqSeqRef = useRef({
+    exchange: 0,
+    up: 0,
+    down: 0,
+    wave: 0,
+    volume: 0,
+    new: 0,
+    surge: 0,
+  });
 
   // 自选相关状态
   const [myOwn, setOwn] = useState([]);
@@ -151,6 +173,7 @@ const loadingTimerRef = useRef(null);
 
   // 各榜单数据加载函数
   const loadExchangeData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.exchange;
     if (!silent) setExchangeLoading(true);
     try {
       // 分别加载现货和衍生品数据
@@ -163,8 +186,10 @@ const loadingTimerRef = useRef(null);
         data: { type: 'Futures' }
       });
 
+      if (seq !== rankReqSeqRef.current.exchange) return;
+
       if (isEmpty(exchangeSpot?.data) && isEmpty(exchangeFutures?.data)) {
-        setExchangeLoading(false);
+        if (!silent) setExchangeLoading(false);
         return;
       }
 
@@ -237,19 +262,23 @@ const loadingTimerRef = useRef(null);
       if (exchangeArr.current[0]) exchangeSelect.push(t('discover.exchange.types.spot'));
       if (exchangeArr.current[1]) exchangeSelect.push(t('discover.exchange.types.futures'));
 
+      if (seq !== rankReqSeqRef.current.exchange) return;
+
       setExchangeData({
         exchangeArr: exchangeArr.current[0] || [],
         exchangeSelect,
         topName: exchangeTopNames.current[0] || ''
       });
-      setExchangeLoading(false);
+      if (!silent) setExchangeLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.exchange) return;
       console.error('加载交易所排行榜失败:', error);
-      setExchangeLoading(false);
+      if (!silent) setExchangeLoading(false);
     }
   };
 
   const loadPriceData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.up;
     if (!silent) setPriceLoading(true);
     try {
       const dim = priceDimArr[pricePickIndex];
@@ -257,6 +286,7 @@ const loadingTimerRef = useRef(null);
         url: Interface.price_change,
         data: { dim }
       });
+      if (seq !== rankReqSeqRef.current.up) return;
       if (!isEmpty(response?.data)) {
         const formattedData = response.data.slice(0, 3).map(item => ({
           symbol: item.symbol,
@@ -270,14 +300,16 @@ const loadingTimerRef = useRef(null);
           priceSelect: pricePickArr
         });
       }
-      setPriceLoading(false);
+      if (!silent) setPriceLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.up) return;
       console.error('加载涨幅榜失败:', error);
-      setPriceLoading(false);
+      if (!silent) setPriceLoading(false);
     }
   };
 
   const loadDownData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.down;
     if (!silent) setDownLoading(true);
     try {
       const dim = downDimArr[downPickIndex];
@@ -285,6 +317,7 @@ const loadingTimerRef = useRef(null);
         url: Interface.PRICE_DOWNCHANGE,
         data: { dim }
       });
+      if (seq !== rankReqSeqRef.current.down) return;
       if (!isEmpty(response?.data)) {
         const formattedData = response.data.slice(0, 3).map(item => ({
           symbol: item.symbol,
@@ -298,14 +331,16 @@ const loadingTimerRef = useRef(null);
           downSelect: downPickArr
         });
       }
-      setDownLoading(false);
+      if (!silent) setDownLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.down) return;
       console.error('加载跌幅榜失败:', error);
-      setDownLoading(false);
+      if (!silent) setDownLoading(false);
     }
   };
 
   const loadWaveData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.wave;
     if (!silent) setWaveLoading(true);
     try {
       const dim = waveDimArr[wavePickIndex];
@@ -313,6 +348,7 @@ const loadingTimerRef = useRef(null);
         url: Interface.price_wave,
         data: { dim }
       });
+      if (seq !== rankReqSeqRef.current.wave) return;
       if (!isEmpty(response?.data)) {
         const formattedData = response.data.slice(0, 3).map(item => ({
           symbol: item.symbol,
@@ -326,14 +362,16 @@ const loadingTimerRef = useRef(null);
           waveSelect: wavePickArr
         });
       }
-      setWaveLoading(false);
+      if (!silent) setWaveLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.wave) return;
       console.error('加载波幅榜失败:', error);
-      setWaveLoading(false);
+      if (!silent) setWaveLoading(false);
     }
   };
 
   const loadTradeData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.volume;
     if (!silent) setTradeLoading(true);
     try {
       const intervals = tradeIntervalsArr[tradePickIndex];
@@ -341,6 +379,7 @@ const loadingTimerRef = useRef(null);
         url: Interface.coin_trade,
         data: { intervals }
       });
+      if (seq !== rankReqSeqRef.current.volume) return;
       if (!isEmpty(response?.data)) {
         const formattedData = response.data.slice(0, 3).map(item => ({
           symbol: item.symbol,
@@ -354,20 +393,23 @@ const loadingTimerRef = useRef(null);
           tradeSelect: tradePickArr
         });
       }
-      setTradeLoading(false);
+      if (!silent) setTradeLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.volume) return;
       console.error('加载成交额榜失败:', error);
-      setTradeLoading(false);
+      if (!silent) setTradeLoading(false);
     }
   };
 
   const loadXinbiData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.new;
     if (!silent) setXinbiLoading(true);
     try {
       const response = await request({
         url: Interface.NEW_COIN,
         data: {}
       });
+      if (seq !== rankReqSeqRef.current.new) return;
       if (response?.data) {
         const formattedData = response.data.slice(0, 3).map(item => ({
           symbol: item.symbol,
@@ -378,14 +420,16 @@ const loadingTimerRef = useRef(null);
         }));
         setXinbiData(prev => ({ ...prev, xinbiArr: formattedData }));
       }
-      setXinbiLoading(false);
+      if (!silent) setXinbiLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.new) return;
       console.error('加载新币榜失败:', error);
-      setXinbiLoading(false);
+      if (!silent) setXinbiLoading(false);
     }
   };
 
   const loadUpTradeData = async (silent = false) => {
+    const seq = ++rankReqSeqRef.current.surge;
     if (!silent) setUpTradeLoading(true);
     setUpTradeError(false);
     try {
@@ -394,6 +438,7 @@ const loadingTimerRef = useRef(null);
         url: Interface.PRICE_UPTRADE,
         data: { intervals }
       });
+      if (seq !== rankReqSeqRef.current.surge) return;
       if (!isEmpty(response?.data)) {
         const formattedData = response.data.slice(0, 3).map(item => ({
           symbol: item.symbol,
@@ -409,11 +454,12 @@ const loadingTimerRef = useRef(null);
       } else {
         setUpTradeError(true);
       }
-      setUpTradeLoading(false);
+      if (!silent) setUpTradeLoading(false);
     } catch (error) {
+      if (seq !== rankReqSeqRef.current.surge) return;
       console.error('加载飙升榜失败:', error);
       setUpTradeError(true);
-      setUpTradeLoading(false);
+      if (!silent) setUpTradeLoading(false);
     }
   };
 
@@ -519,6 +565,7 @@ const loadingTimerRef = useRef(null);
   };
 
   const loadMarketData = async (isRefresh = false) => {
+    const seq = ++marketReqSeqRef.current;
     try {
       // 如果是刷新，重置页码
       if (isRefresh) {
@@ -533,6 +580,8 @@ const loadingTimerRef = useRef(null);
           pageSize: marketPageSize
         }
       });
+
+      if (seq !== marketReqSeqRef.current) return;
       
       if (isEmpty(response?.data?.list)) {
         setMarketError(true);
@@ -564,8 +613,88 @@ const loadingTimerRef = useRef(null);
       
       setMarketLoading(false);
     } catch (error) {
+      if (seq !== marketReqSeqRef.current) return;
       console.error('获取行情数据失败:', error);
       setMarketLoading(false);
+    }
+  };
+
+  const loadUsStockData = async (isRefresh = false) => {
+    const seq = ++usStockReqSeqRef.current;
+    try {
+      if (isRefresh) {
+        usStockPageNo.current = 1;
+        setUsStockHasMore(true);
+      }
+
+      if (US_STOCK_USE_MOCK) {
+        if (seq !== usStockReqSeqRef.current) return;
+        const mockPage = getMockUsStockPage({
+          pageNo: usStockPageNo.current,
+          pageSize: usStockPageSize,
+        });
+        const tempUsStock = mockPage.list.map((item) => ({
+          coin: <MarketTitle url={item.url} symbol={item.symbol} totalVolume={item.totalVolume} />,
+          desc: <MarketDesc currentPrice={item.currentPrice} priceChange24h={item.priceChange24h} />,
+          priceChangePercentage24h: <HighlightArea value={item.priceChangePercentage24h} />,
+          key: item.symbol,
+        }));
+
+        if (usStockPageNo.current === 1) {
+          setUsStockData(tempUsStock);
+        } else {
+          setUsStockData((prev) => [...prev, ...tempUsStock]);
+        }
+
+        setUsStockHasMore(mockPage.hasMore);
+        if (mockPage.hasMore) {
+          usStockPageNo.current++;
+        }
+        setUsStockLoading(false);
+        setUsStockError(false);
+        return;
+      }
+
+      const response = await request({
+        url: Interface.find_stock,
+        data: {
+          pageNo: usStockPageNo.current,
+          pageSize: usStockPageSize,
+        },
+      });
+
+      if (seq !== usStockReqSeqRef.current) return;
+
+      if (isEmpty(response?.data?.list)) {
+        setUsStockError(true);
+        setUsStockLoading(false);
+        return;
+      }
+
+      const tempUsStock = response.data.list.map((item) => ({
+        coin: <MarketTitle url={item.url} symbol={item.symbol} totalVolume={item.totalVolume} />,
+        desc: <MarketDesc currentPrice={item.currentPrice} priceChange24h={item.priceChange24h} />,
+        priceChangePercentage24h: <HighlightArea value={item.priceChangePercentage24h} />,
+        key: item.symbol,
+      }));
+
+      if (usStockPageNo.current === 1) {
+        setUsStockData(tempUsStock);
+      } else {
+        setUsStockData((prev) => [...prev, ...tempUsStock]);
+      }
+
+      if (response.data.list.length < usStockPageSize) {
+        setUsStockHasMore(false);
+      } else {
+        usStockPageNo.current++;
+      }
+
+      setUsStockLoading(false);
+    } catch (error) {
+      if (seq !== usStockReqSeqRef.current) return;
+      console.error('获取美股行情数据失败:', error);
+      setUsStockLoading(false);
     }
   };
 
@@ -589,6 +718,22 @@ const loadingTimerRef = useRef(null);
     }, 3000);
   };
 
+  const loadMoreUsStock = async () => {
+    if (!usStockHasMore || isUsStockLoadingMore) return;
+
+    setIsUsStockLoadingMore(true);
+
+    if (usStockLoadingTimerRef.current) {
+      clearTimeout(usStockLoadingTimerRef.current);
+    }
+
+    await loadUsStockData();
+
+    usStockLoadingTimerRef.current = setTimeout(() => {
+      setIsUsStockLoadingMore(false);
+    }, 3000);
+  };
+
   const [isMarketError, setMarketError] = useState(false);
 
   // 监听 URL 参数变化
@@ -598,38 +743,64 @@ const loadingTimerRef = useRef(null);
     }
   }, [tabFromUrl]);
 
-  // 初始化加载
+  // 初始化加载 / 排行榜串行轮询（等上次完成再发，避免堆积）
   useEffect(() => {
     if (pageActiveKey === 'self') {
       fetchOwnList();
     }
 
-    const timer = setInterval(() => {
-      if (needLoop.current) {
-        if (pageActiveKey === 'self') {
-          fetchOwnList();
-        } else if (pageActiveKey === 'rank') {
-          loadExchangeData(true);
-          loadPriceData(true);
-          loadDownData(true);
-          loadWaveData(true);
-          loadTradeData(true);
-          loadXinbiData(true);
-          loadUpTradeData(true);
-        }
+    let cancelled = false;
+    let timerId;
+
+    const refreshRanks = async () => {
+      await Promise.all([
+        loadExchangeData(true),
+        loadPriceData(true),
+        loadDownData(true),
+        loadWaveData(true),
+        loadTradeData(true),
+        loadXinbiData(true),
+        loadUpTradeData(true),
+      ]);
+    };
+
+    const loop = async () => {
+      if (!needLoop.current || cancelled) return;
+      if (pageActiveKey === 'self') {
+        await fetchOwnList();
+      } else if (pageActiveKey === 'rank') {
+        await refreshRanks();
       }
-    }, RANK_LOOPTIME);
+      if (!cancelled && needLoop.current) {
+        timerId = setTimeout(loop, RANK_LOOPTIME);
+      }
+    };
+
+    if (pageActiveKey === 'self' || pageActiveKey === 'rank') {
+      timerId = setTimeout(loop, RANK_LOOPTIME);
+    }
 
     return () => {
-      clearInterval(timer);
+      cancelled = true;
+      clearTimeout(timerId);
+      if (pageActiveKey === 'rank') {
+        Object.keys(rankReqSeqRef.current).forEach((key) => {
+          rankReqSeqRef.current[key] += 1;
+        });
+      }
       if (loadingTimerRef.current) {
         clearTimeout(loadingTimerRef.current);
+      }
+      if (usStockLoadingTimerRef.current) {
+        clearTimeout(usStockLoadingTimerRef.current);
       }
     };
   }, [pageActiveKey, pricePickIndex, downPickIndex, wavePickIndex, tradePickIndex, upTradePickIndex]);
   useEffect(() => {
     if (pageActiveKey === 'market' && marketData.length === 0) {
       loadMarketData();
+    } else if (pageActiveKey === 'usStock' && usStockData.length === 0) {
+      loadUsStockData();
     } else if (pageActiveKey === 'rank') {
       // 加载所有排行榜数据
       loadExchangeData();
@@ -679,21 +850,51 @@ const loadingTimerRef = useRef(null);
     }
   }, [upTradePickIndex]);
 
-  // 行情数据轮询 - 每5秒刷新一次
+  // 行情数据轮询 - 每5秒刷新一次（串行，避免竞态堆积）
   useEffect(() => {
-    if (pageActiveKey !== 'market') return;
+    if (pageActiveKey !== 'market') return undefined;
 
-    const marketTimer = setInterval(() => {
-      if (needLoop.current && marketData.length > 0) {
-        // 静默刷新第一页数据
-        loadMarketData(true);
+    let cancelled = false;
+    let timerId;
+
+    const loop = async () => {
+      if (!cancelled && needLoop.current && marketData.length > 0) {
+        await loadMarketData(true);
       }
-    }, 5000);
+      if (!cancelled) timerId = setTimeout(loop, 5000);
+    };
+
+    timerId = setTimeout(loop, 5000);
 
     return () => {
-      clearInterval(marketTimer);
+      cancelled = true;
+      clearTimeout(timerId);
+      marketReqSeqRef.current += 1;
     };
   }, [pageActiveKey, marketData.length]);
+
+  // 美股行情数据轮询 - 每5秒刷新一次
+  useEffect(() => {
+    if (pageActiveKey !== 'usStock') return undefined;
+
+    let cancelled = false;
+    let timerId;
+
+    const loop = async () => {
+      if (!cancelled && needLoop.current && usStockData.length > 0) {
+        await loadUsStockData(true);
+      }
+      if (!cancelled) timerId = setTimeout(loop, 5000);
+    };
+
+    timerId = setTimeout(loop, 5000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timerId);
+      usStockReqSeqRef.current += 1;
+    };
+  }, [pageActiveKey, usStockData.length]);
 
   // 切换页面标签
   const handlePageTabChange = (key) => {
@@ -853,8 +1054,21 @@ const loadingTimerRef = useRef(null);
     await loadMarketData(true);
   };
 
-  // 渲染行情列表
-  const renderMarketList = () => {
+  const handleUsStockRefresh = async () => {
+    await loadUsStockData(true);
+  };
+
+  const renderMarketGrid = ({
+    loading,
+    data,
+    isError,
+    hasMore,
+    isLoadingMore,
+    onLoadMore,
+    onRefresh,
+    onItemClick,
+  }) => {
+    const handleItemClick = onItemClick || ((key) => jump2Detail(key));
     const renderMarketSkeleton = () => (
       <div className={styles.marketSkeleton}>
         {Array.from({ length: 10 }).map((_, idx) => (
@@ -879,59 +1093,90 @@ const loadingTimerRef = useRef(null);
     );
 
     return (
+      <div className={styles.marketBox}>
+        <PullToRefresh onRefresh={onRefresh}>
+          <Layout isLoading={false} isError={isError} loadingTop={120}>
+            <div className={styles.gridTitle}>
+              {[
+                { name: t('discover.columns.symbolMarketCap'), width: '30%' },
+                { name: t('discover.columns.priceWithChange'), width: '38%' },
+                { name: t('home.columns.change24h'), width: '32%' },
+              ].map((colItem, colIndex) => (
+                <div
+                  key={colIndex}
+                  className={`${styles.gridTitleItem} ${colIndex !== 0 ? styles.text : ''}`}
+                  style={{ width: colItem.width }}
+                >
+                  {colItem.name}
+                </div>
+              ))}
+            </div>
+
+            {loading && data.length === 0 ? (
+              renderMarketSkeleton()
+            ) : (
+              <>
+                <MoziGrid
+                  length={3}
+                  colName={[t('discover.columns.symbolMarketCap'), t('discover.columns.priceWithChange'), t('home.columns.change24h')]}
+                  gridContent={data}
+                  callback={(gridCon) => { handleItemClick(gridCon.key); }}
+                  hideTitle={true}
+                  enableLoadMore={true}
+                  loadMore={onLoadMore}
+                  hasMore={hasMore && isLoadingMore}
+                  columnWidths={['30%', '38%', '32%']}
+                />
+                {!hasMore && data.length > 0 && !isLoadingMore && (
+                  <div className={styles.loadFinish}>{t('discover.loadFinished')}</div>
+                )}
+              </>
+            )}
+          </Layout>
+        </PullToRefresh>
+      </div>
+    );
+  };
+
+  // 渲染行情列表
+  const renderMarketList = () => {
+    return (
       <>
         {/* 市场概况横向滑动卡片 */}
         <MarketOverview />
-        
-        <div className={styles.marketBox}>
-          <PullToRefresh onRefresh={handleRefresh}>
-            <Layout isLoading={false} isError={isMarketError} loadingTop={120}>
-              <div className={styles.gridTitle}>
-                {[
-                  { name: t('discover.columns.symbolMarketCap'), width: '30%' },
-                  { name: t('discover.columns.priceWithChange'), width: '38%' },
-                  { name: t('home.columns.change24h'), width: '32%' }
-                ].map((colItem, colIndex) => (
-                  <div 
-                    key={colIndex} 
-                    className={`${styles.gridTitleItem} ${colIndex !== 0 ? styles.text : ''}`}
-                    style={{ width: colItem.width }}
-                  >
-                    {colItem.name}
-                  </div>
-                ))}
-              </div>
 
-              {/* 初次加载：骨架屏脉冲加载（替代空白+Loading...） */}
-              {marketLoading && marketData.length === 0 ? (
-                renderMarketSkeleton()
-              ) : (
-                <>
-                  <MoziGrid
-                    length={3}
-                    colName={[t('discover.columns.symbolMarketCap'), t('discover.columns.priceWithChange'), t('home.columns.change24h')]}
-                    gridContent={marketData}
-                    callback={(gridCon) => { jump2Detail(gridCon.key); }}
-                    hideTitle={true}
-                    enableLoadMore={true}
-                    loadMore={loadMore}
-                    hasMore={marketHasMore && isLoadingMore}
-                    columnWidths={['30%', '38%', '32%']}
-                  />
-                  {!marketHasMore && marketData.length > 0 && !isLoadingMore && (
-                    <div className={styles.loadFinish}>{t('discover.loadFinished')}</div>
-                  )}
-                </>
-              )}
-            </Layout>
-          </PullToRefresh>
-        </div>
+        {renderMarketGrid({
+          loading: marketLoading,
+          data: marketData,
+          isError: isMarketError,
+          hasMore: marketHasMore,
+          isLoadingMore,
+          onLoadMore: loadMore,
+          onRefresh: handleRefresh,
+        })}
         
         {/* 悬浮机器人按钮 */}
         <FloatingRobot message={t('discover.robotMessage')} />
       </>
     );
   };
+
+  const renderUsStockList = () => (
+    <>
+      {renderMarketGrid({
+        loading: usStockLoading,
+        data: usStockData,
+        isError: isUsStockError,
+        hasMore: usStockHasMore,
+        isLoadingMore: isUsStockLoadingMore,
+        onLoadMore: loadMoreUsStock,
+        onRefresh: handleUsStockRefresh,
+        onItemClick: (key) => jump2Detail(key, false, { type: 'usStock' }),
+      })}
+
+      <FloatingRobot message={t('discover.robotMessage')} />
+    </>
+  );
   const renderRankList = () => {
     const renderRankSkeleton = ({ variant = 'twoCol', rows = 3 } = {}) => {
       // variant:
@@ -1185,12 +1430,17 @@ const loadingTimerRef = useRef(null);
           <Tabs activeKey={pageActiveKey} onChange={handlePageTabChange}>
           <Tabs.Tab title={t('discover.tabs.self')} key="self" />
           <Tabs.Tab title={t('discover.tabs.market')} key="market" />
+          {SHOW_US_STOCK_TAB && (
+            <Tabs.Tab title={t('discover.tabs.usStock')} key="usStock" />
+          )}
           <Tabs.Tab title={t('discover.tabs.rank')} key="rank" />
         </Tabs>
         </div>
 
         <div className={styles.content}>
           {pageActiveKey === 'market' && renderMarketList()}
+
+          {SHOW_US_STOCK_TAB && pageActiveKey === 'usStock' && renderUsStockList()}
 
           {pageActiveKey === 'self' && renderOwnList()}
           
