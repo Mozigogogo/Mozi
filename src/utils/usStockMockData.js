@@ -2,7 +2,7 @@
 export const US_STOCK_USE_MOCK = false;
 
 /** 发现页是否展示「美股行情」Tab；false 则隐藏 */
-export const SHOW_US_STOCK_TAB = true;
+export const SHOW_US_STOCK_TAB = false;
 
 /** 解析格式化成交额（如 `$82.5亿`）为可比较数值 */
 export function parseVolumeValue(raw) {
