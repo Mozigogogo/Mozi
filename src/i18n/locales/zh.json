@@ -1830,6 +1830,7 @@
     }
   },
   "pcAbout": {
+    "brandName": "Mozi",
     "title": "关于 Mozi (墨子)",
     "lead": "Mozi 是一家全球领先的专业加密数据智能分析平台。我们秉持墨子“兼爱非攻”的哲学理念，致力于通过技术创新打破信息差，降低交易门槛，让每一位用户都能在复杂的加密市场中做出明智决策。",
     "coreFunctionsTitle": "核心功能：解决「买什么、去哪买、怎么买」",
@@ -1864,7 +1865,12 @@
     "vision": "愿景： 让交易更简单、更智能、更安全",
     "values": "价值观： 兼爱 · 务实 · 专注 · 创新 · 自由",
     "joinTitle": "加入我们：",
-    "joinText": "Mozi 正处于高速成长期，诚邀志同道合的技术、运营、产品专家及投资机构共谋发展，将科技与兼爱理念传播至全球。"
+    "joinText": "Mozi 正处于高速成长期，诚邀志同道合的技术、运营、产品专家及投资机构共谋发展，将科技与兼爱理念传播至全球。",
+    "visualTitle": "智能数据洞察",
+    "visualDesc": "实时整合主流交易所全量数据",
+    "showMore": "显示更多",
+    "showLess": "收起",
+    "copyright": "©2017 - {{year}} MoziInnovations"
   },
   "pcHelp": {
     "heroLabel": "Help Center · 帮助中心",

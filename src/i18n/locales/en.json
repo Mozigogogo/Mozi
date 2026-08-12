@@ -1832,6 +1832,7 @@
     }
   },
   "pcAbout": {
+    "brandName": "Mozi",
     "title": "About Mozi",
     "lead": "Mozi is a premier crypto data intelligence platform dedicated to providing global users with precise, real-time market insights. Inspired by the ancient philosophy of \"Universal Love and Non-Aggression\" (Jian'ai & Feigong), we strive to bridge the information gap, simplify trading, and empower users to make smarter investment decisions with reduced risk.",
     "coreFunctionsTitle": "Core Functions: Smart Discovery & Analysis",
@@ -1866,7 +1867,12 @@
     "vision": "Vision: To make trading simpler, smarter, and safer.",
     "values": "Values: Universal Love · Pragmatism · Focus · Innovation · Freedom",
     "joinTitle": "Connect With Us:",
-    "joinText": "As a fast-growing startup, Mozi is actively seeking talented individuals in Tech, Operations, and Product, as well as Investment Institutions who share our vision. Let's build the future of intelligent trading together."
+    "joinText": "As a fast-growing startup, Mozi is actively seeking talented individuals in Tech, Operations, and Product, as well as Investment Institutions who share our vision. Let's build the future of intelligent trading together.",
+    "visualTitle": "Intelligent Insights",
+    "visualDesc": "Real-time data from major exchanges",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "copyright": "©2017 - {{year}} MoziInnovations"
   },
   "pcHelp": {
     "heroLabel": "Help Center",
