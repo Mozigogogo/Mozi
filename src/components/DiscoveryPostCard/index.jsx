@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { removePost } from '@/api/community';
 import { confirm } from '@/components/Modal/confirm';
+import ExpandableText from '@/components/ExpandableText';
 import styles from './index.module.less';
 
 const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
@@ -154,140 +155,164 @@ export default function DiscoveryPostCard({
     >
       {/* 右上角装饰图标 */}
       <img src={findBestCoinIcon} className={styles.findBestCoinBg} alt="" />
-      
-      {/* 用户信息 */}
-      <div className={styles.discoveryHeader}>
-        <div className={styles.discoveryUserInfo}>
-          <img 
-            src={post.avatar || '/default-avatar.png'} 
-            alt="avatar" 
+
+      <div className={styles.postLayout}>
+        <div className={styles.avatarCol}>
+          <img
+            src={post.avatar || '/default-avatar.png'}
+            alt="avatar"
             className={styles.discoveryAvatar}
             onClick={(e) => {
               e.stopPropagation();
               onUserClick?.(post.userId);
             }}
           />
-          <div className={styles.discoveryUserContent}>
-            <div className={styles.nicknameRow}>
-              <span className={styles.discoveryNickname} title={post.username}>
-                {post.username}
-              </span>
-              {badgeLabel ? <span className={styles.qaTagBadge}>{badgeLabel}</span> : null}
-            </div>
-            <span className={styles.discoveryTime}>
-              {formatTimeAgo ? formatTimeAgo(post.createTime || post.updatedAt) : post.createTime}
-            </span>
-          </div>
         </div>
 
-        {isPC ? (
-          <Dropdown
-            trigger={['click']}
-            placement="bottomRight"
-            menu={{
-              items: menuItems,
-              onClick: (info) => {
-                info?.domEvent?.stopPropagation?.();
-                if (info?.key === 'report') {
-                  handleReportNavigate();
-                }
-                if (info?.key === 'delete') {
-                  handleDeletePost();
-                }
-              },
-            }}
-            overlayClassName={styles.postMoreDropdown}
-          >
-            <button
-              type="button"
-              className={styles.moreButton}
-              aria-label="more actions"
-              onClick={(e) => e.stopPropagation()}
+        <div className={styles.postMain}>
+          {/* 用户信息 */}
+          <div className={styles.discoveryHeader}>
+            <div
+              className={styles.discoveryUserInfo}
+              onClick={(e) => {
+                e.stopPropagation();
+                onUserClick?.(post.userId);
+              }}
             >
-              <EllipsisOutlined />
-            </button>
-          </Dropdown>
-        ) : null}
-      </div>
+              <div className={styles.discoveryUserContent}>
+                <div className={styles.nicknameRow}>
+                  <span className={styles.discoveryNickname} title={post.username}>
+                    {post.username}
+                  </span>
+                  {badgeLabel ? <span className={styles.qaTagBadge}>{badgeLabel}</span> : null}
+                </div>
+                <span className={styles.discoveryTime}>
+                  {formatTimeAgo ? formatTimeAgo(post.createTime || post.updatedAt) : post.createTime}
+                </span>
+              </div>
+            </div>
 
-      {/* 内容区域：发现好币=币种信息，不懂就问=标题+描述 */}
-      {contentTemplate === 'titleDesc' ? (
-        <div className={styles.qaContentSection}>
-          <div className={styles.qaTitle}>{post.title || '暂无标题'}</div>
-          <div className={styles.qaDesc}>{post.content || '暂无内容'}</div>
-        </div>
-      ) : (
-        <div className={styles.coinInfoSection}>
-          <div className={styles.coinInfoRow}>
-            <img className={styles.coinInfoIconImg} src={integralIcon} alt="" />
-            <span className={styles.coinInfoLabel}>{t('community.coinInfo.coinName')}</span>
-            <span className={styles.coinInfoValue}>
-              {post.tags && post.tags.length > 0 ? post.tags[0].name : 'N/A'}
-            </span>
+            {isPC ? (
+              <Dropdown
+                trigger={['click']}
+                placement="bottomRight"
+                menu={{
+                  items: menuItems,
+                  onClick: (info) => {
+                    info?.domEvent?.stopPropagation?.();
+                    if (info?.key === 'report') {
+                      handleReportNavigate();
+                    }
+                    if (info?.key === 'delete') {
+                      handleDeletePost();
+                    }
+                  },
+                }}
+                overlayClassName={styles.postMoreDropdown}
+              >
+                <button
+                  type="button"
+                  className={styles.moreButton}
+                  aria-label="more actions"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <EllipsisOutlined />
+                </button>
+              </Dropdown>
+            ) : null}
           </div>
-          
-          <div className={styles.coinInfoRow}>
-            <img className={styles.coinInfoIconImg} src={plateIcon} alt="" />
-            <span className={styles.coinInfoLabel}>{t('community.coinInfo.sector')}</span>
-            <span className={styles.coinInfoValue}>{post.sector || 'DeFi'}</span>
-          </div>
-          
-          <div className={styles.coinInfoRow}>
-            <img className={styles.coinInfoIconImg} src={reasonIcon} alt="" />
+
+          {/* 内容区域：发现好币=币种信息，不懂就问=标题+描述 */}
+          {contentTemplate === 'titleDesc' ? (
+            <div className={styles.qaContentSection}>
+              <div className={styles.qaTitle}>{post.title || '暂无标题'}</div>
+              <ExpandableText
+                text={post.content || '暂无内容'}
+                maxLines={5}
+                enabled={isPC}
+                className={styles.qaDesc}
+              />
+            </div>
+          ) : (
+            <div className={styles.coinInfoSection}>
+              <div className={styles.coinInfoRow}>
+                <img className={styles.coinInfoIconImg} src={integralIcon} alt="" />
+                <span className={styles.coinInfoLabel}>{t('community.coinInfo.coinName')}</span>
+                <span className={styles.coinInfoValue}>
+                  {post.tags && post.tags.length > 0 ? post.tags[0].name : 'N/A'}
+                </span>
+              </div>
+
+              <div className={styles.coinInfoRow}>
+                <img className={styles.coinInfoIconImg} src={plateIcon} alt="" />
+                <span className={styles.coinInfoLabel}>{t('community.coinInfo.sector')}</span>
+                <span className={styles.coinInfoValue}>{post.sector || 'DeFi'}</span>
+              </div>
+
+              <div className={styles.coinInfoRow}>
+                <img className={styles.coinInfoIconImg} src={reasonIcon} alt="" />
             <span className={styles.coinInfoLabel}>{t('post.recommendReason')}：</span>
-            <span className={styles.coinInfoValue}>{post.content || ''}</span>
+            <ExpandableText
+              text={post.content || ''}
+              maxLines={5}
+              enabled={isPC}
+              className={styles.coinInfoValue}
+              wrapClassName={styles.coinInfoValueWrap}
+            />
+              </div>
+            </div>
+          )}
+
+          {/* 操作按钮 */}
+          <div className={styles.discoveryActionButtons}>
+            <button
+              className={`${styles.discoveryActionBtn} ${styles.likeBtn} ${isLiked ? styles.liked : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onLikeClick?.(post.id);
+              }}
+            >
+              <img
+                className={`${styles.discoveryActionIcon} ${isPC ? styles.pcIcon : ''}`}
+                src={isLiked ? messagesLikeActiveIcon : messagesLikeNoActivedIcon}
+                alt="like"
+              />
+              <span className={styles.actionCount}>{post.likeCount || 0}</span>
+            </button>
+
+            {showDislike ? (
+              <button
+                className={`${styles.discoveryActionBtn} ${styles.dislikeBtn} ${isDisliked ? styles.disliked : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDislikeClick?.(post.id);
+                }}
+              >
+                <img
+                  className={`${styles.discoveryActionIcon} ${styles.dislikeIcon} ${isPC ? styles.pcIcon : ''}`}
+                  src={isDisliked ? messagesLikeActiveIcon : messagesLikeNoActivedIcon}
+                  alt="dislike"
+                />
+                <span className={styles.actionCount}>{post.dislikeCount || 0}</span>
+              </button>
+            ) : null}
+
+            <button
+              className={`${styles.discoveryActionBtn} ${styles.shareBtn}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onShareClick?.(post);
+              }}
+            >
+              <img className={`${styles.discoveryActionIcon} ${isPC ? styles.pcIcon : ''}`} src={messagesShareIcon} alt="share" />
+            </button>
+
+            <button className={`${styles.discoveryActionBtn} ${styles.commentBtn}`}>
+              <img className={`${styles.discoveryActionIcon} ${isPC ? styles.pcIcon : ''}`} src={messagesCommentIcon} alt="comment" />
+              <span className={styles.actionCount}>{post.commentCount || 0}</span>
+            </button>
           </div>
         </div>
-      )}
-
-      {/* 操作按钮 */}
-      <div className={styles.discoveryActionButtons}>
-        <button 
-          className={`${styles.discoveryActionBtn} ${styles.likeBtn} ${isLiked ? styles.liked : ''}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onLikeClick?.(post.id);
-          }}
-        >
-          <img
-            className={`${styles.discoveryActionIcon} ${isPC ? styles.pcIcon : ''}`}
-            src={isLiked ? messagesLikeActiveIcon : messagesLikeNoActivedIcon}
-            alt="like"
-          />
-          <span className={styles.actionCount}>{post.likeCount || 0}</span>
-        </button>
-
-        {showDislike ? (
-          <button
-            className={`${styles.discoveryActionBtn} ${styles.dislikeBtn} ${isDisliked ? styles.disliked : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDislikeClick?.(post.id);
-            }}
-          >
-            <img
-              className={`${styles.discoveryActionIcon} ${styles.dislikeIcon} ${isPC ? styles.pcIcon : ''}`}
-              src={isDisliked ? messagesLikeActiveIcon : messagesLikeNoActivedIcon}
-              alt="dislike"
-            />
-            <span className={styles.actionCount}>{post.dislikeCount || 0}</span>
-          </button>
-        ) : null}
-        
-        <button 
-          className={`${styles.discoveryActionBtn} ${styles.shareBtn}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onShareClick?.(post);
-          }}
-        >
-          <img className={`${styles.discoveryActionIcon} ${isPC ? styles.pcIcon : ''}`} src={messagesShareIcon} alt="share" />
-        </button>
-        
-        <button className={`${styles.discoveryActionBtn} ${styles.commentBtn}`}>
-          <img className={`${styles.discoveryActionIcon} ${isPC ? styles.pcIcon : ''}`} src={messagesCommentIcon} alt="comment" />
-          <span className={styles.actionCount}>{post.commentCount || 0}</span>
-        </button>
       </div>
     </div>
   );

@@ -23,6 +23,7 @@ import { jump2Detail } from '@/utils/core';
 import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
 import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, getMockUsStockPage, sortUsStockByVolume } from '@/utils/usStockMockData';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
+import { formatMoneyCompact } from '@/utils/formatMoney';
 import styles from './index.module.less';
 
 const RANK_SHARE_ICON = '/icons/pc/share_toolbar.svg';
@@ -116,7 +117,7 @@ const dbgCalendar = (...args) => {
 export default function PCFindContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   const [activeTab, setActiveTab] = useState('market');
   const [marketViewMode, setMarketViewMode] = useState('table'); // table | calendar
@@ -144,6 +145,8 @@ export default function PCFindContent() {
   const [usStockVolumeSort, setUsStockVolumeSort] = useState('desc');
   const [marketData, setMarketData] = useState([]);
   const [usStockData, setUsStockData] = useState([]);
+  const [usStockTotal, setUsStockTotal] = useState(0);
+  const [usStockPage, setUsStockPage] = useState(1);
   const [selfData, setSelfData] = useState([]);
   const [calendarEventDates, setCalendarEventDates] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
@@ -155,6 +158,7 @@ export default function PCFindContent() {
   // 请求序号：丢弃过期响应，避免轮询/切 Tab 竞态覆盖
   const marketReqSeqRef = useRef(0);
   const usStockReqSeqRef = useRef(0);
+  const usStockPageRef = useRef(1);
   const rankReqSeqRef = useRef({
     exchange: 0,
     up: 0,
@@ -288,6 +292,28 @@ export default function PCFindContent() {
     priceChange24h: item.priceChange24h,
     priceChangePercentage24h: item.priceChangePercentage24h,
   });
+
+  // 适配后端 GET /stock/discovery/list 的字段到前端表格需要的字段
+  const formatUsStockListItem = (item) => {
+    const symbol = String(item?.underlying ?? '').trim();
+    const spotPrice = item?.spotPrice ?? '--';
+    const quoteVolume24h = item?.quoteVolume24h;
+    const pct = Number(item?.priceChangePercent);
+
+    const pctStr = Number.isFinite(pct) ? pct.toFixed(2) : '';
+
+    return {
+      key: symbol,
+      symbol,
+      url: item?.url || '',
+      // 表格列是“24H成交额”，前端 mock 用的就是 `$xx.xx亿/万亿` 这种字符串，这里统一格式化
+      totalVolume: formatMoneyCompact(quoteVolume24h, i18n.language, true),
+      currentPrice: spotPrice,
+      // UI 的“涨跌额/涨跌幅”列历史复用：后端只给了涨跌幅（priceChangePercent），这里把它映射到两列
+      priceChange24h: pctStr || '--',
+      priceChangePercentage24h: pctStr || '',
+    };
+  };
 
   const buildBaseMarketColumns = (colWidths) => [
     {
@@ -490,13 +516,13 @@ export default function PCFindContent() {
   };
 
   // 获取美股行情数据
-  const fetchUsStockData = async (volumeSort = usStockVolumeSort, { silent = false } = {}) => {
+  const fetchUsStockData = async (volumeSort = usStockVolumeSort, { silent = false, pageNo = 1 } = {}) => {
     const seq = ++usStockReqSeqRef.current;
     if (!silent) setUsStockLoading(true);
     try {
       if (US_STOCK_USE_MOCK) {
         if (seq !== usStockReqSeqRef.current) return;
-        const mockPage = getMockUsStockPage({ pageNo: 1, pageSize: 20, sortOrder: volumeSort });
+        const mockPage = getMockUsStockPage({ pageNo, pageSize: 20, sortOrder: volumeSort });
         setUsStockData(mockPage.list.map(formatMarketListItem));
         return;
       }
@@ -504,16 +530,17 @@ export default function PCFindContent() {
       const res = await request({
         url: Interface.find_stock,
         data: {
-          pageNo: 1,
+          pageNo,
           pageSize: 20,
-          sortField: 'totalVolume',
-          sortOrder: volumeSort,
         },
       });
 
       if (seq !== usStockReqSeqRef.current) return;
       if (res?.data?.list) {
-        setUsStockData(res.data.list.map(formatMarketListItem));
+        setUsStockData(res.data.list.map(formatUsStockListItem));
+        setUsStockTotal(res.data.total ?? 0);
+        setUsStockPage(pageNo);
+        usStockPageRef.current = pageNo;
       }
     } catch (error) {
       if (seq !== usStockReqSeqRef.current) return;
@@ -560,7 +587,7 @@ export default function PCFindContent() {
     let cancelled = false;
     let timerId;
     const loop = async () => {
-      await fetchUsStockData(usStockVolumeSort, { silent: true });
+      await fetchUsStockData(usStockVolumeSort, { silent: true, pageNo: usStockPageRef.current });
       if (!cancelled) timerId = setTimeout(loop, 5000);
     };
     timerId = setTimeout(loop, 5000);
@@ -1170,6 +1197,9 @@ export default function PCFindContent() {
     volumeSortOrder,
     onVolumeSortToggle,
     onRowClick,
+    total,
+    currentPage,
+    onPageChange,
   }) => (
     <>
       <div
@@ -1268,7 +1298,7 @@ export default function PCFindContent() {
             showHeader={false}
             columns={columns}
             dataSource={dataSource}
-            pagination={{ pageSize: 20 }}
+            pagination={total != null ? { pageSize: 20, total, current: currentPage, onChange: onPageChange } : { pageSize: 20 }}
             onRow={(record) => ({
               onClick: () => (onRowClick ? onRowClick(record) : jump2Detail(record.symbol)),
               style: { cursor: 'pointer' },
@@ -1769,9 +1799,10 @@ export default function PCFindContent() {
                 dataSource: sortedUsStockData,
                 isLoading: usStockLoading,
                 tableKey: 'us-stock-table',
-                volumeSortOrder: usStockVolumeSort,
-                onVolumeSortToggle: handleUsStockVolumeSort,
                 onRowClick: (record) => jump2Detail(record.symbol, false, { type: 'usStock' }),
+                total: usStockTotal,
+                currentPage: usStockPage,
+                onPageChange: (page) => fetchUsStockData(usStockVolumeSort, { pageNo: page }),
               })}
 
             {isCalendarViewOpen && (

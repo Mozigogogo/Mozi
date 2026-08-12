@@ -1,5 +1,8 @@
 /* 发现好币卡片样式 - 基础样式 */
 .discoveryCard {
+  --post-avatar-size: 28px;
+  --post-avatar-gap: 6px;
+
   position: relative;
   background: #fff;
   cursor: pointer;
@@ -8,8 +11,27 @@
   flex-direction: column;
 }
 
+.postLayout {
+  display: grid;
+  grid-template-columns: var(--post-avatar-size) minmax(0, 1fr);
+  column-gap: var(--post-avatar-gap);
+  align-items: start;
+}
+
+.avatarCol {
+  display: flex;
+  justify-content: center;
+}
+
+.postMain {
+  min-width: 0;
+}
+
 /* PC端样式 */
 .pcCard {
+  --post-avatar-size: 36PX;
+  --post-avatar-gap: 8PX;
+
   padding: 12PX;
   border-radius: 0;
   box-shadow: none;
@@ -82,6 +104,8 @@
   align-items: center;
   position: relative;
   z-index: 2;
+  flex: 1;
+  min-width: 0;
 }
 
 .discoveryHeader {
@@ -181,10 +205,10 @@
 }
 
 .pcCard .discoveryAvatar {
-  width: 36PX;
-  height: 36PX;
+  width: var(--post-avatar-size);
+  height: var(--post-avatar-size);
   border-radius: 18PX;
-  margin-right: 8PX;
+  margin-right: 0;
   
   &:hover {
     opacity: 0.8;
@@ -192,10 +216,10 @@
 }
 
 .mobileCard .discoveryAvatar {
-  width: 28px;
-  height: 28px;
+  width: var(--post-avatar-size);
+  height: var(--post-avatar-size);
   border-radius: 14px;
-  margin-right: 6px;
+  margin-right: 0;
 }
 
 .discoveryUserContent {
@@ -281,21 +305,26 @@
 
 .qaDesc {
   color: #6b7280;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+.mobileCard .qaDesc {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+  overflow: hidden;
 }
 
 .pcCard .coinInfoSection {
 //   margin-bottom: 12PX;
     padding-top: 6PX;
+    margin-left: 0;
 }
 
 .pcCard .qaContentSection {
   padding-top: 6PX;
+  margin-left: 0;
 }
 
 .pcCard .qaTitle {
@@ -384,17 +413,23 @@
   margin-right: 3px;
 }
 
+.coinInfoValueWrap {
+  flex: 1;
+  min-width: 0;
+}
+
 .coinInfoValue {
   color: #9A9DA0;
-  flex: 1;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.mobileCard .coinInfoValue {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.4;
-  word-break: break-word;
 }
 
 .pcCard .coinInfoValue {
@@ -417,6 +452,7 @@
 
 .pcCard .discoveryActionButtons {
   padding-top: 12PX;
+  margin-left: 0;
 }
 
 .mobileCard .discoveryActionButtons {

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { removePost } from '@/api/community';
 import { confirm } from '@/components/Modal/confirm';
+import ExpandableText from '@/components/ExpandableText';
 import styles from './index.module.less';
 
 const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
@@ -148,133 +149,151 @@ function PostCard({
       onClick={() => onPostClick?.(post.id)}
     >
       <div className={styles.postWatermark} aria-hidden="true" />
-      
-      <div className={styles.postHeader}>
-        <div 
-          className={styles.userInfo} 
-          onClick={(e) => { 
-            e.stopPropagation(); 
-            onUserClick?.(post.userId); 
-          }}
-        >
-          <img 
-            src={post.avatar || '/default-avatar.png'} 
-            alt="avatar" 
-            className={styles.avatar} 
+
+      <div className={styles.postLayout}>
+        <div className={styles.avatarCol}>
+          <img
+            src={post.avatar || '/default-avatar.png'}
+            alt="avatar"
+            className={styles.avatar}
+            onClick={(e) => {
+              e.stopPropagation();
+              onUserClick?.(post.userId);
+            }}
           />
-          <div className={styles.userMeta}>
-            <div className={styles.userRow}>
-              <span className={styles.username} title={post.username}>
-                {post.username}
-              </span>
-              <span className={styles.badgeLabel}>
-                {post.categoryLabel || post.category || post.type || '资讯'}
-              </span>
-              {post.tags?.map((tag) => (
+        </div>
+
+        <div className={styles.postMain}>
+          <div className={styles.postHeader}>
+            <div
+              className={styles.userInfo}
+              onClick={(e) => {
+                e.stopPropagation();
+                onUserClick?.(post.userId);
+              }}
+            >
+              <div className={styles.userMeta}>
+                <div className={styles.userRow}>
+                  <span className={styles.username} title={post.username}>
+                    {post.username}
+                  </span>
+                  <span className={styles.badgeLabel}>
+                    {post.categoryLabel || post.category || post.type || '资讯'}
+                  </span>
+                  {post.tags?.map((tag) => (
+                    <span
+                      key={`tag-${tag.id}`}
+                      className={styles.coinTag}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTagClick?.(tag.name);
+                      }}
+                    >
+                      ${tag.name}$
+                    </span>
+                  ))}
+                </div>
+                <span className={styles.postTime}>
+                  {formatTimeAgo ? formatTimeAgo(post.createTime || post.updatedAt) : post.createTime}
+                </span>
+              </div>
+            </div>
+
+            {(isPC || enableReportMenu) && (
+              <Dropdown
+                trigger={['click']}
+                placement="bottomRight"
+                menu={{
+                  items: menuItems,
+                  onClick: (info) => {
+                    info?.domEvent?.stopPropagation?.();
+                    if (info?.key === 'report') {
+                      handleReportNavigate();
+                    }
+                    if (info?.key === 'delete') {
+                      handleDeletePost();
+                    }
+                  },
+                }}
+                overlayClassName={styles.postMoreDropdown}
+              >
+                <button
+                  type="button"
+                  className={styles.moreButton}
+                  aria-label="more actions"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <EllipsisOutlined />
+                </button>
+              </Dropdown>
+            )}
+          </div>
+
+          <div className={styles.postContent}>
+            {post.title ? <h3 className={styles.postTitle}>{post.title}</h3> : null}
+            {post.content ? (
+              <ExpandableText
+                text={post.content}
+                maxLines={5}
+                enabled={isPC}
+                className={styles.postText}
+              />
+            ) : null}
+            {post.images && post.images.length > 0 && (
+              <div className={styles.postImages}>
+                {post.images.map((image, index) => (
+                  <img key={index} src={image} alt="post" className={styles.postImage} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {post.topics?.length > 0 && (
+            <div className={styles.tagsTopicsContainer}>
+              {post.topics.map((topic) => (
                 <span
-                  key={`tag-${tag.id}`}
-                  className={styles.coinTag}
+                  key={`topic-${topic.id}`}
+                  className={styles.topicTag}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onTagClick?.(tag.name);
+                    onTopicClick?.(topic.id, topic.name);
                   }}
                 >
-                  ${tag.name}$
+                  #{topic.name}
                 </span>
               ))}
             </div>
-            <span className={styles.postTime}>
-              {formatTimeAgo ? formatTimeAgo(post.createTime || post.updatedAt) : post.createTime}
-            </span>
-          </div>
-        </div>
+          )}
 
-        {(isPC || enableReportMenu) && (
-          <Dropdown
-            trigger={['click']}
-            placement="bottomRight"
-            menu={{
-              items: menuItems,
-              onClick: (info) => {
-                info?.domEvent?.stopPropagation?.();
-                if (info?.key === 'report') {
-                  handleReportNavigate();
-                }
-                if (info?.key === 'delete') {
-                  handleDeletePost();
-                }
-              },
-            }}
-            overlayClassName={styles.postMoreDropdown}
-          >
-            <button
-              type="button"
-              className={styles.moreButton}
-              aria-label="more actions"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <EllipsisOutlined />
-            </button>
-          </Dropdown>
-        )}
-      </div>
-      
-      <div className={styles.postContent}>
-        {post.title ? <h3 className={styles.postTitle}>{post.title}</h3> : null}
-        {post.content ? <p className={styles.postText}>{post.content}</p> : null}
-        {post.images && post.images.length > 0 && (
-          <div className={styles.postImages}>
-            {post.images.map((image, index) => (
-              <img key={index} src={image} alt="post" className={styles.postImage} />
-            ))}
-          </div>
-        )}
-      </div>
-      
-      {post.topics?.length > 0 && (
-        <div className={styles.tagsTopicsContainer}>
-          {post.topics.map((topic) => (
-            <span 
-              key={`topic-${topic.id}`} 
-              className={styles.topicTag}
+          <div className={`${styles.postFooter} ${showFooterDivider ? '' : styles.postFooterNoDivider}`}>
+            <div
+              className={styles.postAction}
               onClick={(e) => {
                 e.stopPropagation();
-                onTopicClick?.(topic.id, topic.name);
+                onShareClick?.(post);
               }}
             >
-              #{topic.name}
-            </span>
-          ))}
-        </div>
-      )}
-      
-      <div className={`${styles.postFooter} ${showFooterDivider ? '' : styles.postFooterNoDivider}`}>
-        <div 
-          className={styles.postAction} 
-          onClick={(e) => {
-            e.stopPropagation();
-            onShareClick?.(post);
-          }}
-        >
-          <img className={styles.actionIconImg} src={shareIcon} alt="share" />
-        </div>
-        <div className={styles.postAction}>
-          <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
-          <span>{post.commentCount || 0}</span>
-        </div>
-        <div 
-          className={styles.postAction} 
-          onClick={(e) => { 
-            e.stopPropagation(); 
-            onLikeClick?.(post.id); 
-          }}
-        >
-          <img
-            className={styles.actionIconImg}
-            src={isLiked ? likeActiveIcon : likeIcon}
-            alt="like"
-          />
-          <span>{post.likeCount || 0}</span>
+              <img className={styles.actionIconImg} src={shareIcon} alt="share" />
+            </div>
+            <div className={styles.postAction}>
+              <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
+              <span>{post.commentCount || 0}</span>
+            </div>
+            <div
+              className={styles.postAction}
+              onClick={(e) => {
+                e.stopPropagation();
+                onLikeClick?.(post.id);
+              }}
+            >
+              <img
+                className={styles.actionIconImg}
+                src={isLiked ? likeActiveIcon : likeIcon}
+                alt="like"
+              />
+              <span>{post.likeCount || 0}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

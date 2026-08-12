@@ -71,8 +71,8 @@ export default function PCCommunityContent() {
   const [searchLoading, setSearchLoading] = useState(false); // 搜索加载状态
   const [showSearchPanel, setShowSearchPanel] = useState(false); // 是否显示搜索下拉面板
   const [activeCapsuleTab, setActiveCapsuleTab] = useState('all'); // 顶部胶囊tab，默认全部
-  const isDiscoveryLikeTab = activeCapsuleTab === 'discover' || activeCapsuleTab === 'qa';
-  const isCoinStyleTab = activeCapsuleTab === 'coin' || activeCapsuleTab === 'all';
+  const isDiscoveryLikeTab = activeCapsuleTab === 'discover';
+  const isCoinStyleTab = activeCapsuleTab === 'coin' || activeCapsuleTab === 'all' || activeCapsuleTab === 'qa';
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailModalPost, setDetailModalPost] = useState(null);
   const [detailModalComments, setDetailModalComments] = useState([]);
