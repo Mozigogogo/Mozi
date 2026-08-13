@@ -143,121 +143,116 @@ export default function PostDetailModal({
             ×
           </button>
 
-          <div className={styles.postHeader}>
-            <h3 className={styles.title}>{title}</h3>
-            <p className={styles.desc}>{description}</p>
-            <div className={styles.tagRow}>
-              {tags.map((tag) => (
-                <span key={tag} className={styles.tag}>
-                  #{tag}
-                </span>
-              ))}
+          {loading ? (
+            <div className={styles.loadingWrap} aria-busy="true" aria-live="polite">
+              <SpinLoading color="#00b578" style={{ '--size': '28PX' }} />
+              <span className={styles.loadingText}>Loading...</span>
             </div>
-          </div>
-
-          <div className={styles.commentTitle}>{listTitle}</div>
-          <div className={styles.commentList}>
-            {loading ? (
-              <div
-                style={{
-                  height: '220PX',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                  gap: '8PX',
-                  color: '#9CA3AF',
-                  fontSize: '14PX',
-                }}
-              >
-                <SpinLoading color="#00b578" style={{ '--size': '24PX' }} />
-                <span>Loading...</span>
+          ) : (
+            <>
+              <div className={styles.postHeader}>
+                <h3 className={styles.title}>{title}</h3>
+                <p className={styles.desc}>{description}</p>
+                <div className={styles.tagRow}>
+                  {tags.map((tag) => (
+                    <span key={tag} className={styles.tag}>
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
               </div>
-            ) : (
-              comments.map((item) => (
-                <div key={item.id} className={styles.commentItem}>
-                  <img className={styles.commentAvatar} src={item.avatar || '/default-avatar.png'} alt="avatar" />
-                  <div className={styles.commentBody}>
-                    <div className={styles.commentMeta}>
-                      <span className={styles.commentUser}>{item.username || '示例用户'}</span>
-                      <span className={styles.commentTime}>{formatTime(item.time || '45分钟前')}</span>
+
+              <div className={styles.commentTitle}>{listTitle}</div>
+              <div className={styles.commentList}>
+                {comments.length > 0 ? (
+                  comments.map((item) => (
+                    <div key={item.id} className={styles.commentItem}>
+                      <img className={styles.commentAvatar} src={item.avatar || '/default-avatar.png'} alt="avatar" />
+                      <div className={styles.commentBody}>
+                        <div className={styles.commentMeta}>
+                          <span className={styles.commentUser}>{item.username || '示例用户'}</span>
+                          <span className={styles.commentTime}>{formatTime(item.time || '45分钟前')}</span>
+                        </div>
+                        <div className={styles.commentText}>{item.content || ''}</div>
+                      </div>
                     </div>
-                    <div className={styles.commentText}>{item.content || ''}</div>
+                  ))
+                ) : (
+                  <div className={styles.emptyComments}>暂无评论</div>
+                )}
+              </div>
+
+              {!isTopic && (
+                <div className={styles.actionBar}>
+                  <button
+                    type="button"
+                    className={`${styles.actionBtn} ${isLiked ? styles.actionBtnActive : ''}`}
+                    onClick={() => onLike?.(post)}
+                  >
+                    <img
+                      className={`${styles.actionIconImg} ${isLiked ? styles.actionIconActive : ''}`}
+                      src={isLiked ? likeActiveIcon : likeIcon}
+                      alt="like"
+                      onError={(e) => {
+                        // CDN 里若没有 active 图标，则回退到默认图标 + 颜色高亮
+                        if (e.currentTarget.src.includes('like-active')) {
+                          e.currentTarget.src = likeIcon;
+                        }
+                      }}
+                    />
+                    <span>{likeCount}</span>
+                  </button>
+                  <button type="button" className={styles.actionBtn} onClick={() => onComment?.(post)}>
+                    <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
+                    <span>{commentCount}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.actionBtn} ${styles.shareBtn}`}
+                    onClick={() => onShare?.(post)}
+                  >
+                    <img className={styles.actionIconImg} src={shareIcon} alt="share" />
+                    <span>{shareCount}</span>
+                  </button>
+                </div>
+              )}
+
+              {!isTopic && (
+                <div className={styles.inputBar}>
+                  <img
+                    className={styles.inputAvatar}
+                    src={resolvedCurrentUserAvatar}
+                    alt="current user avatar"
+                    onError={(e) => {
+                      e.currentTarget.src = DEFAULT_AVATAR;
+                    }}
+                  />
+                  <div className={styles.inputWrap}>
+                    <input
+                      className={styles.input}
+                      placeholder="说点什么..."
+                      value={commentValue}
+                      onChange={(e) => setCommentValue(e.currentTarget.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSubmitComment();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className={styles.sendBtn}
+                      onClick={handleSubmitComment}
+                      aria-label="send comment"
+                      disabled={submitting || !String(commentValue || '').trim()}
+                    >
+                      发送
+                    </button>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-
-          {!isTopic && (
-            <div className={styles.actionBar}>
-              <button
-                type="button"
-                className={`${styles.actionBtn} ${isLiked ? styles.actionBtnActive : ''}`}
-                onClick={() => onLike?.(post)}
-              >
-                <img
-                  className={`${styles.actionIconImg} ${isLiked ? styles.actionIconActive : ''}`}
-                  src={isLiked ? likeActiveIcon : likeIcon}
-                  alt="like"
-                  onError={(e) => {
-                    // CDN 里若没有 active 图标，则回退到默认图标 + 颜色高亮
-                    if (e.currentTarget.src.includes('like-active')) {
-                      e.currentTarget.src = likeIcon;
-                    }
-                  }}
-                />
-                <span>{likeCount}</span>
-              </button>
-              <button type="button" className={styles.actionBtn} onClick={() => onComment?.(post)}>
-                <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
-                <span>{commentCount}</span>
-              </button>
-              <button
-                type="button"
-                className={`${styles.actionBtn} ${styles.shareBtn}`}
-                onClick={() => onShare?.(post)}
-              >
-                <img className={styles.actionIconImg} src={shareIcon} alt="share" />
-                <span>{shareCount}</span>
-              </button>
-            </div>
-          )}
-
-          {!isTopic && (
-            <div className={styles.inputBar}>
-              <img
-                className={styles.inputAvatar}
-                src={resolvedCurrentUserAvatar}
-                alt="current user avatar"
-                onError={(e) => {
-                  e.currentTarget.src = DEFAULT_AVATAR;
-                }}
-              />
-              <div className={styles.inputWrap}>
-                <input
-                  className={styles.input}
-                  placeholder="说点什么..."
-                  value={commentValue}
-                  onChange={(e) => setCommentValue(e.currentTarget.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleSubmitComment();
-                    }
-                  }}
-                />
-                <button
-                  type="button"
-                  className={styles.sendBtn}
-                  onClick={handleSubmitComment}
-                  aria-label="send comment"
-                  disabled={submitting || !String(commentValue || '').trim()}
-                >
-                  发送
-                </button>
-              </div>
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>

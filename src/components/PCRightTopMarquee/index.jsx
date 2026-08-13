@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Skeleton } from '@/components/Skeleton';
+import { jump2Detail } from '@/utils/core';
 import styles from './index.module.less';
 
 const SYMBOL_COLOR_PALETTE = [
@@ -34,7 +35,9 @@ export default function PCRightTopMarquee({
   speed = 22,
   loading = false,
   className = '',
+  onItemClick,
 }) {
+  const [paused, setPaused] = useState(false);
   const normalizedItems = useMemo(
     () =>
       (items || [])
@@ -61,6 +64,14 @@ export default function PCRightTopMarquee({
     [items]
   );
 
+  const handleItemClick = (item) => {
+    if (onItemClick) {
+      onItemClick(item);
+      return;
+    }
+    if (item?.symbol) jump2Detail(item.symbol);
+  };
+
   if (loading) {
     return (
       <div className={`${styles.root} ${className}`.trim()}>
@@ -80,12 +91,24 @@ export default function PCRightTopMarquee({
   if (!normalizedItems.length) return null;
 
   return (
-    <div className={`${styles.root} ${className}`.trim()}>
-      <div className={styles.track} style={{ '--duration': `${speed}s` }}>
+    <div
+      className={`${styles.root} ${className}`.trim()}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <div
+        className={`${styles.track} ${paused ? styles.trackPaused : ''}`}
+        style={{ '--duration': `${speed}s` }}
+      >
         {[0, 1].map((loop) => (
           <div key={loop} className={styles.group}>
             {normalizedItems.map((item) => (
-              <span key={`${loop}-${item.symbol}`} className={styles.item}>
+              <button
+                key={`${loop}-${item.symbol}`}
+                type="button"
+                className={styles.item}
+                onClick={() => handleItemClick(item)}
+              >
                 <span className={styles.symbol} style={{ color: item.symbolColor }}>
                   {item.symbol}
                 </span>
@@ -97,7 +120,7 @@ export default function PCRightTopMarquee({
                 >
                   {item.changePercent}
                 </span>
-              </span>
+              </button>
             ))}
           </div>
         ))}

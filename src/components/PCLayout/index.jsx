@@ -258,14 +258,62 @@ export default function PCLayout({ children }) {
   
   // 公告栏数据
   const [notices, setNotices] = useState([]);
+  const isCommunityPage = pathname === '/pc/community' || pathname === '/community';
 
   useEffect(() => {
-    setNotices([
-      t('pcLayout.notice'),
-      t('pcLayout.notice'),
-      t('pcLayout.notice')
-    ]);
-  }, [t]);
+    let cancelled = false;
+
+    // 仅 PC 社区页底部改为 24H 快讯；其他页面保持原公告
+    if (!isCommunityPage) {
+      setNotices([
+        t('pcLayout.notice'),
+        t('pcLayout.notice'),
+        t('pcLayout.notice'),
+      ]);
+      return undefined;
+    }
+
+    const loadFlashNewsNotices = async () => {
+      try {
+        const res = await request({
+          url: Interface.POSTS_API,
+          data: {
+            page: 1,
+            size: 20,
+            userType: 'virtual',
+            _t: Date.now(),
+          },
+        });
+        if (cancelled) return;
+        const list = Array.isArray(res?.data?.data) ? res.data.data : [];
+        const mapped = list
+          .map((item) => {
+            const title = String(item?.title || '').trim();
+            const content = String(item?.content || '').trim();
+            const text = title || content.slice(0, 40);
+            const id = item?.id;
+            if (!text || id == null || id === '') return null;
+            return { id, text };
+          })
+          .filter(Boolean);
+        if (mapped.length > 0) {
+          setNotices(mapped);
+          return;
+        }
+      } catch (_) {
+        // 回退到标题文案
+      }
+      if (!cancelled) {
+        const flashTitle = t('pcCommunity.flashNewsTitle');
+        setNotices([flashTitle, flashTitle, flashTitle]);
+      }
+    };
+
+    loadFlashNewsNotices();
+    return () => {
+      cancelled = true;
+    };
+  }, [t, isCommunityPage]);
 
   // 搜索框状态
   const [searchValue, setSearchValue] = useState('');
@@ -1564,7 +1612,20 @@ export default function PCLayout({ children }) {
             {isDetailPage ? <div className={styles.detailFooterSpacer} aria-hidden /> : null}
             
             {/* 底部公告栏 - 只在内容区域显示 */}
-            <PCFooterNotice notices={notices} collapsed={collapsed} />
+            <PCFooterNotice
+              notices={notices}
+              collapsed={collapsed}
+              speed={isCommunityPage ? Math.max(60, notices.length * 6) : 30}
+              onItemClick={
+                isCommunityPage
+                  ? (item) => {
+                      const postId = String(item?.id ?? '').trim();
+                      if (!postId) return;
+                      router.push(`/pc/community?postId=${encodeURIComponent(postId)}`);
+                    }
+                  : undefined
+              }
+            />
           </div>
         </Content>
       </Layout>

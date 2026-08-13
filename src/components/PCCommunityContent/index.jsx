@@ -17,10 +17,10 @@ import HotTopicList from '@/components/HotTopicList';
 import PCTopicSearchModal from '@/components/PCTopicSearchModal';
 import PCCapsuleTabs from '@/components/PCCapsuleTabs';
 import PCPublishComposer from '@/components/PCPublishComposer';
-import PCFlashNewsTicker from '@/components/PCFlashNewsTicker';
+import PCRightTopMarquee from '@/components/PCRightTopMarquee';
 import PostDetailModal from '@/components/PostDetailModal';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
-import { jump2Detail } from '@/utils/core';
+import { jump2Detail, formatNumber } from '@/utils/core';
 import { dislikePost, undislikePost, followUser, getUserFollowStatus, unfollowUser } from '@/api/community';
 import styles from './index.module.less';
 
@@ -42,13 +42,8 @@ export default function PCCommunityContent() {
     { key: 'discover', label: t('community.tabs.discovery') },
     { key: 'qa', label: t('community.tabs.question') },
   ];
-  const [flashNewsItems, setFlashNewsItems] = useState([]);
-  const [flashNewsLoading, setFlashNewsLoading] = useState(false);
-  const [flashNewsLoadingMore, setFlashNewsLoadingMore] = useState(false);
-  const [flashNewsPage, setFlashNewsPage] = useState(1);
-  const [flashNewsTotal, setFlashNewsTotal] = useState(0);
-  const [flashNewsHasMore, setFlashNewsHasMore] = useState(true);
-  const FLASH_NEWS_PAGE_SIZE = 15;
+  const [marketTickerItems, setMarketTickerItems] = useState([]);
+  const [marketTickerLoading, setMarketTickerLoading] = useState(true);
   
   const [coinPosts, setCoinPosts] = useState([]); // 币种帖子
   const [coinPostsPage, setCoinPostsPage] = useState(1);
@@ -187,80 +182,72 @@ export default function PCCommunityContent() {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   };
 
-  // 获取快讯（与移动端一致：/posts?userType=virtual）
-  const fetchFlashNews = async (nextPage = 1, { force = false, append = false } = {}) => {
-    if (append) {
-      if (flashNewsLoadingMore || flashNewsLoading || !flashNewsHasMore) return;
-      setFlashNewsLoadingMore(true);
-    } else {
-      if (flashNewsLoading && !force) return;
-      setFlashNewsLoading(true);
-    }
-
+  // 顶部市场价格轮播（与币种详情页 PCRightTopMarquee 一致）
+  const fetchMarketTicker = async ({ silent = false } = {}) => {
+    if (!silent) setMarketTickerLoading(true);
     try {
+      const toChangePercent24h = (v) => {
+        if (v === null || v === undefined || v === '') return '--';
+        const s = String(v).trim();
+        if (s.endsWith('%')) {
+          const n = Number(s.replace('%', '').trim());
+          return Number.isFinite(n) ? `${n.toFixed(2)}%` : s;
+        }
+        const n = Number(s);
+        return Number.isFinite(n) ? `${n.toFixed(2)}%` : s;
+      };
+      const formatMarqueePrice = (priceRaw) => {
+        if (priceRaw === null || priceRaw === undefined || priceRaw === '') return '--';
+        if (typeof priceRaw === 'number' && Number.isFinite(priceRaw)) {
+          const digits = Math.abs(priceRaw) >= 1 ? 2 : 6;
+          return `$${formatNumber(priceRaw, digits)}`;
+        }
+        const s = String(priceRaw).trim();
+        return s.startsWith('$') ? s : `$${s}`;
+      };
+
       const res = await request({
-        url: Interface.POSTS_API,
-        data: {
-          page: nextPage,
-          size: FLASH_NEWS_PAGE_SIZE,
-          userType: 'virtual',
-          _t: Date.now(), // 避免缓存导致看起来未刷新
-        },
+        url: Interface.find_coin,
+        data: { pageNo: 1, pageSize: 10 },
       });
-      const list = res?.data?.data || [];
-      const total = res?.data?.total ?? 0;
-      const totalNum = Number.isFinite(Number(total)) ? Number(total) : 0;
-      setFlashNewsTotal(totalNum);
-      setFlashNewsPage(nextPage);
+      const listRaw = res?.data;
+      const list = Array.isArray(listRaw?.list)
+        ? listRaw.list
+        : Array.isArray(listRaw)
+          ? listRaw
+          : Array.isArray(listRaw?.data)
+            ? listRaw.data
+            : Array.isArray(listRaw?.items)
+              ? listRaw.items
+              : [];
 
-      const mapped = list.slice(0, FLASH_NEWS_PAGE_SIZE).map((item) => {
-        const title = String(item?.title || '').trim();
-        const content = String(item?.content || '').trim();
-        const nickName = String(item?.nickName || item?.username || t('community.tabs.news')).trim();
-        const category = String(item?.category || t('pcCommunity.newsTag')).trim();
-        const timeSource = item?.updatedAt || item?.createdAt || '';
-        return {
-          id: item?.id,
-          account: nickName || t('community.tabs.news'),
-          avatar: item?.avatar || item?.userAvatar || item?.headImg || '',
-          tag: category || t('pcCommunity.newsTag'),
-          time: formatTimeAgo(timeSource),
-          title: title || content.slice(0, 40) || t('community.tabs.news'),
-          desc: content || title,
-          likeCount: item?.likeCnt ?? item?.likeCount ?? 0,
-          commentCount: item?.commentCnt ?? item?.commentCount ?? 0,
-          shareCount: item?.shareCnt ?? item?.shareCount ?? 0,
-          isLiked: Boolean(item?.isLikedByCurrentUser ?? item?.isLiked),
-        };
-      });
+      const mapped = list
+        .map((item) => {
+          const symbol = String(
+            item?.symbol || item?.coin || item?.base || item?.name || ''
+          ).toUpperCase();
+          const priceRaw =
+            item?.currentPrice ?? item?.last ?? item?.price ?? item?.close ?? '--';
+          const changeRaw =
+            item?.priceChangePercentage24h ?? item?.priceChangePercentage_24h ?? '--';
+          const changePercent = toChangePercent24h(changeRaw);
+          const changeNum = Number(String(changePercent).replace('%', '').trim());
+          return {
+            symbol,
+            price: formatMarqueePrice(priceRaw),
+            changePercent,
+            isUp: Number.isFinite(changeNum) ? changeNum >= 0 : null,
+          };
+        })
+        .filter((x) => x.symbol)
+        .slice(0, 10);
 
-      setFlashNewsItems((prev) => {
-        if (!append) return mapped;
-        const seen = new Set(prev.map((row) => String(row.id)));
-        const merged = [...prev];
-        mapped.forEach((row) => {
-          if (!seen.has(String(row.id))) merged.push(row);
-        });
-        return merged;
-      });
-
-      setFlashNewsHasMore(
-        mapped.length > 0 && nextPage * FLASH_NEWS_PAGE_SIZE < totalNum
-      );
+      setMarketTickerItems(mapped);
     } catch (e) {
-      console.error('获取快讯失败:', e);
-      message.error(t('pcCommunity.errors.fetchFlashNewsFailed'));
-      if (!append) {
-        setFlashNewsItems([]);
-        setFlashNewsTotal(0);
-        setFlashNewsHasMore(false);
-      }
+      console.error('获取市场价格轮播失败:', e);
+      if (!silent) setMarketTickerItems([]);
     } finally {
-      if (append) {
-        setFlashNewsLoadingMore(false);
-      } else {
-        setFlashNewsLoading(false);
-      }
+      if (!silent) setMarketTickerLoading(false);
     }
   };
 
@@ -907,6 +894,8 @@ export default function PCCommunityContent() {
           shareCount: detail?.shareCnt ?? detail?.shareCount ?? prev.shareCount ?? 0,
         };
       });
+      const authorId = detail?.userId ?? detail?.uid;
+      if (authorId) syncDetailFollowStatus(authorId);
     } catch (error) {
       console.error('获取帖子详情失败:', error);
     }
@@ -1020,13 +1009,18 @@ export default function PCCommunityContent() {
   };
 
   // 跳转到帖子详情
-  const goToPostDetail = (postId) => {
+  const goToPostDetail = async (postId) => {
     const target = coinPosts.find((post) => String(post.id) === String(postId));
+    const targetPostId = String(postId || '').trim();
+    if (!targetPostId) return;
+
+    setDetailModalComments([]);
+    setDetailModalLoading(true);
+    setDetailModalVariant('post');
+    setDetailModalOpen(true);
+
     if (!target) {
       // 允许从右侧快讯/其他来源打开弹窗：先用最小数据占位，再用详情接口覆盖
-      const targetPostId = String(postId || '').trim();
-      if (!targetPostId) return;
-
       setDetailModalPost({
         id: targetPostId,
         coverImage: undefined,
@@ -1043,38 +1037,37 @@ export default function PCCommunityContent() {
         commentCount: 0,
         shareCount: 0,
       });
-      setDetailModalOpen(true);
-      setDetailModalVariant('post');
-      fetchPostDetail(targetPostId);
-      fetchDetailComments(targetPostId);
-      return;
+    } else {
+      const mapped = {
+        id: target.id,
+        coverImage: target.images?.[0] || undefined,
+        authorName: target.username || t('myNotices.anonymousUser'),
+        authorAvatar: target.avatar || '/default-avatar.png',
+        authorId: target.userId || '',
+        isFollowing: false,
+        isLiked: likedPosts[target.id] ?? target.isLiked ?? false,
+        timeText: formatTimeAgo(target.createTime || target.updatedAt || target.createdAt),
+        title: target.title || t('pcCommunity.postDetailTitle'),
+        description: target.content || '',
+        tags: Array.isArray(target.tags) && target.tags.length > 0
+          ? target.tags.map((tag) => String(tag?.name || '').trim()).filter(Boolean)
+          : [selectedCoin || 'Mozi'],
+        likeCount: target.likeCount || 0,
+        commentCount: target.commentCount || 0,
+        shareCount: target.shareCount || 0,
+      };
+      setDetailModalPost(mapped);
+      syncDetailFollowStatus(mapped.authorId);
     }
 
-    const mapped = {
-      id: target.id,
-      coverImage: target.images?.[0] || undefined,
-      authorName: target.username || t('myNotices.anonymousUser'),
-      authorAvatar: target.avatar || '/default-avatar.png',
-      authorId: target.userId || '',
-      isFollowing: false,
-      isLiked: likedPosts[target.id] ?? target.isLiked ?? false,
-      timeText: formatTimeAgo(target.createTime || target.updatedAt || target.createdAt),
-      title: target.title || t('pcCommunity.postDetailTitle'),
-      description: target.content || '',
-      tags: Array.isArray(target.tags) && target.tags.length > 0
-        ? target.tags.map((tag) => String(tag?.name || '').trim()).filter(Boolean)
-        : [selectedCoin || 'Mozi'],
-      likeCount: target.likeCount || 0,
-      commentCount: target.commentCount || 0,
-      shareCount: target.shareCount || 0,
-    };
-
-    setDetailModalPost(mapped);
-    setDetailModalOpen(true);
-    setDetailModalVariant('post');
-    fetchPostDetail(target.id);
-    fetchDetailComments(target.id);
-    syncDetailFollowStatus(mapped.authorId);
+    try {
+      await Promise.all([
+        fetchPostDetail(targetPostId),
+        fetchDetailComments(targetPostId),
+      ]);
+    } finally {
+      setDetailModalLoading(false);
+    }
   };
 
   // PC 分享链接 /commentinfo?id= 会重定向到 /pc/community?postId=
@@ -1171,7 +1164,9 @@ export default function PCCommunityContent() {
   useEffect(() => {
     fetchCoinPosts(selectedCoin, 1, activeCapsuleTab); // 加载左侧帖子
     fetchHotTopics(1); // 加载热门话题（第1页）
-    fetchFlashNews(1); // 加载快讯（第1页）
+    fetchMarketTicker({ silent: false });
+    const timer = setInterval(() => fetchMarketTicker({ silent: true }), 30000);
+    return () => clearInterval(timer);
   }, []);
 
   // 币种或顶部tab切换时重新加载
@@ -1201,11 +1196,11 @@ export default function PCCommunityContent() {
               onChange={setActiveCapsuleTab}
             />
           </div>
-          <div className={styles.topFlashTicker}>
-            <PCFlashNewsTicker
-              items={flashNewsItems}
-              loading={flashNewsLoading}
-              onItemClick={(item) => goToPostDetail(item?.id)}
+          <div className={styles.topMarketTicker}>
+            <PCRightTopMarquee
+              items={marketTickerItems}
+              loading={marketTickerLoading}
+              className={styles.topMarketMarquee}
             />
           </div>
         </div>
