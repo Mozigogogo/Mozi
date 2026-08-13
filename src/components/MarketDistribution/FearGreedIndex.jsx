@@ -3,7 +3,7 @@
  */
 'use client';
 
-import { Popover } from 'antd-mobile';
+import IndicatorInfoTip from './IndicatorInfoTip';
 import styles from './index.module.less';
 import './popover-global.css';
 import { useTranslation } from 'react-i18next';
@@ -165,9 +165,14 @@ export default function FearGreedIndex({
     // 确保 indexValue 是整数
     const value = Math.round(indexValue);
     
-    // PC端使用不同的位置映射（基于200px宽，100px高）
+    // PC端使用不同的位置映射（基于200px宽，100px高），再按实际渲染尺寸缩放
     if (isPC) {
-      return getPCBallPosition(value);
+      const pos = getPCBallPosition(value);
+      const scale = 168 / 200;
+      return {
+        top: pos.top * scale,
+        left: pos.left * scale,
+      };
     }
     
     // 每个数字单独匹配（0-100）
@@ -287,13 +292,11 @@ export default function FearGreedIndex({
     <div className={styles.indicatorItem}>
       <div className={styles.indicatorHeader}>
         <span className={styles.indicatorTitle}>{t('market.fearGreed.title')}</span>
-        <Popover
+        <IndicatorInfoTip
+          isPC={isPC}
+          iconSrc={warnIcon}
           content={<TooltipContent t={t} />}
-          trigger="click"
-          placement="bottom"
-        >
-          <img className={styles.infoIcon} src={warnIcon} alt="info" />
-        </Popover>
+        />
       </div>
       <div className={styles.fearGreedContainer}>
         <div className={styles.fearGreedChart}>

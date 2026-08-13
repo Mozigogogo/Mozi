@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Row, Col, Card, Tabs, Table, Tag, Carousel, Skeleton, message } from 'antd';
+import { DualRingSpinner } from '@/components/Loading';
 import { 
   RiseOutlined, 
   FallOutlined, 
@@ -23,14 +24,14 @@ import { buildPcFindRankHref } from '@/utils/pcFindNavigation';
 import { completeTask } from '@/api/user';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 import styles from './index.module.less';
-import { SectorTreeMapChunkSkeleton, HotTopicsChunkSkeleton, MarketDistributionChunkSkeleton } from './ChunkSkeletons';
+import { SectorTreeMapChunkSkeleton, MarketDistributionChunkSkeleton } from './ChunkSkeletons';
 
 // Lazy load heavy components — 必须带 loading，否则 chunk 下载期间整块空白
 const MarketDistribution = dynamic(() => import('../MarketDistribution'), {
   loading: () => <MarketDistributionChunkSkeleton />,
 });
-const PCHotTopics = dynamic(() => import('../PCHotTopics'), {
-  loading: () => <HotTopicsChunkSkeleton />,
+const PCHotTopicsMarquee = dynamic(() => import('../PCHotTopicsMarquee'), {
+  loading: () => <div className={styles.hotTopicsTickerSkeleton} aria-hidden />,
 });
 const PCSectorTreeMap = dynamic(() => import('../PCSectorTreeMap'), {
   loading: () => <SectorTreeMapChunkSkeleton />,
@@ -39,7 +40,8 @@ const PCSectorTreeMap = dynamic(() => import('../PCSectorTreeMap'), {
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
 
-// Banner 图片
+// Banner 图片；false 时隐藏首页轮播
+const SHOW_HOME_BANNER = false;
 const HOME_BANNERS = [
   'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner1_pc_en.png',
   'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner2_pc_en.png',
@@ -110,7 +112,7 @@ export default function PCHome() {
 
   // 自动轮播
   useEffect(() => {
-    if (bannerLoading) return;
+    if (!SHOW_HOME_BANNER || bannerLoading) return;
     
     const timer = setInterval(() => {
       setActiveBanner((prev) => (prev + 1) % HOME_BANNERS.length);
@@ -156,12 +158,7 @@ export default function PCHome() {
       {
         key: 'funding',
         icon: arbitrageIcons.funding,
-        title: (
-          <>
-            <span className={styles.arbEnLabel}>Funding</span>{' '}
-            {t('pcHome.arbitrage.fundingSuffix')}
-          </>
-        ),
+        title: t('pcHome.arbitrage.funding'),
         alt: t('pcHome.arbitrage.funding'),
         path: '/arbitrage?tab=funding',
       },
@@ -371,8 +368,6 @@ export default function PCHome() {
   const fetchRankData = async (rankType = 'zhangfu', page = 1) => {
     const requestId = ++rankRequestIdRef.current;
     setRankLoading(true);
-    // 清空数据以防止显示上一个榜单的数据
-    setRankData([]);
     
     try {
       // 从配置中查找对应的接口
@@ -504,6 +499,7 @@ export default function PCHome() {
   return (
     <div className={styles.pcHome}>
       {/* Banner 3D轮播 */}
+      {SHOW_HOME_BANNER ? (
       <div className={styles.bannerWrapper}>
         {bannerLoading && (
           <div className={styles.carouselSkeleton}>
@@ -550,76 +546,94 @@ export default function PCHome() {
         </div>
 
       </div>
+      ) : null}
 
-      {/* 内容区域：左侧60% 右侧40% */}
+      {/* 行情 + 板块选币：统一白色容器 */}
+      <div className={styles.homeMainPanel}>
       <div className={styles.contentSplit}>
         <div className={styles.leftColumn}>
-          {/* 合约专区 / 套利专区 */}
+          {/* 合约专区 / 套利专区 + 热聊话题横向滚动 */}
           <div>
             <div className={styles.derivativeHeader}>
-              {showArbitrageZone ? (
-                <>
-                  <button
-                    type="button"
-                    className={`${styles.zoneTab} ${activeZone === 'arbitrage' ? styles.zoneTabActive : ''}`}
-                    onClick={() => setActiveZone('arbitrage')}
-                  >
-                    {t('pcHome.arbitrage.title')}
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.zoneTab} ${activeZone === 'derivatives' ? styles.zoneTabActive : ''}`}
-                    onClick={() => setActiveZone('derivatives')}
-                  >
-                    {t('pcHome.derivatives.title')}
-                  </button>
-                </>
-              ) : (
-                <div className={styles.derivativeSectionTitle}>{t('pcHome.derivatives.title')}</div>
-              )}
+              <div className={styles.zoneTabs}>
+                {showArbitrageZone ? (
+                  <>
+                    <button
+                      type="button"
+                      className={`${styles.zoneTab} ${activeZone === 'arbitrage' ? styles.zoneTabActive : ''}`}
+                      onClick={() => setActiveZone('arbitrage')}
+                    >
+                      {t('pcHome.arbitrage.title')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.zoneTab} ${activeZone === 'derivatives' ? styles.zoneTabActive : ''}`}
+                      onClick={() => setActiveZone('derivatives')}
+                    >
+                      {t('pcHome.derivatives.title')}
+                    </button>
+                  </>
+                ) : (
+                  <div className={styles.derivativeSectionTitle}>{t('pcHome.derivatives.title')}</div>
+                )}
+              </div>
+              <div className={styles.hotTopicsTicker}>
+                <span className={styles.hotTopicsLabel}>
+                  <img
+                    className={styles.hotTopicsIcon}
+                    src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/hot.png"
+                    alt=""
+                    aria-hidden
+                  />
+                  {t('pcHome.hotTopics.title')}
+                </span>
+                <PCHotTopicsMarquee className={styles.hotTopicsMarquee} />
+              </div>
             </div>
 
-            <div className={styles.zoneBody}>
-              <div className={styles.derivativeRow}>
-                {(showArbitrageZone && activeZone === 'arbitrage'
-                  ? arbitrageItems
-                  : derivativeItems
-                ).map((item) => (
-                  <div key={item.key} className={styles.derivativeCol}>
-                    <Card
-                      className={styles.derivativeCard}
-                      hoverable
-                      onClick={() => router.push(item.path)}
-                    >
-                      <div className={styles.derivativeContent}>
-                        <span className={styles.derivativeIconWrap}>
-                          <img
-                            src={item.icon}
-                            alt={item.alt || (typeof item.title === 'string' ? item.title : '')}
-                            className={styles.derivativeIcon}
-                          />
-                        </span>
-                        <div className={styles.derivativeText}>
-                          <div className={styles.derivativeTitle}>{item.title}</div>
-                        </div>
-                      </div>
-                    </Card>
-                  </div>
-                ))}
-              </div>
+            <div className={styles.zoneHeaderDivider} aria-hidden />
 
+            <div className={styles.zoneBody}>
               <div className={styles.marketDistributionWrapper}>
-                <MarketDistribution isPC={true} />
+                <MarketDistribution
+                  isPC={true}
+                  leftSlot={(
+                    <div className={styles.derivativeRow}>
+                      {(showArbitrageZone && activeZone === 'arbitrage'
+                        ? arbitrageItems
+                        : derivativeItems
+                      ).map((item) => (
+                        <div key={item.key} className={styles.derivativeCol}>
+                          <Card
+                            className={styles.derivativeCard}
+                            hoverable
+                            onClick={() => router.push(item.path)}
+                          >
+                            <div className={styles.derivativeContent}>
+                              <span className={styles.derivativeIconWrap}>
+                                <img
+                                  src={item.icon}
+                                  alt={item.alt || (typeof item.title === 'string' ? item.title : '')}
+                                  className={styles.derivativeIcon}
+                                />
+                              </span>
+                              <div className={styles.derivativeText}>
+                                <div className={styles.derivativeTitle}>{item.title}</div>
+                              </div>
+                            </div>
+                          </Card>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                />
               </div>
             </div>
           </div>
         </div>
-
-        <div className={styles.rightColumn}>
-            {/* 话题热榜 */}
-            <PCHotTopics />
-          </div>
       </div>
+
+      <div className={styles.homeMainDivider} aria-hidden />
 
       {/* 板块选币 TreeMap */}
       <div id="sector" className={styles.sectorSection}>
@@ -638,17 +652,17 @@ export default function PCHome() {
         </div>
       </div>
 
+      <div className={styles.homeMainDivider} aria-hidden />
+
       {/* 实时榜单 */}
       <div className={styles.rankSection}>
-        {/* 标题 */}
         <div className={styles.rankHeader}>
           <h2 className={styles.rankTitle}>{t('pcHome.ranks.title')}</h2>
           <div className={styles.headerViewMore} onClick={() => router.push(buildPcFindRankHref(activeRankTab))}>
             {t('pcHome.ranks.viewMore')}
           </div>
         </div>
-        
-        {/* 表格在白色卡片里 */}
+
         <Card className={styles.rankCard}>
           <Tabs
             activeKey={activeRankTab}
@@ -659,7 +673,16 @@ export default function PCHome() {
           <Table
             columns={columns}
             dataSource={rankData}
-            loading={rankLoading}
+            className={rankLoading ? styles.rankTableLoading : undefined}
+            loading={{
+              spinning: rankLoading,
+              indicator: <DualRingSpinner color="#11B787" size={32} />,
+            }}
+            locale={{
+              emptyText: rankLoading ? (
+                <div className={styles.rankEmptyLoading} aria-hidden />
+              ) : undefined,
+            }}
             pagination={{
               ...pagination,
               onChange: handlePageChange,
@@ -673,6 +696,7 @@ export default function PCHome() {
             })}
           />
         </Card>
+      </div>
       </div>
     </div>
   );

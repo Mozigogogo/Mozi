@@ -9,7 +9,11 @@ import { useTranslation } from 'react-i18next';
 export default function DistributionChart({ chartData, statistics, isPC = false }) {
   const { t } = useTranslation();
   // 获取最大值用于计算柱状图高度
-  const maxValue = Math.max(...chartData.map(item => item.value));
+  const maxValue = Math.max(...chartData.map(item => item.value), 0);
+
+  const chartLayout = isPC
+    ? { valueReserve: 16, labelReserve: 28, maxBarHeight: 96 }
+    : { valueReserve: 17, labelReserve: 15, maxBarHeight: 128 };
 
   // 获取颜色
   const getBarColor = (type) => {
@@ -21,10 +25,11 @@ export default function DistributionChart({ chartData, statistics, isPC = false 
     }
   };
 
-  // 计算柱状图高度
+  // 柱高只占用中间区域，顶部数字 + 底部区间标签预留固定空间
   const getBarHeight = (value) => {
-    const maxHeight = 120; // 增加最大高度
-    return Math.min(Math.max((value / maxValue) * 120, 4), maxHeight);
+    if (!maxValue) return 4;
+    const height = (value / maxValue) * chartLayout.maxBarHeight;
+    return Math.max(Math.min(height, chartLayout.maxBarHeight), 4);
   };
 
   return (

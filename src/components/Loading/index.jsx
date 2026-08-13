@@ -53,6 +53,64 @@ export const Loading = ({ tip, color = '#11B787', size = 24, style }) => {
   );
 };
 
+export const DualRingSpinner = ({ color = '#11B787', size = 32, style, className }) => {
+  const mapColor = (c) => {
+    if (!c) return '#11B787';
+    const lower = String(c).toLowerCase();
+    if (lower === 'primary') return '#11B787';
+    if (lower === 'white') return '#ffffff';
+    if (lower === 'black') return '#000000';
+    return c;
+  };
+
+  const resolvedColor = mapColor(color);
+  const strokeWidth = Math.max(2, Math.round(size / 14));
+  const center = size / 2;
+  const outerRadius = (size - strokeWidth) / 2;
+  const innerRadius = outerRadius * 0.52;
+  const outerCircumference = 2 * Math.PI * outerRadius;
+  const innerCircumference = 2 * Math.PI * innerRadius;
+  const outerArc = outerCircumference * 0.26;
+  const innerArc = innerCircumference * 0.34;
+
+  return (
+    <svg
+      className={[styles.dualSpinner, className].filter(Boolean).join(' ')}
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      style={style}
+      role="status"
+      aria-label="loading"
+    >
+      <g className={styles.dualSpinnerOuter}>
+        <circle
+          cx={center}
+          cy={center}
+          r={outerRadius}
+          fill="none"
+          stroke={resolvedColor}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={`${outerArc} ${outerCircumference}`}
+        />
+      </g>
+      <g className={styles.dualSpinnerInner}>
+        <circle
+          cx={center}
+          cy={center}
+          r={innerRadius}
+          fill="none"
+          stroke={resolvedColor}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={`${innerArc} ${innerCircumference}`}
+        />
+      </g>
+    </svg>
+  );
+};
+
 export const GardenLoading = () => {
   const { t } = useTranslation();
   return (

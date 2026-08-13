@@ -3,7 +3,7 @@
  */
 'use client';
 
-import { Popover } from 'antd-mobile';
+import IndicatorInfoTip from './IndicatorInfoTip';
 import styles from './index.module.less';
 import './popover-global.css';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,7 @@ const TooltipContent = ({ t }) => (
   </div>
 );
 
-export default function BTCMarketShare({ percentage = '0%', change = '0%' }) {
+export default function BTCMarketShare({ percentage = '0%', change = '0%', isPC = false }) {
   const { t } = useTranslation();
   // 判断涨跌方向
   const isPositive = change.startsWith('+') || (!change.startsWith('-') && parseFloat(change) > 0);
@@ -30,13 +30,11 @@ export default function BTCMarketShare({ percentage = '0%', change = '0%' }) {
     <div className={styles.indicatorItem}>
       <div className={styles.indicatorHeader}>
         <span className={styles.indicatorTitle}>{t('market.btcMarketShare.title')}</span>
-        <Popover
+        <IndicatorInfoTip
+          isPC={isPC}
+          iconSrc={warnIcon}
           content={<TooltipContent t={t} />}
-          trigger="click"
-          placement="bottom"
-        >
-          <img className={styles.infoIcon} src={warnIcon} alt="info" />
-        </Popover>
+        />
       </div>
       <div className={styles.btcMarketShare}>
         <div className={styles.btcPercentage}>{percentage}</div>

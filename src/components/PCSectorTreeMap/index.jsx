@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import * as d3 from 'd3';
 import { message } from 'antd';
 import { useRouter } from 'next/navigation';
@@ -8,6 +9,10 @@ import { completeTask } from '@/api/user';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import styles from './index.module.less';
+
+const TOOLTIP_WIDTH = 540;
+const TOOLTIP_FALLBACK_HEIGHT = 460;
+const TOOLTIP_EDGE_PAD = 12;
 
 const PCSectorTreeMap = ({ 
   list = [], 
@@ -31,8 +36,10 @@ const PCSectorTreeMap = ({
   const router = useRouter();
   const { t } = useTranslation();
   const containerRef = useRef(null);
+  const tooltipRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [tooltipStyle, setTooltipStyle] = useState(null);
   const [sectorCoins, setSectorCoins] = useState([]);
   const [coinsLoading, setCoinsLoading] = useState(false);
   const [coinSortField, setCoinSortField] = useState('symbol'); // 'symbol' | 'price' | 'change24h'
@@ -416,55 +423,120 @@ const PCSectorTreeMap = ({
     };
   }, [list, dimensions, loading, LEGEND_ITEMS, getColor, showHoverPanel, clearHidePanelTimer, scheduleHidePanel]);
 
-  const getTooltipStyle = (item) => {
-    if (!item) return {};
-    
-    const containerWidth = dimensions.width;
-    const containerHeight = dimensions.height;
-    const TOOLTIP_WIDTH = 540;
-    const TOOLTIP_HEIGHT = 520;
-    
-    // Dynamic offsets based on item size
-    // Ensure the tooltip overlaps the item by a consistent amount, or half the item size if it's small
-    const overlapX = Math.min(30, item.width / 2); 
+  // 按视口空间定位：父级 overflow:hidden 裁切不了 portal + fixed 的面板
+  const updateTooltipPosition = useCallback((item, measuredHeight) => {
+    if (!item || !containerRef.current || typeof window === 'undefined') {
+      setTooltipStyle(null);
+      return;
+    }
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
+    const tooltipH = Math.min(
+      measuredHeight || tooltipRef.current?.offsetHeight || TOOLTIP_FALLBACK_HEIGHT,
+      viewportH - TOOLTIP_EDGE_PAD * 2
+    );
+
+    const overlapX = Math.min(30, item.width / 2);
     const overlapY = Math.min(40, item.height / 2);
-    
-    // Default: Top-Right Stagger (shifted right, slightly overlapping leftwards, and shifted down)
-    // left: Start at right edge of item, move left by overlapX
-    let left = item.x + item.width - overlapX;
-    // top: Start at top edge of item, move down by overlapY
-    let top = item.y + overlapY;
 
-    // Horizontal check
-    if (left + TOOLTIP_WIDTH > containerWidth) {
-      // Not enough space on the right, switch to Left Stagger
-      // left: Start at left edge of item, move left by TOOLTIP_WIDTH, then move right by overlapX
-      left = item.x - TOOLTIP_WIDTH + overlapX;
-      if (left < 0) left = 0;
-    }
+    const itemLeft = containerRect.left + item.x;
+    const itemTop = containerRect.top + item.y;
+    const itemRight = itemLeft + item.width;
 
-    // Vertical check
-    if (top + TOOLTIP_HEIGHT > containerHeight) {
-      // Not enough space at the bottom, switch to Bottom Stagger (align bottom with upward shift)
-      
-      // top: Start at bottom edge of item, move up by TOOLTIP_HEIGHT, then move up by overlapY (so bottom overlaps)
-      top = item.y + item.height - TOOLTIP_HEIGHT - overlapY;
-      
-      // If that pushes it off the top, just clamp to bottom edge of container
-      if (top + TOOLTIP_HEIGHT > containerHeight) {
-          top = containerHeight - TOOLTIP_HEIGHT - overlapY;
+    const preferTop = itemTop + overlapY;
+    const preferLeft = itemRight - overlapX;
+    const spaceBelow = viewportH - preferTop;
+    const fitsBelow = spaceBelow >= tooltipH + TOOLTIP_EDGE_PAD;
+
+    let left;
+    let top;
+
+    if (fitsBelow) {
+      left = preferLeft;
+      top = preferTop;
+      if (left + TOOLTIP_WIDTH > viewportW - TOOLTIP_EDGE_PAD) {
+        left = itemLeft - TOOLTIP_WIDTH + overlapX;
       }
+    } else {
+      // 第一屏常见：视口下方不够 → 贴主内容区右上角（可盖住上方行情区）
+      left = containerRect.right - TOOLTIP_WIDTH - TOOLTIP_EDGE_PAD;
+      top = Math.max(
+        TOOLTIP_EDGE_PAD,
+        Math.min(containerRect.top - 24, viewportH - tooltipH - TOOLTIP_EDGE_PAD)
+      );
     }
-    
-    // Top boundary check
-    if (top < 0) top = overlapY;
 
-    return {
-      left: `${left}px`,
-      top: `${top}px`,
-      '--tooltip-glass-tint': getColor(item.change),
+    left = Math.max(
+      TOOLTIP_EDGE_PAD,
+      Math.min(left, viewportW - TOOLTIP_WIDTH - TOOLTIP_EDGE_PAD)
+    );
+    top = Math.max(
+      TOOLTIP_EDGE_PAD,
+      Math.min(top, viewportH - tooltipH - TOOLTIP_EDGE_PAD)
+    );
+
+    setTooltipStyle((prev) => {
+      const next = {
+        position: 'fixed',
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${TOOLTIP_WIDTH}px`,
+        maxHeight: `${tooltipH}px`,
+        zIndex: 1100,
+        '--tooltip-glass-tint': getColor(item.change),
+      };
+      if (
+        prev &&
+        prev.left === next.left &&
+        prev.top === next.top &&
+        prev.maxHeight === next.maxHeight &&
+        prev['--tooltip-glass-tint'] === next['--tooltip-glass-tint']
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, [getColor]);
+
+  useEffect(() => {
+    if (!showHoverPanel || !hoveredItem) {
+      setTooltipStyle(null);
+      return undefined;
+    }
+
+    updateTooltipPosition(hoveredItem);
+
+    const rerender = () => updateTooltipPosition(hoveredItem);
+    window.addEventListener('resize', rerender);
+    window.addEventListener('scroll', rerender, true);
+
+    let ro;
+    if (typeof ResizeObserver !== 'undefined') {
+      // 等一帧让 portal 面板挂载后再测真实高度
+      const raf = requestAnimationFrame(() => {
+        if (tooltipRef.current) {
+          ro = new ResizeObserver(() => {
+            updateTooltipPosition(hoveredItem, tooltipRef.current?.offsetHeight);
+          });
+          ro.observe(tooltipRef.current);
+          updateTooltipPosition(hoveredItem, tooltipRef.current.offsetHeight);
+        }
+      });
+      return () => {
+        cancelAnimationFrame(raf);
+        ro?.disconnect();
+        window.removeEventListener('resize', rerender);
+        window.removeEventListener('scroll', rerender, true);
+      };
+    }
+
+    return () => {
+      window.removeEventListener('resize', rerender);
+      window.removeEventListener('scroll', rerender, true);
     };
-  };
+  }, [showHoverPanel, hoveredItem, sectorCoins, coinsLoading, updateTooltipPosition]);
 
   const tooltipChange = hoveredItem ? formatChangeDisplay(hoveredItem.changeRaw) : null;
 
@@ -588,11 +660,15 @@ const PCSectorTreeMap = ({
         ref={containerRef}
         style={fillHeight ? undefined : { position: 'relative', width: '100%', height: '600px' }}
         onMouseLeave={(e) => {
-          // 鼠标真正离开整个 treemap（含悬浮面板）时强制关闭，避免面板卡住
-          // relatedTarget 可能是非 Node（如离开窗口），不能直接传给 contains
+          // 面板 portal 到 body 后，移入面板不算离开；延迟关闭避免空隙闪断
           const next = e.relatedTarget;
-          if (next instanceof Node && containerRef.current?.contains(next)) return;
-          hidePanelNow();
+          if (
+            next instanceof Node &&
+            (containerRef.current?.contains(next) || tooltipRef.current?.contains(next))
+          ) {
+            return;
+          }
+          scheduleHidePanel();
         }}
       >
         {loading && (
@@ -653,12 +729,17 @@ const PCSectorTreeMap = ({
             )}
           </div>
         )}
+      </div>
 
-        {/* Tooltip */}
-        {showHoverPanel && hoveredItem && (
-          <div 
+      {showHoverPanel &&
+        hoveredItem &&
+        tooltipStyle &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={tooltipRef}
             className={styles.customTooltip}
-            style={getTooltipStyle(hoveredItem)}
+            style={tooltipStyle}
             onMouseEnter={() => {
               clearHidePanelTimer();
               isTooltipHoveredRef.current = true;
@@ -710,32 +791,32 @@ const PCSectorTreeMap = ({
 
                   return (
                     <>
-                <button
-                  type="button"
-                    className={`${styles.tooltipCoinHeadSort} ${symbolActive ? styles.tooltipCoinHeadSortActive : ''}`}
-                  onClick={() => toggleCoinSort('symbol')}
-                >
-                  <span>{t('sectorDetail.sort.constituent')}</span>
-                    <i className={`${styles.sortArrows} ${symbolActive ? styles.sortArrowsActive : ''} ${symbolOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
-                </button>
-                <button
-                  type="button"
-                    className={`${styles.tooltipCoinHeadSort} ${priceActive ? styles.tooltipCoinHeadSortActive : ''}`}
-                  onClick={() => toggleCoinSort('price')}
-                >
-                  <span>{t('sectorDetail.sort.latestPrice')}</span>
-                    <i className={`${styles.sortArrows} ${priceActive ? styles.sortArrowsActive : ''} ${priceOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
-                </button>
-                <button
-                  type="button"
-                    className={`${styles.tooltipCoinHeadSort} ${changeActive ? styles.tooltipCoinHeadSortActive : ''}`}
-                  onClick={() => toggleCoinSort('change24h')}
-                >
-                  <span>{t('sectorDetail.sort.change24h')}</span>
-                    <i className={`${styles.sortArrows} ${changeActive ? styles.sortArrowsActive : ''} ${changeOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
-                </button>
-                <span>{t('home.columns.addFavorites')}</span>
-                <span>{t('sectorDetail.addMonitor')}</span>
+                      <button
+                        type="button"
+                        className={`${styles.tooltipCoinHeadSort} ${symbolActive ? styles.tooltipCoinHeadSortActive : ''}`}
+                        onClick={() => toggleCoinSort('symbol')}
+                      >
+                        <span>{t('sectorDetail.sort.constituent')}</span>
+                        <i className={`${styles.sortArrows} ${symbolActive ? styles.sortArrowsActive : ''} ${symbolOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.tooltipCoinHeadSort} ${priceActive ? styles.tooltipCoinHeadSortActive : ''}`}
+                        onClick={() => toggleCoinSort('price')}
+                      >
+                        <span>{t('sectorDetail.sort.latestPrice')}</span>
+                        <i className={`${styles.sortArrows} ${priceActive ? styles.sortArrowsActive : ''} ${priceOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.tooltipCoinHeadSort} ${changeActive ? styles.tooltipCoinHeadSortActive : ''}`}
+                        onClick={() => toggleCoinSort('change24h')}
+                      >
+                        <span>{t('sectorDetail.sort.change24h')}</span>
+                        <i className={`${styles.sortArrows} ${changeActive ? styles.sortArrowsActive : ''} ${changeOrder === 'asc' ? styles.sortAsc : styles.sortDesc}`} />
+                      </button>
+                      <span>{t('home.columns.addFavorites')}</span>
+                      <span>{t('sectorDetail.addMonitor')}</span>
                     </>
                   );
                 })()}
@@ -803,9 +884,9 @@ const PCSectorTreeMap = ({
                 </div>
               )}
             </div>
-          </div>
+          </div>,
+          document.body
         )}
-      </div>
     </div>
   );
 };

@@ -61,14 +61,16 @@
 }
 
 .customTooltip {
-  position: absolute;
-  z-index: 1000;
+  position: fixed;
+  z-index: 1100;
   pointer-events: auto;
   --tooltip-glass-tint: #33a56f;
   padding: 0;
   width: 540px;
   border-radius: 20px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.4);
   background: color-mix(in srgb, var(--tooltip-glass-tint) 26%, rgba(255, 255, 255, 0.28));
   backdrop-filter: blur(18px) saturate(140%);
@@ -169,6 +171,11 @@
 
 .tooltipCoinSection {
   padding: 10px 14px 14px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .tooltipCoinHead {
@@ -277,8 +284,11 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1;
+  min-height: 0;
   max-height: 246px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .tooltipCoinRow {

@@ -31,6 +31,37 @@
   }
 }
 
+.dualSpinner {
+  display: inline-block;
+  overflow: visible;
+}
+
+.dualSpinnerOuter,
+.dualSpinnerInner {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.dualSpinnerOuter {
+  animation: dualSpinnerSlow 1.4s linear infinite;
+}
+
+.dualSpinnerInner {
+  animation: dualSpinnerFast 0.65s linear infinite;
+}
+
+@keyframes dualSpinnerSlow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dualSpinnerFast {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
 .gardenLoading {
   display: flex;
   align-items: center;

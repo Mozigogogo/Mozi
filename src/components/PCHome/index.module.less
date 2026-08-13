@@ -135,17 +135,38 @@
   background: #11B787;
 }
 
+/* 行情 + 板块选币统一容器 */
+.homeMainPanel {
+  margin: 0 24px 20px;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.homeMainDivider {
+  height: 1px;
+  margin: 6px 20px 0;
+  background: #eef1f5;
+}
+
+.zoneHeaderDivider {
+  height: 1px;
+  margin: 6px 0 0;
+  background: #eef1f5;
+}
+
 /* 内容分栏布局 */
 .contentSplit {
   display: flex;
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   align-items: stretch;
-  padding: 0 24px;
+  padding: 12px 20px 0;
 }
 
 .leftColumn {
-  width: 55%;
+  width: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -153,23 +174,67 @@
 }
 
 .rightColumn {
-  width: 45%;
-  display: flex;
-  flex-direction: column;
-  min-height: 720px;
-
-  > * {
-    flex: 1;
-    min-height: 720px;
-  }
+  display: none;
 }
 
 /* 合约专区 */
 .derivativeHeader {
   display: flex;
   align-items: center;
+  gap: 16px;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.zoneTabs {
+  display: flex;
+  align-items: center;
   gap: 20px;
-  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.hotTopicsTicker {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-left: 1PX solid #eef1f5;
+  padding-left: 16PX;
+}
+
+.hotTopicsLabel {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hotTopicsIcon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+}
+
+.hotTopicsMarquee {
+  flex: 1;
+  min-width: 0;
+}
+
+.hotTopicsTickerSkeleton {
+  width: 100%;
+  height: 40PX;
+  border-radius: 8PX;
+  background: linear-gradient(90deg, #eef2f6 25%, #f7f9fc 37%, #eef2f6 63%);
+  background-size: 400% 100%;
+  animation: zoneSkel 1.2s ease infinite;
 }
 
 .zoneTab {
@@ -232,15 +297,15 @@
 .zoneBody {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 0;
 }
 
 .derivativeRow {
-  margin-bottom: 0; /* Removed bottom margin as it's handled by gap in leftColumn */
+  margin-bottom: 0;
   display: flex;
   justify-content: space-between;
   align-items: stretch;
-  gap: 16px;
+  gap: 0;
 }
 
 .derivativeCol {
@@ -250,18 +315,21 @@
 }
 
 .derivativeCard {
-  border-radius: 30px !important;
+  border: none !important;
+  border-radius: 0 !important;
   box-shadow: none !important;
   height: 100%;
   width: 100%;
   background: #FFF;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
 
   :global(.ant-card-body) {
     display: flex;
     width: 100%;
     height: 100%;
-    min-height: 88px;
-    padding: 20px 16px;
+    min-height: 72px;
+    padding: 10px 8px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
@@ -269,14 +337,41 @@
     flex-shrink: 0;
     align-self: stretch;
     box-sizing: border-box;
+    transition: background-color 0.2s ease;
+  }
+
+  &:hover {
+    background: #f2fbf8 !important;
+    box-shadow: none !important;
+
+    :global(.ant-card-body) {
+      background: #f2fbf8;
+    }
+
+    .derivativeIcon {
+      transform: scale(1.08);
+    }
+
+    .derivativeTitle {
+      color: #11B787;
+    }
+  }
+
+  &:active {
+    background: #e8f8f3 !important;
+
+    :global(.ant-card-body) {
+      background: #e8f8f3;
+    }
   }
 }
 
 .derivativeContent {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 6px;
   width: auto;
   max-width: 100%;
   min-width: 0;
@@ -284,19 +379,20 @@
 
 .derivativeIconWrap {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .derivativeIcon {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   object-fit: contain;
   object-position: center;
   display: block;
+  transition: transform 0.2s ease;
 }
 
 .derivativeText {
@@ -304,15 +400,19 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
   gap: 0;
+  text-align: center;
 }
 
 .derivativeTitle {
-  font-size: 16px !important;
+  font-size: 14px !important;
   font-weight: 600;
   color: #333;
   white-space: nowrap;
+  text-align: center;
+  transition: color 0.2s ease;
 }
 
 .arbEnLabel {
@@ -323,10 +423,12 @@
 
 @media (max-width: 1600px) {
   .derivativeRow {
-    gap: 12px;
+    gap: 0;
   }
 
   .derivativeCard {
+    border-radius: 0 !important;
+
     :global(.ant-card-body) {
       padding: 16px 18px;
       min-height: 76px;
@@ -347,11 +449,11 @@
 
 @media (max-width: 1366px) {
   .derivativeRow {
-    gap: 10px;
+    gap: 0;
   }
 
   .derivativeCard {
-    border-radius: 22px !important;
+    border-radius: 0 !important;
 
     :global(.ant-card-body) {
       padding: 14px;
@@ -361,7 +463,8 @@
   }
 
   .derivativeContent {
-    gap: 8px;
+    flex-direction: column;
+    gap: 6px;
   }
 
   .derivativeIconWrap,
@@ -377,7 +480,7 @@
 
 @media (max-width: 1200px) {
   .derivativeCard {
-    border-radius: 18px !important;
+    border-radius: 0 !important;
 
     :global(.ant-card-body) {
       padding: 12px 10px;
@@ -403,8 +506,10 @@
 
 /* 涨跌分布区域 - PC端适配 */
 .marketDistributionWrapper {
-  background: transparent; /* 背景透明，让标题在外面 */
+  background: transparent;
   padding: 0;
+  border-radius: 0;
+  overflow: hidden;
 }
 
 /* 话题区域 */
@@ -653,8 +758,8 @@
 
 /* 实时榜单 */
 .sectorSection {
-  margin-bottom: 20px;
-  padding: 0 24px;
+  margin-bottom: 0;
+  padding: 6px 20px 20px;
 }
 
 .sectorHeader {
@@ -698,34 +803,34 @@
 }
 
 .sectorCard {
-  border-radius: 30px;
+  border-radius: 0;
   overflow: hidden;
-  background: #fff;
-  padding: 20px;
+  background: transparent;
+  padding: 0;
 }
 
 .rankSection {
-  margin-bottom: 20px;
-  padding: 0 24px;
+  margin-bottom: 0;
+  padding: 6px 20px 20px;
 }
 
 .rankHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 6px;
 }
 
 .rankTitle {
   font-size: 18px;
   font-weight: 600;
   color: #333;
-  margin: 0px 30px 0px 0px;
+  margin: 0;
 }
 
 .rankTabs {
   width: 100%;
-  margin-bottom: 8px;
+  margin-bottom: 2px;
 
   :global(.ant-tabs-nav) {
     margin-bottom: 0;
@@ -733,50 +838,74 @@
     
     :global(.ant-tabs-nav-list) {
       width: 100%;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: 8px;
     }
 
     &::before {
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: none !important;
     }
   }
 
   :global(.ant-tabs-tab) {
-    padding: 12px 0;
+    padding: 4px 14px !important;
     margin: 0 !important;
     background: transparent;
     border: none;
-    font-size: 16px;
+    border-radius: 6px;
+    font-size: 14px;
     color: #666;
-    flex: 1;
+    flex: none;
     justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
 
     &:hover {
-      color: #11B787;
+      color: #333;
+      background: #f5f6f8;
     }
   }
 
   :global(.ant-tabs-tab-active) {
-    background: transparent;
+    background: #f2f3f5 !important;
     
     :global(.ant-tabs-tab-btn) {
-      color: #11B787 !important;
+      color: #111 !important;
       font-weight: 600;
     }
   }
 
   :global(.ant-tabs-ink-bar) {
-    background: #11B787;
-    height: 3px;
-    border-radius: 3px;
+    display: none;
   }
 }
 
 .rankCard {
-  border-radius: 30px;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent;
 
   :global(.ant-card-body) {
-    padding: 20px;
+    padding: 0;
+  }
+}
+
+.rankEmptyLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 600px;
+  padding: 0;
+}
+
+/* 10 行 + 表头高度，切 tab loading 时避免表格区塌陷抖动 */
+.rankTableLoading {
+  :global(.ant-table) {
+    min-height: 647px;
+  }
+
+  :global(.ant-table-tbody) {
+    min-height: 600px;
   }
 }
 

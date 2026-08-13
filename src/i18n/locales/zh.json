@@ -1797,7 +1797,7 @@
     },
     "arbitrage": {
       "title": "套利专区",
-      "funding": "Funding 套利",
+      "funding": "费率套利",
       "fundingSuffix": "套利",
       "spread": "现货价差",
       "basis": "基差套利",
@@ -2282,7 +2282,7 @@
   "arbitrageRadar": {
     "title": "套利专区",
     "tabs": {
-      "funding": "Funding 套利",
+      "funding": "费率套利",
       "spread": "现货价差",
       "basis": "基差套利",
       "oi": "OI 异动"

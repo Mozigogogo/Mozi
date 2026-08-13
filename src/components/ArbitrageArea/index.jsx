@@ -24,12 +24,7 @@ export default function ArbitrageArea({ inCarousel = false }) {
       {
         key: 'funding',
         icon: fundingArbIcon,
-        text: (
-          <>
-            <span className={styles.enLabel}>Funding</span>{' '}
-            {t('pcHome.arbitrage.fundingSuffix')}
-          </>
-        ),
+        text: t('pcHome.arbitrage.funding'),
         alt: t('pcHome.arbitrage.funding'),
       },
       {

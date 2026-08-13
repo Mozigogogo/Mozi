@@ -1,0 +1,109 @@
+.root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 40PX;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: transparent;
+}
+
+.marqueeViewport {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  white-space: nowrap;
+  animation: hotTopicsMarquee var(--duration, 28s) linear infinite;
+  will-change: transform;
+}
+
+.trackPaused {
+  animation-play-state: paused;
+}
+
+.skeletonWrap {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 22PX;
+  overflow: hidden;
+}
+
+.skeletonItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8PX;
+  flex-shrink: 0;
+}
+
+.group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8PX;
+  margin-right: 22PX;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  max-width: 280PX;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+.rank {
+  flex-shrink: 0;
+  font-size: 13PX;
+  font-weight: 700;
+  color: #11b787;
+  line-height: 1;
+}
+
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #111827;
+  font-size: 14PX;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.hot {
+  flex-shrink: 0;
+  font-size: 13PX;
+  font-weight: 600;
+  color: #f43138;
+  line-height: 1;
+}
+
+@keyframes hotTopicsMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

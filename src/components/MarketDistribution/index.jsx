@@ -8,7 +8,7 @@ import FearGreedIndex from './FearGreedIndex';
 import BTCMarketShare from './BTCMarketShare';
 import styles from './index.module.less';
 
-export default function MarketDistribution({ showUpdateTime = true, isPC = false }) {
+export default function MarketDistribution({ showUpdateTime = true, isPC = false, leftSlot = null }) {
   const { t } = useTranslation();
   const title = t('market.marketDistribution');
   // 恐慌贪婪指数
@@ -201,13 +201,22 @@ export default function MarketDistribution({ showUpdateTime = true, isPC = false
     }
   ], [fearGreedIndex, fearGreedCategory, distributionData.btcMarketShare]);
 
-  // PC端布局：左右分布
+  // PC端布局：左（专区卡片 + 指标）| 右（涨跌分布）
   if (isPC) {
     return (
       <div className={`${styles.marketDistributionWrapper} ${styles.pcMode}`}>
-        {/* PC端左右布局 */}
         <div className={styles.pcContent}>
-          {/* 左侧：涨跌分布柱状图 */}
+          <div className={styles.pcSideLeft}>
+            {leftSlot ? <div className={styles.pcSideLeftTop}>{leftSlot}</div> : null}
+            <div className={styles.pcRight}>
+              {indicators.map(({ key, component: Component, props }) => (
+                <Component key={key} {...props} isPC={true} />
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.pcContentDivider} aria-hidden />
+
           <div className={styles.pcLeft}>
             <div className={styles.pcChartHeader}>
               <div className={styles.pcChartTitle}>{title}</div>
@@ -221,21 +230,21 @@ export default function MarketDistribution({ showUpdateTime = true, isPC = false
               isPC={true}
             />
           </div>
-
-          {/* 右侧：恐惧贪婪指数 + BTC市场占有率 */}
-          <div className={styles.pcRight}>
-            {indicators.map(({ key, component: Component, props }) => (
-              <Component key={key} {...props} isPC={true} />
-            ))}
-          </div>
         </div>
       </div>
     );
   }
 
-  // 移动端布局：上下分布
+  // 移动端布局：指标在上，涨跌分布在下
   return (
     <div className={styles.marketDistributionWrapper}>
+      {/* 底部指标 */}
+      <div className={styles.indicatorsRow}>
+        {indicators.map(({ key, component: Component, props }) => (
+          <Component key={key} {...props} />
+        ))}
+      </div>
+
       {/* 标题区域 - 独立出来 */}
       <div className={styles.distributionHeader}>
         <div className={styles.distributionTitle}>{title}</div>
@@ -252,13 +261,6 @@ export default function MarketDistribution({ showUpdateTime = true, isPC = false
           chartData={distributionData.chartData}
           statistics={distributionData.statistics}
         />
-      </div>
-
-      {/* 底部指标 */}
-      <div className={styles.indicatorsRow}>
-        {indicators.map(({ key, component: Component, props }) => (
-          <Component key={key} {...props} />
-        ))}
       </div>
     </div>
   );
