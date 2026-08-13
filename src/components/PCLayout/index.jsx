@@ -256,22 +256,11 @@ export default function PCLayout({ children }) {
     }
   }, [userInfo]);
   
-  // 公告栏数据
+  // 公告栏数据（全站与社区页一致：24H 快讯）
   const [notices, setNotices] = useState([]);
-  const isCommunityPage = pathname === '/pc/community' || pathname === '/community';
 
   useEffect(() => {
     let cancelled = false;
-
-    // 仅 PC 社区页底部改为 24H 快讯；其他页面保持原公告
-    if (!isCommunityPage) {
-      setNotices([
-        t('pcLayout.notice'),
-        t('pcLayout.notice'),
-        t('pcLayout.notice'),
-      ]);
-      return undefined;
-    }
 
     const loadFlashNewsNotices = async () => {
       try {
@@ -313,7 +302,7 @@ export default function PCLayout({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [t, isCommunityPage]);
+  }, [t]);
 
   // 搜索框状态
   const [searchValue, setSearchValue] = useState('');
@@ -1615,16 +1604,12 @@ export default function PCLayout({ children }) {
             <PCFooterNotice
               notices={notices}
               collapsed={collapsed}
-              speed={isCommunityPage ? Math.max(60, notices.length * 6) : 30}
-              onItemClick={
-                isCommunityPage
-                  ? (item) => {
-                      const postId = String(item?.id ?? '').trim();
-                      if (!postId) return;
-                      router.push(`/pc/community?postId=${encodeURIComponent(postId)}`);
-                    }
-                  : undefined
-              }
+              speed={Math.max(60, notices.length * 6)}
+              onItemClick={(item) => {
+                const postId = String(item?.id ?? '').trim();
+                if (!postId) return;
+                router.push(`/pc/community?postId=${encodeURIComponent(postId)}`);
+              }}
             />
           </div>
         </Content>

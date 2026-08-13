@@ -39,9 +39,34 @@ export default function HotTopicList({
   const getTopicDesc = (topic) => topic?.description || t('community.actions.noDescription');
   const getTopicTime = (topic) => (topic?.createdAt || topic?.createTime || '').replace('T', ' ');
   const getTopicHeat = (topic) => topic?.score || topic?.postCount || 0;
+  // PC 分页 / 首次加载：整表骨架；移动端加载更多：底部 spinner
+  const showPageSkeleton = loading && !pullRefresh && (isPC || topics.length === 0);
+  const showLoadMoreSpinner = loading && !pullRefresh && !isPC && topics.length > 0;
+
+  const skeletonBlock = (
+    <div className={styles.topicListSkeleton} aria-busy="true" aria-label={t('community.actions.loading')}>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className={styles.topicSkeletonItem}>
+          <div className={styles.topicSkeletonRank} />
+          <div className={styles.topicSkeletonInfo}>
+            <div className={styles.topicSkeletonLine} style={{ width: '58%' }} />
+            <div className={styles.topicSkeletonLine} style={{ width: '82%' }} />
+          </div>
+          <div className={styles.topicSkeletonRight}>
+            <div className={styles.topicSkeletonLine} style={{ width: '40PX' }} />
+            <div className={styles.topicSkeletonLine} style={{ width: '72PX' }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   const listContent = (
     <>
-      {topics.length > 0 && topics.map((topic, index) => (
+      {showPageSkeleton
+        ? skeletonBlock
+        : topics.length > 0
+          ? topics.map((topic, index) => (
         <div 
           key={topic.id} 
           className={styles.hotTopicItem} 
@@ -79,29 +104,21 @@ export default function HotTopicList({
             </span>
           </div>
         </div>
-      ))}
+      ))
+          : null}
 
-      {loading && !pullRefresh && (
-        <div 
-          className={styles.loadingMore} 
-          style={topics.length === 0 ? { paddingTop: '60px' } : {}}
-        >
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            gap: '8px' 
-          }}>
+      {showLoadMoreSpinner ? (
+        <div className={styles.loadingMore}>
+          <div className={styles.loadingMoreInner}>
             <SpinLoading color="#00b578" style={{ '--size': '24px' }} />
-            <span style={{ fontSize: '14px', color: '#999' }}>
+            <span className={styles.loadingMoreText}>
               {t('community.actions.loading')}
             </span>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {allLoaded && topics.length > 0 && (
+      {allLoaded && topics.length > 0 && !loading && (
         <div className={styles.listFooter}>
           <span>{t('community.actions.reachedBottom')}</span>
         </div>

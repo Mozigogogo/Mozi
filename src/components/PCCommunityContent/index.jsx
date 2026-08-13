@@ -406,6 +406,9 @@ export default function PCCommunityContent() {
   const fetchHotTopics = async (nextPage = 1, keyword = '') => {
     if (hotTopicsLoading) return;
 
+    const prevPage = hotTopicsPage;
+    // 分页激活态立刻切换，不等接口返回
+    setHotTopicsPage(nextPage);
     setHotTopicsLoading(true);
 
     try {
@@ -434,12 +437,12 @@ export default function PCCommunityContent() {
         : Math.max(0, (Number(response?.data?.totalPages) || 0) * HOT_TOPICS_PAGE_SIZE);
 
       setHotTopics(data);
-      setHotTopicsPage(nextPage);
       setHotTopicsTotal(total);
     } catch (error) {
       console.error('获取热门话题失败:', error);
       setHotTopics([]);
       setHotTopicsTotal(0);
+      setHotTopicsPage(prevPage);
     } finally {
       setHotTopicsLoading(false);
     }
@@ -1255,13 +1258,22 @@ export default function PCCommunityContent() {
 
               <div className={styles.leftContentMain}>
               {coinLoading ? (
-                <div className={styles.loadingContainer}>
-                  <div className={styles.loadingInner}>
-                    <SpinLoading color="#00b578" style={{ '--size': '24PX' }} />
-                    <span className={styles.loadingText}>
-                      {t('community.actions.loading')}
-                    </span>
-                  </div>
+                <div className={styles.postListSkeleton} aria-busy="true" aria-label={t('community.actions.loading')}>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className={styles.postSkeletonItem}>
+                      <div className={styles.postSkeletonAvatar} />
+                      <div className={styles.postSkeletonBody}>
+                        <div className={styles.postSkeletonLine} style={{ width: '36%' }} />
+                        <div className={styles.postSkeletonLine} style={{ width: '92%' }} />
+                        <div className={styles.postSkeletonLine} style={{ width: '78%' }} />
+                        <div className={styles.postSkeletonMeta}>
+                          <div className={styles.postSkeletonLine} style={{ width: '48PX' }} />
+                          <div className={styles.postSkeletonLine} style={{ width: '48PX' }} />
+                          <div className={styles.postSkeletonLine} style={{ width: '64PX' }} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : coinPosts.length > 0 ? (
                 <>

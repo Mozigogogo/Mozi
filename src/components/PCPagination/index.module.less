@@ -72,11 +72,20 @@
 .activePage {
   background: #11B787;
   color: #FFFFFF;
+  opacity: 1;
+  cursor: default;
 }
 
-.activePage:not(.disabled):hover {
-  background: #11B787;
+.activePage.disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.activePage:not(.disabled):hover,
+.activePage.disabled:hover {
+  background: #0ea574;
   color: #FFFFFF;
+  opacity: 1;
 }
 
 .ellipsis {

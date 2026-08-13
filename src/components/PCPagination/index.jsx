@@ -96,7 +96,7 @@ export default function PCPagination({
                 tabIndex={loading || it === currentPage ? -1 : 0}
                 aria-disabled={loading || it === currentPage}
                 className={`${styles.pageBtn} ${it === currentPage ? styles.activePage : ''} ${
-                  loading || it === currentPage ? styles.disabled : ''
+                  loading && it !== currentPage ? styles.disabled : ''
                 }`}
                 onClick={() => {
                   if (!loading && it !== currentPage) onChange?.(it);
