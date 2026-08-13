@@ -68,9 +68,6 @@
   padding: 0;
   width: 540px;
   border-radius: 20px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.4);
   background: color-mix(in srgb, var(--tooltip-glass-tint) 26%, rgba(255, 255, 255, 0.28));
   backdrop-filter: blur(18px) saturate(140%);
@@ -78,6 +75,45 @@
   box-shadow:
     0 14px 34px rgba(15, 25, 38, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.customTooltipNatural {
+  overflow: visible;
+
+  .tooltipCoinSection {
+    flex: none;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .tooltipCoinList {
+    flex: none;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+.customTooltipConstrained {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .tooltipCoinSection {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .tooltipCoinList {
+    flex: 1;
+    min-height: 0;
+    max-height: 246px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
 }
 
 .tooltipContent {
@@ -171,11 +207,6 @@
 
 .tooltipCoinSection {
   padding: 10px 14px 14px;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 }
 
 .tooltipCoinHead {
@@ -284,11 +315,6 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: 1;
-  min-height: 0;
-  max-height: 246px;
-  overflow-x: hidden;
-  overflow-y: auto;
 }
 
 .tooltipCoinRow {

@@ -39,7 +39,7 @@ const PCSectorTreeMap = ({
   const tooltipRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [hoveredItem, setHoveredItem] = useState(null);
-  const [tooltipStyle, setTooltipStyle] = useState(null);
+  const [tooltipPlacement, setTooltipPlacement] = useState(null);
   const [sectorCoins, setSectorCoins] = useState([]);
   const [coinsLoading, setCoinsLoading] = useState(false);
   const [coinSortField, setCoinSortField] = useState('symbol'); // 'symbol' | 'price' | 'change24h'
@@ -50,6 +50,8 @@ const PCSectorTreeMap = ({
   // 用 ref 避免 d3 handler 读到过期的 isTooltipHovered；延迟关闭避免移入面板时被提前清掉
   const isTooltipHoveredRef = useRef(false);
   const hidePanelTimerRef = useRef(null);
+  /** 锁定 natural/constrained，避免测量↔样式↔再测量造成底部抖动 */
+  const placementLockRef = useRef(null);
 
   const clearHidePanelTimer = useCallback(() => {
     if (hidePanelTimerRef.current != null) {
@@ -71,6 +73,7 @@ const PCSectorTreeMap = ({
   const hidePanelNow = useCallback(() => {
     clearHidePanelTimer();
     isTooltipHoveredRef.current = false;
+    placementLockRef.current = null;
     setHoveredItem(null);
   }, [clearHidePanelTimer]);
 
@@ -423,76 +426,121 @@ const PCSectorTreeMap = ({
     };
   }, [list, dimensions, loading, LEGEND_ITEMS, getColor, showHoverPanel, clearHidePanelTimer, scheduleHidePanel]);
 
-  // 按视口空间定位：父级 overflow:hidden 裁切不了 portal + fixed 的面板
-  const updateTooltipPosition = useCallback((item, measuredHeight) => {
+  // 按视口空间定位：模式按「加载完成后的预期高度」一次锁定，避免 loading→数据 时上下跳动
+  const updateTooltipPosition = useCallback((item, contentHeight) => {
     if (!item || !containerRef.current || typeof window === 'undefined') {
-      setTooltipStyle(null);
+      setTooltipPlacement(null);
       return;
     }
 
     const containerRect = containerRef.current.getBoundingClientRect();
     const viewportW = window.innerWidth;
     const viewportH = window.innerHeight;
-    const tooltipH = Math.min(
-      measuredHeight || tooltipRef.current?.offsetHeight || TOOLTIP_FALLBACK_HEIGHT,
-      viewportH - TOOLTIP_EDGE_PAD * 2
+    const lockKey = item.category || item.name;
+
+    const measuredH = Math.ceil(
+      contentHeight ??
+      tooltipRef.current?.scrollHeight ??
+      0
     );
+
+    // 决策高度始终按完整面板估算，不能用 loading 矮高度
+    const expectedH = Math.max(measuredH, TOOLTIP_FALLBACK_HEIGHT);
+    const layoutH = measuredH > 0 ? measuredH : expectedH;
 
     const overlapX = Math.min(30, item.width / 2);
     const overlapY = Math.min(40, item.height / 2);
+    const anchorOverlapY = Math.min(12, item.height / 2);
 
     const itemLeft = containerRect.left + item.x;
     const itemTop = containerRect.top + item.y;
-    const itemRight = itemLeft + item.width;
 
     const preferTop = itemTop + overlapY;
-    const preferLeft = itemRight - overlapX;
-    const spaceBelow = viewportH - preferTop;
-    const fitsBelow = spaceBelow >= tooltipH + TOOLTIP_EDGE_PAD;
+    const spaceBelow = viewportH - preferTop - TOOLTIP_EDGE_PAD;
+
+    let mode;
+    if (placementLockRef.current?.key === lockKey && placementLockRef.current.mode) {
+      mode = placementLockRef.current.mode;
+    } else {
+      mode = expectedH + 16 <= spaceBelow ? 'natural' : 'constrained';
+    }
+
+    placementLockRef.current = {
+      key: lockKey,
+      mode,
+      naturalH: Math.max(placementLockRef.current?.naturalH || 0, expectedH),
+    };
 
     let left;
     let top;
+    let bottom;
+    let maxHeight;
 
-    if (fitsBelow) {
-      left = preferLeft;
+    if (mode === 'natural') {
+      left = itemLeft + item.width - overlapX;
       top = preferTop;
       if (left + TOOLTIP_WIDTH > viewportW - TOOLTIP_EDGE_PAD) {
         left = itemLeft - TOOLTIP_WIDTH + overlapX;
       }
+      if (top + layoutH > viewportH - TOOLTIP_EDGE_PAD) {
+        top = viewportH - TOOLTIP_EDGE_PAD - layoutH;
+      }
     } else {
-      // 第一屏常见：视口下方不够 → 贴主内容区右上角（可盖住上方行情区）
-      left = containerRect.right - TOOLTIP_WIDTH - TOOLTIP_EDGE_PAD;
-      top = Math.max(
-        TOOLTIP_EDGE_PAD,
-        Math.min(containerRect.top - 24, viewportH - tooltipH - TOOLTIP_EDGE_PAD)
-      );
+      // 下方不够：底边锚定在板块上沿，高度随内容，避免预估 460px 造成大空隙
+      const anchorY = itemTop + anchorOverlapY;
+      left = itemLeft + item.width - TOOLTIP_WIDTH + overlapX;
+      if (left < TOOLTIP_EDGE_PAD) {
+        left = itemLeft + item.width - overlapX;
+      }
+      if (left + TOOLTIP_WIDTH > viewportW - TOOLTIP_EDGE_PAD) {
+        left = viewportW - TOOLTIP_WIDTH - TOOLTIP_EDGE_PAD;
+      }
+      bottom = viewportH - anchorY;
+      maxHeight = Math.round(Math.max(160, anchorY - TOOLTIP_EDGE_PAD));
     }
 
-    left = Math.max(
+    left = Math.round(Math.max(
       TOOLTIP_EDGE_PAD,
       Math.min(left, viewportW - TOOLTIP_WIDTH - TOOLTIP_EDGE_PAD)
-    );
-    top = Math.max(
-      TOOLTIP_EDGE_PAD,
-      Math.min(top, viewportH - tooltipH - TOOLTIP_EDGE_PAD)
-    );
+    ));
 
-    setTooltipStyle((prev) => {
-      const next = {
-        position: 'fixed',
-        left: `${left}px`,
-        top: `${top}px`,
-        width: `${TOOLTIP_WIDTH}px`,
-        maxHeight: `${tooltipH}px`,
-        zIndex: 1100,
-        '--tooltip-glass-tint': getColor(item.change),
-      };
+    if (mode === 'natural') {
+      top = Math.round(Math.max(
+        TOOLTIP_EDGE_PAD,
+        Math.min(top, viewportH - TOOLTIP_EDGE_PAD - layoutH)
+      ));
+    } else {
+      bottom = Math.round(Math.max(
+        TOOLTIP_EDGE_PAD,
+        bottom
+      ));
+    }
+
+    const style = {
+      position: 'fixed',
+      left: `${left}px`,
+      width: `${TOOLTIP_WIDTH}px`,
+      zIndex: 1100,
+      '--tooltip-glass-tint': getColor(item.change),
+    };
+
+    if (mode === 'natural') {
+      style.top = `${top}px`;
+    } else {
+      style.bottom = `${bottom}px`;
+      style.maxHeight = `${maxHeight}px`;
+    }
+
+    setTooltipPlacement((prev) => {
+      const next = { mode, style };
       if (
         prev &&
-        prev.left === next.left &&
-        prev.top === next.top &&
-        prev.maxHeight === next.maxHeight &&
-        prev['--tooltip-glass-tint'] === next['--tooltip-glass-tint']
+        prev.mode === next.mode &&
+        prev.style.left === next.style.left &&
+        prev.style.top === next.style.top &&
+        prev.style.bottom === next.style.bottom &&
+        prev.style.maxHeight === next.style.maxHeight &&
+        prev.style['--tooltip-glass-tint'] === next.style['--tooltip-glass-tint']
       ) {
         return prev;
       }
@@ -502,40 +550,43 @@ const PCSectorTreeMap = ({
 
   useEffect(() => {
     if (!showHoverPanel || !hoveredItem) {
-      setTooltipStyle(null);
+      placementLockRef.current = null;
+      setTooltipPlacement(null);
       return undefined;
     }
 
-    updateTooltipPosition(hoveredItem);
+    // 新 hover：先按预期完整高度锁定位置，再等数据补测
+    placementLockRef.current = null;
+    updateTooltipPosition(hoveredItem, TOOLTIP_FALLBACK_HEIGHT);
 
-    const rerender = () => updateTooltipPosition(hoveredItem);
-    window.addEventListener('resize', rerender);
-    window.addEventListener('scroll', rerender, true);
-
-    let ro;
-    if (typeof ResizeObserver !== 'undefined') {
-      // 等一帧让 portal 面板挂载后再测真实高度
-      const raf = requestAnimationFrame(() => {
-        if (tooltipRef.current) {
-          ro = new ResizeObserver(() => {
-            updateTooltipPosition(hoveredItem, tooltipRef.current?.offsetHeight);
-          });
-          ro.observe(tooltipRef.current);
-          updateTooltipPosition(hoveredItem, tooltipRef.current.offsetHeight);
-        }
-      });
-      return () => {
-        cancelAnimationFrame(raf);
-        ro?.disconnect();
-        window.removeEventListener('resize', rerender);
-        window.removeEventListener('scroll', rerender, true);
-      };
-    }
+    let resizeTimer;
+    const onResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        placementLockRef.current = null;
+        updateTooltipPosition(
+          hoveredItem,
+          Math.max(tooltipRef.current?.scrollHeight || 0, TOOLTIP_FALLBACK_HEIGHT)
+        );
+      }, 120);
+    };
+    window.addEventListener('resize', onResize);
 
     return () => {
-      window.removeEventListener('resize', rerender);
-      window.removeEventListener('scroll', rerender, true);
+      clearTimeout(resizeTimer);
+      window.removeEventListener('resize', onResize);
     };
+  }, [showHoverPanel, hoveredItem, updateTooltipPosition]);
+
+  // 币种加载完成后只更新高度相关布局，不改变上下模式
+  useEffect(() => {
+    if (!showHoverPanel || !hoveredItem) return undefined;
+
+    const raf = requestAnimationFrame(() => {
+      const h = tooltipRef.current?.scrollHeight;
+      if (h) updateTooltipPosition(hoveredItem, Math.max(h, TOOLTIP_FALLBACK_HEIGHT));
+    });
+    return () => cancelAnimationFrame(raf);
   }, [showHoverPanel, hoveredItem, sectorCoins, coinsLoading, updateTooltipPosition]);
 
   const tooltipChange = hoveredItem ? formatChangeDisplay(hoveredItem.changeRaw) : null;
@@ -733,13 +784,18 @@ const PCSectorTreeMap = ({
 
       {showHoverPanel &&
         hoveredItem &&
-        tooltipStyle &&
+        tooltipPlacement &&
         typeof document !== 'undefined' &&
         createPortal(
           <div
             ref={tooltipRef}
-            className={styles.customTooltip}
-            style={tooltipStyle}
+            className={[
+              styles.customTooltip,
+              tooltipPlacement.mode === 'natural'
+                ? styles.customTooltipNatural
+                : styles.customTooltipConstrained,
+            ].join(' ')}
+            style={tooltipPlacement.style}
             onMouseEnter={() => {
               clearHidePanelTimer();
               isTooltipHoveredRef.current = true;
