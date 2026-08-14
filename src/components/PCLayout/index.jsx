@@ -1698,8 +1698,7 @@ export default function PCLayout({ children }) {
           router.push(nextRoute);
         }}
         initialData={{
-          name: userInfo?.nickName || userInfo?.nickname || '用户名',
-          account: '账号账号账号号',
+          name: userInfo?.nickName || userInfo?.nickname || '',
           avatar:
             userInfo?.avatar ||
             'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',

@@ -5,10 +5,24 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import RightArrowIcon from '../Icons/RightArrowIcon';
-import { getUserDataInfo, updateUserInfo } from '@/api/user';
+import { getUserDataInfo, updateUserInfo, completeTask } from '@/api/user';
+import { message } from 'antd';
 import styles from './index.module.less';
 
 const CDN_PUBLIC_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
+const DEFAULT_AVATAR = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png';
+
+const FAKE_PROFILE_VALUES = new Set([
+  '用户名',
+  '账号账号账号号',
+  '账号账号账号账号',
+  'carlakorsgaard@gmail.com',
+  '+8234567900',
+  'TronUSDTbinubho',
+  '资金流动大师，金融NO.1',
+  'Master of financial flow, Finance NO.1',
+  'Master of financial flow, Finance NO',
+]);
 
 const TAG_OPTIONS = [
   { id: 'compliance', icon: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/tag1.svg' },
@@ -41,6 +55,21 @@ const pickFirstNonEmptyString = (...vals) => {
     if (s !== '') return s;
   }
   return '';
+};
+
+const sanitizeProfileText = (value, extraFakes = []) => {
+  const text = String(value ?? '').trim();
+  if (!text) return '';
+  if (FAKE_PROFILE_VALUES.has(text) || extraFakes.includes(text)) return '';
+  if (text.startsWith('资金流动大师') || text.startsWith('Master of financial flow')) return '';
+  return text;
+};
+
+const resolveTagId = (raw) => {
+  const text = String(raw ?? '').trim();
+  if (!text) return '';
+  if (TAG_OPTIONS.some((tag) => tag.id === text)) return text;
+  return LEGACY_TAG_TO_ID[text] || '';
 };
 
 /** 是否已绑定 Telegram（PC 账号与 TG 关联），兼容多种后端字段名 */
@@ -132,21 +161,37 @@ const formatPhone = (data, user) => {
   return apc ? `${apc} ${ap}`.trim() : ap;
 };
 
-const mapDatainfoToPopupData = (rawData, fallbackData) => {
+const mapDatainfoToPopupData = (rawData, fallbackData, t) => {
   const data = rawData && typeof rawData === 'object' ? rawData : {};
   const user = data?.userInfo && typeof data.userInfo === 'object' ? data.userInfo : {};
-  const identityRaw = pickFirstNonEmptyString(data?.identityTag, user?.identityTag);
-  const selectedTagId = LEGACY_TAG_TO_ID[identityRaw] || identityRaw || fallbackData.selectedTagId;
+  const fakeBio = t ? [t('user.defaultBio')] : [];
+  const bio = sanitizeProfileText(
+    pickFirstNonEmptyString(data?.introduction, user?.introduction),
+    fakeBio
+  );
+  const name = sanitizeProfileText(
+    pickFirstNonEmptyString(user?.nickName, user?.nickname, data?.nickName, data?.nickname, fallbackData.name)
+  );
 
-  const next = {
+  return {
     ...fallbackData,
-    name: pickFirstNonEmptyString(user?.nickName, user?.nickname, data?.nickName, data?.nickname, fallbackData.name),
-    bio: pickFirstNonEmptyString(data?.introduction, user?.introduction, fallbackData.bio),
-    email: pickFirstNonEmptyString(data?.alertEmail, user?.alertEmail, data?.email, user?.email, fallbackData.email),
-    phone: formatPhone(data, user) || fallbackData.phone,
-    commission: pickFirstNonEmptyString(data?.tronUsdtAddress, user?.tronUsdtAddress, data?.commissionId, user?.commissionId, fallbackData.commission),
-    avatar: pickFirstNonEmptyString(user?.avatar, data?.avatar, fallbackData.avatar),
-    selectedTagId,
+    name,
+    bio,
+    account: bio,
+    email: sanitizeProfileText(
+      pickFirstNonEmptyString(data?.alertEmail, user?.alertEmail, data?.email, user?.email)
+    ),
+    phone: sanitizeProfileText(formatPhone(data, user)),
+    commission: sanitizeProfileText(
+      pickFirstNonEmptyString(
+        data?.tronUsdtAddress,
+        user?.tronUsdtAddress,
+        data?.commissionId,
+        user?.commissionId
+      )
+    ),
+    avatar: pickFirstNonEmptyString(user?.avatar, data?.avatar, fallbackData.avatar) || DEFAULT_AVATAR,
+    selectedTagId: resolveTagId(pickFirstNonEmptyString(data?.identityTag, user?.identityTag)),
     boundTelegram: resolveTelegramBound(data, user),
     boundWallet: !!pickFirstNonEmptyString(user?.walletAddress, data?.walletAddress, user?.address, data?.address),
     userId: resolveCurrentUserId(
@@ -156,28 +201,62 @@ const mapDatainfoToPopupData = (rawData, fallbackData) => {
       fallbackData?.userId
     ),
   };
-  next.account = next.bio || fallbackData.account;
-
-  return next;
 };
 
-const COMMISSION_SAVE_DEBOUNCE_MS = 500;
+const parsePhoneParts = (rawPhone) => {
+  const phoneText = String(rawPhone || '').trim();
+  if (!phoneText) {
+    return { alertPhone: '', alertPhoneCountryCode: '' };
+  }
 
-const syncCommissionToLocalStorage = (value) => {
+  const match = phoneText.match(/^(\+\d{1,4})[\s-]*(\d+)$/);
+  if (match) {
+    return {
+      alertPhoneCountryCode: match[1],
+      alertPhone: match[2],
+    };
+  }
+
+  return {
+    alertPhoneCountryCode: '+86',
+    alertPhone: phoneText.replace(/\s+/g, ''),
+  };
+};
+
+const isValidEmail = (value) => {
+  const email = String(value || '').trim();
+  if (!email) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+const syncProfilePatchToLocalStorage = (patch) => {
   if (typeof window === 'undefined') return;
   try {
     const raw = localStorage.getItem('userDataInfo');
-    if (!raw) return;
-    const parsed = JSON.parse(raw);
-    parsed.tronUsdtAddress = value;
-    if (parsed.userInfo && typeof parsed.userInfo === 'object') {
-      parsed.userInfo.tronUsdtAddress = value;
-    }
-    localStorage.setItem('userDataInfo', JSON.stringify(parsed));
+    const parsed = raw ? JSON.parse(raw) : {};
+    const next = {
+      ...parsed,
+      ...patch,
+      userInfo: {
+        ...(parsed.userInfo || {}),
+        ...(patch.introduction != null ? { introduction: patch.introduction } : {}),
+        ...(patch.identityTag != null ? { identityTag: patch.identityTag } : {}),
+        ...(patch.tronUsdtAddress != null ? { tronUsdtAddress: patch.tronUsdtAddress } : {}),
+        ...(patch.alertEmail != null ? { alertEmail: patch.alertEmail } : {}),
+        ...(patch.alertPhone != null ? { alertPhone: patch.alertPhone } : {}),
+        ...(patch.alertPhoneCountryCode != null
+          ? { alertPhoneCountryCode: patch.alertPhoneCountryCode }
+          : {}),
+      },
+    };
+    localStorage.setItem('userDataInfo', JSON.stringify(next));
   } catch (error) {
-    console.error('[UserProfilePanelPopup] sync commission to localStorage failed:', error);
+    console.error('[UserProfilePanelPopup] sync userDataInfo failed:', error);
   }
 };
+
+const COMMISSION_SAVE_DEBOUNCE_MS = 500;
+const FIELD_SAVE_DEBOUNCE_MS = 600;
 
 export default function UserProfilePanelPopup({
   open,
@@ -191,23 +270,23 @@ export default function UserProfilePanelPopup({
   const router = useRouter();
 
   const data = useMemo(
-    () => ({
-      name: initialData?.name || '用户名',
-      account: initialData?.bio || initialData?.account || t('user.defaultBio'),
-      bio: initialData?.bio || t('user.defaultBio'),
-      email: initialData?.email || 'carlakorsgaard@gmail.com',
-      phone: initialData?.phone || '+8234567900',
-      commission: initialData?.commission || 'TronUSDTbinubho',
-      avatar: initialData?.avatar || 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/avatar.png',
-      boundTelegram: initialData?.boundTelegram ?? false,
-      boundWallet: initialData?.boundWallet ?? false,
-      language: initialData?.language || ((i18n?.language || '').startsWith('en') ? 'English' : '中文（中国）'),
-      selectedTagId:
-        initialData?.selectedTagId ||
-        LEGACY_TAG_TO_ID[initialData?.selectedTag] ||
-        'creator',
-      userId: resolveCurrentUserId(initialData?.userId, initialData?.id),
-    }),
+    () => {
+      const bio = sanitizeProfileText(initialData?.bio || initialData?.account, [t('user.defaultBio')]);
+      return {
+        name: sanitizeProfileText(initialData?.name),
+        account: bio,
+        bio,
+        email: sanitizeProfileText(initialData?.email),
+        phone: sanitizeProfileText(initialData?.phone),
+        commission: sanitizeProfileText(initialData?.commission),
+        avatar: initialData?.avatar || DEFAULT_AVATAR,
+        boundTelegram: initialData?.boundTelegram ?? false,
+        boundWallet: initialData?.boundWallet ?? false,
+        language: initialData?.language || ((i18n?.language || '').startsWith('en') ? 'English' : '中文（中国）'),
+        selectedTagId: resolveTagId(initialData?.selectedTagId || initialData?.selectedTag),
+        userId: resolveCurrentUserId(initialData?.userId, initialData?.id),
+      };
+    },
     [initialData, i18n?.language, t]
   );
 
@@ -220,99 +299,295 @@ export default function UserProfilePanelPopup({
   const [phone, setPhone] = useState(data.phone);
   const [commission, setCommission] = useState(data.commission);
   const [profileData, setProfileData] = useState(data);
-  const selectedTagLabel = t(`editProfile.identity.options.${selectedTagId}`);
+  const [isProfileReady, setIsProfileReady] = useState(false);
+  const selectedTagLabel = selectedTagId
+    ? t(`editProfile.identity.options.${selectedTagId}`)
+    : t('editProfile.identity.placeholder');
   const currentLng = selectedLanguage === 'English' ? 'en' : 'zh';
   const commissionSaveTimerRef = useRef(null);
+  const fieldSaveTimerRef = useRef(null);
+  const isEditingFieldRef = useRef(false);
   const lastSavedCommissionRef = useRef((data.commission || '').trim());
+  const lastSavedBioRef = useRef((data.bio || '').trim());
+  const lastSavedEmailRef = useRef((data.email || '').trim());
+  const lastSavedPhoneRef = useRef((data.phone || '').trim());
+  const lastSavedTagRef = useRef(data.selectedTagId);
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const tRef = useRef(t);
+  tRef.current = t;
+
+  const applyMappedProfile = useCallback((mapped, { resetSaved = true } = {}) => {
+    if (isEditingFieldRef.current) return;
+    setProfileData(mapped);
+    setSelectedTagId(mapped.selectedTagId);
+    setBio(mapped.bio);
+    setEmail(mapped.email);
+    setPhone(mapped.phone);
+    setCommission(mapped.commission);
+    if (resetSaved) {
+      lastSavedCommissionRef.current = (mapped.commission || '').trim();
+      lastSavedBioRef.current = (mapped.bio || '').trim();
+      lastSavedEmailRef.current = (mapped.email || '').trim();
+      lastSavedPhoneRef.current = (mapped.phone || '').trim();
+      lastSavedTagRef.current = mapped.selectedTagId;
+    }
+  }, []);
 
   useEffect(() => {
-    setProfileData(data);
-    setSelectedTagId(data.selectedTagId);
-    setSelectedLanguage(data.language);
-    setBio(data.bio);
-    setEmail(data.email);
-    setPhone(data.phone);
-    setCommission(data.commission);
-    lastSavedCommissionRef.current = (data.commission || '').trim();
-  }, [data]);
-
-  useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
 
     let cancelled = false;
+    isEditingFieldRef.current = false;
+
+    const applySeed = (seed) => {
+      setProfileData(seed);
+      setSelectedTagId(seed.selectedTagId);
+      setSelectedLanguage(seed.language);
+      setBio(seed.bio);
+      setEmail(seed.email);
+      setPhone(seed.phone);
+      setCommission(seed.commission);
+      lastSavedCommissionRef.current = (seed.commission || '').trim();
+      lastSavedBioRef.current = (seed.bio || '').trim();
+      lastSavedEmailRef.current = (seed.email || '').trim();
+      lastSavedPhoneRef.current = (seed.phone || '').trim();
+      lastSavedTagRef.current = seed.selectedTagId;
+    };
+
+    applySeed(dataRef.current);
 
     const hydrateFromLocal = () => {
       try {
         const raw = localStorage.getItem('userDataInfo');
-        if (!raw) return;
+        if (!raw) return false;
         const parsed = JSON.parse(raw);
         const normalized = parsed?.data && typeof parsed.data === 'object' ? parsed.data : parsed;
-        const mapped = mapDatainfoToPopupData(normalized, data);
-        if (cancelled) return;
-        setProfileData(mapped);
-        setSelectedTagId(mapped.selectedTagId);
-        setBio(mapped.bio);
-        setEmail(mapped.email);
-        setPhone(mapped.phone);
-        setCommission(mapped.commission);
-        lastSavedCommissionRef.current = (mapped.commission || '').trim();
+        const mapped = mapDatainfoToPopupData(normalized, dataRef.current, tRef.current);
+        if (cancelled) return false;
+        applyMappedProfile(mapped);
+        return true;
       } catch (error) {
         console.error('[UserProfilePanelPopup] parse local userDataInfo failed:', error);
+        return false;
       }
     };
 
     const fetchDatainfo = async () => {
       try {
         const res = await getUserDataInfo();
-        if (cancelled || !res?.data) return;
-        const mapped = mapDatainfoToPopupData(res.data, data);
-        setProfileData(mapped);
-        setSelectedTagId(mapped.selectedTagId);
-        setBio(mapped.bio);
-        setEmail(mapped.email);
-        setPhone(mapped.phone);
-        setCommission(mapped.commission);
-        lastSavedCommissionRef.current = (mapped.commission || '').trim();
-        localStorage.setItem('userDataInfo', JSON.stringify(res.data));
+        if (cancelled) return;
+        if (res?.data) {
+          const mapped = mapDatainfoToPopupData(res.data, dataRef.current, tRef.current);
+          applyMappedProfile(mapped);
+          localStorage.setItem('userDataInfo', JSON.stringify(res.data));
+        }
       } catch (error) {
         console.error('[UserProfilePanelPopup] fetch user datainfo failed:', error);
+      } finally {
+        if (!cancelled) setIsProfileReady(true);
       }
     };
 
-    hydrateFromLocal();
+    if (hydrateFromLocal()) {
+      setIsProfileReady(true);
+    } else {
+      setIsProfileReady(false);
+    }
     fetchDatainfo();
 
     return () => {
       cancelled = true;
     };
-  }, [open, data]);
+  }, [open, applyMappedProfile]);
 
-  const persistCommission = useCallback(async (value) => {
-    const trimmed = (value || '').trim();
-    if (trimmed === lastSavedCommissionRef.current) return;
+  const persistProfile = useCallback(async (patch, { silent = false } = {}) => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
+      if (!silent) message.warning(t('oneClickAlarm.pleaseLogin'));
+      return false;
+    }
 
-    if (typeof window !== 'undefined' && !localStorage.getItem('token')) return;
+    const nextBio = 'bio' in patch ? String(patch.bio ?? '').trim() : lastSavedBioRef.current;
+    const nextEmail = 'email' in patch ? String(patch.email ?? '').trim() : lastSavedEmailRef.current;
+    const nextPhone = 'phone' in patch ? String(patch.phone ?? '').trim() : lastSavedPhoneRef.current;
+    const nextTagId = 'tagId' in patch ? patch.tagId : lastSavedTagRef.current;
+    const nextCommission = 'commission' in patch
+      ? String(patch.commission ?? '').trim()
+      : lastSavedCommissionRef.current;
+
+    if ('email' in patch && !isValidEmail(nextEmail)) {
+      message.error(t('oneClickAlarm.emailInvalid'));
+      return false;
+    }
+
+    const unchanged =
+      nextBio === lastSavedBioRef.current &&
+      nextEmail === lastSavedEmailRef.current &&
+      nextPhone === lastSavedPhoneRef.current &&
+      nextTagId === lastSavedTagRef.current &&
+      nextCommission === lastSavedCommissionRef.current;
+    if (unchanged) return true;
+
+    const phoneParts = parsePhoneParts(nextPhone);
+    const storedThemeColor = Number(localStorage.getItem('themeColor') || 0);
+    const payload = {
+      nickName: profileData?.name || '',
+      avatar: profileData?.avatar || '',
+      identityTag: nextTagId ? t(`editProfile.identity.options.${nextTagId}`) : '',
+      introduction: nextBio,
+      tronUsdtAddress: nextCommission,
+      language: (i18n?.language || 'zh').startsWith('en') ? 'en' : 'zh',
+      themeColor: Number.isFinite(storedThemeColor) ? storedThemeColor : 0,
+      alertPhone: phoneParts.alertPhone,
+      alertPhoneCountryCode: phoneParts.alertPhone ? phoneParts.alertPhoneCountryCode : '',
+      alertEmail: nextEmail,
+    };
 
     try {
-      await updateUserInfo({ tronUsdtAddress: trimmed });
-      lastSavedCommissionRef.current = trimmed;
-      syncCommissionToLocalStorage(trimmed);
+      const res = await updateUserInfo(payload);
+      const ok =
+        res == null ||
+        res?.code === 200 ||
+        res?.code === 0 ||
+        res?.success === true ||
+        (res && res.code == null && res.success == null);
+
+      if (!ok) {
+        message.error(res?.msg || res?.message || t('editProfile.saveFailed'));
+        return false;
+      }
+
+      lastSavedBioRef.current = nextBio;
+      lastSavedEmailRef.current = nextEmail;
+      lastSavedPhoneRef.current = nextPhone;
+      lastSavedTagRef.current = nextTagId;
+      lastSavedCommissionRef.current = nextCommission;
+      setProfileData((prev) => ({
+        ...prev,
+        bio: nextBio,
+        account: nextBio || prev.account,
+        email: nextEmail,
+        phone: nextPhone,
+        commission: nextCommission,
+        selectedTagId: nextTagId,
+      }));
+
+      syncProfilePatchToLocalStorage(payload);
+      try {
+        await completeTask('COMPLETE_PROFILE');
+      } catch (_) {}
+
+      if (!silent) message.success(t('editProfile.saveSuccess'));
+      return true;
     } catch (error) {
-      console.error('[UserProfilePanelPopup] update commission failed:', error);
+      console.error('[UserProfilePanelPopup] update user info failed:', error);
+      message.error(t('editProfile.saveFailedRetry'));
+      return false;
     }
-  }, []);
+  }, [t, i18n?.language, profileData?.name, profileData?.avatar]);
+
+  const persistCommission = useCallback(
+    (value) => persistProfile({ commission: value }, { silent: true }),
+    [persistProfile]
+  );
+
+  const scheduleFieldSave = useCallback(
+    (patch) => {
+      if (fieldSaveTimerRef.current) {
+        clearTimeout(fieldSaveTimerRef.current);
+      }
+      fieldSaveTimerRef.current = setTimeout(async () => {
+        fieldSaveTimerRef.current = null;
+        const ok = await persistProfile(patch, { silent: true });
+        if (ok) {
+          isEditingFieldRef.current = false;
+        }
+      }, FIELD_SAVE_DEBOUNCE_MS);
+    },
+    [persistProfile]
+  );
+
+  const handleBioChange = useCallback(
+    (e) => {
+      const next = e.target.value;
+      isEditingFieldRef.current = true;
+      setBio(next);
+      scheduleFieldSave({ bio: next });
+    },
+    [scheduleFieldSave]
+  );
+
+  const handleEmailChange = useCallback(
+    (e) => {
+      const next = e.target.value;
+      isEditingFieldRef.current = true;
+      setEmail(next);
+      scheduleFieldSave({ email: next });
+    },
+    [scheduleFieldSave]
+  );
+
+  const handlePhoneChange = useCallback(
+    (e) => {
+      const next = e.target.value;
+      isEditingFieldRef.current = true;
+      setPhone(next);
+      scheduleFieldSave({ phone: next });
+    },
+    [scheduleFieldSave]
+  );
+
+  const flushPendingSaves = useCallback(() => {
+    if (commissionSaveTimerRef.current) {
+      clearTimeout(commissionSaveTimerRef.current);
+      commissionSaveTimerRef.current = null;
+    }
+    if (fieldSaveTimerRef.current) {
+      clearTimeout(fieldSaveTimerRef.current);
+      fieldSaveTimerRef.current = null;
+    }
+    isEditingFieldRef.current = false;
+    persistProfile(
+      {
+        bio,
+        email,
+        phone,
+        tagId: selectedTagId,
+        commission,
+      },
+      { silent: true }
+    );
+  }, [bio, email, phone, selectedTagId, commission, persistProfile]);
+
+  const handleSelectTag = useCallback(
+    (tagId) => {
+      setSelectedTagId(tagId);
+      persistProfile({ tagId });
+    },
+    [persistProfile]
+  );
+
+  const handleClose = useCallback(() => {
+    flushPendingSaves();
+    onClose?.();
+  }, [flushPendingSaves, onClose]);
 
   const handleCommissionChange = useCallback(
     (e) => {
       const next = e.target.value;
+      isEditingFieldRef.current = true;
       setCommission(next);
 
       if (commissionSaveTimerRef.current) {
         clearTimeout(commissionSaveTimerRef.current);
       }
 
-      commissionSaveTimerRef.current = setTimeout(() => {
-        persistCommission(next);
+      commissionSaveTimerRef.current = setTimeout(async () => {
+        commissionSaveTimerRef.current = null;
+        const ok = await persistCommission(next);
+        if (ok) {
+          isEditingFieldRef.current = false;
+        }
       }, COMMISSION_SAVE_DEBOUNCE_MS);
     },
     [persistCommission]
@@ -323,19 +598,22 @@ export default function UserProfilePanelPopup({
       if (commissionSaveTimerRef.current) {
         clearTimeout(commissionSaveTimerRef.current);
       }
+      if (fieldSaveTimerRef.current) {
+        clearTimeout(fieldSaveTimerRef.current);
+      }
     },
     []
   );
 
   const handleSwitchTheme = () => {
-    onClose?.();
+    handleClose();
     router.push('/theme');
   };
 
   const handleViewChannel = () => {
     const userId = resolveCurrentUserId(profileData?.userId);
     if (!userId) return;
-    onClose?.();
+    handleClose();
     router.push(`/user/${encodeURIComponent(userId)}`);
   };
 
@@ -362,14 +640,24 @@ export default function UserProfilePanelPopup({
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className={styles.overlay} onClick={onClose}>
+    <div className={styles.overlay} onClick={handleClose}>
       <div className={styles.floatingPanel} onClick={(e) => e.stopPropagation()}>
       <div className={styles.panel}>
         <div className={styles.headerCard}>
-          <img src={profileData.avatar} alt={profileData.name} className={styles.avatar} />
+          <img src={profileData.avatar || DEFAULT_AVATAR} alt={profileData.name || ''} className={styles.avatar} />
           <div className={styles.headerRight}>
-            <div className={styles.name}>{profileData.name}</div>
-            <div className={styles.account}>{profileData.account}</div>
+            <div className={styles.name}>
+              {profileData.name
+                ? profileData.name
+                : isProfileReady
+                  ? t('user.defaultNickname')
+                  : <span className={styles.skeletonText} style={{ width: '42%' }} />}
+            </div>
+            <div className={`${styles.account} ${isProfileReady && !profileData.account ? styles.placeholderText : ''}`}>
+              {isProfileReady
+                ? (profileData.account || t('editProfile.bio.placeholder'))
+                : <span className={styles.skeletonText} style={{ width: '78%' }} />}
+            </div>
             <button type="button" className={styles.channelBtn} onClick={handleViewChannel}>
               {t('user.profilePanel.viewChannel')}
             </button>
@@ -382,26 +670,36 @@ export default function UserProfilePanelPopup({
               <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/bind_telegram.svg" alt="" />
               <span>{t('user.profilePanel.telegram')}</span>
             </div>
-            <button
-              type="button"
-              className={profileData.boundTelegram ? styles.boundBtn : styles.unboundBtn}
-              onClick={() => onBindBenefitCode?.()}
-            >
-              {profileData.boundTelegram ? t('user.profilePanel.bound') : t('user.profilePanel.bind')}
-            </button>
+            {isProfileReady ? (
+              <button
+                type="button"
+                className={profileData.boundTelegram ? styles.boundBtn : styles.unboundBtn}
+                onClick={() => onBindBenefitCode?.()}
+              >
+                {profileData.boundTelegram ? t('user.profilePanel.bound') : t('user.profilePanel.bind')}
+              </button>
+            ) : (
+              <span className={styles.skeletonBtn} />
+            )}
           </div>
         </div>
 
         <div className={styles.sectionCard}>
           <div
             className={styles.labelRow}
-            onClick={() => setTagExpanded((prev) => !prev)}
+            onClick={() => isProfileReady && setTagExpanded((prev) => !prev)}
           >
             <div className={styles.labelTitle}>
               <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/user_tag_90A1B9.svg" alt="" />
               <div>
                 <div className={styles.labelMain}>{t('editProfile.identity.label')}</div>
-                <div className={styles.labelSub}>{selectedTagLabel}</div>
+                {isProfileReady ? (
+                  <div className={`${styles.labelSub} ${!selectedTagId ? styles.placeholderText : ''}`}>
+                    {selectedTagLabel}
+                  </div>
+                ) : (
+                  <span className={styles.skeletonText} style={{ width: '46%' }} />
+                )}
               </div>
             </div>
             <RightArrowIcon
@@ -417,7 +715,7 @@ export default function UserProfilePanelPopup({
                 <div
                   key={tag.id}
                   className={`${styles.tagItem} ${selectedTagId === tag.id ? styles.tagActive : ''}`}
-                  onClick={() => setSelectedTagId(tag.id)}
+                  onClick={() => handleSelectTag(tag.id)}
                 >
                   <img src={tag.icon} alt="" className={styles.tagIcon} />
                   <div className={styles.tagTextWrap}>
@@ -431,48 +729,100 @@ export default function UserProfilePanelPopup({
 
           <div className={styles.formRow}>
             <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/user_icon.svg" alt="" />
-            <div className={styles.formField}>
+            <div
+              className={styles.formField}
+              onClick={(e) => e.currentTarget.querySelector('input')?.focus()}
+            >
               <div className={styles.formLabel}>{t('editProfile.bio.label')}</div>
-              <input value={bio} onChange={(e) => setBio(e.target.value)} />
+              {isProfileReady ? (
+                <input
+                  type="text"
+                  value={bio}
+                  onChange={handleBioChange}
+                  placeholder={t('editProfile.bio.placeholder')}
+                />
+              ) : (
+                <span className={styles.skeletonText} />
+              )}
             </div>
           </div>
           <div className={styles.formRow}>
             <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/email.svg" alt="" />
-            <div className={styles.formField}>
+            <div
+              className={styles.formField}
+              onClick={(e) => e.currentTarget.querySelector('input')?.focus()}
+            >
               <div className={styles.formLabel}>{t('editProfile.email.label')}</div>
-              <input value={email} onChange={(e) => setEmail(e.target.value)} />
+              {isProfileReady ? (
+                <input
+                  type="email"
+                  value={email}
+                  onChange={handleEmailChange}
+                  placeholder={t('editProfile.email.placeholder')}
+                />
+              ) : (
+                <span className={styles.skeletonText} />
+              )}
             </div>
           </div>
           <div className={styles.formRow}>
             <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/phone.svg" alt="" />
-            <div className={styles.formField}>
+            <div
+              className={styles.formField}
+              onClick={(e) => e.currentTarget.querySelector('input')?.focus()}
+            >
               <div className={styles.formLabel}>{t('editProfile.phone.label')}</div>
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} />
+              {isProfileReady ? (
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={handlePhoneChange}
+                  placeholder={t('editProfile.phone.placeholder')}
+                />
+              ) : (
+                <span className={styles.skeletonText} />
+              )}
             </div>
           </div>
           <div className={styles.formRow}>
             <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/earn.svg" alt="" />
-            <div className={styles.formField}>
+            <div
+              className={styles.formField}
+              onClick={(e) => e.currentTarget.querySelector('input')?.focus()}
+            >
               <div className={styles.formLabel}>{t('editProfile.commission.label')}</div>
-              <input
-                value={commission}
-                onChange={handleCommissionChange}
-                placeholder={t('editProfile.commission.placeholder')}
-              />
+              {isProfileReady ? (
+                <input
+                  value={commission}
+                  onChange={handleCommissionChange}
+                  placeholder={t('editProfile.commission.placeholder')}
+                />
+              ) : (
+                <span className={styles.skeletonText} />
+              )}
             </div>
           </div>
         </div>
 
         <div
           className={styles.logoutBtn}
-          onClick={() => onLogout?.()}
+          onClick={() => {
+            flushPendingSaves();
+            onLogout?.();
+          }}
         >
           <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/logout.svg" alt="" className={styles.logoutIcon} />
           <span>{t('user.profilePanel.logout')}</span>
         </div>
 
         <div className={styles.sectionCard}>
-          <div className={styles.bottomRow} onClick={() => onSave?.()}>
+          <div
+            className={styles.bottomRow}
+            onClick={() => {
+              flushPendingSaves();
+              onSave?.();
+            }}
+          >
             <div className={styles.bottomLeft}>
               <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/vip.svg" alt="" />
               <span>{t('user.profilePanel.subscriptionAndMembership')}</span>

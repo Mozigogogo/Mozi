@@ -1,7 +1,7 @@
 .panel {
-  padding: 10PX;
+  padding: 12PX 10PX 12PX;
   box-sizing: border-box;
-  height: 100%;
+  height: auto;
   max-height: 100%;
   overflow-y: auto;
   background: #fff;
@@ -22,7 +22,7 @@
   right: 100PX;
   width: 328PX;
   max-width: calc(100vw - 24PX);
-  height: 820PX;
+  height: auto;
   max-height: calc(100vh - 84PX);
   border-radius: 16PX;
   box-shadow: 0 8PX 28PX rgba(15, 23, 42, 0.18);
@@ -41,7 +41,7 @@
   display: flex;
   align-items: flex-start;
   gap: 10PX;
-  margin-bottom: 10PX;
+  margin-bottom: 8PX;
 }
 
 .headerRight {
@@ -51,15 +51,15 @@
 }
 
 .avatar {
-  width: 52PX;
-  height: 52PX;
+  width: 48PX;
+  height: 48PX;
   border-radius: 999PX;
   object-fit: cover;
   border: 1PX solid #eceef2;
 }
 
 .name {
-  margin-top: 8PX;
+  margin-top: 6PX;
   color: #1f2937;
   font-size: 16PX;
   font-weight: 600;
@@ -80,7 +80,7 @@
   font-size: 13PX;
   font-weight: 600;
   padding: 0;
-  margin-top: 8PX;
+  margin-top: 6PX;
   cursor: pointer;
   text-align: left;
 
@@ -97,7 +97,7 @@
 .bindRow,
 .formRow,
 .bottomRow {
-  min-height: 54PX;
+  min-height: 48PX;
   border-bottom: 1PX solid #eef2f7;
 }
 
@@ -158,7 +158,7 @@
 }
 
 .labelRow {
-  min-height: 54PX;
+  min-height: 48PX;
   border-bottom: none;
   display: flex;
   align-items: center;
@@ -184,7 +184,7 @@
 }
 
 .labelSub {
-  margin-top: 2PX;
+  margin-top: 4PX;
   color: rgba(49, 65, 88, 1);
   font-size: 15PX;
   line-height: 1.25;
@@ -205,7 +205,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10PX;
-  padding: 12PX 0;
+  padding: 10PX 0;
   background: rgba(248, 250, 252, 1);
   border-radius: 14PX;
 }
@@ -251,6 +251,7 @@
   align-items: center;
   gap: 10PX;
   border-bottom: none;
+  padding: 4PX 0;
 
   img {
     width: 20PX;
@@ -296,7 +297,8 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2PX;
+  gap: 4PX;
+  cursor: text;
 
   input {
     border: none;
@@ -305,8 +307,24 @@
     color: rgba(49, 65, 88, 1);
     font-size: 15PX;
     font-weight: 500;
-    line-height: 1.25;
-    padding: 0;
+    line-height: 1.4;
+    padding: 2PX 0;
+    width: 100%;
+    min-height: 22PX;
+    cursor: text;
+    box-shadow: none;
+
+    &::placeholder {
+      color: #9ca3af;
+      font-weight: 400;
+    }
+
+    &:hover,
+    &:focus {
+      border: none;
+      outline: none;
+      box-shadow: none;
+    }
   }
 }
 
@@ -316,9 +334,44 @@
   line-height: 1.2;
 }
 
+.placeholderText {
+  color: #9ca3af !important;
+  font-weight: 400 !important;
+}
+
+.skeletonText {
+  display: block;
+  height: 14PX;
+  width: 68%;
+  margin-top: 6PX;
+  border-radius: 4PX;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8eef5 37%, #f1f5f9 63%);
+  background-size: 400% 100%;
+  animation: profileSkeleton 1.2s ease infinite;
+}
+
+.skeletonBtn {
+  display: inline-block;
+  height: 30PX;
+  width: 74PX;
+  border-radius: 999PX;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8eef5 37%, #f1f5f9 63%);
+  background-size: 400% 100%;
+  animation: profileSkeleton 1.2s ease infinite;
+}
+
+@keyframes profileSkeleton {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
 .logoutBtn {
   width: 100%;
-  min-height: 42PX;
+  min-height: 40PX;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -329,7 +382,7 @@
   color: #ef4444;
   font-size: 15PX;
   font-weight: 600;
-  margin-bottom: 10PX;
+  margin: 6PX 0;
   cursor: pointer;
 }
 
