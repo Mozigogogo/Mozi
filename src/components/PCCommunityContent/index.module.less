@@ -92,6 +92,11 @@
     box-sizing: border-box;
   }
 
+  .postListLoadMoreSkeleton {
+    flex-shrink: 0;
+    padding-bottom: 8PX;
+  }
+
   .postSkeletonItem {
     display: grid;
     grid-template-columns: 40PX minmax(0, 1fr);
@@ -626,6 +631,10 @@
     .loadingContainer,
     .postListSkeleton {
       background: #1c1f24;
+    }
+
+    .postListLoadMoreSkeleton {
+      background: transparent;
     }
 
     .loadingText,

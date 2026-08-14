@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Empty, message } from 'antd';
-import { SpinLoading } from 'antd-mobile';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { request } from '@/utils/request';
@@ -1188,6 +1187,23 @@ export default function PCCommunityContent() {
     await fetchCoinPosts(selectedCoin, 1, activeCapsuleTab);
   };
 
+  const renderPostSkeletonItems = (count = 5) =>
+    Array.from({ length: count }).map((_, i) => (
+      <div key={i} className={styles.postSkeletonItem}>
+        <div className={styles.postSkeletonAvatar} />
+        <div className={styles.postSkeletonBody}>
+          <div className={styles.postSkeletonLine} style={{ width: '36%' }} />
+          <div className={styles.postSkeletonLine} style={{ width: '92%' }} />
+          <div className={styles.postSkeletonLine} style={{ width: '78%' }} />
+          <div className={styles.postSkeletonMeta}>
+            <div className={styles.postSkeletonLine} style={{ width: '48PX' }} />
+            <div className={styles.postSkeletonLine} style={{ width: '48PX' }} />
+            <div className={styles.postSkeletonLine} style={{ width: '64PX' }} />
+          </div>
+        </div>
+      </div>
+    ));
+
   return (
     <div className={styles.pcCommunityContent}>
       <div className={styles.mainPanel}>
@@ -1259,21 +1275,7 @@ export default function PCCommunityContent() {
               <div className={styles.leftContentMain}>
               {coinLoading ? (
                 <div className={styles.postListSkeleton} aria-busy="true" aria-label={t('community.actions.loading')}>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className={styles.postSkeletonItem}>
-                      <div className={styles.postSkeletonAvatar} />
-                      <div className={styles.postSkeletonBody}>
-                        <div className={styles.postSkeletonLine} style={{ width: '36%' }} />
-                        <div className={styles.postSkeletonLine} style={{ width: '92%' }} />
-                        <div className={styles.postSkeletonLine} style={{ width: '78%' }} />
-                        <div className={styles.postSkeletonMeta}>
-                          <div className={styles.postSkeletonLine} style={{ width: '48PX' }} />
-                          <div className={styles.postSkeletonLine} style={{ width: '48PX' }} />
-                          <div className={styles.postSkeletonLine} style={{ width: '64PX' }} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  {renderPostSkeletonItems(5)}
                 </div>
               ) : coinPosts.length > 0 ? (
                 <>
@@ -1317,9 +1319,12 @@ export default function PCCommunityContent() {
                   ))}
                 </div>
                 {coinPostsLoadingMore ? (
-                  <div className={styles.leftLoadMoreHint}>
-                    <SpinLoading color="#00b578" style={{ '--size': '20PX' }} />
-                    <span>{t('common.loading')}</span>
+                  <div
+                    className={`${styles.postListSkeleton} ${styles.postListLoadMoreSkeleton}`}
+                    aria-busy="true"
+                    aria-label={t('community.actions.loading')}
+                  >
+                    {renderPostSkeletonItems(2)}
                   </div>
                 ) : null}
                 {!coinPostsHasMore && coinPosts.length > 0 && !coinPostsLoadingMore ? (

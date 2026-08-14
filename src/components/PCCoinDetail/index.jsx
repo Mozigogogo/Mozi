@@ -342,7 +342,7 @@ export default function PCCoinDetail({
           {loading && !currentPrice ? (
             <div className={styles.overviewSkeletonPrice}>
               <Skeleton config={{ type: 'element', width: 96, height: 24, borderRadius: 4 }} />
-              <Skeleton config={{ type: 'element', width: 88, height: 12, borderRadius: 4, style: { marginTop: 4 } }} />
+              <Skeleton config={{ type: 'element', width: 88, height: 12, borderRadius: 4 }} />
             </div>
           ) : (
             <div className={styles.priceBlock}>
@@ -363,10 +363,12 @@ export default function PCCoinDetail({
         <div className={styles.topBarMain}>
           {loading && !currentPrice ? (
             <div className={styles.overviewSkeletonStats}>
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className={styles.overviewSkeletonStatCol}>
-                  <Skeleton config={{ type: 'element', width: 48, height: 10, borderRadius: 4 }} />
-                  <Skeleton config={{ type: 'element', width: 64, height: 12, borderRadius: 4, style: { marginTop: 4 } }} />
+              {Array.from({ length: 5 }).map((_, colIndex) => (
+                <div key={colIndex} className={styles.overviewSkeletonStatGroup}>
+                  <div className={styles.overviewSkeletonStatCol}>
+                    <Skeleton config={{ type: 'element', width: 48, height: 10, borderRadius: 4 }} />
+                    <Skeleton config={{ type: 'element', width: 64, height: 12, borderRadius: 4, style: { marginTop: 4 } }} />
+                  </div>
                 </div>
               ))}
             </div>

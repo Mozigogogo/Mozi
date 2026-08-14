@@ -736,6 +736,10 @@
 
 .overviewSkeletonPrice {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4PX;
   padding-right: 12PX;
   border-right: 1PX solid #f0f0f0;
 }
@@ -743,13 +747,22 @@
 .overviewSkeletonStats {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 20PX;
   flex: 1;
   min-width: 0;
 }
 
+.overviewSkeletonStatGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8PX;
+  flex-shrink: 0;
+}
+
 .overviewSkeletonStatCol {
+  display: flex;
+  flex-direction: column;
   flex-shrink: 0;
   min-width: 0;
 }

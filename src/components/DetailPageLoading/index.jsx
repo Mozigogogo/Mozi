@@ -1,5 +1,6 @@
 import { SkeletonPage } from '@/components/Skeleton';
 import { detailPageSkeletonConfig } from '@/components/Skeleton/configs/detailPageConfig';
+import PcDetailBootSkeleton from './PcDetailBootSkeleton';
 import styles from './index.module.less';
 
 /** 币种详情页路由切换 / 首屏加载时的骨架屏 */
@@ -11,10 +12,12 @@ export default function DetailPageLoading({
   /** 二次进入：只留白卡片占位，不闪骨架动画 */
   quiet = false,
 } = {}) {
-  const skeleton = quiet ? null : (
+  const skeleton = quiet ? null : pc ? (
+    <PcDetailBootSkeleton />
+  ) : (
     <SkeletonPage
       config={detailPageSkeletonConfig}
-      className={`${styles.pageSkeleton}${inContent || pc ? ` ${styles.pageSkeletonInContent}` : ''}${pc ? ` ${styles.pageSkeletonPc}` : ''}`}
+      className={`${styles.pageSkeleton}${inContent ? ` ${styles.pageSkeletonInContent}` : ''}`}
     />
   );
 
@@ -22,9 +25,7 @@ export default function DetailPageLoading({
     return (
       <div className={styles.pcBootWrap} aria-busy={!quiet} aria-live="polite">
         <div className={`${styles.pcBootCard}${quiet ? ` ${styles.pcBootCardQuiet}` : ''}`}>
-          {quiet ? null : (
-            <div className={`${styles.shell} ${styles.shellInContent}`}>{skeleton}</div>
-          )}
+          {quiet ? null : skeleton}
         </div>
       </div>
     );

@@ -205,10 +205,27 @@ export default function DetailPage() {
   const renderMarketSkeleton = () => {
     if (isPC) {
       return (
-        <div className={styles.pcMarketBlockSkeleton} aria-hidden>
-          <Skeleton
-            config={{ type: 'element', width: '100%', height: '100%', borderRadius: 8 }}
-          />
+        <div className={styles.pcMarketSkeleton} aria-hidden>
+          <div className={styles.pcMarketSkeletonTitle}>
+            <Skeleton config={{ type: 'circle', size: 8 }} />
+            <Skeleton config={{ type: 'element', width: 56, height: 16, borderRadius: 4 }} />
+          </div>
+          <div className={styles.pcMarketSkeletonHead}>
+            {[72, 56, 56, 64, 64].map((w, i) => (
+              <Skeleton key={i} config={{ type: 'element', width: w, height: 12, borderRadius: 4 }} />
+            ))}
+          </div>
+          {Array.from({ length: 5 }).map((_, row) => (
+            <div key={row} className={styles.pcMarketSkeletonRow}>
+              <div className={styles.pcMarketSkeletonExchange}>
+                <Skeleton config={{ type: 'circle', size: 18 }} />
+                <Skeleton config={{ type: 'element', width: 64, height: 14, borderRadius: 4 }} />
+              </div>
+              {[52, 48, 56, 56].map((w, i) => (
+                <Skeleton key={i} config={{ type: 'element', width: w, height: 14, borderRadius: 4 }} />
+              ))}
+            </div>
+          ))}
         </div>
       );
     }
@@ -229,10 +246,19 @@ export default function DetailPage() {
   const renderRoiSkeleton = () => {
     if (isPC) {
       return (
-        <div className={styles.pcRoiBlockSkeleton} aria-hidden>
-          <Skeleton
-            config={{ type: 'element', width: '100%', height: '100%', borderRadius: 8 }}
-          />
+        <div className={styles.pcRoiSkeleton} aria-hidden>
+          <div className={styles.pcRoiSkeletonTitle}>
+            <Skeleton config={{ type: 'circle', size: 8 }} />
+            <Skeleton config={{ type: 'element', width: 40, height: 16, borderRadius: 4 }} />
+          </div>
+          <div className={styles.pcRoiSkeletonGrid}>
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton
+                key={index}
+                config={{ type: 'element', width: '100%', height: 56, borderRadius: 8 }}
+              />
+            ))}
+          </div>
         </div>
       );
     }

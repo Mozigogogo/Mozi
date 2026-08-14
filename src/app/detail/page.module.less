@@ -1344,6 +1344,53 @@
   }
 }
 
+.pcMarketSkeleton {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 2PX 0 8PX;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.pcMarketSkeletonTitle {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  flex-shrink: 0;
+  padding-bottom: 8PX;
+}
+
+.pcMarketSkeletonHead,
+.pcMarketSkeletonRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6PX;
+}
+
+.pcMarketSkeletonHead {
+  flex-shrink: 0;
+  padding-bottom: 6PX;
+  border-bottom: 1PX solid #eef1f4;
+}
+
+.pcMarketSkeletonRow {
+  padding: 10PX 0;
+  border-bottom: 1PX solid rgba(249, 250, 251, 1);
+}
+
+.pcMarketSkeletonExchange {
+  display: flex;
+  align-items: center;
+  gap: 6PX;
+  flex: 0 0 108PX;
+  min-width: 0;
+}
+
 .pcRoiBlockSkeleton {
   width: 100%;
   min-height: 156PX;
@@ -1356,6 +1403,28 @@
     min-height: 156PX !important;
     display: block !important;
   }
+}
+
+.pcRoiSkeleton {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8PX;
+  padding: 2PX 0 8PX;
+  box-sizing: border-box;
+}
+
+.pcRoiSkeletonTitle {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  flex-shrink: 0;
+}
+
+.pcRoiSkeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8PX;
 }
 
 .sectionSkeleton {
@@ -2512,5 +2581,13 @@
   .box,
   .headerContainer {
     background: #1c1f24;
+  }
+
+  .pcMarketSkeletonHead {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcMarketSkeletonRow {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
   }
 }

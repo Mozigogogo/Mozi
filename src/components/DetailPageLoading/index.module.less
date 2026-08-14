@@ -63,6 +63,296 @@
   padding-top: 16PX;
 }
 
+/* PC 详情首屏骨架：对齐 PCCoinDetail 三栏布局 */
+.pcBootLayout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  --pc-boot-side-width: min(340PX, 34%);
+}
+
+.pcBootTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  padding: 8PX 0;
+  border-bottom: 1PX solid #e5e7eb;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.pcBootTopLead {
+  flex: 0 0 var(--pc-boot-side-width);
+  width: var(--pc-boot-side-width);
+  max-width: 340PX;
+  min-width: 260PX;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10PX;
+  padding: 0 12PX 0 16PX;
+  border-right: 1PX solid #e5e7eb;
+  overflow: hidden;
+}
+
+.pcBootTopLeft {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pcBootTopPrice {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4PX;
+  padding-right: 12PX;
+  border-right: 1PX solid #f0f0f0;
+}
+
+.pcBootTopMain {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12PX;
+  padding: 0 16PX 0 12PX;
+}
+
+.pcBootTopStats {
+  display: flex;
+  align-items: flex-start;
+  gap: 20PX;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pcBootStatGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8PX;
+  flex-shrink: 0;
+}
+
+.pcBootStatItem {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.pcBootTopActions {
+  display: flex;
+  align-items: center;
+  gap: 6PX;
+  flex-shrink: 0;
+}
+
+.pcBootMain {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pcBootRow {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.pcBootSide {
+  flex: 0 0 var(--pc-boot-side-width);
+  width: var(--pc-boot-side-width);
+  max-width: 340PX;
+  min-width: 260PX;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1PX solid #e5e7eb;
+}
+
+.pcBootMarquee {
+  flex: 0 0 48PX;
+  height: 48PX;
+  display: flex;
+  align-items: center;
+  gap: 22PX;
+  padding: 0 12PX;
+  overflow: hidden;
+  border-bottom: 1PX solid #e5e7eb;
+}
+
+.pcBootMarqueeItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8PX;
+  flex-shrink: 0;
+}
+
+.pcBootSideSection {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8PX;
+  padding: 10PX 12PX;
+  overflow: hidden;
+
+  &:not(:last-child) {
+    border-bottom: 1PX solid #e5e7eb;
+  }
+
+  &:last-child {
+    flex: 0 0 auto;
+  }
+}
+
+.pcBootSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  flex-shrink: 0;
+}
+
+.pcBootMarketHead,
+.pcBootMarketRow,
+.pcBootBookHead,
+.pcBootBookRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8PX;
+}
+
+.pcBootMarketHead {
+  flex-shrink: 0;
+  padding-bottom: 6PX;
+}
+
+.pcBootMarketRow {
+  padding: 8PX 0;
+}
+
+.pcBootExchangeCell {
+  display: flex;
+  align-items: center;
+  gap: 6PX;
+  flex: 0 0 108PX;
+  min-width: 0;
+}
+
+.pcBootRoiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8PX;
+}
+
+.pcBootChart {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 4PX 2PX 12PX 12PX;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.pcBootToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12PX;
+  flex-shrink: 0;
+  margin-bottom: 6PX;
+  min-height: 32PX;
+}
+
+.pcBootPeriodPills,
+.pcBootChartTypePills {
+  display: flex;
+  align-items: center;
+  gap: 2PX;
+  padding: 4PX;
+  border-radius: 20PX;
+  background: rgba(244, 244, 245, 1);
+}
+
+.pcBootChartMain {
+  flex: 1 1 auto;
+  min-height: 220PX;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pcBootChartSubs {
+  display: flex;
+  flex-direction: column;
+  gap: 8PX;
+  flex-shrink: 0;
+  margin-top: 8PX;
+}
+
+.pcBootBarrage {
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  flex-shrink: 0;
+  margin-top: 8PX;
+}
+
+.pcBootOrder {
+  flex: 0 0 300PX;
+  width: 300PX;
+  min-width: 240PX;
+  max-width: 460PX;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 1PX solid #e5e7eb;
+}
+
+.pcBootOrderHalf {
+  flex: 1 1 50%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8PX;
+  padding: 10PX 12PX;
+  overflow: hidden;
+
+  &:first-child {
+    border-bottom: 1PX solid #e5e7eb;
+  }
+}
+
+.pcBootCommunityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12PX;
+  padding: 8PX 0;
+}
+
+.pcBootCommunityBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 :global([data-theme='dark']) {
   .shell {
     background-color: #161a1e;
@@ -85,5 +375,42 @@
   .pcBootCard,
   .pcBootCardQuiet {
     background: #1c1f24;
+  }
+
+  .pcBootTopBar {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcBootTopLead {
+    border-right-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcBootTopPrice {
+    border-right-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcBootSide {
+    border-right-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcBootMarquee {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcBootSideSection:not(:last-child) {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcBootOrder {
+    border-left-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcBootOrderHalf:first-child {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcBootPeriodPills,
+  .pcBootChartTypePills {
+    background: rgba(255, 255, 255, 0.08);
   }
 }
