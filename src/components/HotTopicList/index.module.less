@@ -55,7 +55,7 @@
   border-radius: 50%;
   flex-shrink: 0;
   background: #f0f0f0;
-  animation: hotTopicSkeletonPulse 1.5s infinite ease-in-out;
+  animation: hotTopicSkeletonPulse 2.4s ease-in-out infinite;
 }
 
 .topicSkeletonInfo {
@@ -78,7 +78,7 @@
   height: 12PX;
   border-radius: 4PX;
   background: #f0f0f0;
-  animation: hotTopicSkeletonPulse 1.5s infinite ease-in-out;
+  animation: hotTopicSkeletonPulse 2.4s ease-in-out infinite;
 }
 
 @keyframes hotTopicSkeletonPulse {
@@ -419,5 +419,100 @@
     flex-shrink: 0;
     padding: 10PX 16PX 14PX;
     border-top: 1PX solid #F1F5F9;
+  }
+}
+
+:global([data-theme='dark']) {
+  .hotTopics {
+    background: #1c1f24;
+  }
+
+  .topicListSkeleton {
+    background: #1c1f24;
+  }
+
+  .topicSkeletonItem {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .topicSkeletonRank,
+  .topicSkeletonLine {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .loadingMoreText,
+  .listFooter,
+  .emptyContent {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .hotTopicItem {
+    background: #1c1f24;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  .topicRank {
+    color: #34d399;
+    background: rgba(17, 183, 135, 0.16);
+  }
+
+  .topicTitle {
+    color: #f3f4f6;
+  }
+
+  .topicDesc {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .timeText {
+    color: rgba(255, 255, 255, 0.35);
+  }
+
+  .pcMode {
+    background: #1c1f24;
+    box-shadow: none;
+
+    .pcHeaderText {
+      color: #f3f4f6;
+    }
+
+    .hotTopicItem:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .topicRank {
+      color: #34d399;
+      background: rgba(17, 183, 135, 0.16);
+    }
+
+    .topicTitle {
+      color: #f3f4f6;
+    }
+
+    .topicDesc {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .timeText {
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    .pcScrollArea {
+      &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.28);
+        }
+      }
+    }
+
+    .pcPagination {
+      border-top-color: rgba(255, 255, 255, 0.08);
+    }
   }
 }

@@ -12,12 +12,14 @@ import { Interface } from '@/utils/constants';
 import { handleOptions } from '@/utils/chartUtils';
 import { DownOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/context/ThemeProvider';
 import PCSectorTreeMap from '@/components/PCSectorTreeMap';
 import styles from './page.module.less';
 
 const TradeVol = () => {
   const router = useRouter();
   const { t } = useTranslation();
+  const { isDark } = useTheme();
   const [cexArr, setCexArr] = useState([]);
   const [cexSelected, setCexSelected] = useState('');
   const [coinArr, setCoinArr] = useState([]);
@@ -248,6 +250,21 @@ const TradeVol = () => {
       cleanup2 && cleanup2();
     };
   }, [isPC, activeTab]);
+
+  useEffect(() => {
+    if (!chartRef1.current || !chartData.current.his) return;
+    let options = handleOptions(chartData.current.his.data, 'linebar', chartData.current.his.msg);
+    if (isPC) {
+      options.grid = {
+        left: '5%',
+        right: '3%',
+        top: '5%',
+        bottom: '10%',
+        containLabel: true,
+      };
+    }
+    chartRef1.current.setOption(options, true);
+  }, [isDark, isPC]);
 
   // 获取数据
   const getData = async ({ coin = coinSelected, exchange = cexSelected }) => {

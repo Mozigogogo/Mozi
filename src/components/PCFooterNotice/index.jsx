@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTheme } from '@/context/ThemeProvider';
 import styles from './index.module.less';
 
 /**
@@ -21,6 +22,9 @@ export default function PCFooterNotice({
   onItemClick,
 }) {
   const [paused, setPaused] = useState(false);
+  const { isDark } = useTheme();
+  const resolvedBackground = isDark ? '#13241e' : backgroundColor;
+  const resolvedTextColor = isDark ? '#34d399' : textColor;
 
   const items = useMemo(
     () =>
@@ -61,8 +65,8 @@ export default function PCFooterNotice({
         onItemClick ? styles.footerNoticeInteractive : ''
       }`}
       style={{
-        backgroundColor,
-        '--text-color': textColor,
+        backgroundColor: resolvedBackground,
+        '--text-color': resolvedTextColor,
         '--animation-duration': `${speed}s`,
       }}
       onMouseEnter={() => setPaused(true)}

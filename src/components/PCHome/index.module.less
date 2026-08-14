@@ -260,9 +260,9 @@
     display: flex;
     width: 100%;
     height: 100%;
-    min-height: 88px;
-    padding: 20px 16px;
-    flex-direction: row;
+    min-height: 104px;
+    padding: 16px 12px;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 0;
@@ -274,10 +274,11 @@
 
 .derivativeContent {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  width: auto;
+  gap: 8px;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
 }
@@ -302,8 +303,10 @@
 .derivativeText {
   flex: 0 1 auto;
   min-width: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
   gap: 0;
 }
@@ -312,7 +315,9 @@
   font-size: 16px !important;
   font-weight: 600;
   color: #333;
-  white-space: nowrap;
+  text-align: center;
+  line-height: 1.25;
+  white-space: normal;
 }
 
 .arbEnLabel {
@@ -328,8 +333,8 @@
 
   .derivativeCard {
     :global(.ant-card-body) {
-      padding: 16px 18px;
-      min-height: 76px;
+      padding: 14px 12px;
+      min-height: 96px;
       gap: 0;
     }
   }
@@ -354,14 +359,14 @@
     border-radius: 22px !important;
 
     :global(.ant-card-body) {
-      padding: 14px;
-      min-height: 68px;
+      padding: 12px 10px;
+      min-height: 88px;
       gap: 0;
     }
   }
 
   .derivativeContent {
-    gap: 8px;
+    gap: 6px;
   }
 
   .derivativeIconWrap,
@@ -380,10 +385,14 @@
     border-radius: 18px !important;
 
     :global(.ant-card-body) {
-      padding: 12px 10px;
-      min-height: 60px;
+      padding: 10px 8px;
+      min-height: 80px;
       gap: 0;
     }
+  }
+
+  .derivativeContent {
+    gap: 6px;
   }
 
   .derivativeIconWrap,
@@ -985,6 +994,162 @@
             }
           }
         }
+      }
+    }
+  }
+}
+
+:global([data-theme='dark']) {
+  .derivativeCard {
+    background: #1c1f24 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    :global(.ant-card-body) {
+      background: transparent;
+    }
+  }
+
+  .derivativeTitle {
+    color: #f3f4f6;
+  }
+
+  .zoneTab,
+  .arbitrageSectionTitle {
+    color: rgba(255, 255, 255, 0.45);
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.78);
+    }
+  }
+
+  .zoneTabActive,
+  .derivativeSectionTitle {
+    color: #f3f4f6;
+  }
+
+  .sectorCard,
+  .rankCard {
+    background: #1c1f24 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .rankCard :global(.ant-card-body) {
+    background: transparent;
+  }
+
+  .sectorTitle,
+  .rankTitle {
+    color: #f3f4f6;
+  }
+
+  .skeletonItem {
+    background: #1c1f24;
+  }
+
+  .zoneBodySkeleton {
+    background: #1c1f24;
+    background-image: none;
+  }
+
+  .rankTabs {
+    :global(.ant-tabs-nav)::before {
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    :global(.ant-tabs-tab) {
+      color: rgba(255, 255, 255, 0.55);
+
+      &:hover {
+        color: #11b787;
+      }
+    }
+
+    :global(.ant-tabs-tab-active) :global(.ant-tabs-tab-btn) {
+      color: #11b787;
+    }
+  }
+
+  .rankCard {
+    :global(.ant-table) {
+      background: transparent;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    :global(.ant-table-thead > tr > th) {
+      border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+      color: rgba(255, 255, 255, 0.45) !important;
+    }
+
+    :global(.ant-table-tbody > tr > td) {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    :global(.ant-table-tbody > tr:hover > td) {
+      background: rgba(255, 255, 255, 0.04) !important;
+    }
+
+    :global(.ant-pagination-item) {
+      background: #1c1f24;
+      border-color: rgba(255, 255, 255, 0.12);
+
+      a {
+        color: rgba(255, 255, 255, 0.72);
+      }
+    }
+
+    :global(.ant-pagination-item-active) {
+      background: rgba(17, 183, 135, 0.16);
+      border-color: rgba(17, 183, 135, 0.45);
+
+      a {
+        color: #11b787;
+      }
+    }
+
+    :global(.ant-pagination-prev .ant-pagination-item-link),
+    :global(.ant-pagination-next .ant-pagination-item-link) {
+      background: #1c1f24;
+      border-color: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.72);
+    }
+  }
+
+  .headerViewMore {
+    color: rgba(255, 255, 255, 0.78);
+
+    &:hover {
+      color: #11b787;
+    }
+  }
+
+  .coinCell span {
+    color: #f3f4f6;
+  }
+
+  .viewMore {
+    color: rgba(255, 255, 255, 0.55);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .rankTitle {
+    color: #f3f4f6;
+  }
+
+  .rankCard {
+    :global {
+      .ant-table-tbody > tr > td:nth-child(2) {
+        color: #f3f4f6;
+      }
+
+      .ant-tag-success {
+        background: rgba(17, 183, 135, 0.16) !important;
+        color: #34d399 !important;
+      }
+
+      .ant-tag-error {
+        background: rgba(250, 95, 95, 0.16) !important;
+        color: #ff6060 !important;
       }
     }
   }

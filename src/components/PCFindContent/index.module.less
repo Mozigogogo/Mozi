@@ -818,7 +818,7 @@
       rgba(255, 255, 255, 0.28) 90%
     );
     background-size: 220% 100%;
-    animation: rankSkelShimmer 1.25s linear infinite;
+    animation: rankSkelShimmer 2.4s ease-in-out infinite;
     border-radius: 6px;
   }
 
@@ -1131,6 +1131,192 @@
   .rankChangePill.negative {
     background: #FA5F5F;
     color: #fff;
+  }
+}
+
+:global([data-theme='dark']) {
+  .pcFindContent {
+    .mainTabs {
+      :global {
+        .ant-tabs-tab .ant-tabs-tab-btn {
+          color: rgba(255, 255, 255, 0.45);
+        }
+
+        .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+          color: #34d399;
+        }
+      }
+    }
+
+    .marketTableHeader {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .marketTableHeaderSort:hover,
+    .marketTableHeaderSortActive {
+      color: #34d399;
+    }
+
+    .marketTableBody {
+      background: #1c1f24;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .marketTableSkeletonRow {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .marketTable {
+      :global {
+        .ant-table-wrapper,
+        .ant-table,
+        .ant-table-container,
+        .ant-table-content {
+          background: #1c1f24 !important;
+          color: rgba(255, 255, 255, 0.78);
+        }
+
+        .ant-table-tbody > tr > td {
+          background: #1c1f24 !important;
+          border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+          color: rgba(255, 255, 255, 0.78);
+        }
+
+        .ant-table-tbody > tr:hover > td {
+          background: rgba(255, 255, 255, 0.04) !important;
+        }
+      }
+    }
+
+    .marketActionBtn {
+      background: rgba(17, 183, 135, 0.08);
+      border-color: rgba(17, 183, 135, 0.45);
+      color: #34d399;
+
+      &:hover {
+        background: rgba(17, 183, 135, 0.16);
+      }
+    }
+
+    .contentCard {
+      :global {
+        .ant-table-tbody > tr:hover {
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        .ant-table-tbody > tr > td {
+          border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+          color: rgba(255, 255, 255, 0.78);
+        }
+
+        .ant-table-pagination {
+          .ant-pagination-item {
+            background: #161a1e;
+            border-color: rgba(255, 255, 255, 0.12);
+
+            a {
+              color: rgba(255, 255, 255, 0.72);
+            }
+          }
+
+          .ant-pagination-item-active {
+            background: rgba(17, 183, 135, 0.16) !important;
+            border-color: rgba(17, 183, 135, 0.45) !important;
+
+            a {
+              color: #34d399 !important;
+            }
+          }
+
+          .ant-pagination-prev .ant-pagination-item-link,
+          .ant-pagination-next .ant-pagination-item-link {
+            background: #161a1e;
+            border-color: rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.72);
+          }
+        }
+      }
+    }
+
+    .rankPanel {
+      background: #1c1f24;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+    }
+
+    .rankPanelTab {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .rankPanelTabActive {
+      color: #34d399;
+    }
+
+    .rankRangePills {
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .rankIconBtn {
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .rankTable {
+      background: #161a1e;
+    }
+
+    .rankTableHeader {
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(255, 255, 255, 0.45);
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .rankTableRow {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+    }
+
+    .rankCoinSymbol,
+    .rankPrice {
+      color: #f3f4f6;
+    }
+
+    .rankColCenter {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .rankExchangeArea {
+      background: #161a1e;
+    }
+
+    .spinContainer {
+      background: #1c1f24;
+    }
+
+    .listingBlock {
+      background: #1c1f24;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+    }
+
+    .rankTypeSelector .rankTypeItem {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.55);
+
+      &:hover {
+        background: rgba(17, 183, 135, 0.12);
+        color: #34d399;
+      }
+
+      &.active {
+        background: rgba(17, 183, 135, 0.16);
+        color: #34d399;
+      }
+    }
   }
 }
 

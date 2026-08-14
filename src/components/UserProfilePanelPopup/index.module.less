@@ -426,3 +426,104 @@
   }
 }
 
+:global([data-theme='dark']) {
+  .panel,
+  .floatingPanel {
+    background: #161a1e;
+    box-shadow: 0 8PX 28PX rgba(0, 0, 0, 0.45);
+  }
+
+  .avatar {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .name {
+    color: #f3f4f6;
+  }
+
+  .account {
+    color: #9ca3af;
+  }
+
+  .sectionCard {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .bindRow,
+  .formRow,
+  .bottomRow {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .bindLeft {
+    color: rgba(255, 255, 255, 0.78);
+
+    img {
+      filter: brightness(0) invert(0.78);
+    }
+  }
+
+  .boundBtn {
+    background: rgba(17, 183, 135, 0.16);
+    border-color: rgba(17, 183, 135, 0.35);
+    color: #34d399;
+  }
+
+  .unboundBtn {
+    background: transparent;
+    border-color: rgba(17, 183, 135, 0.45);
+    color: #34d399;
+  }
+
+  .labelMain,
+  .formLabel,
+  .placeholderText {
+    color: #9ca3af !important;
+  }
+
+  .labelSub {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .tagGrid {
+    background: #1c1f24;
+  }
+
+  .tagItem {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .formRow img,
+  .labelTitle img,
+  .bottomRow img {
+    filter: brightness(0) invert(0.78);
+  }
+
+  .formField input {
+    color: rgba(255, 255, 255, 0.78);
+
+    &::placeholder {
+      color: #6b7280;
+    }
+  }
+
+  .languageItem {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .languageItemActive {
+    color: #34d399;
+  }
+
+  .bottomRow,
+  .bottomLeft {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .skeletonText,
+  .skeletonBtn {
+    background: linear-gradient(90deg, #1c1f24 25%, #252930 37%, #1c1f24 63%);
+    background-size: 400% 100%;
+  }
+}
+

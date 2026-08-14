@@ -86,6 +86,7 @@
   transform: translateX(-50%);
   display: flex;
   align-items: center;
+  gap: 10PX;
   box-sizing: border-box;
   /* 必须给宽度：仅 max-width 时绝对定位下 shrink-to-fit 会按 min-content 算，灰条会被压得很窄 */
   width: min(712px, calc(100vw - 360px));
@@ -153,6 +154,7 @@
   line-height: 0;
   text-decoration: none;
   color: inherit;
+  flex-shrink: 0;
 }
 
 .aiSearchBadge {
@@ -176,6 +178,37 @@
     width: auto;
     flex-shrink: 0;
   }
+}
+
+.aiSearchBadgePlain {
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  line-height: 1;
+  background: rgba(17, 183, 135, 0.16);
+  border: 2px solid rgba(17, 183, 135, 0.45);
+  color: #34d399;
+}
+
+.aiSearchBadgePlainIcon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
+.aiSearchBadgePlainText {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .searchButton {
@@ -296,6 +329,11 @@
 
   :global(.ant-menu) {
     flex-shrink: 0;
+  }
+
+  :global(.ant-menu-item:not(.ant-menu-item-selected):hover),
+  :global(.ant-menu-item:not(.ant-menu-item-selected):hover .ant-menu-title-content) {
+    color: inherit;
   }
 }
 
@@ -1318,5 +1356,230 @@
 
   .contentWrapper {
     min-height: calc(100vh - 56px);
+  }
+}
+
+:global([data-theme='dark']) {
+  .header {
+    background: #161a1e;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  }
+
+  .logo {
+    color: #f3f4f6;
+  }
+
+  .menuBtn {
+    color: #9ca3af;
+  }
+
+  .searchBox {
+    background-color: #1c1f24;
+  }
+
+  .searchInput {
+    color: #f3f4f6;
+
+    &::placeholder {
+      color: #6b7280;
+    }
+  }
+
+  .searchButton {
+    background: rgba(17, 183, 135, 0.16);
+    border-color: rgba(17, 183, 135, 0.45);
+  }
+
+  .searchText {
+    color: #34d399;
+  }
+
+  .searchIconImg {
+    background-color: #34d399;
+  }
+
+  .walletEntry {
+    background: rgba(17, 183, 135, 0.16);
+    border-color: rgba(17, 183, 135, 0.45);
+    color: #34d399;
+  }
+
+  .headerIconBtn {
+    &:hover {
+      background: rgba(255, 255, 255, 0.08) !important;
+    }
+  }
+
+  .headerIconImg {
+    filter: brightness(0) invert(0.78);
+  }
+
+  .sider {
+    background: #161a1e;
+    border-right-color: rgba(255, 255, 255, 0.08);
+
+    :global(.ant-layout-sider),
+    :global(.ant-layout-sider-children),
+    :global(.ant-menu) {
+      background: #161a1e !important;
+    }
+
+    :global(.ant-menu-item),
+    :global(.ant-menu-submenu-title) {
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    :global(.ant-menu-item:not(.ant-menu-item-selected):hover),
+    :global(.ant-menu-item:not(.ant-menu-item-selected):hover .ant-menu-title-content) {
+      color: rgba(255, 255, 255, 0.72) !important;
+    }
+
+    :global(.ant-menu-item:not(.ant-menu-item-selected)) {
+      :global(.ant-menu-item-icon) img {
+        filter: brightness(0) invert(0.78);
+      }
+    }
+
+    :global(.ant-menu-item-selected),
+    :global(.ant-menu-item-selected .ant-menu-title-content) {
+      color: #34d399 !important;
+    }
+
+    :global(.ant-menu-submenu-selected > .ant-menu-submenu-title),
+    :global(.ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-title-content) {
+      color: #34d399 !important;
+    }
+  }
+
+  .pcWatchlistHeader:not(.pcWatchlistHeaderSelected) {
+    .pcWatchlistHeaderIconSvg img {
+      filter: brightness(0) invert(0.78);
+    }
+  }
+
+  .siderFooter {
+    background: #161a1e;
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .socialIcon {
+    background: rgba(255, 255, 255, 0.08);
+
+    &:hover {
+      background: rgba(17, 183, 135, 0.16);
+    }
+  }
+
+  .footerCopyright {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .footerLinks a {
+    color: #9ca3af;
+  }
+
+  .userName {
+    color: #f3f4f6;
+  }
+
+  .mineGroupTitle {
+    border-top-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .pcWatchlistHeader {
+    color: rgba(255, 255, 255, 0.78);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .pcWatchlistTitle {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .pcWatchlistHeaderSelected,
+  .pcWatchlistTitleSelected {
+    color: #34d399;
+
+    .pcWatchlistTitle {
+      color: #34d399;
+
+      &.pcWatchlistTitleExpanded {
+        color: #34d399;
+      }
+    }
+  }
+
+  .pcWatchlistChevron {
+    background-color: rgba(255, 255, 255, 0.55);
+  }
+
+  .pcWatchlistChevronSelected {
+    background-color: #34d399;
+  }
+
+  .pcWatchlistChevronExpanded.pcWatchlistChevronSelected {
+    background-color: #34d399;
+  }
+
+  .pcWatchlistHint {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .pcWatchlistSymbol,
+  .pcWatchlistPrice {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .pcWatchlistName {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .pcAiChatRow {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .pcAiChatRowLabel {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .pcAiChatRowActive {
+    background: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.08);
+
+    &:hover {
+      background: #1c1f24;
+    }
+
+    .pcAiChatRowLabel {
+      color: #34d399;
+    }
+  }
+
+  .content {
+    background: #161a1e;
+
+    &.homeContent {
+      background: #161a1e !important;
+      background-image: none !important;
+      background-attachment: scroll !important;
+    }
+  }
+
+  .contentWrapper,
+  .contentMain {
+    background: transparent;
+  }
+
+  .layout {
+    :global(.ant-layout) {
+      background: #161a1e;
+    }
+  }
+
+  .footer {
+    background: #161a1e;
   }
 }

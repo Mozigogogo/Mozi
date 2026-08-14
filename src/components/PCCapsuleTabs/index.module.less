@@ -31,3 +31,22 @@
   box-shadow: none;
   border-radius: 17px;
 }
+
+:global([data-theme='dark']) {
+  .wrapper {
+    background: #1c1f24;
+  }
+
+  .tabBtn {
+    color: rgba(255, 255, 255, 0.55);
+
+    &:hover:not(.active) {
+      color: rgba(255, 255, 255, 0.78);
+    }
+  }
+
+  .active {
+    color: #fff;
+    background: #11b787;
+  }
+}

@@ -329,3 +329,110 @@ body.daily-page {
   margin-right: 8px !important;
 }
 
+/* RainbowKit 钱包弹窗：与 PC 暗色面板 (#161a1e) 对齐 */
+:root[data-theme='dark'] [data-rk] {
+  --rk-colors-modalBackground: #161a1e;
+  --rk-colors-modalBorder: rgba(255, 255, 255, 0.08);
+  --rk-colors-menuItemBackground: #1c1f24;
+  --rk-colors-closeButtonBackground: rgba(255, 255, 255, 0.08);
+  --rk-colors-actionButtonSecondaryBackground: #1c1f24;
+  --rk-colors-downloadBottomCardBackground: #1c1f24;
+  --rk-colors-downloadTopCardBackground: #161a1e;
+  --rk-colors-generalBorder: rgba(255, 255, 255, 0.08);
+  --rk-colors-generalBorderDim: rgba(255, 255, 255, 0.04);
+  --rk-colors-modalText: #f3f4f6;
+  --rk-colors-modalTextSecondary: #9ca3af;
+  --rk-colors-modalTextDim: #6b7280;
+  --rk-colors-accentColor: #11b787;
+}
+
+/* Ant Design Select：暗色主题（下拉挂载在 body portal） */
+:root[data-theme='dark'] .ant-select {
+  --ant-select-background-color: #161a1e;
+  --ant-select-border-color: rgba(255, 255, 255, 0.12);
+  --ant-select-hover-border-color: rgba(17, 183, 135, 0.45);
+  --ant-select-active-border-color: #11b787;
+  --ant-select-active-outline-color: rgba(17, 183, 135, 0.2);
+  --ant-select-color: #f3f4f6;
+}
+
+:root[data-theme='dark'] .ant-select:not(.ant-select-disabled):hover,
+:root[data-theme='dark'] .ant-select:not(.ant-select-disabled).ant-select-focused,
+:root[data-theme='dark'] .ant-select:not(.ant-select-disabled).ant-select-open {
+  --ant-select-background-color: #1c1f24 !important;
+  --ant-select-border-color: rgba(17, 183, 135, 0.45) !important;
+  --ant-select-color: #f3f4f6 !important;
+  background: #1c1f24 !important;
+  color: #f3f4f6 !important;
+}
+
+:root[data-theme='dark'] .ant-select:not(.ant-select-disabled).ant-select-focused {
+  --ant-select-border-color: #11b787 !important;
+  --ant-select-active-outline-color: rgba(17, 183, 135, 0.2) !important;
+}
+
+:root[data-theme='dark'] .ant-select:not(.ant-select-disabled):hover .ant-select-content,
+:root[data-theme='dark'] .ant-select:not(.ant-select-disabled):hover .ant-select-content-value,
+:root[data-theme='dark'] .ant-select:not(.ant-select-disabled).ant-select-open .ant-select-content-value {
+  color: #f3f4f6 !important;
+}
+
+:root[data-theme='dark'] .ant-select .ant-select-suffix,
+:root[data-theme='dark'] .ant-select .ant-select-arrow {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+:root[data-theme='dark'] .ant-select .ant-select-selector {
+  background: #161a1e !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f3f4f6 !important;
+}
+
+:root[data-theme='dark'] .ant-select:not(.ant-select-disabled):hover .ant-select-selector,
+:root[data-theme='dark'] .ant-select:not(.ant-select-disabled).ant-select-focused .ant-select-selector {
+  background: #1c1f24 !important;
+  border-color: rgba(17, 183, 135, 0.45) !important;
+  color: #f3f4f6 !important;
+}
+
+:root[data-theme='dark'] .ant-select:not(.ant-select-disabled).ant-select-focused .ant-select-selector {
+  border-color: #11b787 !important;
+}
+
+:root[data-theme='dark'] .ant-select .ant-select-selection-item {
+  color: #f3f4f6 !important;
+}
+
+:root[data-theme='dark'] .ant-select-dropdown {
+  --ant-color-bg-elevated: #1c1f24;
+  --ant-select-option-active-bg: rgba(255, 255, 255, 0.06);
+  --ant-select-option-selected-bg: rgba(17, 183, 135, 0.16);
+  --ant-select-option-selected-color: #34d399;
+  background: #1c1f24 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme='dark'] .ant-select-dropdown .ant-select-item {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+:root[data-theme='dark'] .ant-select-dropdown .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+:root[data-theme='dark'] .ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: rgba(17, 183, 135, 0.16) !important;
+  color: #34d399 !important;
+  font-weight: 600;
+}
+
+:root[data-theme='dark'] .ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) .ant-select-item-option-state {
+  color: #34d399;
+}
+
+:root[data-theme='dark'] .ant-select-dropdown .ant-select-item-group,
+:root[data-theme='dark'] .ant-select-dropdown .ant-select-item-empty {
+  color: rgba(255, 255, 255, 0.45);
+}
+

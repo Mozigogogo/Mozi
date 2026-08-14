@@ -18,7 +18,7 @@
   );
   background-repeat: no-repeat;
   background-size: 800px 100%;
-  animation: shimmer 1.2s linear infinite;
+  animation: shimmer 2.4s ease-in-out infinite;
   border-radius: 4px;
   display: inline-block;
   line-height: 1;
@@ -39,3 +39,20 @@
   margin: 0;
 }
 
+:global([data-theme='dark']) {
+  .skeleton,
+  .skeletonCircle {
+    background: rgba(255, 255, 255, 0.08);
+    background-image: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.14) 20%,
+      rgba(255, 255, 255, 0.06) 40%,
+      rgba(255, 255, 255, 0.06) 100%
+    );
+  }
+
+  .skeletonPage {
+    background-color: #161a1e;
+  }
+}

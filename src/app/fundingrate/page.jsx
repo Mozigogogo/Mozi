@@ -10,6 +10,7 @@ import { Interface } from '../../utils/constants';
 import Layout from '../../components/Layout';
 import NavBar from '../../components/NavBar';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/context/ThemeProvider';
 import { Loading } from '../../components/Loading';
 import { handleOptions } from '../../utils/chartUtils';
 import styles from './page.module.less';
@@ -39,6 +40,7 @@ function formatRightAxisToWan(value, slot, unitWan = '万') {
 export default function FundingRate() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { isDark } = useTheme();
   const [activeKey, setActiveKey] = useState('currentRatio');
   const [isPC, setIsPC] = useState(false);
   const [coinList, setCoinList] = useState([]);
@@ -220,6 +222,15 @@ export default function FundingRate() {
       }, 50);
     }
   }, [showChart]);
+
+  useEffect(() => {
+    if (chartDataRef.current && chartInstance.current) {
+      chartInstance.current.setOption(
+        buildHistoryChartOptions(chartDataRef.current.data),
+        true
+      );
+    }
+  }, [isDark]);
 
   // 初始化图表（PC 历史 Tab 挂载 / 移动端图表显示时）
   useEffect(() => {

@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import Layout from "@/components/Layout";
 import NavBar from "@/components/NavBar";
-import { request } from "@/utils/request";
-import { Interface } from "@/utils/constants";
 import { safeBack } from "@/utils/navigation";
-import { navigateToOrReload } from "@/utils/clientNavigation";
+import { applyAppTheme } from "@/context/ThemeProvider";
 import styles from "./page.module.less";
+
+/** 设为 true 时只展示白名单主题；改回 false 可恢复全部主题 */
+const SHOW_LIMITED_THEMES_ONLY = true;
+const VISIBLE_THEME_IDS = ["default", "black"];
 
 const THEMES = [
   { id: "default", nameKey: "theme.themes.default.name", descKey: "theme.themes.default.description", primaryColor: "#11B787", bgColor: "#EEF0F3", themeColor: 1 },
@@ -23,10 +25,25 @@ const THEMES = [
   { id: "yellow", nameKey: "theme.themes.yellow.name", descKey: "theme.themes.yellow.description", primaryColor: "#E5C100", bgColor: "#FFFFF0", themeColor: 8 },
 ];
 
+const DISPLAY_THEMES = SHOW_LIMITED_THEMES_ONLY
+  ? THEMES.filter((theme) => VISIBLE_THEME_IDS.includes(theme.id))
+  : THEMES;
+
 export default function ThemeCenterPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [currentTheme, setCurrentTheme] = useState("default");
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    if (typeof window === "undefined") return "default";
+    try {
+      const saved = localStorage.getItem("app_theme");
+      if (SHOW_LIMITED_THEMES_ONLY && saved && !VISIBLE_THEME_IDS.includes(saved)) {
+        return "default";
+      }
+      return saved || "default";
+    } catch {
+      return "default";
+    }
+  });
   const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
@@ -41,59 +58,30 @@ export default function ThemeCenterPage() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("app_theme");
-      if (saved) setCurrentTheme(saved);
+      if (!saved) return;
+      if (SHOW_LIMITED_THEMES_ONLY && !VISIBLE_THEME_IDS.includes(saved)) {
+        setCurrentTheme("default");
+        return;
+      }
+      setCurrentTheme(saved);
     } catch {}
   }, []);
 
-  const handleSelectTheme = async (themeId) => {
+  const handleSelectTheme = (themeId) => {
     const theme = THEMES.find((item) => item.id === themeId);
-    if (!theme) return;
+    if (!theme || themeId === currentTheme) return;
 
+    setCurrentTheme(themeId);
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        Toast.show({ content: t("auth.notLoggedIn") || t("user.pleaseLogin"), position: "bottom" });
-        return;
-      }
+      localStorage.setItem("themeColor", String(theme.themeColor));
+    } catch {}
+    applyAppTheme(themeId);
 
-      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
-
-      Toast.show({ icon: "loading", content: t("theme.switching"), duration: 0 });
-
-      const storedUserId = (userInfo && userInfo.userId) || localStorage.getItem("userId");
-
-      const res = await request({
-        url: Interface.EDIT_USER_THEME,
-        method: "POST",
-        data: { userId: storedUserId, themeColor: theme.themeColor },
-      });
-
-      Toast.clear();
-
-      if (res && (res.code === 0 || res.success)) {
-        setCurrentTheme(themeId);
-        try {
-          localStorage.setItem("app_theme", themeId);
-        } catch {}
-        Toast.show({ content: t("theme.switchSuccess"), icon: "success", position: "bottom" });
-        setTimeout(() => {
-          if (isDesktop) {
-            safeBack(router, { fallback: "/home" });
-          } else {
-            navigateToOrReload("/user");
-          }
-        }, 1200);
-      } else {
-        Toast.show({ content: res?.errorMsg || t("theme.switchFailed"), icon: "fail", position: "bottom" });
-      }
-    } catch {
-      Toast.clear();
-      Toast.show({ content: t("theme.switchFailedRetry"), icon: "fail", position: "bottom" });
-    }
+    Toast.show({ content: t("theme.switchSuccess"), icon: "success", position: "bottom" });
   };
 
   const pageContent = (
-    <div className={`${styles.page} ${isDesktop ? styles.pageDesktop : ""}`}>
+    <div className={`${styles.page} ${isDesktop ? styles.pageDesktop : ""} ${currentTheme === "black" ? styles.pageDark : ""}`}>
       {!isDesktop ? <NavBar title={t("user.skinCenter")} showBorder={false} /> : null}
 
       <div className={styles.content}>
@@ -122,7 +110,7 @@ export default function ThemeCenterPage() {
           <div className={styles.header}>{t("theme.selectTheme")}</div>
 
           <div className={styles.themeGrid}>
-            {THEMES.map((theme) => (
+            {DISPLAY_THEMES.map((theme) => (
               <div
                 key={theme.id}
                 className={`${styles.themeCard} ${currentTheme === theme.id ? styles.active : ""}`}

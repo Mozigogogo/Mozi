@@ -1048,3 +1048,88 @@
     max-height: 108PX;
   }
 }
+
+:global([data-theme='dark']) {
+  .container {
+    background: #1c1f24;
+  }
+
+  .title {
+    color: #f3f4f6;
+  }
+
+  .countdownLabel,
+  .countdownText {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .dropdownText {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .dropdownArrow {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .dropdownMenu {
+    background: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4PX 16PX rgba(0, 0, 0, 0.35);
+  }
+
+  .dropdownOption {
+    color: rgba(255, 255, 255, 0.78);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+  }
+
+  .dropdownOptionActive {
+    background: rgba(17, 183, 135, 0.12);
+    color: #34d399;
+  }
+
+  .legendText {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .bookHead {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .colAmount {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .exchangeIcon {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .exchangeIconPlaceholder {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .midRow {
+    border-top-color: rgba(255, 255, 255, 0.08);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .midSub {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .empty {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .maskOverlay {
+    background: rgba(22, 26, 30, 0.92);
+  }
+
+  @media (min-width: 1024px) {
+    .maskCard {
+      background-color: #1c1f24;
+    }
+  }
+}

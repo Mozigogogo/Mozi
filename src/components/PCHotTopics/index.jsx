@@ -4,11 +4,13 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import * as homeApi from '@/api/home';
 import { RightArrowBoldIcon, UpArrowIcon } from '@/components/Icons';
+import { useTheme } from '@/context/ThemeProvider';
 import styles from './index.module.less';
 
 const PCHotTopics = () => {
   const router = useRouter();
   const { t, i18n } = useTranslation();
+  const { isDark } = useTheme();
   const isZh = (i18n.language || '').startsWith('zh');
   const listRef = useRef(null);
   const isFetchingRef = useRef(false);
@@ -139,22 +141,29 @@ const PCHotTopics = () => {
     }
   };
 
+  const renderTitle = () => {
+    if (isZh) {
+      return (
+        <span className={styles.titleText}>
+          <span className={styles.titleHot}>热</span>
+          <span className={styles.titleChat}>聊</span>
+          <span className={styles.titleSuffix}>话题</span>
+        </span>
+      );
+    }
+    return (
+      <span className={styles.titleText}>
+        {t('pcHome.hotTopics.title')}
+      </span>
+    );
+  };
+
   if (loading && page === 1) {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
           <div className={styles.title}>
-            {isZh ? (
-              <span className={styles.titleText}>
-                <span style={{ color: '#F43138' }}>热</span>
-                <span style={{ color: '#FF7E09' }}>聊</span>
-                <span style={{ color: '#000' }}>话题</span>
-              </span>
-            ) : (
-              <span className={styles.titleText} style={{ color: '#000' }}>
-                {t('pcHome.hotTopics.title')}
-              </span>
-            )}
+            {renderTitle()}
           </div>
         </div>
         <div className={styles.skeleton}>
@@ -170,20 +179,15 @@ const PCHotTopics = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.title}>
-          {isZh ? (
-            <span className={styles.titleText}>
-              <span style={{ color: '#F43138' }}>热</span>
-              <span style={{ color: '#FF7E09' }}>聊</span>
-              <span style={{ color: '#000' }}>话题</span>
-            </span>
-          ) : (
-            <span className={styles.titleText} style={{ color: '#000' }}>
-              {t('pcHome.hotTopics.title')}
-            </span>
-          )}
+          {renderTitle()}
         </div>
         <div className={styles.moreBtn} onClick={handleMoreClick}>
-          <RightArrowBoldIcon width={10} height={17} color="#09244B" style={{ display: 'block' }} />
+          <RightArrowBoldIcon
+            width={10}
+            height={17}
+            color={isDark ? 'rgba(255, 255, 255, 0.55)' : '#09244B'}
+            style={{ display: 'block' }}
+          />
         </div>
       </div>
 

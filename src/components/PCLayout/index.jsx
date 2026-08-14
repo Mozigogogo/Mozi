@@ -27,6 +27,7 @@ import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useDisconnect } from 'wagmi';
 import { PcShellContext } from '../PcShellContext';
+import { useTheme } from '@/context/ThemeProvider';
 import PCSearchResults from '../PCSearchResults';
 import PCFindContent from '../PCFindContent';
 import PCCommunityContent from '../PCCommunityContent';
@@ -230,6 +231,7 @@ export default function PCLayout({ children }) {
   const searchParams = useSearchParams();
   const { formatValue, formatPrice, formatSmallDecimal } = useFormatNumber();
   const { t, i18n } = useTranslation();
+  const { isDark } = useTheme();
   const { isConnected: web3Connected } = useAccount();
   const { disconnect } = useDisconnect();
   const noFavoritesText = t('discover.noFavorites', {
@@ -944,10 +946,10 @@ export default function PCLayout({ children }) {
 
   const aiHeaderIconColor = useMemo(() => {
     if (!isAiRoute) {
-      return '#333333';
+      return isDark ? 'rgba(255, 255, 255, 0.78)' : '#333333';
     }
     return isAiChatExpanded ? '#00ac72' : '#11b787';
-  }, [isAiRoute, isAiChatExpanded]);
+  }, [isAiRoute, isAiChatExpanded, isDark]);
 
   const getSelectedKey = () => {
     if (activeContent) {
@@ -1107,14 +1109,16 @@ export default function PCLayout({ children }) {
             }}
           </ConnectButton.Custom>
           <Button 
-            type="text" 
+            type="text"
+            className={styles.headerIconBtn}
             onClick={() => setShowUserProfilePopup(true)}
-            icon={<img src={`${CDN_PUBLIC_PREFIX}/icons/pc/setting@2x.png`} alt="settings" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
+            icon={<img className={styles.headerIconImg} src={`${CDN_PUBLIC_PREFIX}/icons/pc/setting@2x.png`} alt="settings" style={{ width: 22, height: 22, objectFit: 'contain' }} />} 
           />
           <Badge count={notificationCount} size="small" offset={[-6, 0]}>
             <Button 
-              type="text" 
-              icon={<img src={`${CDN_PUBLIC_PREFIX}/icons/pc/email@2x.png`} alt="notifications" style={{ width: 18, height: 18, objectFit: 'contain' }} />} 
+              type="text"
+              className={styles.headerIconBtn}
+              icon={<img className={styles.headerIconImg} src={`${CDN_PUBLIC_PREFIX}/icons/pc/email@2x.png`} alt="notifications" style={{ width: 18, height: 18, objectFit: 'contain' }} />} 
             />
           </Badge>
         </div>
@@ -1128,7 +1132,7 @@ export default function PCLayout({ children }) {
           collapsible
           collapsed={collapsed}
           onCollapse={setCollapsed}
-          theme="light"
+          theme={isDark ? 'dark' : 'light'}
           trigger={null}
         >
           {/* 用户信息 */}
@@ -1167,10 +1171,11 @@ export default function PCLayout({ children }) {
             theme={{
               components: {
                 Menu: {
-                  itemSelectedColor: '#11B787',
+                  itemSelectedColor: isDark ? '#34d399' : '#11B787',
                   itemSelectedBg: 'transparent',
-                  itemHoverColor: 'inherit',
-                  itemHoverBg: '#f5f5f5',
+                  itemColor: isDark ? 'rgba(255, 255, 255, 0.72)' : 'rgba(0, 0, 0, 0.88)',
+                  itemHoverColor: isDark ? 'rgba(255, 255, 255, 0.72)' : 'rgba(0, 0, 0, 0.88)',
+                  itemHoverBg: isDark ? 'rgba(255, 255, 255, 0.08)' : '#f5f5f5',
                   itemActiveBg: 'transparent',
                   iconMarginInlineEnd: 12,
                 },

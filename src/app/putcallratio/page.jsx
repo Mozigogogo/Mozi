@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/context/ThemeProvider';
 import { Picker, Toast } from 'antd-mobile';
 import { Select } from 'antd';
 import NavBar from '@/components/NavBar';
@@ -18,6 +19,7 @@ import styles from './page.module.less';
 const PutCallRatio = () => {
   const router = useRouter();
   const { t } = useTranslation();
+  const { isDark } = useTheme();
   const [isPC, setIsPC] = useState(false);
 
   const ratioTabs = useMemo(() => [
@@ -136,6 +138,12 @@ const PutCallRatio = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (chartData.current?.data) {
+      applyChartOption(chartData.current.data, chartData.current.msg);
+    }
+  }, [isDark, applyChartOption]);
 
   // 获取数据
   const getData = async ({ ratioTypeSelected, coin = coinSelected, exchange = cexSelected, getType = 'all' }) => {

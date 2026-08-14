@@ -7,6 +7,7 @@ import { Popover } from 'antd-mobile';
 import styles from './index.module.less';
 import './popover-global.css';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/context/ThemeProvider';
 
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
 const warnIcon = `${CDN_PREFIX}/icon/warn.png`;
@@ -145,6 +146,7 @@ export default function FearGreedIndex({
   ballLeft
 }) {
   const { t } = useTranslation();
+  const { isDark } = useTheme();
   // 计算圆球旋转角度
   // index 从 0-100，对应圆弧从 -90度（左端）到 90度（右端）
   // 0 = 极度恐慌（绿色左端）= -90度
@@ -291,6 +293,7 @@ export default function FearGreedIndex({
           content={<TooltipContent t={t} />}
           trigger="click"
           placement="bottom"
+          mode={isDark ? 'dark' : 'light'}
         >
           <img className={styles.infoIcon} src={warnIcon} alt="info" />
         </Popover>

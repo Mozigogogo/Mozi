@@ -1,16 +1,33 @@
 export const handleOptions = (data, type, msg) => {
   console.log('Chart data:', data, 'Type:', type);
+
+  const isAppDarkTheme = () =>
+    typeof document !== 'undefined' &&
+    document.documentElement.getAttribute('data-theme') === 'dark';
+
+  const darkAxisCommon = {
+    axisLabel: { color: 'rgba(255, 255, 255, 0.45)' },
+    axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.12)' } },
+    splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.08)' } },
+  };
   
   if (type === 'samebar') {
     const labelShort = msg && typeof msg === 'object' && msg.labels && msg.labels.short ? msg.labels.short : '空';
     const labelLong = msg && typeof msg === 'object' && msg.labels && msg.labels.long ? msg.labels.long : '多';
     const labelRatio = msg && typeof msg === 'object' && msg.labels && msg.labels.ratio ? msg.labels.ratio : '多空比';
-    return {
+    const option = {
       tooltip: {
         trigger: 'axis',
         axisPointer: {
           type: 'line'
-        }
+        },
+        ...(isAppDarkTheme()
+          ? {
+              backgroundColor: '#1c1f24',
+              borderColor: 'rgba(255, 255, 255, 0.08)',
+              textStyle: { color: '#f3f4f6' },
+            }
+          : {}),
       },
       legend: {
         selectedMode: false,
@@ -22,8 +39,8 @@ export const handleOptions = (data, type, msg) => {
         itemGap: 10,
         textStyle: {
           fontSize: 11,
-          color: '#666'
-        }
+          color: isAppDarkTheme() ? 'rgba(255, 255, 255, 0.55)' : '#666',
+        },
       },
       grid: {
         left: '10%',
@@ -33,13 +50,21 @@ export const handleOptions = (data, type, msg) => {
         containLabel: false
       },
       yAxis: [{
-        type: 'value'
+        type: 'value',
+        ...(isAppDarkTheme() ? darkAxisCommon : {}),
       }, {
-        type: 'value'
+        type: 'value',
+        ...(isAppDarkTheme() ? darkAxisCommon : {}),
       }],
       xAxis: {
         type: 'category',
-        data: data.xAxisData
+        data: data.xAxisData,
+        ...(isAppDarkTheme()
+          ? {
+              axisLabel: { color: 'rgba(255, 255, 255, 0.55)' },
+              axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.12)' } },
+            }
+          : {}),
       },
       dataZoom: [
         {
@@ -53,7 +78,16 @@ export const handleOptions = (data, type, msg) => {
           start: 80,
           end: 100,
           top: '87%',
-          height: 20
+          height: 20,
+          ...(isAppDarkTheme()
+            ? {
+                backgroundColor: '#161a1e',
+                borderColor: 'rgba(255, 255, 255, 0.08)',
+                fillerColor: 'rgba(17, 183, 135, 0.2)',
+                handleStyle: { color: '#11b787', borderColor: '#11b787' },
+                textStyle: { color: 'rgba(255, 255, 255, 0.45)' },
+              }
+            : {}),
         }
       ],
       series: [
@@ -88,6 +122,7 @@ export const handleOptions = (data, type, msg) => {
         }
       ]
     };
+    return option;
   }
 
   if (type === 'kline') {
@@ -463,12 +498,58 @@ export const handleOptions = (data, type, msg) => {
       ],
     };
     
+    if (isAppDarkTheme()) {
+      baseConfig.tooltip = {
+        ...baseConfig.tooltip,
+        backgroundColor: '#1c1f24',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        textStyle: { color: '#f3f4f6' },
+      };
+      baseConfig.legend = {
+        ...baseConfig.legend,
+        textStyle: { color: 'rgba(255, 255, 255, 0.55)' },
+      };
+      baseConfig.xAxis = baseConfig.xAxis.map((axis) => ({
+        ...axis,
+        axisLabel: {
+          ...axis.axisLabel,
+          color: 'rgba(255, 255, 255, 0.55)',
+        },
+        axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.12)' } },
+      }));
+      baseConfig.yAxis = baseConfig.yAxis.map((axis, index) => ({
+        ...axis,
+        nameTextStyle: { color: 'rgba(255, 255, 255, 0.55)' },
+        axisLabel: {
+          ...axis.axisLabel,
+          color: 'rgba(255, 255, 255, 0.45)',
+        },
+        axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.12)' } },
+        splitLine: index === 0
+          ? { lineStyle: { color: 'rgba(255, 255, 255, 0.08)' } }
+          : axis.splitLine,
+      }));
+      if (baseConfig.dataZoom?.[1]) {
+        baseConfig.dataZoom[1] = {
+          ...baseConfig.dataZoom[1],
+          borderColor: 'rgba(255, 255, 255, 0.12)',
+          fillerColor: 'rgba(17, 183, 135, 0.2)',
+          handleStyle: { color: '#11b787' },
+          textStyle: { color: 'rgba(255, 255, 255, 0.45)' },
+          dataBackground: {
+            lineStyle: { color: 'rgba(255, 255, 255, 0.12)' },
+            areaStyle: { color: 'rgba(255, 255, 255, 0.06)' },
+          },
+        };
+      }
+    }
+
     console.log('✅ linebar配置生成完成:', baseConfig);
     return baseConfig;
   }
 
   if (type === 'updownbarline') {
-    return {
+    const baseConfig = {
       grid: {
         left: '10%',
         right: '3%',  // 减少右侧边距，让图表占据更多空间
@@ -484,6 +565,7 @@ export const handleOptions = (data, type, msg) => {
           const point = info.find((p) => p?.data?.toolTips)?.data || info[0]?.data;
           const valueList = point?.toolTips;
           const axisLabel = info[0]?.axisValueLabel || info[0]?.name || '';
+          const labelColor = isAppDarkTheme() ? 'rgba(255, 255, 255, 0.55)' : '#666';
           if (!Array.isArray(valueList) || valueList.length === 0) {
             const raw = info[0]?.value;
             if (raw == null || Array.isArray(raw)) return axisLabel;
@@ -500,7 +582,7 @@ export const handleOptions = (data, type, msg) => {
               : '';
             return `<div style="display:flex;align-items:center;margin:2px 0;">${icon}<span>${item?.exchange || ''}</span><span style="margin-left:8px;font-variant-numeric:tabular-nums;">${pct}</span></div>`;
           }).join('');
-          return axisLabel ? `<div style="margin-bottom:4px;color:#666;">${axisLabel}</div>${rows}` : rows;
+          return axisLabel ? `<div style="margin-bottom:4px;color:${labelColor};">${axisLabel}</div>${rows}` : rows;
         }
       },
       legend: {
@@ -585,6 +667,49 @@ export const handleOptions = (data, type, msg) => {
         }
       ],
     };
+
+    if (isAppDarkTheme()) {
+      baseConfig.tooltip = {
+        ...baseConfig.tooltip,
+        backgroundColor: '#1c1f24',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        textStyle: { color: '#f3f4f6' },
+      };
+      baseConfig.xAxis = baseConfig.xAxis.map((axis) => ({
+        ...axis,
+        axisLabel: {
+          ...axis.axisLabel,
+          color: 'rgba(255, 255, 255, 0.55)',
+        },
+        axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.12)' } },
+      }));
+      baseConfig.yAxis = baseConfig.yAxis.map((axis, index) => ({
+        ...axis,
+        axisLabel: {
+          ...axis.axisLabel,
+          color: 'rgba(255, 255, 255, 0.45)',
+        },
+        axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.12)' } },
+        splitLine: index === 0
+          ? { lineStyle: { color: 'rgba(255, 255, 255, 0.08)' } }
+          : axis.splitLine,
+      }));
+      if (baseConfig.dataZoom?.[1]) {
+        baseConfig.dataZoom[1] = {
+          ...baseConfig.dataZoom[1],
+          borderColor: 'rgba(255, 255, 255, 0.12)',
+          fillerColor: 'rgba(17, 183, 135, 0.2)',
+          handleStyle: { color: '#11b787' },
+          textStyle: { color: 'rgba(255, 255, 255, 0.45)' },
+          dataBackground: {
+            lineStyle: { color: 'rgba(255, 255, 255, 0.12)' },
+            areaStyle: { color: 'rgba(255, 255, 255, 0.06)' },
+          },
+        };
+      }
+    }
+
+    return baseConfig;
   }
 
   // 默认返回空配置

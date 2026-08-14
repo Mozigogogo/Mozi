@@ -7,6 +7,7 @@ import { Popover } from 'antd-mobile';
 import styles from './index.module.less';
 import './popover-global.css';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/context/ThemeProvider';
 
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
 const warnIcon = `${CDN_PREFIX}/icon/warn.png`;
@@ -23,6 +24,7 @@ const TooltipContent = ({ t }) => (
 
 export default function BTCMarketShare({ percentage = '0%', change = '0%' }) {
   const { t } = useTranslation();
+  const { isDark } = useTheme();
   // 判断涨跌方向
   const isPositive = change.startsWith('+') || (!change.startsWith('-') && parseFloat(change) > 0);
   
@@ -34,6 +36,7 @@ export default function BTCMarketShare({ percentage = '0%', change = '0%' }) {
           content={<TooltipContent t={t} />}
           trigger="click"
           placement="bottom"
+          mode={isDark ? 'dark' : 'light'}
         >
           <img className={styles.infoIcon} src={warnIcon} alt="info" />
         </Popover>

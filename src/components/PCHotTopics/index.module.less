@@ -33,6 +33,19 @@
 .titleText {
   font-size: 20px;
   font-weight: bold;
+  color: #000;
+}
+
+.titleHot {
+  color: #f43138;
+}
+
+.titleChat {
+  color: #ff7e09;
+}
+
+.titleSuffix {
+  color: #000;
 }
 
 .moreBtn {
@@ -216,4 +229,72 @@
   0% { opacity: 0.6; }
   50% { opacity: 1; }
   100% { opacity: 0.6; }
+}
+
+:global([data-theme='dark']) {
+  .container {
+    background: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .title,
+  .titleText,
+  .titleSuffix {
+    color: #f3f4f6;
+  }
+
+  .empty {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .moreBtn {
+    background: rgba(255, 255, 255, 0.08);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .arrowIcon {
+      color: rgba(255, 255, 255, 0.55);
+    }
+  }
+
+  .itemTitle {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .item {
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+  }
+
+  .topItem {
+    background: rgba(255, 77, 79, 0.08);
+
+    &:hover {
+      background: rgba(255, 77, 79, 0.12);
+    }
+  }
+
+  .rank {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .date {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .tag {
+    color: #6ea8ff;
+    background: rgba(18, 69, 250, 0.16);
+  }
+
+  .hotValue {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .skeleton .skeletonItem {
+    background: rgba(255, 255, 255, 0.06);
+  }
 }

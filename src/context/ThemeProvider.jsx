@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useLayoutEffect } from 'react';
 
 // 主题类型
 export const THEMES = {
@@ -10,6 +10,19 @@ export const THEMES = {
 
 // 本地存储键名
 const THEME_STORAGE_KEY = 'mozi-theme';
+export const APP_THEME_STORAGE_KEY = 'app_theme';
+export const APP_THEME_CHANGE_EVENT = 'app-theme-change';
+
+export const resolveColorScheme = (appThemeId) =>
+  appThemeId === 'black' ? THEMES.DARK : THEMES.LIGHT;
+
+export const applyAppTheme = (themeId) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(APP_THEME_STORAGE_KEY, themeId);
+  } catch (_) {}
+  window.dispatchEvent(new CustomEvent(APP_THEME_CHANGE_EVENT, { detail: { themeId } }));
+};
 
 // 创建主题上下文
 const ThemeContext = createContext({
@@ -41,23 +54,49 @@ const darkThemeVars = {
   '--text-tertiary': '#808080',
 };
 
+const readStoredTheme = () => {
+  if (typeof window === 'undefined') return THEMES.LIGHT;
+  try {
+    const savedAppTheme = localStorage.getItem(APP_THEME_STORAGE_KEY);
+    if (savedAppTheme) return resolveColorScheme(savedAppTheme);
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    if (savedTheme && Object.values(THEMES).includes(savedTheme)) return savedTheme;
+  } catch (_) {}
+  return THEMES.LIGHT;
+};
+
 // 主题提供者组件
 export function ThemeProvider({ children }) {
-  // 默认使用亮色主题
   const [theme, setThemeState] = useState(THEMES.LIGHT);
   const [mounted, setMounted] = useState(false);
 
-  // 初始化时从 localStorage 读取主题（目前强制亮色）
-  useEffect(() => {
-    // 强制亮色模式 - 暂时禁用主题读取
-    // const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    // if (savedTheme && Object.values(THEMES).includes(savedTheme)) {
-    //   setThemeState(savedTheme);
-    // }
-    setThemeState(THEMES.LIGHT); // 强制亮色
-    localStorage.setItem(THEME_STORAGE_KEY, THEMES.LIGHT);
+  useLayoutEffect(() => {
+    setThemeState(readStoredTheme());
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    const onAppThemeChange = (event) => {
+      const nextTheme = resolveColorScheme(event?.detail?.themeId);
+      setThemeState(nextTheme);
+      try {
+        localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+      } catch (_) {}
+    };
+
+    window.addEventListener(APP_THEME_CHANGE_EVENT, onAppThemeChange);
+    return () => window.removeEventListener(APP_THEME_CHANGE_EVENT, onAppThemeChange);
+  }, [mounted]);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch (_) {}
+  }, [mounted, theme]);
 
   // 应用主题变量到 document
   useEffect(() => {

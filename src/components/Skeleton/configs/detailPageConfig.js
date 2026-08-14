@@ -3,7 +3,6 @@ export const detailHeaderSkeletonConfig = {
   type: 'container',
   style: {
     padding: '16px',
-    backgroundColor: '#fff',
   },
   children: [
         // 币种基本信息行
@@ -129,17 +128,15 @@ export const detailHeaderSkeletonConfig = {
  */
 export const detailPageSkeletonConfig = {
   type: 'column',
-  style: { width: '100%', backgroundColor: '#fff' },
+  style: { width: '100%' },
   children: [
     detailHeaderSkeletonConfig,
 
     // 图表区域（包含整个图表和控制按钮）
     {
       type: 'container',
-      style: { 
+      style: {
         padding: '16px',
-        backgroundColor: '#fff',
-        borderBottom: '1px solid #f0f0f0'
       },
       children: [
         { type: 'element', width: '100%', height: 300, borderRadius: 8 }
@@ -149,9 +146,8 @@ export const detailPageSkeletonConfig = {
     // 市场数据标题
     {
       type: 'container',
-      style: { 
+      style: {
         padding: '16px',
-        backgroundColor: '#fff'
       },
       children: [
         { type: 'element', width: 100, height: 24 }
@@ -161,9 +157,8 @@ export const detailPageSkeletonConfig = {
     // 市场数据表格
     {
       type: 'container',
-      style: { 
+      style: {
         padding: '0 16px 16px',
-        backgroundColor: '#fff'
       },
       children: [
         // 表头

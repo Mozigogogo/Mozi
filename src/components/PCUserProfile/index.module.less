@@ -428,3 +428,143 @@
 .headerCenter {
   text-align: center;
 }
+
+:global([data-theme='dark']) {
+  .container {
+    background: transparent;
+  }
+
+  .headerCard {
+    background: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
+  .avatar {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .nickname {
+    color: #f3f4f6;
+  }
+
+  .nicknameInput {
+    background: #161a1e;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f3f4f6;
+  }
+
+  .tag {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .bio {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .statValue {
+    color: #f3f4f6;
+  }
+
+  .statLabel {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .tabCard {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+
+    &:hover {
+      border-color: rgba(17, 183, 135, 0.45);
+      box-shadow: none;
+    }
+
+    &.active {
+      border-color: #11b787;
+      background: rgba(17, 183, 135, 0.12);
+
+      .tabTitle {
+        color: #34d399;
+      }
+    }
+  }
+
+  .tabTitle {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .tabSubtitle {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .contentSection {
+    background: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .tableHeader {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .tableRow {
+    &:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  .colCoin,
+  .colPrice {
+    color: #f3f4f6;
+  }
+
+  .changeTag {
+    &.up {
+      background: rgba(17, 183, 135, 0.16);
+      color: #34d399;
+    }
+
+    &.down {
+      background: rgba(250, 95, 95, 0.16);
+      color: #ff6060;
+    }
+  }
+
+  .actionBtn {
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .noData {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .paginationWrapper {
+    :global(.ant-pagination-item) {
+      background: #161a1e;
+      border-color: rgba(255, 255, 255, 0.12);
+
+      a {
+        color: rgba(255, 255, 255, 0.72);
+      }
+    }
+
+    :global(.ant-pagination-item-active) {
+      background: rgba(17, 183, 135, 0.16);
+      border-color: rgba(17, 183, 135, 0.45);
+
+      a {
+        color: #34d399;
+      }
+    }
+
+    :global(.ant-pagination-prev .ant-pagination-item-link),
+    :global(.ant-pagination-next .ant-pagination-item-link) {
+      background: #161a1e;
+      border-color: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.72);
+    }
+  }
+}

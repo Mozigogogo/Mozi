@@ -7,12 +7,15 @@ import { mainnet, arbitrum } from 'wagmi/chains'
 import {
   RainbowKitProvider,
   getDefaultConfig,
+  darkTheme,
   lightTheme,
   useConnectModal,
   useAccountModal,
   useChainModal,
 } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
+import { useTranslation } from 'react-i18next'
+import { useTheme } from './ThemeProvider'
 
 // WalletConnect Cloud projectId（RainbowKit 通过它连接 WC 协议）
 const projectId = process.env.NEXT_PUBLIC_PROJECT_ID
@@ -80,6 +83,68 @@ function WalletModalBridge() {
   return null
 }
 
+const RAINBOW_ACCENT = '#11B787'
+const MOZI_DARK_MODAL_BG = '#161a1e'
+const MOZI_DARK_SURFACE = '#1c1f24'
+
+const RAINBOW_THEME_OPTIONS = {
+  accentColor: RAINBOW_ACCENT,
+  accentColorForeground: '#ffffff',
+  borderRadius: 'medium',
+  fontStack: 'system',
+}
+
+function resolveRainbowLocale(language) {
+  if (!language) return 'en-US'
+  if (language.startsWith('zh')) return 'zh-CN'
+  return 'en-US'
+}
+
+function buildRainbowKitTheme(isDark) {
+  if (!isDark) {
+    return lightTheme(RAINBOW_THEME_OPTIONS)
+  }
+
+  const base = darkTheme({
+    ...RAINBOW_THEME_OPTIONS,
+    overlayBlur: 'small',
+  })
+
+  return {
+    ...base,
+    colors: {
+      ...base.colors,
+      modalBackground: MOZI_DARK_MODAL_BG,
+      modalBorder: 'rgba(255, 255, 255, 0.08)',
+      menuItemBackground: MOZI_DARK_SURFACE,
+      closeButtonBackground: 'rgba(255, 255, 255, 0.08)',
+      actionButtonSecondaryBackground: MOZI_DARK_SURFACE,
+      downloadBottomCardBackground: MOZI_DARK_SURFACE,
+      downloadTopCardBackground: MOZI_DARK_MODAL_BG,
+      generalBorder: 'rgba(255, 255, 255, 0.08)',
+      generalBorderDim: 'rgba(255, 255, 255, 0.04)',
+      modalText: '#f3f4f6',
+      modalTextSecondary: '#9ca3af',
+      modalTextDim: '#6b7280',
+    },
+  }
+}
+
+function RainbowKitThemedProvider({ children }) {
+  const { isDark } = useTheme()
+  const { i18n } = useTranslation()
+
+  const theme = useMemo(() => buildRainbowKitTheme(isDark), [isDark])
+  const locale = useMemo(() => resolveRainbowLocale(i18n.language), [i18n.language])
+
+  return (
+    <RainbowKitProvider key={isDark ? 'dark' : 'light'} theme={theme} locale={locale}>
+      <WalletModalBridge />
+      {children}
+    </RainbowKitProvider>
+  )
+}
+
 export default function Web3Provider({ children }) {
   // 必须在整棵子树首帧就提供 WagmiProvider，否则 RainbowKit / ConnectButton 会立刻调用 useConfig 报错。
   // ssr: true 为 RainbowKit + Next 推荐写法，避免在服务端走 WalletConnect 的 indexedDB 路径。
@@ -101,17 +166,7 @@ export default function Web3Provider({ children }) {
   return (
     <WagmiProvider config={wagmiConfig} reconnectOnMount={true}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          theme={lightTheme({
-            accentColor: '#11B787',
-            accentColorForeground: '#ffffff',
-            borderRadius: 'medium',
-            fontStack: 'system',
-          })}
-        >
-          <WalletModalBridge />
-          {children}
-        </RainbowKitProvider>
+        <RainbowKitThemedProvider>{children}</RainbowKitThemedProvider>
       </QueryClientProvider>
     </WagmiProvider>
   )

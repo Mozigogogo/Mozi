@@ -123,3 +123,25 @@
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+:global([data-theme='dark']) {
+  .composer {
+    background: #1c1f24;
+  }
+
+  .main {
+    background: #161a1e;
+  }
+
+  .textarea {
+    color: #f3f4f6;
+  }
+
+  .textarea::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+  }
+
+  .toolBtn {
+    color: rgba(255, 255, 255, 0.45);
+  }
+}

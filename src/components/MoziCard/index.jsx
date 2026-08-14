@@ -1,11 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { SpinLoading, Empty } from 'antd-mobile';
 // 发现Tab排行榜标题的右箭头使用PNG以匹配原项目视觉
 import RankGrid from '../RankGrid';
 import { RightArrowIcon } from '../Icons';
+import { useTheme } from '@/context/ThemeProvider';
 import styles from './index.module.less';
+
+const DEFAULT_CARD_BG = '#fff';
+const isDefaultWhiteBg = (color) =>
+  typeof color === 'string' && color.toLowerCase() === DEFAULT_CARD_BG;
 
 const MoziCard = ({ 
   title,
@@ -41,13 +46,21 @@ const MoziCard = ({
   // 新增：是否隐藏 cardHeader
   hideHeader = false
 }) => {
-  // 合并默认样式和自定义样式（customStyle 优先级最高）
-  const cardStyle = {
-    borderRadius,
-    backgroundColor,
-    marginBottom,
-    ...customStyle
-  };
+  const { isDark } = useTheme();
+
+  // 暗色主题下省略默认白底 inline style，让 CSS module 接管
+  const cardStyle = useMemo(() => {
+    const style = {
+      borderRadius,
+      marginBottom,
+      ...customStyle,
+    };
+    const resolvedBg = customStyle.backgroundColor ?? backgroundColor;
+    if (!(isDark && isDefaultWhiteBg(resolvedBg))) {
+      style.backgroundColor = resolvedBg;
+    }
+    return style;
+  }, [borderRadius, marginBottom, customStyle, backgroundColor, isDark]);
   
   const renderTitle = () => {
     // 如果有自定义标题，直接返回

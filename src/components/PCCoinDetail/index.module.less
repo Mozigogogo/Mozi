@@ -1154,3 +1154,94 @@
     font-size: 11px;
   }
 }
+
+:global([data-theme='dark']) {
+  .topBar {
+    background: #1c1f24;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .topBarLead {
+    border-right-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .topBarLeadFlat .priceBlock {
+    border-right-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .backBtn {
+    color: rgba(255, 255, 255, 0.78);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .headerTitle,
+  .priceMain,
+  .statValue {
+    color: #f3f4f6;
+  }
+
+  .coinSymbol,
+  .statLabel {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .coinIcon {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .actionBtn {
+    color: rgba(255, 255, 255, 0.72);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .mainCard {
+    background: #1c1f24;
+  }
+
+  .overviewSkeletonPrice {
+    border-right-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .barrageToggle {
+    color: rgba(255, 255, 255, 0.55);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f3f4f6;
+    }
+  }
+
+  .barrageBar {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .barrageInput {
+    color: #f3f4f6;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.35);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .chartPane .barrageBar {
+      border-color: rgba(255, 255, 255, 0.12);
+      background: transparent;
+    }
+
+    .paneResizer::before {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .paneResizer:hover::before,
+    .paneResizerActive::before {
+      background: #11b787;
+    }
+  }
+}

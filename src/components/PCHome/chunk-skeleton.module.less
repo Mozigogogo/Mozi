@@ -236,3 +236,59 @@
     opacity: 0.55;
   }
 }
+
+:global([data-theme='dark']) {
+  .sectorWrap {
+    background: #1c1f24;
+  }
+
+  .sectorItem {
+    background: rgba(255, 255, 255, 0.08);
+
+    &:nth-child(1) {
+      background: rgba(255, 255, 255, 0.12);
+    }
+  }
+
+  .hotWrap {
+    background: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .hotTitle {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .hotItem {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .marketWrap {
+    background: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
+  .marketTitle,
+  .marketTime,
+  .marketBarLabel,
+  .marketStat,
+  .marketCardTitle,
+  .marketCardLine {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .marketBar {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .marketCard {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .marketGauge,
+  .marketCardBig {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}

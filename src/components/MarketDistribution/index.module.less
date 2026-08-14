@@ -762,3 +762,116 @@
     font-size: 16px;
   }
 }
+
+:global([data-theme='dark']) {
+  .distributionTitle {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .distributionUpdateTime {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .marketDistributionContainer {
+    background-color: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
+  .barValue {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .barLabel {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .fearGreedLabel,
+  .btcLabel {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .fearGreedValue,
+  .btcPercentage {
+    color: #f3f4f6;
+  }
+
+  .fearGreedText,
+  .changeText {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .fearGreedInner {
+    background-color: #1c1f24;
+  }
+
+  .fearGreedBall {
+    background-color: #f3f4f6;
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  }
+
+  .pcLeft {
+    background: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    .pcChartTitle {
+      color: #f3f4f6;
+    }
+
+    .pcChartTime {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .chartBars {
+      background-color: rgba(255, 255, 255, 0.04);
+      background-image: linear-gradient(to top, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    }
+
+    .statText {
+      color: rgba(255, 255, 255, 0.55);
+    }
+  }
+
+  .pcRight .indicatorItem {
+    background: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .indicatorTitle {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .infoIcon {
+    filter: brightness(0) invert(0.78);
+    opacity: 0.9;
+  }
+
+  .statItem.neutral .statValue {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .tooltipContent {
+    color: rgba(255, 255, 255, 0.78);
+
+    .tooltipTitle {
+      color: #34d399;
+    }
+
+    .tooltipDesc {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .tooltipList li {
+      color: rgba(255, 255, 255, 0.55);
+
+      &:before {
+        color: #34d399;
+      }
+
+      strong {
+        color: #f3f4f6;
+      }
+    }
+  }
+}

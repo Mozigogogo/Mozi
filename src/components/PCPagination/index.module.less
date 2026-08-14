@@ -168,3 +168,32 @@
     font-size: 12PX;
   }
 }
+
+:global([data-theme='dark']) {
+  .pagerBtn {
+    background: #161a1e;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .pageBtn {
+    color: rgba(255, 255, 255, 0.72);
+
+    &:not(.disabled):hover {
+      background: rgba(17, 183, 135, 0.12);
+      color: #34d399;
+    }
+  }
+
+  .activePage,
+  .activePage:not(.disabled):hover,
+  .activePage.disabled:hover {
+    background: rgba(17, 183, 135, 0.16);
+    color: #34d399;
+  }
+
+  .ellipsis,
+  .totalPages {
+    color: rgba(255, 255, 255, 0.45);
+  }
+}

@@ -106,7 +106,7 @@
     height: 40PX;
     border-radius: 50%;
     background: #f0f0f0;
-    animation: communitySkeletonPulse 1.5s infinite ease-in-out;
+    animation: communitySkeletonPulse 2.4s ease-in-out infinite;
   }
 
   .postSkeletonBody {
@@ -121,7 +121,7 @@
     height: 12PX;
     border-radius: 4PX;
     background: #f0f0f0;
-    animation: communitySkeletonPulse 1.5s infinite ease-in-out;
+    animation: communitySkeletonPulse 2.4s ease-in-out infinite;
   }
 
   .postSkeletonMeta {
@@ -609,5 +609,76 @@
   .coinPostsList,
   .discoveryPostsGrid {
     gap: 0;
+  }
+}
+
+:global([data-theme='dark']) {
+  .pcCommunityContent {
+    .mainPanel {
+      background: #1c1f24;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .topMarketMarquee {
+      border-left-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .loadingContainer,
+    .postListSkeleton {
+      background: #1c1f24;
+    }
+
+    .loadingText,
+    .leftLoadMoreHint {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .postSkeletonItem {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .postSkeletonAvatar,
+    .postSkeletonLine {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .coinHotTopicSection {
+      background: #1c1f24;
+      border-top-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .leftContentWrapper {
+      background: #1c1f24;
+      border-right-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .leftTopComposer {
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .leftPanelContainer {
+      background: #1c1f24;
+      border-top-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .rightContentWrapper {
+      background: #1c1f24;
+    }
+
+    .leftScrollArea {
+      &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.28);
+        }
+      }
+    }
+
+    .content {
+      &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
   }
 }

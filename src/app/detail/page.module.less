@@ -2233,3 +2233,284 @@
     font-size: 13PX;
   }
 }
+
+:global([data-theme='dark']) {
+  .surfaceBootOverlay,
+  .surfaceBootOverlayPc {
+    background: #161a1e;
+  }
+
+  @media (min-width: 1024px) {
+    .surfaceBootOverlay {
+      background: #161a1e;
+    }
+  }
+
+  .pcContentColLeft {
+    background: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcRightOpen .pcContentColLeft {
+    border-right-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcWorkspace {
+    background: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcRightRail,
+  .pcRightCollapsed .pcRightRail {
+    background: #1c1f24;
+  }
+
+  .pcRightRailToggle {
+    background: #161a1e;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.72);
+
+    &:hover {
+      background: rgba(17, 183, 135, 0.12);
+      color: #34d399;
+      border-color: rgba(17, 183, 135, 0.35);
+    }
+  }
+
+  .pcRightRailLabel {
+    color: rgba(255, 255, 255, 0.45);
+
+    &:hover {
+      color: #34d399;
+    }
+  }
+
+  .pcRoiSideWrap,
+  .pcRoiSideMarket,
+  .pcRoiSideRoi {
+    background: #1c1f24;
+  }
+
+  .pcRoiSideRoi,
+  .pcRoiSideMarket {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcRoiSideMarket :global([class*='pcCard']),
+  .pcRoiSideRoi :global([class*='pcCard']),
+  .pcRightPanelCard,
+  .pcRoiSideCard,
+  .pcMarketSideCard {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .roiBox {
+    background: transparent;
+  }
+
+  .positive {
+    background: rgba(17, 183, 135, 0.12);
+
+    .roiValue {
+      color: #34d399;
+    }
+  }
+
+  .negative {
+    background: rgba(250, 95, 95, 0.12);
+
+    .roiValue {
+      color: #ff6060;
+    }
+  }
+
+  .roiLabel {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .pcRoiTitleText,
+  .pcCommunityHeader {
+    color: #f3f4f6;
+  }
+
+  .pcRoiTitleNum,
+  .pcRoiTitleNumRight,
+  .pcCommunityMore {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .pcMarketHeadRow {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .pcMarketHeadScroll {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcMarketHeadScroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .pcMarketBodyRow {
+    color: rgba(255, 255, 255, 0.78);
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  .pcOrderCommunityCol,
+  .pcCommunityHalf,
+  .pcCommunityHalfFull {
+    background: #1c1f24;
+  }
+
+  .pcContentColLeft .orderBookSection {
+    background: #1c1f24;
+
+    > div {
+      background: #1c1f24;
+    }
+  }
+
+  .pcContentColLeft .orderBookSection.pcOrderHalf {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .klineContainerPc {
+    background: #1c1f24;
+  }
+
+  .pcCommunityHeader {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcCommunityItem {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .pcCommunityUserName {
+    color: #f3f4f6;
+  }
+
+  .pcCommunitySubTitle,
+  .pcCommunityMainText {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .pcCommunityAction,
+  .pcCommunityTime,
+  .pcCommunityEllipsis {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .pcCommunityEmpty {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .pcCommunityTagUsdt {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .pcCommunityTagOrange {
+    background: rgba(250, 140, 22, 0.12);
+    border-color: rgba(250, 140, 22, 0.35);
+    color: #fb923c;
+  }
+
+  .pcCommunityTagBlue {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #60a5fa;
+  }
+
+  .pcCommunityBadge {
+    background: rgba(17, 183, 135, 0.12);
+    color: #34d399;
+  }
+
+  .pcCommunityAvatar {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcCommunitySkeletonItem {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .pcOrderCommunityResizer::before {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .pcOrderCommunityResizer:hover::before,
+  .pcOrderCommunityResizerActive::before {
+    background: #11b787;
+  }
+
+  .emptyInfo {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  @media (min-width: 1024px) {
+    .positive {
+      background: rgba(17, 183, 135, 0.12);
+
+      .roiValue {
+        color: #34d399;
+      }
+    }
+
+    .negative {
+      background: rgba(250, 95, 95, 0.12);
+
+      .roiValue {
+        color: #ff6060;
+      }
+    }
+
+    .roiLabel {
+      color: rgba(255, 255, 255, 0.55);
+    }
+  }
+
+  .pcRightRoiCard :global([class*='cardHeader']) {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .pcMarketExchangeCell img {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pcRightMarketGrid {
+    :global([class*='gridTitleItem']),
+    :global([class*='gridConItem']) {
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    :global([class*='gridListItem']) {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+
+      &:first-child {
+        border-top-color: rgba(255, 255, 255, 0.06);
+      }
+    }
+  }
+
+  .sectionSkeletonRow {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .orderBookSection {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .box,
+  .headerContainer {
+    background: #1c1f24;
+  }
+}

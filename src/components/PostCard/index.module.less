@@ -458,3 +458,46 @@
 .liked {
   color: var(--primary-color);
 }
+
+:global([data-theme='dark']) {
+  .pcPostItem {
+    background: #1c1f24;
+    border-top-color: rgba(255, 255, 255, 0.06);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .username {
+      color: #f3f4f6;
+    }
+
+    .postTime {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .postTitle {
+      color: #f3f4f6;
+    }
+
+    .postText {
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .postFooter {
+      border-top-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .postAction {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .moreButton {
+      color: rgba(255, 255, 255, 0.45);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+    }
+  }
+}

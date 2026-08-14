@@ -267,3 +267,56 @@
     }
   }
 }
+
+:global([data-theme='dark']) {
+  .pcMarketOverview {
+    .statCard {
+      background: #1c1f24;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+
+      &:hover {
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+
+      .cardHeader .cardTitle {
+        color: rgba(255, 255, 255, 0.55);
+      }
+
+      .currencySymbol,
+      .valueText {
+        color: #f3f4f6;
+      }
+
+      .smartValueText {
+        color: #f3f4f6;
+      }
+
+      .smartPercentText {
+        color: #34d399;
+      }
+
+      .valueText.placeholderText,
+      .placeholderText {
+        color: rgba(255, 255, 255, 0.35);
+      }
+
+      .cardContent .cardDesc {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.16);
+        color: rgba(255, 255, 255, 0.78);
+
+        &:hover {
+          border-color: rgba(17, 183, 135, 0.45);
+          color: #34d399;
+        }
+      }
+    }
+
+    .statCardTodaySelected {
+      .cardHeader .cardTitle {
+        color: #fff;
+      }
+    }
+  }
+}

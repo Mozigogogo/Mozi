@@ -109,27 +109,36 @@
 /* 暗黑模式 */
 :global([data-theme="dark"]) {
   .hotSearchBar {
-    background-color: #1a1a1a;
-    border-bottom-color: #333;
+    background-color: transparent;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
   }
   
   .searchBox {
-    background-color: #333;
+    background-color: #161a1e;
+    border-color: rgba(255, 255, 255, 0.12);
   }
   
   .searchText {
-    color: #999;
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .searchInput {
+    color: #f3f4f6;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.35);
+    }
   }
   
   .pcMode {
     background: transparent;
     
     .searchBox {
-      background-color: #2a2a2a;
-      border-color: #444;
+      background-color: #161a1e;
+      border-color: rgba(255, 255, 255, 0.12);
       
       &:hover {
-        border-color: #11B787;
+        border-color: rgba(17, 183, 135, 0.45);
       }
     }
   }

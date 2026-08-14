@@ -221,12 +221,18 @@
         .PCRDescName,
         .PCRDescContent,
         .PCRDescContent > div {
-          color: #86909c;
+          color: rgba(255, 255, 255, 0.45);
         }
       }
 
-      .PCRList .pcrItem .pcrItemTitle .pcrItemName {
-        color: #fff;
+      .PCRList .pcrItem .pcrItemTitle {
+        > div:first-child {
+          color: rgba(255, 255, 255, 0.45);
+        }
+
+        .pcrItemName {
+          color: #f3f4f6;
+        }
       }
     }
   }

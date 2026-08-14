@@ -11,6 +11,7 @@ import NavBar from '@/components/NavBar';
 import PCSectorTreeMap from '@/components/PCSectorTreeMap';
 import { handleOptions } from '@/utils/chartUtils';
 import { safeBack } from '@/utils/navigation';
+import { useTheme } from '@/context/ThemeProvider';
 import * as echarts from 'echarts';
 import styles from './page.module.less';
 
@@ -42,6 +43,7 @@ const mapCurTreemapData = (items) =>
 export default function Positionsize() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { isDark } = useTheme();
   const [isPC, setIsPC] = useState(false);
   const [cexArr, setCexArr] = useState([]);
   const [cexSelected, setCexSelected] = useState('');
@@ -205,7 +207,7 @@ export default function Positionsize() {
       applyHisChart();
     }, 100);
     return () => clearTimeout(timer);
-  }, [isPC, activeTab, applyHisChart]);
+  }, [isPC, activeTab, applyHisChart, isDark]);
 
   const getData = async ({ coin = coinSelected, exchange = cexSelected }) => {
     try {

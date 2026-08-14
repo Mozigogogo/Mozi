@@ -2,7 +2,10 @@
 
 import { useId, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/context/ThemeProvider';
 import styles from './index.module.less';
+
+const AI_CHAT_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/ai_chat.svg';
 
 /* 顶栏装饰；展示尺寸由 index.module.less 中 .aiSearchBadge 控制 */
 const RAW_SVG = `<svg width="112" height="36" viewBox="0 0 88 42" preserveAspectRatio="xMidYMid meet" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -141,10 +144,27 @@ function escapeXml(text) {
  */
 export default function AISearchBadge() {
   const { t } = useTranslation();
+  const { isDark } = useTheme();
   const uid = useId().replace(/:/g, '');
   const label = t('home.quickActions.ai');
   const svg = useMemo(() => RAW_SVG.replace('__AI_BADGE_LABEL__', escapeXml(label)), [label]);
   const html = useMemo(() => prefixSvgIds(svg, `${uid}-`), [uid, svg]);
+
+  if (isDark) {
+    return (
+      <span className={`${styles.aiSearchBadge} ${styles.aiSearchBadgePlain}`}>
+        <span
+          className={styles.aiSearchBadgePlainIcon}
+          style={{
+            WebkitMaskImage: `url(${AI_CHAT_ICON})`,
+            maskImage: `url(${AI_CHAT_ICON})`,
+          }}
+          aria-hidden
+        />
+        <span className={styles.aiSearchBadgePlainText}>{label}</span>
+      </span>
+    );
+  }
 
   return (
     <span

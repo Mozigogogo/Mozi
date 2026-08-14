@@ -59,6 +59,31 @@
 }
 
 .pageSkeletonPc {
-  background-color: #fff;
+  background-color: transparent;
   padding-top: 16PX;
+}
+
+:global([data-theme='dark']) {
+  .shell {
+    background-color: #161a1e;
+  }
+
+  .navSkeleton {
+    background: #1c1f24;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .pageSkeleton {
+    background-color: #161a1e;
+  }
+
+  .pageSkeletonInContent,
+  .pageSkeletonPc {
+    background-color: transparent;
+  }
+
+  .pcBootCard,
+  .pcBootCardQuiet {
+    background: #1c1f24;
+  }
 }
