@@ -1,8 +1,13 @@
+import { formatMoneyCompact } from '@/utils/formatMoney';
+
 /** 后端 /stock/discovery/list 就绪后改为 false */
 export const US_STOCK_USE_MOCK = false;
 
 /** 发现页是否展示「美股行情」Tab；false 则隐藏 */
-export const SHOW_US_STOCK_TAB = false;
+export const SHOW_US_STOCK_TAB = true;
+
+/** 美股列表是否可点击进入详情页；暂时关闭 */
+export const US_STOCK_DETAIL_ENABLED = false;
 
 /** 解析格式化成交额（如 `$82.5亿`）为可比较数值 */
 export function parseVolumeValue(raw) {
@@ -25,6 +30,58 @@ export function sortUsStockByVolume(list, sortOrder = 'desc') {
     return sortOrder === 'asc' ? diff : -diff;
   });
   return sorted;
+}
+
+function formatUsStockPriceChange(raw) {
+  if (raw == null || raw === '') return '--';
+  const s = String(raw).trim();
+  const n = Number(s);
+  if (Number.isFinite(n)) {
+    const digits = Math.abs(n) >= 1 ? 2 : 4;
+    return n.toFixed(digits).replace(/\.?0+$/, '') || '0';
+  }
+  return s;
+}
+
+function formatUsStockPriceChangePercent(raw) {
+  if (raw == null || raw === '') return '';
+  const s = String(raw).trim();
+  if (s.endsWith('%')) return s;
+  const n = Number(s);
+  if (Number.isFinite(n)) {
+    const formatted = n.toFixed(2).replace(/\.?0+$/, '') || '0';
+    return `${formatted}%`;
+  }
+  return s.includes('%') ? s : `${s}%`;
+}
+
+function formatUsStockQuoteVolume(item, language = 'zh') {
+  const quoteVolume = item?.quoteVolume ?? item?.quoteVolume24h;
+  if (quoteVolume != null && quoteVolume !== '') {
+    return formatMoneyCompact(quoteVolume, language, true);
+  }
+  if (item?.totalVolume != null && item.totalVolume !== '') {
+    return String(item.totalVolume);
+  }
+  return '--';
+}
+
+/** 将 /stock/discovery/list 字段映射为行情表展示字段 */
+export function formatUsStockListItem(item, { language = 'zh' } = {}) {
+  const symbol = String(item?.symbol ?? item?.underlying ?? '').trim();
+  const lastPrice = item?.lastPrice ?? item?.currentPrice ?? item?.spotPrice;
+  const priceChange = item?.priceChange ?? item?.priceChange24h;
+  const priceChangePercent = item?.priceChangePercent ?? item?.priceChangePercentage24h;
+
+  return {
+    key: symbol,
+    symbol,
+    url: item?.logo ?? item?.url ?? item?.img ?? '',
+    totalVolume: formatUsStockQuoteVolume(item, language),
+    currentPrice: lastPrice == null || lastPrice === '' ? '--' : String(lastPrice),
+    priceChange24h: formatUsStockPriceChange(priceChange),
+    priceChangePercentage24h: formatUsStockPriceChangePercent(priceChangePercent),
+  };
 }
 
 /** 与 /discovery/coin 列表项字段对齐的静态美股数据 */
@@ -195,9 +252,11 @@ export function getMockUsStockPage({ pageNo = 1, pageSize = 20, sortOrder = 'des
   const sortedList = sortUsStockByVolume(MOCK_US_STOCK_LIST, sortOrder);
   const start = (pageNo - 1) * pageSize;
   const list = sortedList.slice(start, start + pageSize);
+  const pageCount = Math.ceil(MOCK_US_STOCK_LIST.length / pageSize) || 0;
   return {
     list,
     total: MOCK_US_STOCK_LIST.length,
+    pageCount,
     pageNo,
     pageSize,
     hasMore: start + list.length < MOCK_US_STOCK_LIST.length,

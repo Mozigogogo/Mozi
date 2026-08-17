@@ -21,9 +21,8 @@ import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import { savePcAiNav } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
 import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
-import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, getMockUsStockPage, sortUsStockByVolume } from '@/utils/usStockMockData';
+import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, sortUsStockByVolume, formatUsStockListItem } from '@/utils/usStockMockData';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
-import { formatMoneyCompact } from '@/utils/formatMoney';
 import styles from './index.module.less';
 
 const RANK_SHARE_ICON = '/icons/pc/share_toolbar.svg';
@@ -35,6 +34,7 @@ const MARKET_TABLE_COL_TEMPLATE = MARKET_TABLE_COL_WIDTHS.join(' ');
 /** 美股行情表 5 列宽比例（无大单侦测、交易雷达） */
 const US_STOCK_TABLE_COL_WIDTHS = ['20%', '20%', '20%', '20%', '20%'];
 const US_STOCK_TABLE_COL_TEMPLATE = US_STOCK_TABLE_COL_WIDTHS.join(' ');
+const US_STOCK_PAGE_SIZE = 20;
 const MARKET_TABLE_SKELETON_ROWS = 10;
 
 const MARKET_TRADING_RADAR_ICON =
@@ -145,7 +145,7 @@ export default function PCFindContent() {
   const [usStockVolumeSort, setUsStockVolumeSort] = useState('desc');
   const [marketData, setMarketData] = useState([]);
   const [usStockData, setUsStockData] = useState([]);
-  const [usStockTotal, setUsStockTotal] = useState(0);
+  const [usStockPageCount, setUsStockPageCount] = useState(0);
   const [usStockPage, setUsStockPage] = useState(1);
   const [selfData, setSelfData] = useState([]);
   const [calendarEventDates, setCalendarEventDates] = useState([]);
@@ -158,6 +158,7 @@ export default function PCFindContent() {
   // 请求序号：丢弃过期响应，避免轮询/切 Tab 竞态覆盖
   const marketReqSeqRef = useRef(0);
   const usStockReqSeqRef = useRef(0);
+  const usStockPollSeqRef = useRef(0);
   const usStockPageRef = useRef(1);
   const rankReqSeqRef = useRef({
     exchange: 0,
@@ -293,27 +294,7 @@ export default function PCFindContent() {
     priceChangePercentage24h: item.priceChangePercentage24h,
   });
 
-  // 适配后端 GET /stock/discovery/list 的字段到前端表格需要的字段
-  const formatUsStockListItem = (item) => {
-    const symbol = String(item?.underlying ?? '').trim();
-    const spotPrice = item?.spotPrice ?? '--';
-    const quoteVolume24h = item?.quoteVolume24h;
-    const pct = Number(item?.priceChangePercent);
-
-    const pctStr = Number.isFinite(pct) ? pct.toFixed(2) : '';
-
-    return {
-      key: symbol,
-      symbol,
-      url: item?.url || '',
-      // 表格列是“24H成交额”，前端 mock 用的就是 `$xx.xx亿/万亿` 这种字符串，这里统一格式化
-      totalVolume: formatMoneyCompact(quoteVolume24h, i18n.language, true),
-      currentPrice: spotPrice,
-      // UI 的“涨跌额/涨跌幅”列历史复用：后端只给了涨跌幅（priceChangePercent），这里把它映射到两列
-      priceChange24h: pctStr || '--',
-      priceChangePercentage24h: pctStr || '',
-    };
-  };
+  const mapUsStockListItem = (item) => formatUsStockListItem(item, { language: i18n.language });
 
   const buildBaseMarketColumns = (colWidths) => [
     {
@@ -516,37 +497,60 @@ export default function PCFindContent() {
   };
 
   // 获取美股行情数据
-  const fetchUsStockData = async (volumeSort = usStockVolumeSort, { silent = false, pageNo = 1 } = {}) => {
-    const seq = ++usStockReqSeqRef.current;
-    if (!silent) setUsStockLoading(true);
+  const fetchUsStockData = async (volumeSort = usStockVolumeSort, { silent = false, pageNo } = {}) => {
+    const targetPage = pageNo ?? usStockPageRef.current;
+
+    if (!silent) {
+      usStockPageRef.current = targetPage;
+      setUsStockPage(targetPage);
+      setUsStockLoading(true);
+    }
+
+    const userSeq = silent ? null : ++usStockReqSeqRef.current;
+    const pollSeq = silent ? ++usStockPollSeqRef.current : null;
+
     try {
       if (US_STOCK_USE_MOCK) {
-        if (seq !== usStockReqSeqRef.current) return;
-        const mockPage = getMockUsStockPage({ pageNo, pageSize: 20, sortOrder: volumeSort });
-        setUsStockData(mockPage.list.map(formatMarketListItem));
+        if (silent) {
+          if (pollSeq !== usStockPollSeqRef.current) return;
+          if (targetPage !== usStockPageRef.current) return;
+        } else if (userSeq !== usStockReqSeqRef.current) {
+          return;
+        }
+        const mockPage = getMockUsStockPage({ pageNo: targetPage, pageSize: US_STOCK_PAGE_SIZE, sortOrder: volumeSort });
+        setUsStockData(mockPage.list.map(mapUsStockListItem));
+        setUsStockPageCount(mockPage.pageCount ?? 0);
         return;
       }
 
       const res = await request({
         url: Interface.find_stock,
         data: {
-          pageNo,
-          pageSize: 20,
+          pageNo: targetPage,
+          pageSize: US_STOCK_PAGE_SIZE,
         },
       });
 
-      if (seq !== usStockReqSeqRef.current) return;
+      if (silent) {
+        if (pollSeq !== usStockPollSeqRef.current) return;
+        if (targetPage !== usStockPageRef.current) return;
+      } else if (userSeq !== usStockReqSeqRef.current) {
+        return;
+      }
+
       if (res?.data?.list) {
-        setUsStockData(res.data.list.map(formatUsStockListItem));
-        setUsStockTotal(res.data.total ?? 0);
-        setUsStockPage(pageNo);
-        usStockPageRef.current = pageNo;
+        setUsStockData(res.data.list.map(mapUsStockListItem));
+        setUsStockPageCount(res.data.pageCount ?? 0);
       }
     } catch (error) {
-      if (seq !== usStockReqSeqRef.current) return;
+      if (silent) {
+        if (pollSeq !== usStockPollSeqRef.current) return;
+      } else if (userSeq !== usStockReqSeqRef.current) {
+        return;
+      }
       console.error('获取美股行情数据失败:', error);
     } finally {
-      if (seq === usStockReqSeqRef.current && !silent) setUsStockLoading(false);
+      if (!silent) setUsStockLoading(false);
     }
   };
 
@@ -561,7 +565,9 @@ export default function PCFindContent() {
 
   useEffect(() => {
     if (activeTab !== 'usStock' || US_STOCK_USE_MOCK) return;
-    fetchUsStockData(usStockVolumeSort);
+    usStockPageRef.current = 1;
+    setUsStockPage(1);
+    fetchUsStockData(usStockVolumeSort, { pageNo: 1 });
   }, [usStockVolumeSort]);
 
   // 加密行情列表：每 5 秒静默刷新（等上次完成再发，避免堆积）
@@ -581,20 +587,23 @@ export default function PCFindContent() {
     };
   }, [activeTab]);
 
-  // 美股行情列表：每 5 秒静默刷新
+  // 美股行情列表：每 5 秒静默刷新当前页（轮询与用户翻页分开序号，避免 loading 卡死）
   useEffect(() => {
-    if (activeTab !== 'usStock') return undefined;
+    if (activeTab !== 'usStock' || US_STOCK_USE_MOCK) return undefined;
     let cancelled = false;
     let timerId;
     const loop = async () => {
-      await fetchUsStockData(usStockVolumeSort, { silent: true, pageNo: usStockPageRef.current });
+      await fetchUsStockData(usStockVolumeSort, {
+        silent: true,
+        pageNo: usStockPageRef.current,
+      });
       if (!cancelled) timerId = setTimeout(loop, 5000);
     };
     timerId = setTimeout(loop, 5000);
     return () => {
       cancelled = true;
       clearTimeout(timerId);
-      usStockReqSeqRef.current += 1;
+      usStockPollSeqRef.current += 1;
     };
   }, [activeTab, usStockVolumeSort]);
 
@@ -1008,7 +1017,9 @@ export default function PCFindContent() {
     if (key === 'market') {
       fetchMarketData();
     } else if (key === 'usStock') {
-      fetchUsStockData();
+      usStockPageRef.current = 1;
+      setUsStockPage(1);
+      fetchUsStockData(undefined, { pageNo: 1 });
     } else if (key === 'self') {
       fetchSelfData();
     }
@@ -1197,7 +1208,9 @@ export default function PCFindContent() {
     volumeSortOrder,
     onVolumeSortToggle,
     onRowClick,
+    rowClickable = true,
     total,
+    pageCount,
     currentPage,
     onPageChange,
   }) => (
@@ -1298,11 +1311,27 @@ export default function PCFindContent() {
             showHeader={false}
             columns={columns}
             dataSource={dataSource}
-            pagination={total != null ? { pageSize: 20, total, current: currentPage, onChange: onPageChange } : { pageSize: 20 }}
-            onRow={(record) => ({
-              onClick: () => (onRowClick ? onRowClick(record) : jump2Detail(record.symbol)),
-              style: { cursor: 'pointer' },
-            })}
+            pagination={
+              pageCount != null
+                ? {
+                    pageSize: US_STOCK_PAGE_SIZE,
+                    total: pageCount * US_STOCK_PAGE_SIZE,
+                    current: currentPage,
+                    onChange: onPageChange,
+                    showSizeChanger: false,
+                  }
+                : total != null
+                  ? { pageSize: 20, total, current: currentPage, onChange: onPageChange }
+                  : { pageSize: 20 }
+            }
+            onRow={
+              rowClickable
+                ? (record) => ({
+                    onClick: () => (onRowClick ? onRowClick(record) : jump2Detail(record.symbol)),
+                    style: { cursor: 'pointer' },
+                  })
+                : undefined
+            }
           />
         )}
       </div>
@@ -1799,8 +1828,11 @@ export default function PCFindContent() {
                 dataSource: sortedUsStockData,
                 isLoading: usStockLoading,
                 tableKey: 'us-stock-table',
-                onRowClick: (record) => jump2Detail(record.symbol, false, { type: 'usStock' }),
-                total: usStockTotal,
+                rowClickable: US_STOCK_DETAIL_ENABLED,
+                onRowClick: US_STOCK_DETAIL_ENABLED
+                  ? (record) => jump2Detail(record.symbol, false, { type: 'usStock' })
+                  : undefined,
+                pageCount: usStockPageCount,
                 currentPage: usStockPage,
                 onPageChange: (page) => fetchUsStockData(usStockVolumeSort, { pageNo: page }),
               })}

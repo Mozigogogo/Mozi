@@ -1395,8 +1395,9 @@ export default function DetailPage() {
               item?.symbol || item?.coin || item?.base || item?.name || ''
             ).toUpperCase();
             const priceRaw =
-              item?.currentPrice ?? item?.last ?? item?.price ?? item?.close ?? '--';
-            const changeRaw = item?.priceChangePercentage24h ?? item?.priceChangePercentage_24h ?? '--';
+              item?.lastPrice ?? item?.currentPrice ?? item?.last ?? item?.price ?? item?.close ?? '--';
+            const changeRaw =
+              item?.priceChangePercent ?? item?.priceChangePercentage24h ?? item?.priceChangePercentage_24h ?? '--';
             const changePercent = toChangePercent24h(changeRaw);
             const changeNum = Number(String(changePercent).replace('%', '').trim());
             return {

@@ -25,7 +25,7 @@ import { FindEvents } from '../../utils/amplitude';
 import styles from './page.module.less';
 import { useTranslation } from 'react-i18next';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
-import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, getMockUsStockPage } from '@/utils/usStockMockData';
+import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, formatUsStockListItem } from '@/utils/usStockMockData';
 
 // 过滤交易所名称中的.com，避免文字过长溢出
 const sanitizeExchangeName = (name) => {
@@ -71,7 +71,7 @@ const MarketDesc = ({ currentPrice, priceChange24h }) => {
 export default function FindPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Find');
   const tabFromUrl = searchParams.get('tab');
   const RANK_LOOPTIME = 5000;
@@ -633,12 +633,15 @@ const loadingTimerRef = useRef(null);
           pageNo: usStockPageNo.current,
           pageSize: usStockPageSize,
         });
-        const tempUsStock = mockPage.list.map((item) => ({
-          coin: <MarketTitle url={item.url} symbol={item.symbol} totalVolume={item.totalVolume} />,
-          desc: <MarketDesc currentPrice={item.currentPrice} priceChange24h={item.priceChange24h} />,
-          priceChangePercentage24h: <HighlightArea value={item.priceChangePercentage24h} />,
-          key: item.symbol,
-        }));
+        const tempUsStock = mockPage.list.map((item) => {
+          const row = formatUsStockListItem(item, { language: i18n.language });
+          return {
+            coin: <MarketTitle url={row.url} symbol={row.symbol} totalVolume={row.totalVolume} />,
+            desc: <MarketDesc currentPrice={row.currentPrice} priceChange24h={row.priceChange24h} />,
+            priceChangePercentage24h: <HighlightArea value={row.priceChangePercentage24h} />,
+            key: row.symbol,
+          };
+        });
 
         if (usStockPageNo.current === 1) {
           setUsStockData(tempUsStock);
@@ -671,12 +674,15 @@ const loadingTimerRef = useRef(null);
         return;
       }
 
-      const tempUsStock = response.data.list.map((item) => ({
-        coin: <MarketTitle url={item.url} symbol={item.symbol} totalVolume={item.totalVolume} />,
-        desc: <MarketDesc currentPrice={item.currentPrice} priceChange24h={item.priceChange24h} />,
-        priceChangePercentage24h: <HighlightArea value={item.priceChangePercentage24h} />,
-        key: item.symbol,
-      }));
+      const tempUsStock = response.data.list.map((item) => {
+        const row = formatUsStockListItem(item, { language: i18n.language });
+        return {
+          coin: <MarketTitle url={row.url} symbol={row.symbol} totalVolume={row.totalVolume} />,
+          desc: <MarketDesc currentPrice={row.currentPrice} priceChange24h={row.priceChange24h} />,
+          priceChangePercentage24h: <HighlightArea value={row.priceChangePercentage24h} />,
+          key: row.symbol,
+        };
+      });
 
       if (usStockPageNo.current === 1) {
         setUsStockData(tempUsStock);
@@ -1171,7 +1177,9 @@ const loadingTimerRef = useRef(null);
         isLoadingMore: isUsStockLoadingMore,
         onLoadMore: loadMoreUsStock,
         onRefresh: handleUsStockRefresh,
-        onItemClick: (key) => jump2Detail(key, false, { type: 'usStock' }),
+        onItemClick: US_STOCK_DETAIL_ENABLED
+          ? (key) => jump2Detail(key, false, { type: 'usStock' })
+          : () => {},
       })}
 
       <FloatingRobot message={t('discover.robotMessage')} />
