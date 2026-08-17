@@ -6,6 +6,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+
+  :global([data-theme='dark']) & {
+    background: rgba(0, 0, 0, 0.65);
+  }
 }
 
 .sheet {
@@ -14,6 +18,16 @@
   background: #fff;
   border-radius: 16PX;
   padding: 16PX 16PX 20PX;
+
+  :global([data-theme='dark']) & {
+    background: #1c1f24;
+    border: 1PX solid rgba(255, 255, 255, 0.08);
+
+    .iconImg {
+      filter: brightness(0) invert(1);
+      opacity: 0.82;
+    }
+  }
 }
 
 .actions {
@@ -31,6 +45,10 @@
   gap: 10PX;
   color: #475569;
   cursor: pointer;
+
+  :global([data-theme='dark']) & {
+    color: rgba(255, 255, 255, 0.72);
+  }
 }
 
 .iconCircle {
@@ -41,6 +59,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  :global([data-theme='dark']) & {
+    background: #161a1e;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
 }
 
 .iconImg {
@@ -53,6 +76,10 @@
   font-size: 16PX;
   font-weight: 500;
   line-height: 1.2;
+
+  :global([data-theme='dark']) & {
+    color: rgba(255, 255, 255, 0.72);
+  }
 }
 
 .moreDots {
@@ -65,5 +92,8 @@
   height: 5PX;
   border-radius: 999PX;
   background: #64748b;
-}
 
+  :global([data-theme='dark']) & {
+    background: rgba(255, 255, 255, 0.55);
+  }
+}

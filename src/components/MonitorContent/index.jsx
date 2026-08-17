@@ -418,21 +418,21 @@ export default function MonitorContent({
         {showNavBar && <NavBar title={t('myAlarm.title')} showBorder={false} />}
         
         {warnData.loading && (
-          <div className={styles.sideBox} style={{ background: '#fff', height: '100%', display: 'flex' }}>
+          <div className={`${styles.sideBox} ${styles.loadingSideBox}`}>
             {/* Sidebar Skeleton */}
-            <div style={{ width: '85px', padding: '12px 0', background: '#f5f5f5', display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center' }}>
+            <div className={styles.loadingSidebar}>
                {Array(6).fill(0).map((_, i) => (
-                 <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                 <div key={i} className={styles.loadingSidebarItem}>
                    <Skeleton config={{ type: 'circle', size: 24 }} />
                    <Skeleton config={{ type: 'element', width: 30, height: 12 }} />
                  </div>
                ))}
             </div>
             {/* Content Skeleton */}
-            <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div className={styles.loadingMain}>
                {Array(4).fill(0).map((_, i) => (
-                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                 <div key={i} className={styles.loadingMainRow}>
+                   <div className={styles.loadingMainCol}>
                      <Skeleton config={{ type: 'element', width: 120, height: 16 }} />
                      <Skeleton config={{ type: 'element', width: 80, height: 20 }} />
                    </div>

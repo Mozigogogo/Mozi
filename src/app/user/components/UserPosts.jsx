@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/Skeleton';
 import { Loading } from '@/components/Loading';
 import PCPagination from '@/components/PCPagination';
 import { getPostsByUserId } from '@/api/community';
+import styles from './UserPosts.module.less';
 
 export default function UserPosts({ userId, pcMode = false }) {
   const { t } = useTranslation();
@@ -166,46 +167,29 @@ export default function UserPosts({ userId, pcMode = false }) {
   }, [router, userId]);
 
   if (initialLoading) {
-    const loadingWrapStyle = pcMode
-      ? { background: '#fff', minHeight: '100%', padding: '16PX 20PX' }
-      : { background: '#fff', minHeight: '100%', padding: '15px' };
-    const loadingItemStyle = pcMode
-      ? { marginBottom: '16PX', borderBottom: '1PX solid #f5f5f5', paddingBottom: '16PX' }
-      : { marginBottom: '20px', borderBottom: '1px solid #f5f5f5', paddingBottom: '20px' };
-    const loadingHeaderStyle = pcMode
-      ? { display: 'flex', gap: '10PX', marginBottom: '10PX' }
-      : { display: 'flex', gap: '10px', marginBottom: '12px' };
     return (
-      <div style={loadingWrapStyle}>
+      <div className={pcMode ? styles.loadingWrapPc : styles.loadingWrap}>
         {Array(3).fill(0).map((_, i) => (
-          <div key={i} style={loadingItemStyle}>
-            <div style={loadingHeaderStyle}>
-              <Skeleton config={{ type: 'circle', size: 40 }} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', justifyContent: 'center' }}>
+          <div key={i} className={pcMode ? styles.loadingItemPc : styles.loadingItem}>
+            <div className={pcMode ? styles.loadingHeaderPc : styles.loadingHeader}>
+              <Skeleton config={{ type: 'circle', size: pcMode ? 36 : 40 }} />
+              <div className={styles.loadingMeta}>
                 <Skeleton config={{ type: 'element', width: 120, height: 16 }} />
                 <Skeleton config={{ type: 'element', width: 60, height: 12 }} />
               </div>
             </div>
-            <Skeleton config={{ type: 'element', width: '90%', height: 20, style: { marginBottom: '10px' } }} />
-            <Skeleton config={{ type: 'element', width: '100%', height: 80, borderRadius: 8 }} />
+            <div className={pcMode ? styles.loadingTitlePc : styles.loadingTitle}>
+              <Skeleton config={{ type: 'element', width: '90%', height: 20 }} />
+            </div>
+            <Skeleton config={{ type: 'element', width: '100%', height: pcMode ? 96 : 80, borderRadius: 8 }} />
           </div>
         ))}
       </div>
     );
   }
 
-  const listWrapStyle = pcMode
-    ? { background: '#fff', minHeight: '100%', paddingBottom: '20PX' }
-    : { background: '#fff', minHeight: '100%', paddingBottom: '20px' };
-  const loadingMoreStyle = pcMode
-    ? { display: 'flex', justifyContent: 'center', padding: '12PX' }
-    : { display: 'flex', justifyContent: 'center', padding: '10px' };
-  const noMoreStyle = pcMode
-    ? { textAlign: 'center', padding: '16PX 10PX', color: '#999' }
-    : { textAlign: 'center', padding: '16px 10px', color: '#999' };
-
   return (
-    <div style={listWrapStyle}>
+    <div className={pcMode ? styles.containerPc : styles.container}>
       {posts.map(post => (
         <PostCard
           key={post.id}
@@ -230,11 +214,11 @@ export default function UserPosts({ userId, pcMode = false }) {
       ) : (
         <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
           {(hasMore) ? (
-              <div style={loadingMoreStyle}>
+              <div className={pcMode ? styles.loadingMorePc : styles.loadingMore}>
                 <Loading color="#11B787" size={20} />
               </div>
           ) : (
-              <div style={noMoreStyle}>
+              <div className={pcMode ? styles.noMorePc : styles.noMore}>
                 <span>{t('common.noMore') || '没有更多了'}</span>
               </div>
           )}
