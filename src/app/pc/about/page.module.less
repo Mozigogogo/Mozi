@@ -4,6 +4,11 @@
   background: #fff;
   color: #0f0f0f;
   font-family: 'Roboto', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+
+  :global([data-theme='dark']) & {
+    background: #161a1e;
+    color: #f3f4f6;
+  }
 }
 
 .sectionInner {
@@ -31,6 +36,17 @@
       radial-gradient(circle at 80% 70%, rgba(245, 195, 66, 0.08) 0%, transparent 40%);
     pointer-events: none;
   }
+
+  :global([data-theme='dark']) & {
+    background: linear-gradient(180deg, #1c1f24 0%, #161a1e 100%);
+    color: #f3f4f6;
+
+    &::before {
+      background:
+        radial-gradient(circle at 20% 30%, rgba(17, 183, 135, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 80% 70%, rgba(17, 183, 135, 0.06) 0%, transparent 40%);
+    }
+  }
 }
 
 .heroInner {
@@ -52,6 +68,10 @@
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
+
+  :global([data-theme='dark']) & {
+    color: #f3f4f6;
+  }
 }
 
 .heroLead {
@@ -60,6 +80,10 @@
   line-height: 1.75;
   color: #1f5a46;
   font-weight: 400;
+
+  :global([data-theme='dark']) & {
+    color: rgba(255, 255, 255, 0.68);
+  }
 }
 
 /* Mission & Vision */
@@ -68,6 +92,12 @@
   color: #0f3d2e;
   padding: 0;
   border-top: 1PX solid #f3e4a8;
+
+  :global([data-theme='dark']) & {
+    background: #1c1f24;
+    color: #f3f4f6;
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
 }
 
 .identitySection .sectionInner {
@@ -119,15 +149,38 @@
       color: #2a6a53;
     }
   }
+
+  :global([data-theme='dark']) & {
+    &:hover {
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: 0 14PX 34PX rgba(0, 0, 0, 0.28);
+
+      .identityLabel {
+        color: #f3f4f6;
+      }
+
+      .identityText {
+        color: rgba(255, 255, 255, 0.62);
+      }
+    }
+  }
 }
 
 .identityCard + .identityCard {
   border-left: 1PX solid #f3e4a8;
+
+  :global([data-theme='dark']) & {
+    border-left-color: rgba(255, 255, 255, 0.08);
+  }
 }
 
 .identityIcon {
   color: #5b9d85;
   margin-bottom: 24PX;
+
+  :global([data-theme='dark']) & {
+    color: #34d399;
+  }
 }
 
 .identityLabel {
@@ -135,6 +188,10 @@
   font-size: 32PX;
   font-weight: 700;
   line-height: 1.2;
+
+  :global([data-theme='dark']) & {
+    color: #f3f4f6;
+  }
 }
 
 .identityText {
@@ -142,12 +199,20 @@
   font-size: 16PX;
   line-height: 1.75;
   color: #2a6a53;
+
+  :global([data-theme='dark']) & {
+    color: rgba(255, 255, 255, 0.62);
+  }
 }
 
 /* Core Features */
 .featureSection {
   background: #fff;
   padding: 96PX 0;
+
+  :global([data-theme='dark']) & {
+    background: #161a1e;
+  }
 }
 
 .featureInner {
@@ -168,10 +233,18 @@
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.01em;
+
+  :global([data-theme='dark']) & {
+    color: #f3f4f6;
+  }
 }
 
 .sectionHeadingDark {
   color: #0f0f0f;
+
+  :global([data-theme='dark']) & {
+    color: #f3f4f6;
+  }
 }
 
 .sectionIntro {
@@ -179,6 +252,10 @@
   font-size: 16PX;
   line-height: 1.75;
   color: #4b5563;
+
+  :global([data-theme='dark']) & {
+    color: rgba(255, 255, 255, 0.55);
+  }
 }
 
 .featureList {
@@ -196,6 +273,14 @@
   &:last-child {
     border-bottom: 1PX solid #f0f0f0;
   }
+
+  :global([data-theme='dark']) & {
+    border-top-color: rgba(255, 255, 255, 0.08);
+
+    &:last-child {
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+  }
 }
 
 .featureIndex {
@@ -211,11 +296,19 @@
   font-size: 15PX;
   line-height: 1.7;
   color: #374151;
+
+  :global([data-theme='dark']) & {
+    color: rgba(255, 255, 255, 0.62);
+  }
 }
 
 .featureLabel {
   font-weight: 600;
   color: #111827;
+
+  :global([data-theme='dark']) & {
+    color: #f3f4f6;
+  }
 }
 
 .featureVisual {
@@ -224,6 +317,10 @@
   border-radius: 20PX;
   background: linear-gradient(145deg, #f7f8fa 0%, #eef2f5 100%);
   overflow: hidden;
+
+  :global([data-theme='dark']) & {
+    background: linear-gradient(145deg, #1c1f24 0%, #12151a 100%);
+  }
 }
 
 .visualCardMain {
@@ -275,6 +372,11 @@
   box-shadow: 0 12PX 32PX rgba(0, 0, 0, 0.1);
   font-weight: 700;
   color: #f59e0b;
+
+  :global([data-theme='dark']) & {
+    background: #252930;
+    box-shadow: 0 12PX 32PX rgba(0, 0, 0, 0.35);
+  }
 }
 
 .visualCoin {
@@ -298,6 +400,10 @@
 .advantageSection {
   background: #f7f8fa;
   padding: 96PX 0;
+
+  :global([data-theme='dark']) & {
+    background: #161a1e;
+  }
 }
 
 .advantageGrid {
@@ -317,6 +423,15 @@
   &:hover {
     box-shadow: 0 12PX 32PX rgba(0, 0, 0, 0.06);
   }
+
+  :global([data-theme='dark']) & {
+    background: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.08);
+
+    &:hover {
+      box-shadow: 0 12PX 32PX rgba(0, 0, 0, 0.32);
+    }
+  }
 }
 
 .advantageLabel {
@@ -324,6 +439,10 @@
   font-size: 18PX;
   font-weight: 700;
   color: #111827;
+
+  :global([data-theme='dark']) & {
+    color: #f3f4f6;
+  }
 }
 
 .advantageText {
@@ -331,6 +450,10 @@
   font-size: 15PX;
   line-height: 1.75;
   color: #4b5563;
+
+  :global([data-theme='dark']) & {
+    color: rgba(255, 255, 255, 0.55);
+  }
 }
 
 /* Values */
@@ -339,12 +462,21 @@
   color: #0f3d2e;
   padding: 96PX 0;
   text-align: center;
+
+  :global([data-theme='dark']) & {
+    background: #1c1f24;
+    color: #f3f4f6;
+  }
 }
 
 .valuesHeading {
   margin: 0 0 24PX;
   font-size: 32PX;
   font-weight: 700;
+
+  :global([data-theme='dark']) & {
+    color: #f3f4f6;
+  }
 }
 
 .valuesLabel {
@@ -362,12 +494,20 @@
   font-size: 20PX;
   line-height: 1.7;
   color: #2a6a53;
+
+  :global([data-theme='dark']) & {
+    color: rgba(255, 255, 255, 0.62);
+  }
 }
 
 /* Join */
 .joinSection {
   background: #fff;
   padding: 80PX 0 96PX;
+
+  :global([data-theme='dark']) & {
+    background: #161a1e;
+  }
 }
 
 .joinText {
@@ -379,6 +519,10 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
   overflow: hidden;
+
+  :global([data-theme='dark']) & {
+    color: rgba(255, 255, 255, 0.55);
+  }
 }
 
 .joinTextExpanded {
@@ -418,6 +562,12 @@
   color: #0f3d2e;
   padding: 48PX 0 56PX;
   border-top: 1PX solid #f3e4a8;
+
+  :global([data-theme='dark']) & {
+    background: #1c1f24;
+    color: #f3f4f6;
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
 }
 
 .footerInner {
@@ -442,12 +592,20 @@
 .footerName {
   font-size: 18PX;
   font-weight: 700;
+
+  :global([data-theme='dark']) & {
+    color: #f3f4f6;
+  }
 }
 
 .copyright {
   margin: 0;
   font-size: 13PX;
   color: #2a6a53;
+
+  :global([data-theme='dark']) & {
+    color: rgba(255, 255, 255, 0.45);
+  }
 }
 
 @media (max-width: 960PX) {

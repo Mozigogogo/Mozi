@@ -93,3 +93,98 @@
   color: #333;
   font-weight: 500;
 }
+
+:global([data-theme='dark']) {
+  .searchResults {
+    background: #161a1e;
+    color: #f3f4f6;
+  }
+
+  .searchResultsLoading,
+  .loadingWrapper {
+    background: #161a1e;
+  }
+
+  .resultCard {
+    background: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    :global(.ant-card-head) {
+      background: #1c1f24;
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    :global(.ant-card-head-title) {
+      color: #f3f4f6;
+    }
+
+    :global(.ant-card-body) {
+      background: #1c1f24;
+    }
+
+    :global {
+      .ant-table-wrapper,
+      .ant-table,
+      .ant-table-container,
+      .ant-table-content,
+      .ant-table table {
+        background: #1c1f24 !important;
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .ant-table-thead > tr > th {
+        background: #161a1e !important;
+        border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+      }
+
+      .ant-table-tbody > tr > td {
+        background: #1c1f24 !important;
+        border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .ant-table-tbody > tr:hover > td {
+        background: rgba(255, 255, 255, 0.04) !important;
+      }
+
+      .ant-empty-description {
+        color: rgba(255, 255, 255, 0.45);
+      }
+    }
+  }
+
+  .coinCell span {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .actionIcon {
+    color: rgba(255, 255, 255, 0.45);
+
+    &:hover {
+      color: #34d399;
+    }
+  }
+
+  .actionIconActive {
+    color: rgba(250, 95, 95, 1);
+
+    &:hover {
+      color: rgba(250, 95, 95, 1);
+    }
+  }
+
+  .sectionItem {
+    background: #161a1e;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+
+    &:hover {
+      background: rgba(17, 183, 135, 0.08);
+      border-color: rgba(17, 183, 135, 0.22);
+    }
+  }
+
+  .sectionName {
+    color: rgba(255, 255, 255, 0.78);
+  }
+}
