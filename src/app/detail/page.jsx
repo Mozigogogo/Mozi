@@ -3426,6 +3426,12 @@ ${coinInfo.name || symbol} (${symbol})
     const assetClassLabel = assetClassKey
       ? t(`detail.assetClass.${assetClassKey}`, { defaultValue: assetClassKey })
       : '--';
+    const instrumentKey = String(coinInfo.instrument || '').trim().toLowerCase();
+    const instrumentLabel = instrumentKey
+      ? instrumentKey === 'spot'
+        ? t('detail.instrument.spot')
+        : t('detail.instrument.contract')
+      : '--';
 
     return [
       { key: 'name', label: t('detail.companyProfile.name'), value: fmt(coinInfo.name) },
@@ -3434,7 +3440,6 @@ ${coinInfo.name || symbol} (${symbol})
       { key: 'sector', label: t('detail.companyProfile.sector'), value: fmt(coinInfo.sector) },
       { key: 'industry', label: t('detail.companyProfile.industry'), value: fmt(coinInfo.industry) },
       { key: 'assetClass', label: t('detail.companyProfile.assetClass'), value: assetClassLabel },
-      { key: 'isin', label: t('detail.companyProfile.isin'), value: fmt(coinInfo.isin) },
       { key: 'country', label: t('detail.companyProfile.country'), value: fmt(coinInfo.country) },
       { key: 'ipoDate', label: t('detail.companyProfile.ipoDate'), value: fmt(coinInfo.ipoDate) },
       { key: 'ceo', label: t('detail.companyProfile.ceo'), value: fmt(coinInfo.ceo) },
@@ -3442,32 +3447,9 @@ ${coinInfo.name || symbol} (${symbol})
       { key: 'marketCap', label: t('detail.companyProfile.marketCap'), value: fmt(coinInfo.marketCap) },
       { key: 'beta', label: t('detail.companyProfile.beta'), value: fmt(coinInfo.beta) },
       { key: 'priceRange52w', label: t('detail.companyProfile.priceRange52w'), value: fmt(coinInfo.priceRange52w) },
-      { key: 'exchange', label: t('detail.companyProfile.exchange'), value: fmt(coinInfo.exchange) },
-      { key: 'issuance', label: t('detail.companyProfile.issuance'), value: fmt(coinInfo.issuance) },
-      { key: 'instrument', label: t('detail.companyProfile.instrument'), value: fmt(coinInfo.instrument) },
+      { key: 'instrument', label: t('detail.companyProfile.instrument'), value: instrumentLabel },
     ];
   }, [coinInfo, isUsStock, symbol, t]);
-
-  const companySpreadFields = useMemo(() => {
-    if (!isUsStock || !coinInfo) return [];
-    const fmt = (value) => {
-      if (value == null || value === '' || value === '--') return '--';
-      return String(value);
-    };
-    const fmtPrice = (value) => {
-      const text = fmt(value);
-      if (text === '--') return text;
-      return text.startsWith('$') ? text : `$${text}`;
-    };
-    return [
-      { key: 'maxExchange', label: t('detail.companyProfile.maxExchange'), value: fmt(coinInfo.maxExchange) },
-      { key: 'maxPrice', label: t('detail.companyProfile.maxPrice'), value: fmtPrice(coinInfo.maxPrice) },
-      { key: 'minExchange', label: t('detail.companyProfile.minExchange'), value: fmt(coinInfo.minExchange) },
-      { key: 'minPrice', label: t('detail.companyProfile.minPrice'), value: fmtPrice(coinInfo.minPrice) },
-      { key: 'spreadAbs', label: t('detail.companyProfile.spreadAbs'), value: fmtPrice(coinInfo.spreadAbs) },
-      { key: 'spreadPct', label: t('detail.companyProfile.spreadPct'), value: fmt(coinInfo.spreadPct) },
-    ];
-  }, [coinInfo, isUsStock, t]);
 
   const companyDescription = useMemo(() => {
     if (!isUsStock || !coinInfo) return '';
@@ -3498,22 +3480,6 @@ ${coinInfo.name || symbol} (${symbol})
               </div>
             ))}
           </div>
-
-          {companySpreadFields.length > 0 ? (
-            <div className={styles.companyProfileSection}>
-              <div className={styles.companyProfileSectionTitle}>
-                {t('detail.companyProfile.spreadSection')}
-              </div>
-              <div className={styles.companyProfileGrid}>
-                {companySpreadFields.map((item) => (
-                  <div key={item.key} className={styles.companyProfileItem}>
-                    <div className={styles.companyProfileLabel}>{item.label}</div>
-                    <div className={styles.companyProfileValue}>{item.value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
 
           {companyDescription ? (
             <div className={styles.companyProfileSection}>

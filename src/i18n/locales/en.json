@@ -1436,8 +1436,11 @@
       "kr_equity": "KR Equity",
       "china_adr": "China ADR",
       "jp_equity": "JP Equity",
-      "fx": "Forex",
-      "pre_ipo": "Pre-IPO"
+      "fx": "Forex"
+    },
+    "instrument": {
+      "spot": "Spot",
+      "contract": "Contract"
     },
     "tradePicker": {
       "title": "Choose exchange to trade {{symbol}}",

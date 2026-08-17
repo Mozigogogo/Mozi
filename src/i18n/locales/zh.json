@@ -1435,8 +1435,11 @@
       "kr_equity": "韩股",
       "china_adr": "中概 ADR",
       "jp_equity": "日股",
-      "fx": "外汇",
-      "pre_ipo": "Pre-IPO"
+      "fx": "外汇"
+    },
+    "instrument": {
+      "spot": "现货",
+      "contract": "合约"
     },
     "tradePicker": {
       "title": "选择交易所开始交易{{symbol}}",
