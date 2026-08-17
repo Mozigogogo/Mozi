@@ -2303,6 +2303,130 @@
   }
 }
 
+/* PC：美股公司简介（替换中间 K 线区） */
+.companyProfileEntryBtn {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 4PX 2PX;
+  border: none;
+  background: transparent;
+  color: #11b787;
+  font-size: 13PX;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    color: #0ea574;
+    text-decoration: underline;
+  }
+}
+
+.companyProfilePanel {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  box-sizing: border-box;
+  padding: 16PX 20PX 20PX;
+  overflow: auto;
+}
+
+.companyProfileHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12PX;
+  margin-bottom: 16PX;
+  flex-shrink: 0;
+}
+
+.companyProfileTitle {
+  font-size: 16PX;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.companyProfileBackBtn {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 6PX 12PX;
+  border: 1PX solid rgba(17, 183, 135, 0.45);
+  border-radius: 8PX;
+  background: rgba(17, 183, 135, 0.08);
+  color: #11b787;
+  font-size: 13PX;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(17, 183, 135, 0.14);
+  }
+}
+
+.companyProfileEmpty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 14PX;
+}
+
+.companyProfileGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12PX 24PX;
+}
+
+.companyProfileItem {
+  min-width: 0;
+  padding: 10PX 12PX;
+  border-radius: 10PX;
+  background: #f7f8fa;
+}
+
+.companyProfileLabel {
+  font-size: 12PX;
+  color: #8b95a5;
+  margin-bottom: 4PX;
+}
+
+.companyProfileValue {
+  font-size: 14PX;
+  font-weight: 500;
+  color: #1a1a2e;
+  word-break: break-word;
+}
+
+.companyProfileSection {
+  margin-top: 20PX;
+}
+
+.companyProfileSectionTitle {
+  font-size: 14PX;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 12PX;
+}
+
+.companyProfileDescription {
+  padding: 12PX 14PX;
+  border-radius: 10PX;
+  background: #f7f8fa;
+  color: #45556c;
+  font-size: 13PX;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 :global([data-theme='dark']) {
   .surfaceBootOverlay,
   .surfaceBootOverlayPc {
@@ -2576,6 +2700,59 @@
 
   .orderBookSection {
     border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .companyProfileEntryBtn {
+    color: #34d399;
+
+    &:hover {
+      color: #6ee7b7;
+    }
+  }
+
+  .companyProfilePanel {
+    background: #1c1f24;
+  }
+
+  .companyProfileTitle {
+    color: #f3f4f6;
+  }
+
+  .companyProfileBackBtn {
+    border-color: rgba(17, 183, 135, 0.45);
+    background: rgba(17, 183, 135, 0.12);
+    color: #34d399;
+
+    &:hover {
+      background: rgba(17, 183, 135, 0.2);
+    }
+  }
+
+  .companyProfileEmpty {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .companyProfileItem {
+    background: #161a1e;
+    border: 1PX solid rgba(255, 255, 255, 0.06);
+  }
+
+  .companyProfileLabel {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .companyProfileValue {
+    color: #f3f4f6;
+  }
+
+  .companyProfileSectionTitle {
+    color: #f3f4f6;
+  }
+
+  .companyProfileDescription {
+    background: #161a1e;
+    border: 1PX solid rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.72);
   }
 
   .box,

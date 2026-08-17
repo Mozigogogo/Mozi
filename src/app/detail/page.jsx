@@ -68,6 +68,8 @@ import {
   getMockUsStockKline,
   getMockUsStockExchangePrice,
   getMockUsStockPage,
+  normalizeUsStockHeaderResponse,
+  buildUsStockHeaderInfoPanels,
 } from '@/utils/usStockMockData';
 import styles from './page.module.less';
 
@@ -389,6 +391,7 @@ export default function DetailPage() {
   /** K 线弹幕专用（userType=real），与右下角社区列表互不影响 */
   const [barragePosts, setBarragePosts] = useState([]);
   const [barrageVisible, setBarrageVisible] = useState(true);
+  const [showCompanyProfile, setShowCompanyProfile] = useState(false);
   const [pcAiChatOpen, setPcAiChatOpen] = useState(false);
   const [pcAiAutoSend, setPcAiAutoSend] = useState({ text: '', token: '' });
   const [pcOrderBookHeightPx, setPcOrderBookHeightPx] = useState(null);
@@ -1080,9 +1083,13 @@ export default function DetailPage() {
       } else {
         const response = await request({
           url: isUsStock ? Interface.stock_info : Interface.coin_info,
-          data: { symbol }
+          data: { symbol },
         });
-        coinData = response?.data || null;
+        if (isUsStock) {
+          coinData = normalizeUsStockHeaderResponse(response?.data, { language: i18n.language });
+        } else {
+          coinData = response?.data || null;
+        }
       }
       
       if (coinData) {
@@ -1106,30 +1113,36 @@ export default function DetailPage() {
           isSelfSelected: favorite,
         }));
         
-        // 设置详细信息（存 key，文案在渲染时按当前语言翻译）
-        const headerInfoLeft = [
-          { key: 'high24h', value: coinData.high_24h != null ? `$${coinData.high_24h}` : coinData.high_24h },
-          { key: 'low24h', value: coinData.low_24h != null ? `$${coinData.low_24h}` : coinData.low_24h },
-          { key: 'fdv', value: coinData.fullyDilutedValuation },
-          { key: 'marketCapChange24h', value: coinData.marketCapChange_24h },
-          { key: 'marketCapChangePercent24h', value: coinData.marketCapChangePercentage_24h },
-          { key: 'athDate', value: coinData.athDate },
-          { key: 'atlDate', value: coinData.atlDate },
-        ];
+        if (isUsStock) {
+          const panels = buildUsStockHeaderInfoPanels(coinData);
+          setCoinInfoLeft(panels.left);
+          setCoinInfoRight(panels.right);
+        } else {
+          // 设置详细信息（存 key，文案在渲染时按当前语言翻译）
+          const headerInfoLeft = [
+            { key: 'high24h', value: coinData.high_24h != null ? `$${coinData.high_24h}` : coinData.high_24h },
+            { key: 'low24h', value: coinData.low_24h != null ? `$${coinData.low_24h}` : coinData.low_24h },
+            { key: 'fdv', value: coinData.fullyDilutedValuation },
+            { key: 'marketCapChange24h', value: coinData.marketCapChange_24h },
+            { key: 'marketCapChangePercent24h', value: coinData.marketCapChangePercentage_24h },
+            { key: 'athDate', value: coinData.athDate },
+            { key: 'atlDate', value: coinData.atlDate },
+          ];
 
-        const headerInfoRight = [
-          { key: 'totalSupply', value: coinData.totalSupply },
-          { key: 'marketCap', value: coinData.marketCap },
-          { key: 'totalVolume24h', value: coinData.totalVolume },
-          { key: 'circulatingSupply', value: coinData.circulatingSupply },
-          { key: 'ath', value: coinData.ath },
-          { key: 'athChangePercent', value: coinData.athChangePercentage },
-          { key: 'atl', value: coinData.atl },
-          { key: 'atlChangePercent', value: coinData.atlChangePercentage },
-        ];
+          const headerInfoRight = [
+            { key: 'totalSupply', value: coinData.totalSupply },
+            { key: 'marketCap', value: coinData.marketCap },
+            { key: 'totalVolume24h', value: coinData.totalVolume },
+            { key: 'circulatingSupply', value: coinData.circulatingSupply },
+            { key: 'ath', value: coinData.ath },
+            { key: 'athChangePercent', value: coinData.athChangePercentage },
+            { key: 'atl', value: coinData.atl },
+            { key: 'atlChangePercent', value: coinData.atlChangePercentage },
+          ];
 
-        setCoinInfoLeft(headerInfoLeft);
-        setCoinInfoRight(headerInfoRight);
+          setCoinInfoLeft(headerInfoLeft);
+          setCoinInfoRight(headerInfoRight);
+        }
       }
     } catch (error) {
       console.error(isUsStock ? '获取美股信息失败:' : '获取币种信息失败:', error);
@@ -1875,6 +1888,7 @@ ${coinInfo.name || symbol} (${symbol})
 
   useEffect(() => {
     setIsFavorite(fromFavorite);
+    setShowCompanyProfile(false);
     if (!symbol || fromFavorite) return undefined;
 
     let alive = true;
@@ -1964,6 +1978,7 @@ ${coinInfo.name || symbol} (${symbol})
           }
           pollingTimerRef.current = setInterval(() => {
             if (needLoop.current) {
+              fetchCoinInfo({ silent: true });
               fetchMarketData({ silent: true });
             }
           }, LOOPTIME);
@@ -2685,8 +2700,17 @@ ${coinInfo.name || symbol} (${symbol})
             </div>
           </div>
           <div className={styles.right}>
-            <div className={styles.marketRank}>No.{coinInfo.marketCapRank}</div>
-            <div className={styles.marketItem}>{t('detail.marketCap')} {coinInfo.marketCap}</div>
+            {isUsStock ? (
+              <>
+                <div className={styles.marketRank}>{coinInfo.listingMarket || coinInfo.sector || '--'}</div>
+                <div className={styles.marketItem}>{coinInfo.name || symbol}</div>
+              </>
+            ) : (
+              <>
+                <div className={styles.marketRank}>No.{coinInfo.marketCapRank}</div>
+                <div className={styles.marketItem}>{t('detail.marketCap')} {coinInfo.marketCap}</div>
+              </>
+            )}
           </div>
         </div>
         
@@ -3392,6 +3416,118 @@ ${coinInfo.name || symbol} (${symbol})
     [isFavorite, coinInfo?.isSelfSelected, fromFavorite]
   );
 
+  const companyProfileFields = useMemo(() => {
+    if (!isUsStock || !coinInfo) return [];
+    const fmt = (value) => {
+      if (value == null || value === '' || value === '--') return '--';
+      return String(value);
+    };
+    const assetClassKey = String(coinInfo.assetClass || '').trim();
+    const assetClassLabel = assetClassKey
+      ? t(`detail.assetClass.${assetClassKey}`, { defaultValue: assetClassKey })
+      : '--';
+
+    return [
+      { key: 'name', label: t('detail.companyProfile.name'), value: fmt(coinInfo.name) },
+      { key: 'symbol', label: t('detail.companyProfile.symbol'), value: fmt(coinInfo.symbol || symbol) },
+      { key: 'listingMarket', label: t('detail.companyProfile.listingMarket'), value: fmt(coinInfo.listingMarket) },
+      { key: 'sector', label: t('detail.companyProfile.sector'), value: fmt(coinInfo.sector) },
+      { key: 'industry', label: t('detail.companyProfile.industry'), value: fmt(coinInfo.industry) },
+      { key: 'assetClass', label: t('detail.companyProfile.assetClass'), value: assetClassLabel },
+      { key: 'isin', label: t('detail.companyProfile.isin'), value: fmt(coinInfo.isin) },
+      { key: 'country', label: t('detail.companyProfile.country'), value: fmt(coinInfo.country) },
+      { key: 'ipoDate', label: t('detail.companyProfile.ipoDate'), value: fmt(coinInfo.ipoDate) },
+      { key: 'ceo', label: t('detail.companyProfile.ceo'), value: fmt(coinInfo.ceo) },
+      { key: 'fullTimeEmployees', label: t('detail.companyProfile.fullTimeEmployees'), value: fmt(coinInfo.fullTimeEmployees) },
+      { key: 'marketCap', label: t('detail.companyProfile.marketCap'), value: fmt(coinInfo.marketCap) },
+      { key: 'beta', label: t('detail.companyProfile.beta'), value: fmt(coinInfo.beta) },
+      { key: 'priceRange52w', label: t('detail.companyProfile.priceRange52w'), value: fmt(coinInfo.priceRange52w) },
+      { key: 'exchange', label: t('detail.companyProfile.exchange'), value: fmt(coinInfo.exchange) },
+      { key: 'issuance', label: t('detail.companyProfile.issuance'), value: fmt(coinInfo.issuance) },
+      { key: 'instrument', label: t('detail.companyProfile.instrument'), value: fmt(coinInfo.instrument) },
+    ];
+  }, [coinInfo, isUsStock, symbol, t]);
+
+  const companySpreadFields = useMemo(() => {
+    if (!isUsStock || !coinInfo) return [];
+    const fmt = (value) => {
+      if (value == null || value === '' || value === '--') return '--';
+      return String(value);
+    };
+    const fmtPrice = (value) => {
+      const text = fmt(value);
+      if (text === '--') return text;
+      return text.startsWith('$') ? text : `$${text}`;
+    };
+    return [
+      { key: 'maxExchange', label: t('detail.companyProfile.maxExchange'), value: fmt(coinInfo.maxExchange) },
+      { key: 'maxPrice', label: t('detail.companyProfile.maxPrice'), value: fmtPrice(coinInfo.maxPrice) },
+      { key: 'minExchange', label: t('detail.companyProfile.minExchange'), value: fmt(coinInfo.minExchange) },
+      { key: 'minPrice', label: t('detail.companyProfile.minPrice'), value: fmtPrice(coinInfo.minPrice) },
+      { key: 'spreadAbs', label: t('detail.companyProfile.spreadAbs'), value: fmtPrice(coinInfo.spreadAbs) },
+      { key: 'spreadPct', label: t('detail.companyProfile.spreadPct'), value: fmt(coinInfo.spreadPct) },
+    ];
+  }, [coinInfo, isUsStock, t]);
+
+  const companyDescription = useMemo(() => {
+    if (!isUsStock || !coinInfo) return '';
+    return String(coinInfo.description || '').trim();
+  }, [coinInfo, isUsStock]);
+
+  const renderCompanyProfile = () => (
+    <div className={styles.companyProfilePanel}>
+      <div className={styles.companyProfileHeader}>
+        <div className={styles.companyProfileTitle}>{t('detail.companyProfile.title')}</div>
+        <button
+          type="button"
+          className={styles.companyProfileBackBtn}
+          onClick={() => setShowCompanyProfile(false)}
+        >
+          {t('detail.actions.backToKline')}
+        </button>
+      </div>
+      {companyProfileFields.length === 0 ? (
+        <div className={styles.companyProfileEmpty}>{t('detail.companyProfile.empty')}</div>
+      ) : (
+        <>
+          <div className={styles.companyProfileGrid}>
+            {companyProfileFields.map((item) => (
+              <div key={item.key} className={styles.companyProfileItem}>
+                <div className={styles.companyProfileLabel}>{item.label}</div>
+                <div className={styles.companyProfileValue}>{item.value}</div>
+              </div>
+            ))}
+          </div>
+
+          {companySpreadFields.length > 0 ? (
+            <div className={styles.companyProfileSection}>
+              <div className={styles.companyProfileSectionTitle}>
+                {t('detail.companyProfile.spreadSection')}
+              </div>
+              <div className={styles.companyProfileGrid}>
+                {companySpreadFields.map((item) => (
+                  <div key={item.key} className={styles.companyProfileItem}>
+                    <div className={styles.companyProfileLabel}>{item.label}</div>
+                    <div className={styles.companyProfileValue}>{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {companyDescription ? (
+            <div className={styles.companyProfileSection}>
+              <div className={styles.companyProfileSectionTitle}>
+                {t('detail.companyProfile.description')}
+              </div>
+              <div className={styles.companyProfileDescription}>{companyDescription}</div>
+            </div>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+
   if (isPC) {
     return (
       <>
@@ -3420,7 +3556,18 @@ ${coinInfo.name || symbol} (${symbol})
               onGoTrade={handleGoTrade}
               onShare={shareToTelegram}
               onTradingRadar={handleTradingRadar}
-              showBarrage
+              headerExtra={
+                isUsStock ? (
+                  <button
+                    type="button"
+                    className={styles.companyProfileEntryBtn}
+                    onClick={() => setShowCompanyProfile(true)}
+                  >
+                    {t('detail.actions.companyProfile')}
+                  </button>
+                ) : null
+              }
+              showBarrage={!showCompanyProfile}
               barrageVisible={barrageVisible}
               onBarrageVisibleChange={setBarrageVisible}
               onBarrageSend={handleBarrageSend}
@@ -3466,7 +3613,7 @@ ${coinInfo.name || symbol} (${symbol})
               ]}
               loading={loading}
             >
-              {renderKline()}
+              {showCompanyProfile && isUsStock ? renderCompanyProfile() : renderKline()}
               {showOrderBook ? (
                 <div
                   ref={pcOrderCommunityColRef}

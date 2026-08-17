@@ -235,6 +235,39 @@
   overflow: visible;
 }
 
+.headerExtra {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  margin-left: 4PX;
+  margin-right: 4PX;
+}
+
+.companyProfileBtn {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 4PX 2PX;
+  border: none;
+  background: transparent;
+  color: #11b787;
+  font-size: 13PX;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    color: #0ea574;
+    text-decoration: underline;
+  }
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
 .actions {
   display: flex;
   align-items: center;
@@ -1210,6 +1243,14 @@
 
     &:hover {
       background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .companyProfileBtn {
+    color: #34d399;
+
+    &:hover {
+      color: #6ee7b7;
     }
   }
 

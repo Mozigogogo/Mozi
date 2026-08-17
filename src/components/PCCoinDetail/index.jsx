@@ -44,6 +44,8 @@ export default function PCCoinDetail({
   onTradingRadar,
   /** 行情统计项；可传二维列 [[...],[...]] 或扁平 [{ label, value }]，组件会展平为 OKX 式横向指标 */
   statColumns = [],
+  /** 顶栏统计与操作按钮之间的额外内容（如美股「公司简介」） */
+  headerExtra = null,
   loading = false,
   children,
   /** 图表左侧栏内容（如投资回报率） */
@@ -384,6 +386,10 @@ export default function PCCoinDetail({
           ) : (
             <div className={styles.statRow} />
           )}
+
+          {headerExtra ? (
+            <div className={styles.headerExtra}>{headerExtra}</div>
+          ) : null}
 
           <div className={styles.actions}>
             {onToggleFavorite ? (

@@ -6,8 +6,8 @@ export const US_STOCK_USE_MOCK = false;
 /** 发现页是否展示「美股行情」Tab；false 则隐藏 */
 export const SHOW_US_STOCK_TAB = true;
 
-/** 美股列表是否可点击进入详情页；暂时关闭 */
-export const US_STOCK_DETAIL_ENABLED = false;
+/** 美股列表是否可点击进入详情页 */
+export const US_STOCK_DETAIL_ENABLED = true;
 
 /** 解析格式化成交额（如 `$82.5亿`）为可比较数值 */
 export function parseVolumeValue(raw) {
@@ -277,29 +277,139 @@ const findMockListItem = (symbol) => {
   return MOCK_US_STOCK_LIST.find((item) => item.symbol === key) || MOCK_US_STOCK_LIST[0];
 };
 
+/** 将 /stock/detail/header 响应映射为详情页 coinInfo 结构 */
+export function normalizeUsStockHeaderResponse(raw, { language = 'zh' } = {}) {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const priceChange = raw.priceChange ?? raw.priceChange24h ?? raw.priceChange_24h;
+  const priceChangePercent = raw.priceChangePercent ?? raw.priceChangePercentage24h ?? raw.priceChangePercentage_24h;
+
+  const formatPrice = (value) => {
+    if (value == null || value === '') return '--';
+    return formatUsStockLastPrice(value);
+  };
+
+  const formatPercent = (value) => {
+    if (value == null || value === '') return '--';
+    return formatUsStockPriceChangePercent(value);
+  };
+
+  const formatMarketCap = (value) => {
+    if (value == null || value === '') return '--';
+    return formatMoneyCompact(value, language, true);
+  };
+
+  const formatEmployees = (value) => {
+    if (value == null || value === '') return '--';
+    const n = Number(value);
+    if (!Number.isFinite(n)) return String(value);
+    return n.toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US');
+  };
+
+  return {
+    ...raw,
+    symbol: String(raw.symbol ?? '').trim(),
+    name: raw.name ?? raw.symbol ?? '',
+    url: raw.logo ?? raw.url ?? '',
+    currentPrice: formatPrice(raw.lastPrice ?? raw.currentPrice ?? raw.price),
+    priceChange_24h: formatUsStockPriceChange(priceChange),
+    priceChangePercentage_24h: formatPercent(priceChangePercent),
+    high_24h: formatPrice(raw.highPrice ?? raw.high_24h ?? raw.high24h),
+    low_24h: formatPrice(raw.lowPrice ?? raw.low_24h ?? raw.low24h),
+    marketCap: formatMarketCap(raw.marketCap),
+    totalVolume: formatUsStockQuoteVolume(raw, language),
+    listingMarket: raw.listingMarket ?? '',
+    sector: raw.sector ?? '',
+    industry: raw.industry ?? '',
+    spreadPct: formatPercent(raw.spreadPct),
+    spreadAbs: formatPrice(raw.spreadAbs),
+    maxExchange: raw.maxExchange ?? '--',
+    maxPrice: formatPrice(raw.maxPrice),
+    minExchange: raw.minExchange ?? '--',
+    minPrice: formatPrice(raw.minPrice),
+    priceRange52w: raw.priceRange52w ?? '--',
+    beta: raw.beta ?? '--',
+    country: raw.country ?? '--',
+    ipoDate: raw.ipoDate ?? '--',
+    ceo: raw.ceo ?? '--',
+    fullTimeEmployees: formatEmployees(raw.fullTimeEmployees),
+    description: raw.description ?? '',
+    volume: raw.volume ?? '--',
+    isSelfSelected: Boolean(raw.isSelfSelected ?? raw.isFavorite ?? raw.favorite ?? false),
+  };
+}
+
+/** 美股详情头部信息面板（左/右列） */
+export function buildUsStockHeaderInfoPanels(normalized) {
+  if (!normalized) return { left: [], right: [] };
+
+  const fmt = (value) => (value == null || value === '' ? '--' : value);
+  const fmtPrice = (value) => {
+    const text = fmt(value);
+    if (text === '--') return text;
+    return text.startsWith('$') ? text : `$${text}`;
+  };
+
+  return {
+    left: [
+      { key: 'high24h', value: fmtPrice(normalized.high_24h) },
+      { key: 'low24h', value: fmtPrice(normalized.low_24h) },
+      { key: 'spreadPct', value: fmt(normalized.spreadPct) },
+      { key: 'spreadAbs', value: fmtPrice(normalized.spreadAbs) },
+      { key: 'maxExchange', value: fmt(normalized.maxExchange) },
+      { key: 'maxPrice', value: fmtPrice(normalized.maxPrice) },
+      { key: 'minExchange', value: fmt(normalized.minExchange) },
+      { key: 'minPrice', value: fmtPrice(normalized.minPrice) },
+      { key: 'priceRange52w', value: fmt(normalized.priceRange52w) },
+    ],
+    right: [
+      { key: 'listingMarket', value: fmt(normalized.listingMarket) },
+      { key: 'marketCap', value: fmt(normalized.marketCap) },
+      { key: 'totalVolume24h', value: fmt(normalized.totalVolume) },
+      { key: 'sector', value: fmt(normalized.sector) },
+      { key: 'industry', value: fmt(normalized.industry) },
+      { key: 'beta', value: fmt(normalized.beta) },
+      { key: 'country', value: fmt(normalized.country) },
+      { key: 'ipoDate', value: fmt(normalized.ipoDate) },
+      { key: 'ceo', value: fmt(normalized.ceo) },
+      { key: 'fullTimeEmployees', value: fmt(normalized.fullTimeEmployees) },
+    ],
+  };
+}
+
 /** 详情头部 mock，对齐 GET /stock/detail/header */
 export function getMockUsStockHeader(symbol) {
   const item = findMockListItem(symbol);
   const sym = item.symbol;
-  return {
+  const lastPrice = Number(item.currentPrice) || 100;
+  return normalizeUsStockHeaderResponse({
     symbol: sym,
+    logo: item.url || '',
     name: `${sym} Inc.`,
-    url: item.url || '',
-    currentPrice: item.currentPrice,
-    priceChange_24h: item.priceChange24h,
-    priceChangePercentage_24h: item.priceChangePercentage24h,
-    marketCapRank: 2,
-    marketCap: '$3.5万亿',
-    high_24h: String((Number(item.currentPrice) * 1.01).toFixed(2)),
-    low_24h: String((Number(item.currentPrice) * 0.99).toFixed(2)),
-    totalVolume: item.totalVolume,
-    totalSupply: '155.5亿',
-    circulatingSupply: '153.2亿',
-    fullyDilutedValuation: '$3.6万亿',
-    marketCapChange_24h: item.priceChange24h,
-    marketCapChangePercentage_24h: item.priceChangePercentage24h,
+    listingMarket: 'NASDAQ',
+    sector: 'Technology',
+    industry: 'Semiconductors',
+    lastPrice: String(lastPrice),
+    highPrice: String((lastPrice * 1.01).toFixed(2)),
+    lowPrice: String((lastPrice * 0.99).toFixed(2)),
+    priceChange: item.priceChange24h,
+    priceChangePercent: item.priceChangePercentage24h?.replace?.('%', '') ?? item.priceChangePercentage24h,
+    quoteVolume: '293774.41',
+    marketCap: '5453600360000',
+    spreadPct: '0.24',
+    spreadAbs: '0.54',
+    maxExchange: 'Gate',
+    maxPrice: String((lastPrice * 1.002).toFixed(2)),
+    minExchange: 'Kraken',
+    minPrice: String((lastPrice * 0.998).toFixed(2)),
+    priceRange52w: `${(lastPrice * 0.72).toFixed(2)}-${(lastPrice * 1.04).toFixed(2)}`,
+    beta: '2.21',
+    country: 'US',
+    ipoDate: '1999-01-22',
+    ceo: 'Mock CEO',
+    fullTimeEmployees: 42000,
     isSelfSelected: false,
-  };
+  });
 }
 
 /** 详情 K 线 mock，对齐 GET /stock/detail/kline */
