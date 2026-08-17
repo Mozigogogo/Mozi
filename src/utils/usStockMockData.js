@@ -32,6 +32,15 @@ export function sortUsStockByVolume(list, sortOrder = 'desc') {
   return sorted;
 }
 
+function formatUsStockLastPrice(raw) {
+  if (raw == null || raw === '') return '--';
+  const s = String(raw).trim().replace(/,/g, '');
+  if (!s || s === '--') return '--';
+  const n = Number(s);
+  if (!Number.isFinite(n)) return String(raw).trim();
+  return n.toFixed(8).replace(/\.?0+$/, '') || '0';
+}
+
 function formatUsStockPriceChange(raw) {
   if (raw == null || raw === '') return '--';
   const s = String(raw).trim();
@@ -78,7 +87,7 @@ export function formatUsStockListItem(item, { language = 'zh' } = {}) {
     symbol,
     url: item?.logo ?? item?.url ?? item?.img ?? '',
     totalVolume: formatUsStockQuoteVolume(item, language),
-    currentPrice: lastPrice == null || lastPrice === '' ? '--' : String(lastPrice),
+    currentPrice: formatUsStockLastPrice(lastPrice),
     priceChange24h: formatUsStockPriceChange(priceChange),
     priceChangePercentage24h: formatUsStockPriceChangePercent(priceChangePercent),
   };
