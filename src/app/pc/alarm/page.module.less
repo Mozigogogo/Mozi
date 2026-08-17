@@ -74,7 +74,7 @@
 
 .historyCard {
   background: #fff;
-  border-radius: 32PX;
+  border-radius: 16PX;
   border: 1px solid #e7f0ea;
   box-shadow: 0 4PX 20PX rgba(17, 183, 135, 0.08);
   height: 80vh;
@@ -288,7 +288,7 @@
 
 .card {
   background: #fff;
-  border-radius: 32PX;
+  border-radius: 16PX;
   border: 1px solid #e7f0ea;
   box-shadow: 0 4PX 20PX rgba(17, 183, 135, 0.08);
   padding: 14PX 16PX 16PX;
@@ -495,6 +495,7 @@
 .compactSwitch {
   --height: 24PX;
   --width: 40PX;
+  --checked-color: #11b787;
 }
 
 .featureList {
@@ -626,11 +627,12 @@
   display: flex;
   flex-direction: column;
   isolation: isolate;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20375%20447'%20preserveAspectRatio='none'%3E%3Cpath%20fill='white'%20d='M0.954241%2029.9885C0.979531%2018.962%209.92443%2010.0362%2020.9509%2010.0344L233.113%2010C236.476%209.99947%20239.614%2011.6894%20241.464%2014.4975L252.036%2030.5401C253.886%2033.3478%20257.024%2035.0376%20260.386%2035.0376H354.049C365.075%2035.0376%20374.022%2043.9623%20374.049%2054.989L375%20446.038H0L0.954241%2029.9885Z'/%3E%3C/svg%3E");
+  /* 顶部异形 + 底部圆角（与左侧 card 16PX 对齐） */
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20375%20447'%20preserveAspectRatio='none'%3E%3Cpath%20fill='white'%20d='M0.954241%2029.9885C0.979531%2018.962%209.92443%2010.0362%2020.9509%2010.0344L233.113%2010C236.476%209.99947%20239.614%2011.6894%20241.464%2014.4975L252.036%2030.5401C253.886%2033.3478%20257.024%2035.0376%20260.386%2035.0376H354.049C365.075%2035.0376%20374.022%2043.9623%20374.049%2054.989L375%20430.038A16%2016%200%200%201%20359%20446.038L16%20446.038A16%2016%200%200%201%200%20430.038L0.954241%2029.9885Z'/%3E%3C/svg%3E");
   -webkit-mask-size: 100% calc(100% + 1PX);
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: bottom center;
-  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20375%20447'%20preserveAspectRatio='none'%3E%3Cpath%20fill='white'%20d='M0.954241%2029.9885C0.979531%2018.962%209.92443%2010.0362%2020.9509%2010.0344L233.113%2010C236.476%209.99947%20239.614%2011.6894%20241.464%2014.4975L252.036%2030.5401C253.886%2033.3478%20257.024%2035.0376%20260.386%2035.0376H354.049C365.075%2035.0376%20374.022%2043.9623%20374.049%2054.989L375%20446.038H0L0.954241%2029.9885Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20375%20447'%20preserveAspectRatio='none'%3E%3Cpath%20fill='white'%20d='M0.954241%2029.9885C0.979531%2018.962%209.92443%2010.0362%2020.9509%2010.0344L233.113%2010C236.476%209.99947%20239.614%2011.6894%20241.464%2014.4975L252.036%2030.5401C253.886%2033.3478%20257.024%2035.0376%20260.386%2035.0376H354.049C365.075%2035.0376%20374.022%2043.9623%20374.049%2054.989L375%20430.038A16%2016%200%200%201%20359%20446.038L16%20446.038A16%2016%200%200%201%200%20430.038L0.954241%2029.9885Z'/%3E%3C/svg%3E");
   mask-size: 100% calc(100% + 1PX);
   mask-repeat: no-repeat;
   mask-position: bottom center;
@@ -1184,5 +1186,255 @@
     width: 100%;
     max-width: 280px;
     align-self: center;
+  }
+}
+
+.page {
+  :global([data-theme='dark']) & {
+    .topTabs {
+      background: #1c1f24;
+      box-shadow: 0 2PX 10PX rgba(0, 0, 0, 0.35);
+    }
+
+    .tabGhost {
+      color: rgba(255, 255, 255, 0.55);
+      background: transparent;
+    }
+
+    .card,
+    .historyCard {
+      background: #1c1f24;
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4PX 20PX rgba(0, 0, 0, 0.35);
+    }
+
+    .cardHeader {
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .headerTitle,
+    .symbol,
+    .configLabel,
+    .featureTitle,
+    .sideItemLabel,
+    .freqTitle,
+    .freqOptionTitle {
+      color: #f3f4f6;
+    }
+
+    .headerMeta {
+      background: rgba(17, 183, 135, 0.16);
+      color: #34d399;
+    }
+
+    .manageBtn,
+    .priceLabel,
+    .priceMetaMuted,
+    .featureDesc,
+    .riskTip,
+    .unit,
+    .sideItemSub,
+    .sideFieldHint,
+    .sideSmsHint,
+    .freqOptionDesc {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .manageIcon,
+    .riskTipIcon {
+      filter: brightness(0) invert(0.7);
+    }
+
+    .loadingWrap {
+      background: #1c1f24;
+    }
+
+    .configInputWrap,
+    .sideInputRow {
+      background: #161a1e;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .configInput {
+      color: #f3f4f6;
+
+      :global(.adm-input-element),
+      :global(input) {
+        color: #f3f4f6 !important;
+        -webkit-text-fill-color: #f3f4f6;
+      }
+    }
+
+    .featureList {
+      border-top-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .featureRow {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .sidePanelMask {
+      background: linear-gradient(180deg, rgba(17, 183, 135, 0.28) 0%, rgba(28, 31, 36, 0) 26.5507%), #1c1f24;
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4PX 20PX rgba(0, 0, 0, 0.35);
+    }
+
+    .sideTitle {
+      color: #34d399;
+    }
+
+    .sideSubTitle span {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.35) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: none;
+    }
+
+    .notifySection {
+      background: #161a1e;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .sideInput {
+      color: #f3f4f6;
+    }
+
+    .sideInput::placeholder {
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    .sideInputPrefix {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .sideInputPrefixBtn {
+      border-right-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .sideInputPrefixArrow {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .webhookAddBtn,
+    .webhookRemoveBtn {
+      background: #161a1e;
+      border-color: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .freqOption {
+      background: #161a1e;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .freqOptionSelected {
+      border-color: #11b787;
+      box-shadow: 0 0 0 1PX rgba(17, 183, 135, 0.2);
+    }
+
+    .countryDropdownPanel {
+      background: #1c1f24;
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8PX 24PX rgba(0, 0, 0, 0.45);
+    }
+
+    .countryDropdownItem {
+      background: #1c1f24;
+    }
+
+    .countryDropdownItem:hover {
+      background: rgba(17, 183, 135, 0.12);
+    }
+
+    .countryDropdownName {
+      color: #f3f4f6;
+    }
+
+    .countryDropdownCode {
+      color: #34d399;
+    }
+
+    .historyLeft {
+      background: rgba(22, 26, 30, 0.8);
+      border-right-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .historyLeftTitle,
+    .historyTitle,
+    .historyMetaValue,
+    .historyCoinSymbol,
+    .historyRowLabel {
+      color: #f3f4f6;
+    }
+
+    .historyDesc,
+    .historyMetaLabel,
+    .historyEmpty,
+    .historyRowPrefix,
+    .historyRowUnit {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .historyHeader {
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .historyCoinItem {
+      background: #161a1e;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .historyCoinItemActive {
+      border-color: rgba(17, 183, 135, 0.5);
+      box-shadow: 0 6PX 18PX rgba(17, 183, 135, 0.18);
+    }
+
+    .historyCoinAvatar {
+      background: rgba(17, 183, 135, 0.16);
+      color: #34d399;
+    }
+
+    .historyRow {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .historyRowInputWrap {
+      background: #161a1e;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .historyRowInput {
+      color: #f3f4f6;
+    }
+
+    .historyDeleteBtn {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #f87171;
+    }
+
+    .compactSwitch {
+      --checked-color: #11b787;
+      --adm-color-background: #3a3f47;
+      --adm-color-border: rgba(255, 255, 255, 0.22);
+      --adm-color-text-light-solid: #f3f4f6;
+
+      :global(.adm-switch-checkbox) {
+        background: rgba(255, 255, 255, 0.22);
+      }
+
+      :global(.adm-switch-checkbox::before) {
+        background: #3a3f47;
+      }
+
+      &:global(.adm-switch-checked) {
+        :global(.adm-switch-checkbox) {
+          background: #11b787;
+        }
+      }
+    }
   }
 }

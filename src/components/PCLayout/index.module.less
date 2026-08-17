@@ -655,7 +655,7 @@
   gap: 8px;
   min-height: 50px;
   border: none;
-  border-radius: 12px;
+  border-radius: 16px;
   background: transparent;
   color: rgba(0, 0, 0, 0.72);
   font-size: 13px;
@@ -663,6 +663,7 @@
   padding: 8px 10px;
   cursor: pointer;
   font: inherit;
+  transition: background 0.15s ease;
 
   &:hover {
     background: #f7f8f9;
@@ -1528,6 +1529,47 @@
     color: rgba(255, 255, 255, 0.45);
   }
 
+  .pcWatchlistRow {
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .pcWatchlistRowActive {
+    background: rgba(255, 255, 255, 0.1);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  .pcAlertEntry {
+    color: rgba(255, 255, 255, 0.78);
+    background: transparent;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .pcAlertEntryActive {
+    color: #34d399;
+    background: rgba(255, 255, 255, 0.1);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .pcWatchlistSymbol,
+    .pcAlertPrice {
+      color: #34d399;
+    }
+  }
+
+  .pcAlertPrice {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
   .pcWatchlistSymbol,
   .pcWatchlistPrice {
     color: rgba(255, 255, 255, 0.78);
@@ -1539,6 +1581,10 @@
 
   .pcAiChatRow {
     color: rgba(255, 255, 255, 0.55);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
   }
 
   .pcAiChatRowLabel {
@@ -1546,15 +1592,38 @@
   }
 
   .pcAiChatRowActive {
-    background: #1c1f24;
+    background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+    color: #34d399;
 
     &:hover {
-      background: #1c1f24;
+      background: rgba(255, 255, 255, 0.1);
     }
 
     .pcAiChatRowLabel {
       color: #34d399;
+    }
+  }
+
+  .pcAiChatRowMenuBtn {
+    color: rgba(255, 255, 255, 0.55);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f3f4f6;
+    }
+  }
+
+  .pcAiChatRowDropdown {
+    background: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .pcAiChatLoadMore {
+    &:hover {
+      background: rgba(17, 183, 135, 0.16);
     }
   }
 

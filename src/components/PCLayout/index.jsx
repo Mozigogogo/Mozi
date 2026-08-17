@@ -1336,12 +1336,18 @@ export default function PCLayout({ children }) {
                         })}
                       </div>
                     ) : (
-                      alertsList.map((item) => (
+                      alertsList.map((item) => {
+                        const alertSymbol = searchParams.get('symbol') || '';
+                        const isAlertRowActive =
+                          (pathname === '/pc/alarm' ||
+                            (pathname && pathname.startsWith('/pc/alarm/'))) &&
+                          alertSymbol === item.symbol;
+                        return (
                         <button
                           key={item.symbol}
                           type="button"
                           className={`${styles.pcAlertEntry} ${
-                            pathname === '/pc/alarm' ? styles.pcAlertEntryActive : ''
+                            isAlertRowActive ? styles.pcAlertEntryActive : ''
                           }`}
                           onClick={() => {
                             setActiveContent(null);
@@ -1374,7 +1380,8 @@ export default function PCLayout({ children }) {
                             </span>
                           </span>
                         </button>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 )}

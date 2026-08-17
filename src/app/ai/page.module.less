@@ -1853,8 +1853,244 @@
 }
 
 :global([data-theme='dark']) {
+  .robotPage {
+    background-color: #161a1e;
+    background-image: none;
+
+    .emptyTitle {
+      color: #f3f4f6;
+    }
+
+    .emptySubtitle {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .emptyGridBtn {
+      background: #1c1f24;
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+
+      &:hover {
+        border-color: #11b787;
+        box-shadow: none;
+      }
+    }
+
+    .emptyBtnText {
+      color: #f3f4f6;
+    }
+
+    .emptyAllItemBtn {
+      background: #1c1f24;
+      border-color: rgba(255, 255, 255, 0.08);
+      color: #f3f4f6;
+    }
+
+    .inputBox {
+      background: #1c1f24;
+      box-shadow: 0 4PX 24PX -8PX rgba(0, 0, 0, 0.45);
+
+      &:focus-within {
+        background: #1c1f24;
+        box-shadow: 0 4PX 24PX -8PX rgba(0, 0, 0, 0.45);
+      }
+    }
+
+    .input {
+      color: #f3f4f6;
+
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.35);
+      }
+
+      &:disabled {
+        color: rgba(255, 255, 255, 0.35);
+      }
+    }
+
+    .modeItem {
+      color: rgba(255, 255, 255, 0.55);
+
+      &:hover:not(.activeMode) {
+        background: rgba(255, 255, 255, 0.08);
+      }
+    }
+
+    .activeMode {
+      color: #34d399;
+      background: rgba(17, 183, 135, 0.2);
+    }
+
+    .modeDropdownCaret {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .modeDropdownPanel {
+      background: #1c1f24;
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 -8PX 28PX rgba(0, 0, 0, 0.45);
+    }
+
+    .modeDropdownOption {
+      color: #f3f4f6;
+    }
+
+    .modeDropdownOptionActive {
+      background: rgba(17, 183, 135, 0.16);
+      color: #34d399;
+    }
+
+    .pointsTag {
+      background: rgba(17, 183, 135, 0.16);
+      color: #34d399;
+    }
+
+    .pointsTagWarning {
+      background: rgba(239, 68, 68, 0.16);
+      color: #f87171;
+    }
+
+    .micBtn {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .mobileAlphaReminder {
+      color: rgba(255, 255, 255, 0.45);
+
+      &:active {
+        color: rgba(255, 255, 255, 0.65);
+      }
+    }
+
+    .bubble {
+      &.assistant {
+        background: #1c1f24;
+        color: #f3f4f6;
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+
+      &.error {
+        background: rgba(239, 68, 68, 0.12);
+        border-color: rgba(239, 68, 68, 0.35);
+        color: #f87171;
+      }
+
+      &.aborted,
+      .abortedText {
+        color: rgba(255, 255, 255, 0.45);
+      }
+    }
+
+    .bubbleTime,
+    .timeUnder {
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    .suggestedTitle {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .suggestedBtn {
+      background: #1c1f24;
+      color: #f3f4f6;
+
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.08);
+        color: #f3f4f6;
+      }
+    }
+
+    .suggestedBtnTrade {
+      background: #11b787;
+      color: #fff;
+
+      &:hover:not(:disabled) {
+        background: #0fa076;
+        color: #fff;
+      }
+    }
+
+    .newChatBtn {
+      background: #1c1f24;
+      border-color: rgba(255, 255, 255, 0.12);
+      color: #f3f4f6;
+      box-shadow: none;
+
+      &:hover {
+        border-color: #11b787;
+        color: #11b787;
+        box-shadow: 0 4PX 12PX rgba(17, 183, 135, 0.18);
+      }
+    }
+
+    &.pcMode .newChatBtn {
+      background: #1c1f24;
+      border-color: rgba(255, 255, 255, 0.12);
+      color: #f3f4f6;
+      box-shadow: none;
+
+      &:hover {
+        border-color: #11b787;
+        color: #11b787;
+        box-shadow: 0 4PX 12PX rgba(17, 183, 135, 0.18);
+      }
+    }
+  }
+
   .historyMenuBtn {
     color: #fff;
+  }
+
+  .newChatBtn {
+    background: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f3f4f6;
+    box-shadow: none;
+
+    &:hover {
+      border-color: #11b787;
+      color: #11b787;
+    }
+  }
+
+  .emptyTitle {
+    color: #f3f4f6;
+  }
+
+  .emptySubtitle {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .emptyGridBtn {
+    background: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+
+    &:hover {
+      border-color: #11b787;
+    }
+  }
+
+  .emptyBtnText {
+    color: #f3f4f6;
+  }
+
+  .emptyAllItemBtn {
+    background: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .modelSelectDropdown {
+    :global {
+      .ant-select-item-option-active {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+      }
+
+      .ant-select-item-option-selected {
+        background-color: rgba(17, 183, 135, 0.16) !important;
+        color: #34d399 !important;
+      }
+    }
   }
 }
 

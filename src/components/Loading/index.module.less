@@ -95,7 +95,11 @@
   }
 }
 
-/* 暗色主题由 ThemeProvider 通过 CSS 变量控制 */
+:global([data-theme='dark']) {
+  .logoLoadingMask {
+    background-color: #161a1e;
+  }
+}
 
 @media screen and (min-width: 768px) {
   .loading {

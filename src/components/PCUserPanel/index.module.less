@@ -334,3 +334,92 @@
   font-size: 13px;
   margin-left: 6px;
 }
+
+:global([data-theme='dark']) {
+  .userPanel {
+    background: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  }
+
+  .statItem {
+    &:not(:last-child)::after {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .statValue {
+    color: #f3f4f6;
+  }
+
+  .statLabel,
+  .inviteLabel {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .inviteCodeWrapper {
+    background: #161a1e;
+  }
+
+  .inviteCode {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .signInButton {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #f3f4f6;
+
+    &:hover {
+      border-color: #11b787;
+      color: #11b787;
+    }
+
+    &.loginButton {
+      background: #11b787;
+      border-color: #11b787;
+      color: #ffffff;
+
+      &:hover {
+        background: #0fa076;
+        border-color: #0fa076;
+        color: #ffffff;
+      }
+    }
+  }
+
+  .actionCards {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .actionCard {
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+  }
+
+  .actionIcon img,
+  .footerMenuIcon:not(:global(.anticon)) {
+    filter: brightness(0) invert(0.85);
+  }
+
+  .actionTitle,
+  .footerMenuText {
+    color: #f3f4f6;
+  }
+
+  .actionDesc {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .actionArrow,
+  .footerMenuArrow,
+  .footerMenuIcon:global(.anticon) {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .footerMenuItem {
+    &:hover {
+      background: rgba(17, 183, 135, 0.1);
+    }
+  }
+}
