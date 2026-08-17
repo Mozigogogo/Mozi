@@ -1416,7 +1416,7 @@
       "priceRange52w": "52周价格区间",
       "exchange": "交易所",
       "issuance": "发行类型",
-      "instrument": "合约类型",
+      "instrument": "类型",
       "description": "公司简介",
       "spreadSection": "跨所价差（最高所 vs 最低所）",
       "maxExchange": "最高报价交易所",

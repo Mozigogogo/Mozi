@@ -1127,9 +1127,101 @@
     background: rgba(22, 26, 30, 0.92);
   }
 
+  .maskCard {
+    background-image: none;
+    background-color: #1c1f24;
+  }
+
+  .maskHeaderTitle {
+    color: #f3f4f6;
+  }
+
+  .maskLegendText,
+  .maskBullet {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .maskContent {
+    background: rgba(22, 26, 30, 0.72);
+  }
+
+  .maskTitle,
+  .maskSubtitle {
+    color: #f3f4f6;
+  }
+
+  .maskDescription {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .maskButton {
+    background: #11b787;
+    box-shadow: 0 4px 12px rgba(17, 183, 135, 0.28);
+    color: #fff;
+
+    &:hover {
+      box-shadow: 0 6px 16px rgba(17, 183, 135, 0.38);
+    }
+  }
+
+  .membershipButton {
+    background: rgba(17, 183, 135, 0.16);
+    color: #34d399;
+    box-shadow: none;
+    border: 1px solid rgba(17, 183, 135, 0.35);
+
+    &:hover {
+      background: rgba(17, 183, 135, 0.22);
+    }
+  }
+
   @media (min-width: 1024px) {
+    .maskOverlay {
+      background: rgba(22, 26, 30, 0.96);
+    }
+
     .maskCard {
+      background-image: none;
       background-color: #1c1f24;
+    }
+
+    .maskHeader {
+      background: linear-gradient(
+        90deg,
+        rgba(17, 183, 135, 0.22) 0%,
+        rgba(17, 183, 135, 0.1) 55%,
+        rgba(17, 183, 135, 0.04) 100%
+      );
+    }
+
+    .maskHeaderTitle {
+      color: #f3f4f6;
+    }
+
+    .maskContent {
+      background: rgba(22, 26, 30, 0.55);
+    }
+
+    .maskTitle,
+    .maskSubtitle {
+      color: #f3f4f6;
+    }
+
+    .maskDescription {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .maskButton {
+      background: #11b787;
+      box-shadow: 0 4PX 12PX rgba(17, 183, 135, 0.28);
+      color: #fff;
+    }
+
+    .membershipButton {
+      background: rgba(17, 183, 135, 0.16);
+      color: #34d399;
+      box-shadow: none;
+      border: 1PX solid rgba(17, 183, 135, 0.35);
     }
   }
 }

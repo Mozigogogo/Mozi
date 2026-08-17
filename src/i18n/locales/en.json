@@ -1417,7 +1417,7 @@
       "priceRange52w": "52W Range",
       "exchange": "Exchange",
       "issuance": "Issuance",
-      "instrument": "Instrument",
+      "instrument": "Type",
       "description": "About",
       "spreadSection": "Cross-exchange Spread (High vs Low)",
       "maxExchange": "Highest Exchange",
