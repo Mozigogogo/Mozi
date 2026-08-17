@@ -329,6 +329,21 @@ body.daily-page {
   margin-right: 8px !important;
 }
 
+:root[data-theme='dark'] .ant-message {
+  color: #f3f4f6;
+}
+
+:root[data-theme='dark'] .ant-message-notice-content {
+  background: #1c1f24 !important;
+  color: #f3f4f6 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+}
+
+:root[data-theme='dark'] .ant-message-custom-content {
+  color: #f3f4f6;
+}
+
 /* RainbowKit 钱包弹窗：与 PC 暗色面板 (#161a1e) 对齐 */
 :root[data-theme='dark'] [data-rk] {
   --rk-colors-modalBackground: #161a1e;

@@ -332,3 +332,45 @@
   flex-shrink: 0;
 }
 
+.card {
+  :global([data-theme='dark']) & {
+    border-color: rgba(255, 255, 255, 0.08);
+    background:
+      radial-gradient(51.45% 28.46% at 100% 30%, rgba(17, 183, 135, 0.18) 0%, rgba(28, 31, 36, 0) 100%),
+      linear-gradient(0deg, #1c1f24, #1c1f24);
+
+    .title {
+      color: #f3f4f6;
+    }
+
+    .tabs {
+      background: #161a1e;
+    }
+
+    .tab {
+      color: rgba(255, 255, 255, 0.45);
+      background: transparent;
+    }
+
+    .tabActive {
+      background: rgba(255, 255, 255, 0.1);
+      color: #f3f4f6;
+      box-shadow: none;
+    }
+
+    .name,
+    .rowName {
+      color: #f3f4f6;
+    }
+
+    .score,
+    .rowScore {
+      color: #f3f4f6;
+    }
+
+    .row {
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+  }
+}
+

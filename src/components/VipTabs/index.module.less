@@ -254,30 +254,52 @@
 }
 
 /* 深色模式支持 */
-@media (prefers-color-scheme: dark) {
-  .vipTabs {
-    background: rgba(30, 41, 59, 0.5);
-  }
+.vipTabs {
+  :global([data-theme='dark']) & {
+    background: #1c1f24;
 
-  .tabsHeader {
-    background: rgba(236, 240, 244, 1);
-  }
+    &.default {
+      background: #1c1f24;
+    }
 
-  .tabButton {
-    color: #94a3b8;
+    &.highlight {
+      background: #1c1f24;
+
+      .tabButtonActive {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #f3f4f6 !important;
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+.tabsHeader {
+  :global([data-theme='dark']) & {
+    background: #161a1e;
+  }
+}
+
+.tabButton {
+  :global([data-theme='dark']) & {
+    color: rgba(255, 255, 255, 0.45);
 
     &:hover:not(.disabled) {
-      color: #000;
-      background: #fff;
-    }
-
-    &.active {
-      color: #000;
-      background: #fff;
+      color: #f3f4f6;
+      background: rgba(255, 255, 255, 0.06);
     }
   }
+}
 
-  .tabsContent {
-    color: #cbd5e1;
+.tabButtonActive {
+  :global([data-theme='dark']) & {
+    color: #f3f4f6;
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.contentWrapper {
+  :global([data-theme='dark']) & {
+    color: rgba(255, 255, 255, 0.72);
   }
 }

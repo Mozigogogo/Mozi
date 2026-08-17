@@ -751,3 +751,96 @@
     }
   }
 }
+
+.planCard {
+  :global([data-theme='dark']) & {
+    background: #1c1f24;
+    box-shadow: 0 12PX 28PX rgba(0, 0, 0, 0.35);
+
+    &.popular {
+      background: #1c1f24;
+    }
+
+    .title,
+    .price .currency,
+    .price .amount,
+    .tierSelectTitle {
+      color: #f3f4f6;
+    }
+
+    .price .period,
+    .tierSelectLabel,
+    .tierSelectSubtitle,
+    .tierOptionTitle {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .divider {
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.12) 50%, transparent 100%);
+    }
+
+    .tierPanel {
+      background: #1c1f24;
+      box-shadow: 0 22PX 60PX rgba(0, 0, 0, 0.55);
+    }
+
+    .tierOption:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .tierOptionActive .tierOptionTitle {
+      color: #f3f4f6;
+    }
+
+    .highlightLocked {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .highlightActive {
+      background: rgba(17, 183, 135, 0.16);
+      border-color: rgba(17, 183, 135, 0.35);
+    }
+
+    .features .featureItem {
+      .checkmark,
+      .featureIcon {
+        background: rgba(255, 255, 255, 0.08);
+        color: #f3f4f6;
+      }
+
+      .featureText {
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .featureTextLocked {
+        color: rgba(255, 255, 255, 0.28);
+      }
+    }
+
+    &.planCardFree .features .featureItem .featureIcon {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    &.planCardLite .features .featureItem .featureIcon {
+      background: rgba(17, 183, 135, 0.16);
+    }
+
+    &.planCardPro {
+      .features .featureItem .featureIcon {
+        background: rgba(250, 204, 21, 0.16);
+      }
+
+      .tierSelectTrigger {
+        background: rgba(250, 204, 21, 0.12);
+        border-color: rgba(250, 204, 21, 0.4);
+      }
+    }
+
+    .button.disabled {
+      background: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+}

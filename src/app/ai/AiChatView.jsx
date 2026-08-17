@@ -1848,7 +1848,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         {isPC && showUpgradePill ? (
           <div className={styles.pcUpgradeRow}>
             <AiRobotUpgradePillButton
-              onClick={() => router.push('/vip-recharge')}
+              onClick={() => router.push('/subscribe')}
               ariaLabel={t('aiAssistant.title')}
               label={t('aiAssistant.title')}
               className={styles.pcUpgradeBtn}
@@ -1996,7 +1996,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                               currentPoints={msg.currentPoints}
                               requiredPoints={msg.requiredPoints}
                               onEarnPoints={() => router.push('/pointsdetail')}
-                              onUpgrade={() => router.push('/vip-recharge')}
+                              onUpgrade={() => router.push(isPC ? '/subscribe' : '/vip-recharge')}
                             />
                           </div>
                         </div>

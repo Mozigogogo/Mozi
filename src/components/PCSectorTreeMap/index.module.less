@@ -505,28 +505,30 @@
   100% { opacity: 0.6; }
 }
 
-:global([data-theme='dark']) {
-  .treemapContainer {
-    background: rgba(255, 255, 255, 0.04);
-  }
-
-  .empty {
-    color: rgba(255, 255, 255, 0.45);
-  }
-
-  .skeletonContainer {
-    background: #1c1f24;
-  }
-
-  .skeletonItem {
-    background: rgba(255, 255, 255, 0.08);
-
-    &:nth-child(1) {
-      background: rgba(255, 255, 255, 0.12);
+.container {
+  :global([data-theme='dark']) & {
+    .treemapContainer {
+      background: #161a1e;
     }
-  }
 
-  .legendItem {
-    color: rgba(255, 255, 255, 0.55);
+    .empty {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .skeletonContainer {
+      background: #1c1f24;
+    }
+
+    .skeletonItem {
+      background: rgba(255, 255, 255, 0.08);
+
+      &:nth-child(1) {
+        background: rgba(255, 255, 255, 0.12);
+      }
+    }
+
+    .legendItem {
+      color: rgba(255, 255, 255, 0.55);
+    }
   }
 }

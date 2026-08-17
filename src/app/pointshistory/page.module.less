@@ -359,3 +359,78 @@
   }
 }
 
+.pointsHistoryContainer {
+  :global([data-theme='dark']) & {
+    background: #161a1e;
+
+    .topNav {
+      background: #161a1e;
+      color: #f3f4f6;
+    }
+
+    .backBtn {
+      color: #f3f4f6;
+    }
+
+    .navTitle {
+      color: #f3f4f6;
+    }
+
+    .historyItem {
+      background: #1c1f24;
+
+      .itemContent {
+        .itemHeader {
+          .itemTitle {
+            color: #f3f4f6;
+          }
+        }
+
+        .itemFooter {
+          .itemTime {
+            color: rgba(255, 255, 255, 0.45);
+          }
+        }
+      }
+    }
+
+    .skeletonItem {
+      background: #1c1f24;
+    }
+
+    .emptyState .emptyText,
+    .loadingMore,
+    .noMore {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    &.pcMode {
+      background: transparent;
+
+      .topNav {
+        background: transparent;
+      }
+
+      .backBtn {
+        background: rgba(255, 255, 255, 0.08);
+        color: #f3f4f6;
+        box-shadow: none;
+      }
+
+      .navTitle {
+        color: #f3f4f6;
+      }
+
+      .paginationWrap {
+        background: #161a1e;
+      }
+
+      .emptyState .emptyText,
+      .loadingMore,
+      .noMore {
+        color: rgba(255, 255, 255, 0.45);
+      }
+    }
+  }
+}
+

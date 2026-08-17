@@ -145,3 +145,50 @@
     }
   }
 }
+
+.sectorSection {
+  :global([data-theme='dark']) & {
+    .backBtn {
+      color: #f3f4f6;
+      background: #1c1f24;
+      border-color: rgba(255, 255, 255, 0.12);
+
+      &:hover {
+        border-color: #11b787;
+        color: #11b787;
+      }
+    }
+
+    .sectorTitle {
+      color: #f3f4f6;
+    }
+
+    .legendItem {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .filterBar {
+      :global {
+        [class*='sortButton'] {
+          color: rgba(255, 255, 255, 0.45);
+        }
+
+        [class*='sortButton'][class*='active'] {
+          color: #34d399;
+        }
+      }
+    }
+
+    .sectorCard {
+      background: #1c1f24;
+    }
+
+    .chartWrap {
+      :global {
+        [class*='treemapContainer'] {
+          background: #161a1e;
+        }
+      }
+    }
+  }
+}

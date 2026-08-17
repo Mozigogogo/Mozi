@@ -176,3 +176,32 @@
   background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/first_login_btn.svg');
 }
 
+.card {
+  :global([data-theme='dark']) & {
+    background: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.08);
+
+    .title {
+      color: #f3f4f6;
+    }
+
+    .row {
+      background: #161a1e;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .iconWrap {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .taskTitle {
+      color: #f3f4f6;
+    }
+
+    .stateBox {
+      color: rgba(255, 255, 255, 0.45);
+      border-top-color: rgba(255, 255, 255, 0.08);
+    }
+  }
+}
+

@@ -170,3 +170,45 @@
     min-height: 0;
   }
 }
+
+.pcWrap {
+  :global([data-theme='dark']) & {
+    .backBtn {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f3f4f6;
+      box-shadow: none;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+    }
+
+    .pcTitle {
+      color: #f3f4f6;
+    }
+
+    .headerTabs {
+      :global(.vipTabsRoot.vipRechargeTabs) {
+        background: #1c1f24;
+      }
+
+      :global(.vipTabsRoot.vipRechargeTabs .vipTabButton) {
+        color: rgba(255, 255, 255, 0.45);
+      }
+
+      :global(.vipTabsRoot.vipRechargeTabs .vipTabButton:hover) {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      :global(.vipTabsRoot.vipRechargeTabs .vipTabButtonActive) {
+        background: rgba(255, 255, 255, 0.1);
+        color: #f3f4f6;
+        box-shadow: none;
+      }
+    }
+
+    .planCardsContainer {
+      background: transparent;
+    }
+  }
+}
