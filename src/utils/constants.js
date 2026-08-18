@@ -143,7 +143,8 @@ export const Interface = {
   // 美股详情
   stock_info: '/stock/detail/header',
   stock_line: '/stock/detail/kline',
-  STOCK_MARKET: '/stock/detail/exchangeprice',
+  STOCK_MARKET: '/stock/detail/market',
+  STOCK_RETURN: '/stock/detail/getReturnInvestment',
 
   // 搜索页
   // 币种是否有效

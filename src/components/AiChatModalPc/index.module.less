@@ -384,3 +384,108 @@
   }
 }
 
+:global([data-theme='dark']) {
+  .wrapper {
+    background: #1c1f24;
+    border-color: rgba(52, 211, 153, 0.35);
+    box-shadow: 0 24PX 60PX rgba(0, 0, 0, 0.45);
+  }
+
+  .wrapper::before {
+    border-top-color: rgba(52, 211, 153, 0.35);
+  }
+
+  .wrapper::after {
+    border-top-color: #1c1f24;
+  }
+
+  .logo {
+    color: #f3f4f6;
+  }
+
+  .iconButton {
+    color: rgba(255, 255, 255, 0.55);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .topBorder {
+    background: rgba(52, 211, 153, 0.35);
+  }
+
+  .contentInner {
+    background: #1c1f24;
+  }
+
+  .footer::before {
+    background: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(52, 211, 153, 0.35) 50%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
+
+  .bubbleAssistant {
+    background: #161a1e;
+    border-color: rgba(52, 211, 153, 0.25);
+    color: #f3f4f6;
+    box-shadow: none;
+
+    &::after {
+      background: #161a1e;
+      border-left-color: rgba(52, 211, 153, 0.25);
+      border-bottom-color: rgba(52, 211, 153, 0.25);
+    }
+  }
+
+  .bubbleUser {
+    background: rgba(17, 183, 135, 0.2);
+    border-color: rgba(52, 211, 153, 0.4);
+    color: #34d399;
+    box-shadow: none;
+
+    &::after {
+      background: rgba(17, 183, 135, 0.2);
+      border-top-color: rgba(52, 211, 153, 0.4);
+      border-right-color: rgba(52, 211, 153, 0.4);
+    }
+  }
+
+  .markdownContent :global(pre) {
+    background: rgba(255, 255, 255, 0.06);
+    color: #f3f4f6;
+  }
+
+  .markdownContent :global(code) {
+    color: #f3f4f6;
+  }
+
+  .thinkingDots span {
+    background: rgba(255, 255, 255, 0.45);
+  }
+
+  .inputBar {
+    background: #161a1e;
+    border-color: rgba(52, 211, 153, 0.45);
+  }
+
+  .input {
+    color: #f3f4f6;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.35);
+    }
+  }
+
+  .pauseIcon {
+    background: linear-gradient(
+      to right,
+      rgba(52, 211, 153, 1) 0 4PX,
+      transparent 4PX 8PX,
+      rgba(52, 211, 153, 1) 8PX 12PX
+    );
+  }
+}

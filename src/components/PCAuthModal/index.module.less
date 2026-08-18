@@ -733,12 +733,16 @@
     color: #BFBFBF; 
   }
 
-  /* Fix for autofill background */
+  /* Fix for autofill background & text (override color-scheme: dark) */
   &:-webkit-autofill,
-  &:-webkit-autofill:hover, 
-  &:-webkit-autofill:focus, 
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
   &:-webkit-autofill:active {
-      -webkit-box-shadow: 0 0 0 1000px #F2F3F5 inset !important;
+    -webkit-text-fill-color: #333 !important;
+    caret-color: #333;
+    transition: background-color 99999s ease-out;
+    -webkit-box-shadow: 0 0 0 1000px #F2F3F5 inset !important;
+    box-shadow: 0 0 0 1000px #F2F3F5 inset !important;
   }
 
   @media (max-width: 1366px) {
@@ -851,5 +855,31 @@
   @media (max-width: 1024px) {
     width: 18px;
     height: 18px;
+  }
+}
+
+:global([data-theme='dark']) {
+  .inputWrapper {
+    background: #161a1e;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .nativeInput {
+    color: #f3f4f6;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus,
+    &:-webkit-autofill:active {
+      -webkit-text-fill-color: #f3f4f6 !important;
+      caret-color: #f3f4f6;
+      transition: background-color 99999s ease-out;
+      -webkit-box-shadow: 0 0 0 1000px #161a1e inset !important;
+      box-shadow: 0 0 0 1000px #161a1e inset !important;
+    }
   }
 }

@@ -412,6 +412,58 @@ export function getMockUsStockHeader(symbol) {
   });
 }
 
+function parseUsStockKlineDt(dt) {
+  if (dt == null || dt === '') return 0;
+  const s = String(dt).trim();
+  const m = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})(?:\s+(\d{1,2})(?::(\d{2}))?)?$/);
+  if (m) {
+    const [, y, mo, d, h = '0', min = '0'] = m;
+    return new Date(Number(y), Number(mo) - 1, Number(d), Number(h), Number(min)).getTime();
+  }
+  const t = new Date(s).getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
+function formatUsStockKlineDtLabel(dt) {
+  if (dt == null || dt === '') return '';
+  const s = String(dt).trim();
+  if (/^\d{4}\/\d{1,2}\/\d{1,2}\s+\d{1,2}$/.test(s)) {
+    return `${s}:00`;
+  }
+  return s;
+}
+
+/** 将 GET /stock/detail/kline 响应映射为 KlineChart 结构 */
+export function normalizeUsStockKlineResponse(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const list = Array.isArray(raw.list) ? raw.list : [];
+  if (list.length === 0) {
+    return { values: [], categoryData: [] };
+  }
+
+  const sorted = [...list].sort(
+    (a, b) => parseUsStockKlineDt(a?.dt) - parseUsStockKlineDt(b?.dt)
+  );
+
+  const values = [];
+  const categoryData = [];
+
+  sorted.forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+    const open = parseFloat(item.openPrice ?? item.open ?? 0);
+    const close = parseFloat(item.closePrice ?? item.close ?? 0);
+    const low = parseFloat(item.lowPrice ?? item.low ?? 0);
+    const high = parseFloat(item.highPrice ?? item.high ?? 0);
+    if (![open, close, low, high].every((n) => Number.isFinite(n))) return;
+    values.push([open, close, low, high]);
+    categoryData.push(formatUsStockKlineDtLabel(item.dt));
+  });
+
+  if (values.length === 0) return null;
+  return { values, categoryData };
+}
+
 /** 详情 K 线 mock，对齐 GET /stock/detail/kline */
 export function getMockUsStockKline(symbol, type = 1) {
   const item = findMockListItem(symbol);
@@ -460,18 +512,120 @@ const MOCK_EXCHANGE_ROWS = [
   { exchange: 'Binance', issuance: 'bStock', instrument: 'spot', last: null, price_change_percent: '0.44', volume: '15000', quote_volume: '3200000' },
 ];
 
-/** 跨所价格对比 mock，对齐 GET /stock/detail/exchangeprice */
+/** 单条市场行 → 详情页市场表格结构 */
+export function normalizeUsStockMarketRow(item) {
+  if (!item || typeof item !== 'object') return null;
+  const exchange = item.exchange || item.exchanges || '';
+  if (!exchange) return null;
+
+  let price24h = item.priceChangePercent ?? item.price_change_percent ?? item.price24h ?? '';
+  if (price24h !== '' && price24h != null && !String(price24h).includes('%')) {
+    price24h = `${price24h}%`;
+  }
+
+  return {
+    exchanges: exchange,
+    url: item.logo || item.url || '',
+    last: item.lastPrice ?? item.last,
+    price24h,
+    vol: item.volume ?? item.vol,
+    usd: item.quoteVolume ?? item.quote_volume ?? item.usd,
+    note: item.note || item.pair || '',
+    instrument: item.instrument,
+    issuance: item.issuance,
+    pair: item.pair,
+    currency: item.currency,
+    ts: item.ts,
+  };
+}
+
+/** 将 GET /stock/detail/market 响应映射为市场列表 */
+export function normalizeUsStockMarketResponse(raw) {
+  if (!raw || typeof raw !== 'object') return [];
+  const list = Array.isArray(raw.list)
+    ? raw.list
+    : Array.isArray(raw.exchanges)
+      ? raw.exchanges
+      : [];
+  return list.map(normalizeUsStockMarketRow).filter(Boolean);
+}
+
+const EMPTY_US_STOCK_ROI = {
+  priceChange1Day: '--',
+  priceChange7Day: '--',
+  priceChange1Month: '--',
+  priceChange1Year: '--',
+};
+
+function pickUsStockRoiField(src, keys) {
+  for (const key of keys) {
+    const value = src?.[key];
+    if (value != null && value !== '') return value;
+  }
+  return null;
+}
+
+function formatUsStockRoiValue(raw) {
+  if (raw == null || raw === '') return '--';
+  const s = String(raw).trim();
+  if (!s || s === '--' || s.toLowerCase() === 'null') return '--';
+  return formatUsStockPriceChangePercent(s) || '--';
+}
+
+/** 将 GET /stock/detail/getReturnInvestment 响应映射为 ROI 卡片结构 */
+export function normalizeUsStockReturnResponse(raw) {
+  if (!raw) return { ...EMPTY_US_STOCK_ROI };
+  const src = Array.isArray(raw) ? raw[0] : raw;
+  if (!src || typeof src !== 'object') return { ...EMPTY_US_STOCK_ROI };
+
+  return {
+    priceChange1Day: formatUsStockRoiValue(
+      pickUsStockRoiField(src, ['priceChange1Day', 'priceChangePercent1Day', 'dayReturn'])
+    ),
+    priceChange7Day: formatUsStockRoiValue(
+      pickUsStockRoiField(src, ['priceChange7Day', 'priceChangePercent7Day', 'weekReturn'])
+    ),
+    priceChange1Month: formatUsStockRoiValue(
+      pickUsStockRoiField(src, ['priceChange1Month', 'priceChangePercent1Month', 'monthReturn'])
+    ),
+    priceChange1Year: formatUsStockRoiValue(
+      pickUsStockRoiField(src, ['priceChange1Year', 'priceChangePercent1Year', 'yearReturn'])
+    ),
+  };
+}
+
+/** 投资回报率 mock，对齐 GET /stock/detail/getReturnInvestment */
+export function getMockUsStockReturn(symbol) {
+  return {
+    symbol,
+    priceChange1Day: '0.82',
+    priceChange7Day: '-1.45',
+    priceChange1Month: '6.20',
+    priceChange1Year: '142.50',
+  };
+}
+
+/** 市场模块 mock，对齐 GET /stock/detail/market */
 export function getMockUsStockExchangePrice(underlying) {
   const item = findMockListItem(underlying);
   const price = item.currentPrice;
   return {
-    underlying: item.symbol,
-    logo: item.url || '',
-    exchanges: MOCK_EXCHANGE_ROWS.map((row) => ({
-      ...row,
+    symbol: item.symbol,
+    list: MOCK_EXCHANGE_ROWS.map((row) => ({
+      symbol: item.symbol,
+      pair: `${item.symbol}-USDT`,
+      exchange: row.exchange,
+      issuance: row.issuance,
+      instrument: row.instrument,
+      currency: 'USDT',
       logo: '',
-      last: row.last === null ? price : row.last,
+      lastPrice: row.last === null ? price : row.last,
+      priceChange: '0.50',
+      priceChangePercent: row.price_change_percent,
+      volume: row.volume,
+      quoteVolume: row.quote_volume,
       ts: Date.now(),
+      note: row.note,
     })),
   };
 }
