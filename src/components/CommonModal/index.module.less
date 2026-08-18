@@ -264,3 +264,42 @@
     border-width: 2px;
   }
 }
+
+:global([data-theme='dark']) {
+  .mask {
+    background: rgba(0, 0, 0, 0.65);
+  }
+
+  .modalBody {
+    background: #1c1f24;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .title {
+    color: #f3f4f6;
+  }
+
+  .singleConfirmButton {
+    &:disabled {
+      background: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.35);
+    }
+  }
+
+  .cancelButton {
+    background: #161a1e;
+    color: rgba(255, 255, 255, 0.72);
+    border-color: rgba(255, 255, 255, 0.12);
+
+    &:hover {
+      background: #252930;
+      border-color: rgba(255, 255, 255, 0.18);
+      color: #f3f4f6;
+    }
+
+    &:active {
+      background: #2a2f36;
+    }
+  }
+}

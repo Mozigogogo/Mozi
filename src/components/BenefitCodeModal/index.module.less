@@ -186,3 +186,59 @@
     margin-bottom: 8px;
   }
 }
+
+:global([data-theme='dark']) {
+  .codeBox {
+    background: #161a1e;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .codeNumber {
+    color: #f3f4f6;
+  }
+
+  .countdown {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .countdownTime {
+    color: #34d399;
+  }
+
+  .tipText {
+    color: rgba(255, 255, 255, 0.72);
+
+    strong {
+      color: #f3f4f6;
+    }
+  }
+
+  .noteText {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .noteLabel {
+    color: #f3f4f6;
+  }
+
+  .noteKeyword {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .skeletonText {
+    background: rgba(255, 255, 255, 0.08);
+
+    &::after {
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.12),
+        transparent
+      );
+    }
+  }
+
+  .skeletonCode {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
