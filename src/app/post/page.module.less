@@ -1562,10 +1562,26 @@
   .templateBtn {
     background: #333 !important;
     color: #fff !important;
+
+    .templateBox {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.82);
+    }
   }
 
   .templateBtn:hover {
     background: #404040 !important;
+
+    .templateBox:not(.active) {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.34);
+      color: #f3f4f6;
+    }
+
+    .templateBox:not(.active) .buttonIcon {
+      filter: brightness(0) saturate(100%) invert(97%) sepia(10%) saturate(189%) hue-rotate(173deg) brightness(102%) contrast(91%);
+    }
   }
 
   .popupContent {

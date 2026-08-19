@@ -1469,6 +1469,14 @@
     &:hover {
       background: rgba(17, 183, 135, 0.16);
     }
+
+    &:not(.socialIconFill) img {
+      filter: brightness(0) invert(0.78);
+    }
+
+    &:not(.socialIconFill):hover img {
+      filter: brightness(0) invert(1);
+    }
   }
 
   .footerCopyright {

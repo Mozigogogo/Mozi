@@ -112,6 +112,19 @@ function formatMarketVolume(raw, lng) {
   return !out || out.includes('--') ? '—' : out;
 }
 
+/** 24H 成交额：只取 totalVolume / quoteVolume，不用 volume（标的数量，单位不同会闪跳） */
+function pickTurnover24hRaw(data) {
+  if (!data) return null;
+  const v = data.totalVolume ?? data.quoteVolume;
+  return v === undefined || v === null ? null : v;
+}
+
+function formatTurnover24hDisplay(raw, lng) {
+  if (raw == null || raw === '') return null;
+  const out = formatMoneyCompact(raw, lng, true);
+  return !out || out.includes('--') ? null : out;
+}
+
 function normalizeWatchlistSymbols(data) {
   const list = Array.isArray(data) ? data : Array.isArray(data?.list) ? data.list : [];
   return list
@@ -1114,7 +1127,12 @@ export default function DetailPage() {
           const headerInfoRight = [
             { key: 'totalSupply', value: coinData.totalSupply },
             { key: 'marketCap', value: coinData.marketCap },
-            { key: 'totalVolume24h', value: coinData.totalVolume },
+            {
+              key: 'totalVolume24h',
+              value:
+                formatTurnover24hDisplay(pickTurnover24hRaw(coinData), i18n.language) ??
+                coinData.totalVolume,
+            },
             { key: 'circulatingSupply', value: coinData.circulatingSupply },
             { key: 'ath', value: coinData.ath },
             { key: 'athChangePercent', value: coinData.athChangePercentage },
@@ -2038,7 +2056,11 @@ ${coinInfo.name || symbol} (${symbol})
             priceChangePercentage_24h: tickerData.priceChangePercentage_24h ?? prevInfo.priceChangePercentage_24h,
             high_24h: tickerData.high_24h ?? prevInfo.high_24h,
             low_24h: tickerData.low_24h ?? prevInfo.low_24h,
-            totalVolume: tickerData.totalVolume ?? tickerData.volume ?? prevInfo.totalVolume,
+            totalVolume: (() => {
+              const raw = pickTurnover24hRaw(tickerData);
+              if (raw == null) return prevInfo.totalVolume;
+              return formatTurnover24hDisplay(raw, i18n.language) ?? prevInfo.totalVolume;
+            })(),
             marketCap: tickerData.marketCap ?? prevInfo.marketCap,
           };
         });
@@ -2060,18 +2082,19 @@ ${coinInfo.name || symbol} (${symbol})
           );
         }
 
-        if (tickerData.totalVolume !== undefined && tickerData.totalVolume !== null) {
-          setCoinInfoRight((prev) =>
-            prev.map((item) =>
-              item.key === 'totalVolume24h' ? { ...item, value: tickerData.totalVolume } : item
-            )
-          );
-        } else if (tickerData.volume !== undefined && tickerData.volume !== null) {
-          setCoinInfoRight((prev) =>
-            prev.map((item) =>
-              item.key === 'totalVolume24h' ? { ...item, value: tickerData.volume } : item
-            )
-          );
+        {
+          const turnoverRaw = pickTurnover24hRaw(tickerData);
+          const turnoverDisplay =
+            turnoverRaw != null ? formatTurnover24hDisplay(turnoverRaw, i18n.language) : null;
+          if (turnoverDisplay) {
+            setCoinInfoRight((prev) =>
+              prev.map((item) => {
+                if (item.key !== 'totalVolume24h') return item;
+                if (item.value === turnoverDisplay) return item;
+                return { ...item, value: turnoverDisplay };
+              })
+            );
+          }
         }
 
         if (tickerData.marketCap !== undefined && tickerData.marketCap !== null) {
@@ -2337,7 +2360,11 @@ ${coinInfo.name || symbol} (${symbol})
           circulatingSupply: headerData.circulatingSupply ?? prevInfo.circulatingSupply,
           
           // 成交量
-          totalVolume: headerData.totalVolume ?? prevInfo.totalVolume,
+          totalVolume: (() => {
+            const raw = pickTurnover24hRaw(headerData);
+            if (raw == null) return prevInfo.totalVolume;
+            return formatTurnover24hDisplay(raw, i18n.language) ?? prevInfo.totalVolume;
+          })(),
           volume: headerData.volume ?? prevInfo.volume,
           quoteVolume: headerData.quoteVolume ?? prevInfo.quoteVolume,
           
@@ -2394,8 +2421,12 @@ ${coinInfo.name || symbol} (${symbol})
 
       setCoinInfoRight((prev) =>
         prev.map((item) => {
-          if (item.key === 'totalVolume24h' && headerData.totalVolume !== undefined && headerData.totalVolume !== null) {
-            return { ...item, value: headerData.totalVolume };
+          if (item.key === 'totalVolume24h') {
+            const raw = pickTurnover24hRaw(headerData);
+            if (raw == null) return item;
+            const display = formatTurnover24hDisplay(raw, i18n.language);
+            if (!display || item.value === display) return item;
+            return { ...item, value: display };
           }
           if (item.key === 'totalSupply' && headerData.totalSupply !== undefined && headerData.totalSupply !== null) {
             return { ...item, value: headerData.totalSupply };
