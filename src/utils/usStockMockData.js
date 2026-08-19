@@ -306,10 +306,12 @@ export function normalizeUsStockHeaderResponse(raw, { language = 'zh' } = {}) {
     return n.toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US');
   };
 
+  const isZh = String(language || '').toLowerCase().startsWith('zh');
+
   return {
     ...raw,
     symbol: String(raw.symbol ?? '').trim(),
-    name: raw.name ?? raw.symbol ?? '',
+    name: (isZh ? raw.nameCn : null) || raw.name || raw.symbol || '',
     url: raw.logo ?? raw.url ?? '',
     currentPrice: formatPrice(raw.lastPrice ?? raw.currentPrice ?? raw.price),
     priceChange_24h: formatUsStockPriceChange(priceChange),
@@ -318,9 +320,9 @@ export function normalizeUsStockHeaderResponse(raw, { language = 'zh' } = {}) {
     low_24h: formatPrice(raw.lowPrice ?? raw.low_24h ?? raw.low24h),
     marketCap: formatMarketCap(raw.marketCap),
     totalVolume: formatUsStockQuoteVolume(raw, language),
-    listingMarket: raw.listingMarket ?? '',
-    sector: raw.sector ?? '',
-    industry: raw.industry ?? '',
+    listingMarket: (isZh ? raw.listingMarketCn : null) || raw.listingMarket || '',
+    sector: (isZh ? raw.sectorCn : null) || raw.sector || '',
+    industry: (isZh ? raw.industryCn : null) || raw.industry || '',
     spreadPct: formatPercent(raw.spreadPct),
     spreadAbs: formatPrice(raw.spreadAbs),
     maxExchange: raw.maxExchange ?? '--',
@@ -333,7 +335,7 @@ export function normalizeUsStockHeaderResponse(raw, { language = 'zh' } = {}) {
     ipoDate: raw.ipoDate ?? '--',
     ceo: raw.ceo ?? '--',
     fullTimeEmployees: formatEmployees(raw.fullTimeEmployees),
-    description: raw.description ?? '',
+    description: (isZh ? raw.descriptionCn : null) || raw.description || '',
     volume: raw.volume ?? '--',
     isSelfSelected: Boolean(raw.isSelfSelected ?? raw.isFavorite ?? raw.favorite ?? false),
   };
