@@ -24,6 +24,7 @@ export const WS_EVENTS = {
   KLINE: 'kline',
   RANKING: 'ranking',
   MARKET_OVERVIEW: 'market_overview',
+  STOCK_MARKET: 'stock_market',      // 美股跨所市场数据
   
   // AI 对话
   AI_CHAT: 'ai_chat',
@@ -46,6 +47,7 @@ export const CHANNEL_TYPES = {
   KLINE: 'kline',             // K线数据
   RANKING: 'ranking',         // 榜单数据
   MARKET_OVERVIEW: 'market_overview', // 市场概览
+  STOCK_MARKET: 'stock_market',      // 美股跨所市场数据
 };
 
 // ==================== 平台类型常量 ====================
@@ -291,6 +293,18 @@ export function createMarketOverviewChannel(interval = 30000) {
     params: {
       interval: interval
     }
+  };
+}
+
+/**
+ * 创建美股跨所市场频道配置
+ * @param {Array} symbols - 股票符号列表，如 ['NVDA']
+ * @returns {object} 频道配置
+ */
+export function createStockMarketChannel(symbols) {
+  return {
+    type: CHANNEL_TYPES.STOCK_MARKET,
+    symbols: symbols,
   };
 }
 

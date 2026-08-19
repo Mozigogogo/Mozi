@@ -61,6 +61,7 @@ import {
   KLINE_PERIODS,
   createTickerChannel,
   createKlineChannel,
+  createStockMarketChannel,
 } from '../../utils/websocketProtocol';
 import {
   US_STOCK_USE_MOCK,
@@ -427,6 +428,7 @@ export default function DetailPage() {
   const favoriteLocalRef = useRef(null);
   const wsRef = useRef(null);
   const currentKlineChannelRef = useRef(null); // 当前K线订阅频道ID
+  const stockMarketChannelRef = useRef(null); // 美股跨所市场订阅频道ID
   const isWsAuthenticatedRef = useRef(false); // WebSocket认证状态
   const isFirstRenderRef = useRef(true); // 是否首次渲染
   const currentKlinePeriodRef = useRef('hour'); // 当前K线时间周期
@@ -1984,7 +1986,7 @@ ${coinInfo.name || symbol} (${symbol})
       }
       
       // 停止HTTP降级模式（如果已启动）
-      // 美股 K 线 / 跨所价格走 HTTP 轮询，不走 WS K 线
+      // 美股 K 线走 HTTP 轮询，跨所市场走 WS stock_market
       if (isUsStock) {
         stopHttpFallback();
         useHttpFallbackRef.current = true;
@@ -1995,10 +1997,19 @@ ${coinInfo.name || symbol} (${symbol})
           if (needLoop.current) {
             fetchCoinInfo({ silent: true });
             fetchKlineData({ silent: true, force: true });
-            fetchMarketData({ silent: true });
             fetchROIData({ silent: true });
           }
         }, LOOPTIME);
+
+        // 订阅美股跨所市场实时数据
+        const stockMarketChannel = createStockMarketChannel([symbol]);
+        ws.subscribe([stockMarketChannel]).then((response) => {
+          if (response?.data?.channels?.[0]?.channelId) {
+            stockMarketChannelRef.current = response.data.channels[0].channelId;
+          }
+        }).catch(err => {
+          console.error('订阅 stock_market 失败:', err);
+        });
       } else {
         stopHttpFallback();
       }
@@ -2453,7 +2464,7 @@ ${coinInfo.name || symbol} (${symbol})
         })
       );
       
-      // 5. 更新市场数据（币种可走 WS；美股跨所价格仅 HTTP，忽略 exchangesPriceData）
+      // 5. 更新市场数据（币种走 kline 内嵌的 exchangesPriceData）
       if (
         !isUsStock &&
         exchangesPriceData &&
@@ -2462,6 +2473,18 @@ ${coinInfo.name || symbol} (${symbol})
       ) {
         marketRawRef.current = exchangesPriceData;
         setMarketData(exchangesPriceData.map(mapMarketRow));
+      }
+    });
+
+    // 监听美股跨所市场实时数据（stock_market）
+    ws.on(WS_EVENTS.STOCK_MARKET, (data) => {
+      if (!isUsStock) return;
+      const list = data?.data?.list;
+      if (!Array.isArray(list) || list.length === 0) return;
+      const rows = normalizeUsStockMarketResponse({ list });
+      if (rows.length > 0) {
+        marketRawRef.current = rows;
+        setMarketData(rows.map(mapMarketRow));
       }
     });
 
@@ -2588,6 +2611,7 @@ ${coinInfo.name || symbol} (${symbol})
       wsConnectionStatusRef.current = 'connecting';
       useHttpFallbackRef.current = false;
       currentKlineChannelRef.current = null;
+      stockMarketChannelRef.current = null;
       currentKlinePeriodRef.current = 'hour';
       isFirstRenderRef.current = true;
       hasBigDealDataRef.current = false;
