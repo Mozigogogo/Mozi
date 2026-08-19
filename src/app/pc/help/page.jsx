@@ -102,10 +102,6 @@ export default function PCHelpPage() {
 
   return (
     <>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
-      />
       <div className={styles.pageWrap}>
         <section className={styles.hero}>
           <div className={styles.heroInner}>

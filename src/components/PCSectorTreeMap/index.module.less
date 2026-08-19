@@ -39,6 +39,9 @@
   justify-content: center;
   align-items: center;
   text-align: center;
+  min-width: 0;
+  padding: 0 4px;
+  overflow: hidden;
   text-shadow: 0 2px 0px rgba(0, 0, 0, 0.25); /* Add 3D text shadow effect */
   
   &:hover {
@@ -46,8 +49,43 @@
   }
 }
 
+.nameText {
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
+.nameTextCompact {
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
+.valueText {
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
 /* Hide name when hovered if the block is compact to avoid overlap with yellow tag */
-.hideNameOnHover:hover .nameText {
+.hideNameOnHover:hover .nameText,
+.hideNameOnHover:hover .nameTextCompact {
   display: none;
 }
 
@@ -400,6 +438,7 @@
   top: 0;
   left: 0;
   width: 100%;
+  max-width: 100%;
   background-color: #FEDC34;
   color: #000;
   font-weight: 700;
@@ -407,6 +446,9 @@
   padding: 2px 8px;
   line-height: 1.2;
   box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hoverTriangle {

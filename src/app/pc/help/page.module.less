@@ -46,10 +46,27 @@
     margin: 0 3PX;
     vertical-align: middle;
   }
+
+  :global([data-theme='dark']) & {
+    --ink: #f3f4f6;
+    --ink-light: rgba(255, 255, 255, 0.72);
+    --ink-muted: rgba(255, 255, 255, 0.45);
+    --paper: #161a1e;
+    --paper-warm: #1c1f24;
+    --paper-card: #1c1f24;
+    --accent: #11b787;
+    --accent-light: #34d399;
+    --accent-pale: rgba(17, 183, 135, 0.16);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-light: rgba(255, 255, 255, 0.06);
+    --shadow: rgba(0, 0, 0, 0.35);
+    --shadow-md: rgba(0, 0, 0, 0.45);
+    --hero-bg: #1c1f24;
+  }
 }
 
 .hero {
-  background: var(--ink);
+  background: var(--hero-bg, var(--ink));
   color: var(--paper);
   padding: 28PX 40PX 32PX;
   position: relative;

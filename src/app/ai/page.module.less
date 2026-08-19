@@ -1954,6 +1954,25 @@
       color: rgba(255, 255, 255, 0.55);
     }
 
+    .sendBtn {
+      &:disabled {
+        background: rgba(255, 255, 255, 0.12);
+
+        img,
+        .sendIcon {
+          opacity: 0.55;
+          filter: brightness(0) invert(1);
+        }
+      }
+
+      &:not(:disabled) {
+        img,
+        .sendIcon {
+          filter: brightness(0) invert(1);
+        }
+      }
+    }
+
     .mobileAlphaReminder {
       color: rgba(255, 255, 255, 0.45);
 

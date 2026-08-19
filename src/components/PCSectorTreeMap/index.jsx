@@ -357,6 +357,8 @@ const PCSectorTreeMap = ({
            const changeStr = (d.data.change > 0 ? '+' : '') + d.data.change.toFixed(2) + '%';
            const nameFontSize = Math.max(12, Math.min(itemWidth / 6, itemHeight / 4, 18));
            const valFontSize = Math.max(12, Math.min(itemWidth / 5, itemHeight / 3, 20));
+           const canWrapName = itemWidth >= 72 && itemHeight >= 44;
+           const nameClass = canWrapName ? styles.nameText : styles.nameTextCompact;
 
            // Only show both name and percentage if there is enough space.
            // Height check is crucial: need at least ~50px to stack name and percentage comfortably.
@@ -369,12 +371,10 @@ const PCSectorTreeMap = ({
                displayValue = d.data.price;
              }
 
-             return `<div class="${styles.nameText}" style="font-size:${nameFontSize}px;font-weight:600;margin-bottom:4px;">${d.data.name}</div><div style="font-size:${valFontSize}px;font-weight:700;">${displayValue}</div>`;
+             return `<div class="${nameClass}" style="font-size:${nameFontSize}px;font-weight:600;margin-bottom:4px;">${d.data.name}</div><div class="${styles.valueText}" style="font-size:${valFontSize}px;font-weight:700;">${displayValue}</div>`;
            } else {
              // Priority: Show Name Only
-             // If the name is very long, it might still overflow, but CSS text-overflow should handle it if set,
-             // or it will wrap. Given the constraints, just showing name is safer.
-             return `<div class="${styles.nameText}" style="font-size:${Math.max(10, nameFontSize*0.8)}px;font-weight:500;">${d.data.name}</div>`;
+             return `<div class="${nameClass}" style="font-size:${Math.max(10, nameFontSize*0.8)}px;font-weight:500;">${d.data.name}</div>`;
            }
         });
         
@@ -638,14 +638,7 @@ const PCSectorTreeMap = ({
                   lineHeight: hoveredItem.height < 60 ? '16px' : 'normal'
                 }}
               >
-                <div style={{
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  width: '100%'
-                }}>
-                  {hoveredItem.name}
-                </div>
+                {hoveredItem.name}
                 {hoveredItem.height > 50 && (
                   <div className={styles.hoverTriangle} />
                 )}

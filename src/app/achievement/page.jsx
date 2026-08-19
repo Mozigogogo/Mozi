@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Toast } from 'antd-mobile';
 import NavBar from '@/components/NavBar';
+import { usePcShell } from '@/components/PcShellContext';
 import { getPoolStatus, getTaskPoints, getInvitationList, getTaskList, completeTask } from '@/api/points';
 import { applyCommissionWithdraw } from '@/api/commission';
 import AchievementInviteCard from './AchievementInviteCard';
@@ -24,17 +25,18 @@ import styles from './page.module.less';
 function AchievementContent() {
   const router = useRouter();
   const { t } = useTranslation();
-  const [isPC, setIsPC] = useState(false);
+  const inPcShell = usePcShell();
+  const [isPC, setIsPC] = useState(inPcShell);
 
   useEffect(() => {
     const checkDevice = () => {
       if (typeof window === 'undefined') return;
-      setIsPC(window.innerWidth >= 1024);
+      setIsPC(inPcShell || window.innerWidth >= 1024);
     };
     checkDevice();
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
-  }, []);
+  }, [inPcShell]);
 
   const [inviteData, setInviteData] = useState({
     inviteLink: '',

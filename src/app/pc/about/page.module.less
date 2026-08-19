@@ -1,8 +1,8 @@
 .pageWrap {
   width: 100%;
   min-height: calc(100vh - 64PX);
-  background: #fff;
-  color: #0f0f0f;
+  background: var(--background, #fff);
+  color: var(--foreground, #0f0f0f);
   font-family: 'Roboto', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
 
   :global([data-theme='dark']) & {
@@ -20,7 +20,7 @@
 
 /* Hero */
 .hero {
-  background: linear-gradient(180deg, #fffbe8 0%, #fff7d6 100%);
+  background: linear-gradient(180deg, var(--hero-from, #fffbe8) 0%, var(--hero-to, #fff7d6) 100%);
   color: #0f3d2e;
   padding: 80PX 24PX 96PX;
   text-align: center;
@@ -38,6 +38,8 @@
   }
 
   :global([data-theme='dark']) & {
+    --hero-from: #1c1f24;
+    --hero-to: #161a1e;
     background: linear-gradient(180deg, #1c1f24 0%, #161a1e 100%);
     color: #f3f4f6;
 
