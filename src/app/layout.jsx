@@ -45,7 +45,7 @@ export const metadata = {
   title: "墨子 - 数字货币行情社区",
   description: "墨子数字货币行情社区，提供币种行情、社区讨论等功能",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/favicon.png",
   },
 };
 
@@ -57,9 +57,11 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="shortcut icon" href="/favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#1677ff" />
+        <meta name="theme-color" content="#11B787" />
         {/* Keep only truly global/critical preload asset to avoid stealing bandwidth from home first paint */}
         <link rel="preload" href="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png" as="image" />
         <TgRootRedirectScript />
