@@ -84,11 +84,19 @@ const FadingText = ({ text, className }) => {
   );
 };
 
-const buildLevels = (sideItems, limit) => {
+const resolveLevelQuantity = (item, strictQuantity) => {
+  const qty = Number(item?.quantity);
+  if (Number.isFinite(qty) && qty > 0) return qty;
+  if (strictQuantity) return null;
+  const value = Number(item?.value);
+  return Number.isFinite(value) && value > 0 ? value : null;
+};
+
+const buildLevels = (sideItems, limit, { strictQuantity = false } = {}) => {
   const sorted = [...(sideItems || [])]
     .map((item) => ({
       price: Number(item?.price) || 0,
-      quantity: Number(item?.quantity) || 0,
+      quantity: resolveLevelQuantity(item, strictQuantity),
       value: Number(item?.value) || 0,
       logo: item?.logo || null,
     }))
@@ -97,8 +105,8 @@ const buildLevels = (sideItems, limit) => {
 
   let cumulative = 0;
   return sorted.map((item) => {
-    const qty = item.quantity > 0 ? item.quantity : item.value;
-    cumulative += qty;
+    const qty = item.quantity;
+    cumulative += qty ?? 0;
     return {
       ...item,
       quantity: qty,
@@ -127,6 +135,10 @@ export default function OrderBook({
   membershipButtonText,
   midPrice: midPriceProp,
   priceTrend, // 'up' | 'down' | undefined
+  instrumentTabs = null,
+  activeInstrumentTab = 'spot',
+  onInstrumentTabChange,
+  strictQuantity = false,
 }) {
   const { t, i18n } = useTranslation();
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -270,8 +282,8 @@ export default function OrderBook({
       if (priceDiff !== 0) return priceDiff;
       return (Number(b?.quantity) || 0) - (Number(a?.quantity) || 0);
     });
-    return buildLevels(items, visibleRowsCount);
-  }, [bids, visibleRowsCount]);
+    return buildLevels(items, visibleRowsCount, { strictQuantity });
+  }, [bids, visibleRowsCount, strictQuantity]);
 
   const askLevels = useMemo(() => {
     const items = [...(asks || [])].sort((a, b) => {
@@ -279,8 +291,8 @@ export default function OrderBook({
       if (priceDiff !== 0) return priceDiff;
       return (Number(b?.quantity) || 0) - (Number(a?.quantity) || 0);
     });
-    return buildLevels(items, visibleRowsCount);
-  }, [asks, visibleRowsCount]);
+    return buildLevels(items, visibleRowsCount, { strictQuantity });
+  }, [asks, visibleRowsCount, strictQuantity]);
 
   const maxQty = useMemo(() => {
     let max = 0;
@@ -350,7 +362,8 @@ export default function OrderBook({
   };
 
   const renderLevelRow = (level, side, key, seed) => {
-    const depthPct = Math.max(0, Math.min(100, (Number(level.quantity) / maxQty) * 100));
+    const depthQty = Number(level.quantity);
+    const depthPct = Math.max(0, Math.min(100, ((Number.isFinite(depthQty) ? depthQty : 0) / maxQty) * 100));
     const logo = pickRowLogo(level, seed);
     return (
       <div key={key} className={`${styles.bookRow} ${side === 'ask' ? styles.askRow : styles.bidRow}`}>
@@ -412,6 +425,20 @@ export default function OrderBook({
           <span className={styles.metaRowSpacer} />
         )}
         <div className={styles.legendRight}>
+          {Array.isArray(instrumentTabs) && instrumentTabs.length > 0 && (
+            <div className={styles.instrumentTabs}>
+              {instrumentTabs.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  className={`${styles.instrumentTab} ${activeInstrumentTab === tab ? styles.instrumentTabActive : ''}`}
+                  onClick={() => onInstrumentTabChange?.(tab)}
+                >
+                  {tab === 'perp' ? t('detail.instrument.contract') : t('detail.instrument.spot')}
+                </button>
+              ))}
+            </div>
+          )}
           <div className={styles.dropdown} onClick={() => setDropdownOpen(!dropdownOpen)}>
             <span className={styles.dropdownText}>{selectedOption}</span>
             <svg className={`${styles.dropdownArrow} ${dropdownOpen ? styles.dropdownArrowOpen : ''}`} width="12" height="12" viewBox="0 0 12 12" fill="none">

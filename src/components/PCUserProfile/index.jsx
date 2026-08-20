@@ -440,12 +440,12 @@ export default function PCUserProfile({
                 </div>
                 <div className={styles.centerCol}>
                   <div className={styles.actionBtn}>
-                    <FavoriteIcon filled={true} size={24} color="#FF4D4F" />
+                    <FavoriteIcon filled={true} size={20} color="#FF4D4F" />
                   </div>
                 </div>
                 <div className={styles.centerCol}>
                   <div className={styles.actionBtn}>
-                    <BellIcon size={24} color="#ccc" />
+                    <BellIcon size={20} color="#ccc" />
                   </div>
                 </div>
               </div>

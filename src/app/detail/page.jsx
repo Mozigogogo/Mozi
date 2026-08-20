@@ -62,6 +62,7 @@ import {
   createTickerChannel,
   createKlineChannel,
   createStockMarketChannel,
+  createStockBigDealChannel,
 } from '../../utils/websocketProtocol';
 import {
   US_STOCK_USE_MOCK,
@@ -124,6 +125,51 @@ function formatTurnover24hDisplay(raw, lng) {
   if (raw == null || raw === '') return null;
   const out = formatMoneyCompact(raw, lng, true);
   return !out || out.includes('--') ? null : out;
+}
+
+function toBigDealNumber(v) {
+  if (v === null || v === undefined) return null;
+  const s = String(v).replace(/,/g, '').trim();
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+function mapStockBigDealSide(arr) {
+  return (arr || [])
+    .map((x) => {
+      const price = toBigDealNumber(x?.dealPrice ?? x?.deal_price ?? x?.price);
+      const hasVolume = x?.volume !== null && x?.volume !== undefined && x?.volume !== '';
+      const qty = hasVolume ? toBigDealNumber(x.volume) : null;
+      const quoteVol = toBigDealNumber(x?.quoteVolume ?? x?.quote_volume);
+      const notional = price !== null && qty !== null ? price * qty : null;
+      const fallbackDealValue = quoteVol ?? toBigDealNumber(x?.deal_value ?? x?.deal_amount ?? x?.notional ?? x?.amount);
+      return {
+        price: price ?? 0,
+        quantity: qty,
+        value: notional ?? fallbackDealValue ?? 0,
+        logo: x?.logo || null,
+      };
+    })
+    .filter((row) => row.price > 0);
+}
+
+function buildOrderBookFromBigDealSides(buyRaw, sellRaw) {
+  const buyLevels = mapStockBigDealSide(buyRaw);
+  const sellLevels = mapStockBigDealSide(sellRaw);
+  const bids = [...buyLevels]
+    .sort((a, b) => (a.price - b.price) || (b.quantity - a.quantity))
+    .slice(0, 40);
+  const asks = [...sellLevels]
+    .sort((a, b) => (b.price - a.price) || (b.quantity - a.quantity))
+    .slice(0, 40);
+  return { bids, asks };
+}
+
+function stockBigDealSideHasData(sideObj) {
+  if (!sideObj || typeof sideObj !== 'object') return false;
+  const buy = Array.isArray(sideObj.buy) ? sideObj.buy : [];
+  const sell = Array.isArray(sideObj.sell) ? sideObj.sell : [];
+  return buy.length > 0 || sell.length > 0;
 }
 
 function normalizeWatchlistSymbols(data) {
@@ -546,6 +592,34 @@ export default function DetailPage() {
   const [isBigOrderUnlocked, setIsBigOrderUnlocked] = useState(false);
   const [unlockEndTime, setUnlockEndTime] = useState(null);
   const [orderBookTag, setOrderBookTag] = useState(null);
+  const [stockBigDealTab, setStockBigDealTab] = useState('spot');
+  const [stockBigDealHasPerp, setStockBigDealHasPerp] = useState(false);
+
+  useEffect(() => {
+    stockBigDealTabRef.current = stockBigDealTab;
+  }, [stockBigDealTab]);
+
+  const applyStockBigDealOrderBook = useCallback((tab) => {
+    const side = tab === 'perp' ? stockBigDealRawRef.current.perp : stockBigDealRawRef.current.spot;
+    if (!side) {
+      setOrderBook({ bids: [], asks: [] });
+      return;
+    }
+    const buyRaw = Array.isArray(side.buy) ? side.buy : [];
+    const sellRaw = Array.isArray(side.sell) ? side.sell : [];
+    if (!buyRaw.length && !sellRaw.length) {
+      hasBigDealDataRef.current = true;
+      setOrderBook({ bids: [], asks: [] });
+      return;
+    }
+    hasBigDealDataRef.current = true;
+    setOrderBook(buildOrderBookFromBigDealSides(buyRaw, sellRaw));
+  }, []);
+
+  useEffect(() => {
+    if (!isUsStock) return;
+    applyStockBigDealOrderBook(stockBigDealTab);
+  }, [isUsStock, stockBigDealTab, applyStockBigDealOrderBook]);
   const [mySubscription, setMySubscription] = useState(null);
 
   // 注册 createTime 起 30 天内：免遮罩、无倒计时/限时 flag，开放 Top 40 深度
@@ -1022,6 +1096,9 @@ export default function DetailPage() {
   const pollingTimerRef = useRef(null); // HTTP轮询定时器
   const hasBigDealDataRef = useRef(false); // 是否收到过大单数据（避免 mock 覆盖）
   const bigDealChannelIdRef = useRef(null); // big_deal 订阅频道ID（若服务端返回）
+  const stockBigDealChannelRef = useRef(null); // stock_big_deal 订阅频道ID
+  const stockBigDealRawRef = useRef({ spot: null, perp: null });
+  const stockBigDealTabRef = useRef('spot');
   const didResubscribeBigDealRef = useRef(false); // 防止重复订阅导致请求过多
   const bigDealMsgCountRef = useRef(0);
   const lastOrderBookLogAtRef = useRef(0);
@@ -1050,20 +1127,26 @@ export default function DetailPage() {
           await ws.unsubscribe([bigDealChannelIdRef.current]);
           bigDealChannelIdRef.current = null;
         }
+        if (stockBigDealChannelRef.current) {
+          await ws.unsubscribe([stockBigDealChannelRef.current]);
+          stockBigDealChannelRef.current = null;
+        }
 
-        const bigDealChannel = { type: 'big_deal', symbols: [String(symbol || '').toUpperCase()] };
-        const response = await ws.subscribe([bigDealChannel]);
-        // 调试：打印 big_deal 的订阅回包（用于鉴权/未授权定位）
-        console.log('[WS][detail][big_deal][resubscribe] subscribe_response:', response);
+        const response = isUsStock
+          ? await ws.subscribe([createStockBigDealChannel([String(symbol || '').toUpperCase()])])
+          : await ws.subscribe([{ type: 'big_deal', symbols: [String(symbol || '').toUpperCase()] }]);
         const channelId = response?.data?.channels?.[0]?.channelId;
-        if (channelId) bigDealChannelIdRef.current = channelId;
+        if (channelId) {
+          if (isUsStock) stockBigDealChannelRef.current = channelId;
+          else bigDealChannelIdRef.current = channelId;
+        }
       } catch (e) {
         console.error('[big_deal] resubscribe after unlock failed:', e);
       }
     };
 
     run();
-  }, [orderBookUnlocked, symbol]);
+  }, [orderBookUnlocked, symbol, isUsStock]);
 
   // 这里不再打印解锁状态/订单簿更新日志，避免刷屏；big_deal 只保留最关键字段日志
   
@@ -1931,6 +2014,10 @@ ${coinInfo.name || symbol} (${symbol})
       });
       return undefined;
     }
+
+    setStockBigDealTab('spot');
+    setStockBigDealHasPerp(false);
+    stockBigDealRawRef.current = { spot: null, perp: null };
     
     // 设置首次加载超时（1分钟）
     initialLoadTimeoutRef.current = setTimeout(() => {
@@ -2034,20 +2121,30 @@ ${coinInfo.name || symbol} (${symbol})
         });
       }
 
-      // 订阅大单侦测数据（big_deal）
-      // 对齐协议示例：
-      // { event:"subscribe", data:{ channels:[{ type:"big_deal", symbols:["BTC"] }] } }
-      const bigDealChannel = { type: 'big_deal', symbols: [String(symbol || '').toUpperCase()] };
-      ws.subscribe([bigDealChannel])
-        .then((response) => {
-          // 调试：打印 big_deal 的订阅回包，定位 code=206 的原因（多半是未授权/token 不匹配）
-          console.log('[WS][detail][big_deal] subscribe_response:', response);
-          const channelId = response?.data?.channels?.[0]?.channelId;
-          if (channelId) bigDealChannelIdRef.current = channelId;
-        })
-        .catch((err) => {
-          console.error('订阅 big_deal 失败:', err);
-        });
+      // 订阅大单侦测：美股 stock_big_deal，币种 big_deal
+      if (isUsStock) {
+        const stockBigDealChannel = createStockBigDealChannel([String(symbol || '').toUpperCase()]);
+        ws.subscribe([stockBigDealChannel])
+          .then((response) => {
+            console.log('[WS][detail][stock_big_deal] subscribe_response:', response);
+            const channelId = response?.data?.channels?.[0]?.channelId;
+            if (channelId) stockBigDealChannelRef.current = channelId;
+          })
+          .catch((err) => {
+            console.error('订阅 stock_big_deal 失败:', err);
+          });
+      } else {
+        const bigDealChannel = { type: 'big_deal', symbols: [String(symbol || '').toUpperCase()] };
+        ws.subscribe([bigDealChannel])
+          .then((response) => {
+            console.log('[WS][detail][big_deal] subscribe_response:', response);
+            const channelId = response?.data?.channels?.[0]?.channelId;
+            if (channelId) bigDealChannelIdRef.current = channelId;
+          })
+          .catch((err) => {
+            console.error('订阅 big_deal 失败:', err);
+          });
+      }
     });
     
     // 监听 Ticker 数据更新
@@ -2488,8 +2585,35 @@ ${coinInfo.name || symbol} (${symbol})
       }
     });
 
-    // 监听大单侦测数据（big_deal）
+    // 监听美股大单侦测（stock_big_deal）
+    ws.on(WS_EVENTS.STOCK_BIG_DEAL, (msg) => {
+      if (!isUsStock) return;
+      const data = msg?.data;
+      if (!data) return;
+
+      const msgSymbol = String(data?.symbol || '').toUpperCase();
+      const currentSymbol = String(symbol || '').toUpperCase();
+      if (msgSymbol && currentSymbol && msgSymbol !== currentSymbol) return;
+
+      const spot = data?.spot ?? null;
+      const perp = data?.perp ?? null;
+      stockBigDealRawRef.current = { spot, perp };
+
+      const hasPerp = stockBigDealSideHasData(perp);
+      setStockBigDealHasPerp(hasPerp);
+
+      const activeTab = stockBigDealTabRef.current;
+      if (activeTab === 'perp' && !hasPerp) {
+        setStockBigDealTab('spot');
+        applyStockBigDealOrderBook('spot');
+      } else {
+        applyStockBigDealOrderBook(activeTab);
+      }
+    });
+
+    // 监听大单侦测数据（big_deal，仅币种）
     ws.on('big_deal', (msg) => {
+      if (isUsStock) return;
       bigDealMsgCountRef.current += 1;
       const data = msg?.data;
 
@@ -2616,6 +2740,8 @@ ${coinInfo.name || symbol} (${symbol})
       isFirstRenderRef.current = true;
       hasBigDealDataRef.current = false;
       bigDealChannelIdRef.current = null;
+      stockBigDealChannelRef.current = null;
+      stockBigDealRawRef.current = { spot: null, perp: null };
       
       // 断开 WebSocket
       if (wsRef.current) {
@@ -2626,11 +2752,13 @@ ${coinInfo.name || symbol} (${symbol})
   }, [symbol, isUsStock]);
 
   useEffect(() => {
+    // 美股大单走 stock_big_deal WS，不使用 mock
+    if (isUsStock) return;
     // 仅在尚未收到真实大单数据时使用 mock，避免覆盖 WS 数据
     if (hasBigDealDataRef.current) return;
     if (orderBook?.bids?.length || orderBook?.asks?.length) return;
     setOrderBook(generateMockOrderBook(coinInfo?.url));
-  }, [symbol, coinInfo?.url]);
+  }, [symbol, coinInfo?.url, isUsStock]);
   
   // 监听K线时间周期切换，动态切换订阅
   useEffect(() => {
@@ -2844,6 +2972,10 @@ ${coinInfo.name || symbol} (${symbol})
         ? ['Top 20', 'Top 5']
         : ['Top 5'];
 
+    const stockInstrumentTabs = isUsStock
+      ? (stockBigDealHasPerp ? ['spot', 'perp'] : ['spot'])
+      : null;
+
     return (
       <OrderBook 
         bids={orderBook.bids} 
@@ -2861,6 +2993,10 @@ ${coinInfo.name || symbol} (${symbol})
         maskDescription={t('orderBook.maskDescription')}
         maskButtonText={t('orderBook.maskButtonText')}
         showVipElements={false}
+        instrumentTabs={stockInstrumentTabs}
+        activeInstrumentTab={stockBigDealTab}
+        onInstrumentTabChange={isUsStock ? setStockBigDealTab : undefined}
+        strictQuantity={isUsStock}
       />
     );
   };

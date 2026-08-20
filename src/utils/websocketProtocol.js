@@ -25,6 +25,7 @@ export const WS_EVENTS = {
   RANKING: 'ranking',
   MARKET_OVERVIEW: 'market_overview',
   STOCK_MARKET: 'stock_market',      // 美股跨所市场数据
+  STOCK_BIG_DEAL: 'stock_big_deal',  // 美股大单侦测
   
   // AI 对话
   AI_CHAT: 'ai_chat',
@@ -48,6 +49,7 @@ export const CHANNEL_TYPES = {
   RANKING: 'ranking',         // 榜单数据
   MARKET_OVERVIEW: 'market_overview', // 市场概览
   STOCK_MARKET: 'stock_market',      // 美股跨所市场数据
+  STOCK_BIG_DEAL: 'stock_big_deal',  // 美股大单侦测
 };
 
 // ==================== 平台类型常量 ====================
@@ -304,6 +306,18 @@ export function createMarketOverviewChannel(interval = 30000) {
 export function createStockMarketChannel(symbols) {
   return {
     type: CHANNEL_TYPES.STOCK_MARKET,
+    symbols: symbols,
+  };
+}
+
+/**
+ * 创建美股大单侦测频道配置
+ * @param {Array} symbols - 股票符号列表，如 ['NVDA']
+ * @returns {object} 频道配置
+ */
+export function createStockBigDealChannel(symbols) {
+  return {
+    type: CHANNEL_TYPES.STOCK_BIG_DEAL,
     symbols: symbols,
   };
 }
