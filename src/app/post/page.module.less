@@ -152,6 +152,8 @@
   padding: 0;
   background: none !important;
   border: none;
+  border-radius: 21PX;
+  overflow: hidden;
 }
 
 .pcPostContainer .bottomToolbar .templateBtn .templateBox {
@@ -1076,6 +1078,8 @@
     padding: 0;
     background: none !important;
     border: none;
+    border-radius: 15px; /* 与内部胶囊同圆角，避免暗色 hover 露出方角 */
+    overflow: hidden;
     
     .templateBox {
       background-color: transparent;
@@ -1518,9 +1522,29 @@
 
 /* 暗色模式适配 */
 :global([data-theme="dark"]) {
-  .postContainer {
+  .postPageBg {
+    background: #0f1216;
+  }
+
+  .pcPageWrap {
+    color: #f3f4f6;
+  }
+
+  .pcTitle {
+    color: #f3f4f6;
+  }
+
+  .pcBackBtn {
+    background: #2a2e35;
+    color: #f3f4f6;
+    box-shadow: none;
+  }
+
+  .postContainer,
+  .pcPostContainer {
     background: #1a1a1a;
     color: #fff;
+    box-shadow: none;
   }
 
   .userInfo {
@@ -1537,6 +1561,18 @@
     background-color: #2a2a2a;
   }
 
+  .titleInput,
+  .contentTextarea textarea,
+  .contentTextarea :global(textarea) {
+    color: #f3f4f6;
+  }
+
+  .titleToggleTag {
+    background: #2a2e35;
+    color: rgba(255, 255, 255, 0.75);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
   .coinSelectBtn {
     background: #333;
   }
@@ -1547,6 +1583,10 @@
 
   .voteDisplay {
     background: #2a2a2a;
+  }
+
+  .voteTitle {
+    color: #f3f4f6;
   }
 
   .voteOption {
@@ -1560,7 +1600,7 @@
   }
 
   .templateBtn {
-    background: #333 !important;
+    background: transparent !important;
     color: #fff !important;
 
     .templateBox {
@@ -1571,7 +1611,7 @@
   }
 
   .templateBtn:hover {
-    background: #404040 !important;
+    background: transparent !important;
 
     .templateBox:not(.active) {
       background: rgba(255, 255, 255, 0.08);
@@ -1589,13 +1629,226 @@
     color: #fff;
   }
 
-  .templateItem {
-    background: #333;
-    color: #fff;
+  .templatePopup {
+    .popupContent {
+      background: #1c1f24;
+      color: #f3f4f6;
+    }
+
+    .popupHeader {
+      color: #f3f4f6;
+
+      .closeBtn {
+        color: rgba(255, 255, 255, 0.55);
+      }
+    }
+
+    .templateList .templateItem {
+      background: #2a2e35;
+      color: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+
+      .demoArea {
+        background: #161a1e;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      &:hover {
+        background: #343a43;
+      }
+
+      &.active {
+        background: rgba(17, 183, 135, 0.16);
+        border-color: rgba(17, 183, 135, 0.45);
+        color: #34d399;
+      }
+    }
   }
 
-  .templateItem:hover {
-    background: #404040;
+  .votePopup {
+    .popupContent {
+      background: #1c1f24;
+      color: #f3f4f6;
+    }
+
+    .popupHeader > span {
+      color: #f3f4f6;
+    }
+
+    .headerBtns {
+      .closeBtn {
+        background: #2a2e35 !important;
+        color: rgba(255, 255, 255, 0.85) !important;
+
+        &:hover,
+        &:active {
+          background: #343a43 !important;
+        }
+      }
+    }
+
+    .voteForm .voteTitleInput {
+      background: #2a2e35 !important;
+
+      input,
+      :global(.adm-input-element) {
+        color: #f3f4f6 !important;
+        caret-color: #34d399;
+      }
+
+      :global(.adm-input-element::placeholder) {
+        color: rgba(255, 255, 255, 0.35) !important;
+      }
+
+      .wordCount {
+        color: rgba(255, 255, 255, 0.4);
+      }
+    }
+
+    .voteOptionsList .optionItem {
+      .optionInput {
+        background: #2a2e35 !important;
+        color: #f3f4f6 !important;
+
+        :global(.adm-input-element) {
+          color: #f3f4f6 !important;
+          caret-color: #34d399;
+        }
+
+        :global(.adm-input-element::placeholder) {
+          color: rgba(255, 255, 255, 0.35) !important;
+        }
+      }
+
+      .deleteBtn {
+        color: rgba(255, 255, 255, 0.45);
+
+        &:hover,
+        &:active {
+          color: rgba(255, 255, 255, 0.75);
+        }
+      }
+    }
+
+    .addOptionBtn {
+      background: rgba(17, 183, 135, 0.14) !important;
+      color: #34d399 !important;
+
+      &:hover,
+      &:active {
+        background: rgba(17, 183, 135, 0.22) !important;
+      }
+    }
+  }
+
+  .topicPopup,
+  .coinPopup {
+    .popupContent {
+      background: #1c1f24;
+      color: #f3f4f6;
+      box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .popupHeader,
+    .coinHeader {
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .searchWrapper,
+    .searchBox {
+      background: #2a2e35 !important;
+
+      .searchInput,
+      input {
+        color: #f3f4f6 !important;
+        caret-color: #34d399;
+        background: transparent !important;
+
+        &::placeholder {
+          color: rgba(255, 255, 255, 0.35);
+        }
+      }
+    }
+
+    .cancelBtn {
+      color: rgba(255, 255, 255, 0.7) !important;
+
+      &:hover,
+      &:active {
+        color: #f3f4f6 !important;
+      }
+    }
+
+    .resultsTitle {
+      color: #f3f4f6 !important;
+    }
+
+    .topicItem,
+    .resultItem {
+      background: transparent !important;
+      border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+
+      .topicName,
+      .coinSymbol {
+        color: #f3f4f6 !important;
+      }
+
+      .topicDescription,
+      .coinName {
+        color: rgba(255, 255, 255, 0.45) !important;
+      }
+
+      &:hover,
+      &:active {
+        background: rgba(255, 255, 255, 0.06) !important;
+      }
+    }
+
+    .noResults {
+      color: rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  .topicCreatorMask {
+    background: rgba(0, 0, 0, 0.65);
+
+    .topicCreator {
+      background: #1c1f24;
+      color: #f3f4f6;
+
+      .creatorHeader {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+
+        span {
+          color: #f3f4f6;
+        }
+
+        .closeIcon {
+          color: rgba(255, 255, 255, 0.55);
+        }
+      }
+
+      .creatorContent {
+        .inputGroup {
+          .label {
+            color: rgba(255, 255, 255, 0.7);
+          }
+
+          .titleInput,
+          .descInput,
+          input,
+          textarea {
+            background: #2a2e35 !important;
+            color: #f3f4f6 !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+
+            &::placeholder {
+              color: rgba(255, 255, 255, 0.35);
+            }
+          }
+        }
+      }
+    }
   }
 
   .communityRulesMask {

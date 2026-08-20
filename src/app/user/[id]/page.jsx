@@ -474,7 +474,7 @@ export default function UserProfile({ params }) {
                 </div>
               ) : watchlist.length === 0 ? (
                 <div className={styles.coinList} style={{ padding: '16px', textAlign: 'center', color: '#999' }}>
-                  {t('user.watchlist.empty') || '该用户暂无自选'}
+                  {t('user.watchlist.empty', { defaultValue: '该用户暂无自选' })}
                 </div>
               ) : (
                 <>

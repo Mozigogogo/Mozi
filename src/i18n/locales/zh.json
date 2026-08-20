@@ -445,6 +445,9 @@
       "actionHeaderWatchlist": "加自选",
       "actionHeaderMonitor": "加监控"
     },
+    "watchlist": {
+      "empty": "该用户暂无自选"
+    },
     "logout": "退出登录",
     "loginRegister": "登录/注册",
     "pleaseLogin": "请登录",

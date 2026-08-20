@@ -458,7 +458,7 @@ export default function PCUserProfile({
               <div className={styles.noData}>{t('common.loadFailed') || '加载失败'}</div>
             )}
             {!watchlistLoading && !watchlistError && (!watchlist || watchlist.length === 0) && (
-              <div className={styles.noData}>{t('user.watchlist.empty') || '该用户暂无自选'}</div>
+              <div className={styles.noData}>{t('user.watchlist.empty', { defaultValue: '该用户暂无自选' })}</div>
             )}
           </div>
           <div className={styles.paginationWrapper}>

@@ -445,6 +445,9 @@
       "actionHeaderWatchlist": "Fav",
       "actionHeaderMonitor": "Monitor"
     },
+    "watchlist": {
+      "empty": "No watchlist items"
+    },
     "logout": "Logout",
     "loginRegister": "Login/Register",
     "pleaseLogin": "Please Login",
