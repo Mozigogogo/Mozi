@@ -368,6 +368,7 @@
       "priceWithChange": "最新价格/24H价格变化",
       "change24hValue": "24H价格变化",
       "change24hPercent": "24H价格变化%",
+      "bigOrderDetect": "大单侦测",
       "gain": "涨幅",
       "loss": "跌幅",
       "volatility": "波幅",

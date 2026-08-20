@@ -380,7 +380,7 @@ export default function PCFindContent() {
 
   const marketActionColumns = [
     {
-      title: t('addAlarm.bigOrderDetect'),
+      title: t('discover.columns.bigOrderDetect'),
       key: 'bigOrderDetect',
       align: 'center',
       width: MARKET_TABLE_COL_WIDTHS[5],
@@ -1255,7 +1255,7 @@ export default function PCFindContent() {
             <div
               className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellCenter} ${styles.marketTableHeaderCellShiftRight}`}
             >
-              {t('addAlarm.bigOrderDetect')}
+              {t('discover.columns.bigOrderDetect')}
             </div>
             <div
               className={`${styles.marketTableHeaderCell} ${styles.marketTableHeaderCellCenter} ${styles.marketTableHeaderCellShiftRight}`}
