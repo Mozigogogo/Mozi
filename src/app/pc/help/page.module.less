@@ -62,12 +62,13 @@
     --shadow: rgba(0, 0, 0, 0.35);
     --shadow-md: rgba(0, 0, 0, 0.45);
     --hero-bg: #1c1f24;
+    --hero-fg: #f3f4f6;
   }
 }
 
 .hero {
   background: var(--hero-bg, var(--ink));
-  color: var(--paper);
+  color: var(--hero-fg, var(--paper));
   padding: 28PX 40PX 32PX;
   position: relative;
   overflow: hidden;
@@ -140,7 +141,7 @@
   background: rgba(255, 255, 255, 0.07);
   border: 1PX solid rgba(255, 255, 255, 0.15);
   border-radius: 4PX;
-  color: var(--paper);
+  color: var(--hero-fg, var(--paper));
   font-family: inherit;
   font-size: 15PX;
   outline: none;

@@ -13,6 +13,9 @@ import { Loading } from '@/components/Loading';
 import isEmpty from 'lodash/isEmpty';
 import styles from './index.module.less';
 
+/** 可交易平台：类型 / 可交易时间段 两列显示开关（死数据列，后续接真实数据时可再打开） */
+const SHOW_PLATFORM_TYPE_AND_PERIOD = false;
+
 /**
  * PC端搜索结果组件
  */
@@ -83,9 +86,17 @@ export default function PCSearchResults({ keyword, onClose, onYieldToPage }) {
         setRelatedSections(areaRes.value.data);
       }
 
-      // 处理交易平台
+      // 处理交易平台（类型、可交易时间段为前端死数据）
       if (platformRes.status === 'fulfilled' && !isEmpty(platformRes.value?.data)) {
-        setPlatforms(platformRes.value.data);
+        setPlatforms(
+          platformRes.value.data.map((item, index) => ({
+            ...item,
+            // 死数据：交替展示现货 / 合约
+            pairType: index % 2 === 0 ? 'spot' : 'contract',
+            // 死数据：按美股常规交易时段（美东时间）
+            tradePeriod: '09:30-16:00 ET',
+          }))
+        );
       }
 
       // 处理交易对
@@ -244,12 +255,13 @@ export default function PCSearchResults({ keyword, onClose, onYieldToPage }) {
     },
   ];
 
-  // 交易平台表格列
+  // 交易平台表格列（每列都设宽度，避免无宽度列吃掉剩余空间导致大空隙）
   const platformColumns = [
     {
       title: t('search.platform'),
       dataIndex: 'exchanges',
       key: 'exchanges',
+      width: SHOW_PLATFORM_TYPE_AND_PERIOD ? '16%' : '28%',
       render: (text, record) => (
         <div className={styles.coinCell}>
           <img src={record.url} alt={text} className={styles.coinIcon} />
@@ -257,24 +269,45 @@ export default function PCSearchResults({ keyword, onClose, onYieldToPage }) {
         </div>
       ),
     },
+    SHOW_PLATFORM_TYPE_AND_PERIOD && {
+      title: t('search.type', { defaultValue: '类型' }),
+      dataIndex: 'pairType',
+      key: 'pairType',
+      align: 'center',
+      width: '10%',
+      render: (value) =>
+        value === 'contract'
+          ? t('search.contract', { defaultValue: '合约' })
+          : t('search.spot', { defaultValue: '现货' }),
+    },
+    SHOW_PLATFORM_TYPE_AND_PERIOD && {
+      title: t('search.tradePeriod', { defaultValue: '可交易时间段' }),
+      dataIndex: 'tradePeriod',
+      key: 'tradePeriod',
+      align: 'center',
+      width: '16%',
+    },
     {
       title: t('search.chain'),
       dataIndex: 'chain',
       key: 'chain',
+      width: SHOW_PLATFORM_TYPE_AND_PERIOD ? '22%' : '28%',
     },
     {
       title: t('search.withdrawFee'),
       dataIndex: 'withdrawfee',
       key: 'withdrawfee',
       align: 'right',
+      width: SHOW_PLATFORM_TYPE_AND_PERIOD ? '18%' : '22%',
     },
     {
       title: t('search.withdrawMin'),
       dataIndex: 'withdrawmin',
       key: 'withdrawmin',
       align: 'right',
+      width: SHOW_PLATFORM_TYPE_AND_PERIOD ? '18%' : '22%',
     },
-  ];
+  ].filter(Boolean);
 
   // 交易对表格列
   const pairColumns = [
@@ -388,6 +421,7 @@ export default function PCSearchResults({ keyword, onClose, onYieldToPage }) {
             dataSource={platforms}
             rowKey={(record, index) => `${record.exchanges}-${index}`}
             pagination={false}
+            tableLayout="fixed"
           />
         </Card>
       )}

@@ -1066,6 +1066,10 @@
     "withdrawMin": "Min Wdrl",
     "pairs": "Pairs",
     "tradingPair": "Pair",
+    "type": "Type",
+    "spot": "Spot",
+    "contract": "Futures",
+    "tradePeriod": "Trading Hours",
     "spotPairs": "Spot",
     "derivativePairs": "Derivatives"
   },

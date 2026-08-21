@@ -1583,10 +1583,10 @@ export default function PCLayout({ children }) {
           className={`${styles.content} ${!isHelpPage ? styles.homeContent : ''} ${collapsed ? styles.contentCollapsed : ''} ${isDetailPage ? styles.contentDetail : ''} ${isAiRoute ? styles.contentAi : ''}`}
         >
           <div
-            className={`${styles.contentWrapper} ${isHelpPage ? styles.contentWrapperHelp : ''} ${isDetailPage ? styles.contentWrapperDetail : ''} ${isAiRoute ? styles.contentWrapperAi : ''}`}
+            className={`${styles.contentWrapper} ${isHelpPage ? styles.contentWrapperHelp : ''} ${isDetailPage ? styles.contentWrapperDetail : ''} ${isAiRoute ? styles.contentWrapperAi : ''} ${shouldShowSearchOverlay ? styles.contentWrapperSearch : ''}`}
           >
             <div
-              className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''} ${isDetailPage ? styles.contentMainDetail : ''} ${isAiRoute ? styles.contentMainAi : ''}`}
+              className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''} ${isDetailPage ? styles.contentMainDetail : ''} ${isAiRoute ? styles.contentMainAi : ''} ${shouldShowSearchOverlay ? styles.contentMainSearch : ''}`}
             >
               {(() => {
                 if (shouldShowSearchOverlay) {

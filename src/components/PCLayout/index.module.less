@@ -1143,6 +1143,21 @@
   overflow-y: auto;
 }
 
+/* 顶部搜索：主内容区内部滚动，避免 flex 锁高后截断 */
+.contentWrapperSearch {
+  max-height: calc(100vh - 64px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.contentMainSearch {
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .contentCollapsed {
   margin-left: 80px;
 }
@@ -1320,6 +1335,10 @@
     padding: 12px;
     padding-bottom: 56PX;
     min-height: calc(100vh - 56px);
+  }
+
+  .contentWrapperSearch {
+    max-height: calc(100vh - 56px);
   }
 
   .contentMainAi {

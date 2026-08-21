@@ -1,7 +1,8 @@
 /* PC端搜索结果样式 */
 
 .searchResults {
-  min-height: calc(100vh - 64px);
+  padding: 16px 24px 24px;
+  box-sizing: border-box;
 }
 
 .searchResultsLoading {
@@ -12,7 +13,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 64px);
+  min-height: 320px;
   background: #fff;
 }
 
@@ -186,5 +187,17 @@
 
   .sectionName {
     color: rgba(255, 255, 255, 0.78);
+  }
+}
+
+@media (max-width: 1280px) {
+  .searchResults {
+    padding: 12px 16px 20px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .searchResults {
+    padding: 12px 12px 16px;
   }
 }
