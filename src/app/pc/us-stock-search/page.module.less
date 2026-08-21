@@ -1,0 +1,122 @@
+.page {
+  min-height: calc(100vh - 64px);
+  padding: 16px 24px 40px;
+  box-sizing: border-box;
+}
+
+.results {
+  min-height: auto;
+  padding: 0;
+}
+
+.symbolBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.symbolMain {
+  font-weight: 600;
+  color: inherit;
+  line-height: 1.2;
+}
+
+.symbolSub {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.priceCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+.priceMeta {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #f5f5f5;
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.noteText {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+  line-height: 1.4;
+}
+
+.roiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.roiItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #f5f5f5;
+}
+
+.roiLabel {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.55);
+  font-weight: 500;
+}
+
+:global([data-theme='dark']) {
+  .symbolSub,
+  .priceMeta,
+  .noteText,
+  .roiLabel {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .chip,
+  .roiItem {
+    background: rgba(255, 255, 255, 0.06);
+    color: #f3f4f6;
+  }
+}
+
+@media (max-width: 1100px) {
+  .roiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 12px 12px 32px;
+  }
+
+  .roiGrid {
+    grid-template-columns: 1fr;
+  }
+}

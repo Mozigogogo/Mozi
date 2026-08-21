@@ -149,6 +149,8 @@ export const Interface = {
   // 搜索页
   // 币种是否有效
   IS_COIN: '/search/iscoin',
+  // 标的校验：crypto / stock / invalid
+  SEARCH_VALIDATE: '/search/validate',
 
   // 支付相关
   // Telegram Stars: generate invoice link (no pre-created order on client)

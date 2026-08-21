@@ -47,6 +47,7 @@ import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { getShareCount } from '@/api/home';
 import { savePcAiFromSearch } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
+import { getPcSearchRoute, validateSearchSymbol } from '@/utils/searchValidate';
 import styles from './index.module.less';
 import AISearchBadge from './AISearchBadge';
 // 预热详情页 CSS：用户在 PC 壳内任意页时已加载，首次进 /detail 不再 FOUC
@@ -425,11 +426,24 @@ export default function PCLayout({ children }) {
     return () => clearInterval(timer);
   }, []);
 
-  // 搜索功能：跳转 /pc/search 路由展示结果
-  const handleSearch = () => {
+  // 搜索功能：先调 /search/validate，再按类型跳转
+  const [searchSubmitting, setSearchSubmitting] = useState(false);
+  const handleSearch = async () => {
     const keyword = searchRef.current.trim();
-    if (!keyword) return;
-    router.push(`/pc/search?keyword=${encodeURIComponent(keyword)}`);
+    if (!keyword || searchSubmitting) return;
+
+    setSearchSubmitting(true);
+    try {
+      const type = await validateSearchSymbol(keyword);
+      if (type === 'stock') {
+        router.push(getPcSearchRoute('stock', keyword));
+        return;
+      }
+      // crypto / invalid 都进加密搜索页；页内会再次校验并展示结果或空态
+      router.push(getPcSearchRoute('crypto', keyword));
+    } finally {
+      setSearchSubmitting(false);
+    }
   };
 
   const handleSearchChange = (e) => {
@@ -447,7 +461,12 @@ export default function PCLayout({ children }) {
   const clearSearch = () => {
     setSearchValue('');
     searchRef.current = '';
-    if (pathname === '/pc/search' || pathname?.startsWith('/pc/search/')) {
+    if (
+      pathname === '/pc/search' ||
+      pathname?.startsWith('/pc/search/') ||
+      pathname === '/pc/us-stock-search' ||
+      pathname?.startsWith('/pc/us-stock-search/')
+    ) {
       router.push('/home');
     }
   };
@@ -977,7 +996,10 @@ export default function PCLayout({ children }) {
   const detailSymbol = searchParams.get('symbol') || '';
   const routeSearchKeyword = (searchParams.get('keyword') || '').trim();
   const isSearchPage =
-    pathname === '/pc/search' || (pathname && pathname.startsWith('/pc/search/'));
+    pathname === '/pc/search' ||
+    (pathname && pathname.startsWith('/pc/search/')) ||
+    pathname === '/pc/us-stock-search' ||
+    (pathname && pathname.startsWith('/pc/us-stock-search/'));
 
   // 搜索页：顶栏输入框与 URL keyword 同步
   useEffect(() => {
@@ -1039,7 +1061,12 @@ export default function PCLayout({ children }) {
                 </div>
               )}
             </div>
-            <div className={styles.searchButton} onClick={handleSearch}>
+            <div
+              className={styles.searchButton}
+              onClick={handleSearch}
+              aria-disabled={searchSubmitting}
+              style={searchSubmitting ? { opacity: 0.7, pointerEvents: 'none' } : undefined}
+            >
               <span
                 className={styles.searchIconImg}
                 style={{

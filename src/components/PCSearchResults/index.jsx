@@ -9,6 +9,7 @@ import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { completeTask } from '@/api/user';
 import { jump2Detail } from '@/utils/core';
+import { getPcSearchRoute, validateSearchSymbol } from '@/utils/searchValidate';
 import { Loading } from '@/components/Loading';
 import isEmpty from 'lodash/isEmpty';
 import styles from './index.module.less';
@@ -56,30 +57,24 @@ export default function PCSearchResults({ keyword }) {
     setIsUsStock(false);
     
     try {
-      // 并行：校验币种 + 判断是否美股
-      const [isCoin, stockHeaderRes] = await Promise.all([
-        request({ url: Interface.IS_COIN, data: { coin: keyword } }),
-        request({
-          url: Interface.stock_info,
-          data: { symbol: String(keyword || '').toUpperCase() },
-        }).catch(() => null),
-      ]);
+      // 先校验标的类型，再拉搜索数据
+      const type = await validateSearchSymbol(keyword);
 
-      const usStock =
-        stockHeaderRes?.code === 0 &&
-        !isEmpty(stockHeaderRes?.data) &&
-        Boolean(stockHeaderRes.data.listingMarket || stockHeaderRes.data.symbol);
-      setIsUsStock(usStock);
-      
-      if (!isCoin?.data?.isCoin && !usStock) {
+      if (type === 'stock') {
+        router.replace(getPcSearchRoute('stock', keyword));
+        return;
+      }
+
+      if (type !== 'crypto') {
         setIsValidCoin(false);
         setLoading(false);
         return;
       }
-      
-      setIsValidCoin(true);
 
-      // 并行请求所有数据
+      setIsValidCoin(true);
+      setIsUsStock(false);
+
+      // 并行请求加密货币搜索数据
       const [coinRes, areaRes, platformRes, spotRes] = await Promise.allSettled([
         request({ url: Interface.COIN_INFO, data: { coin: keyword } }),
         request({ url: Interface.COIN_AREA, data: { coin: keyword } }),
@@ -106,19 +101,9 @@ export default function PCSearchResults({ keyword }) {
         setRelatedSections([]);
       }
 
-      // 处理交易平台（美股：类型 / 可交易时间段为前端死数据；币种不挂这两列）
+      // 处理交易平台
       if (platformRes.status === 'fulfilled' && !isEmpty(platformRes.value?.data)) {
-        setPlatforms(
-          platformRes.value.data.map((item, index) =>
-            usStock
-              ? {
-                  ...item,
-                  pairType: index % 2 === 0 ? 'spot' : 'contract',
-                  tradePeriod: '09:30-16:00 ET',
-                }
-              : item
-          )
-        );
+        setPlatforms(platformRes.value.data);
       } else {
         setPlatforms([]);
       }
