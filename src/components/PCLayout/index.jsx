@@ -28,7 +28,6 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useDisconnect } from 'wagmi';
 import { PcShellContext } from '../PcShellContext';
 import { useTheme } from '@/context/ThemeProvider';
-import PCSearchResults from '../PCSearchResults';
 import PCFindContent from '../PCFindContent';
 import PCCommunityContent from '../PCCommunityContent';
 import PCAuthModal from '../PCAuthModal';
@@ -50,13 +49,14 @@ import { savePcAiFromSearch } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
 import styles from './index.module.less';
 import AISearchBadge from './AISearchBadge';
+// 预热详情页 CSS：用户在 PC 壳内任意页时已加载，首次进 /detail 不再 FOUC
+import { DETAIL_CSS_WARMUP } from '@/app/detail/detailCssWarmup';
+
+void DETAIL_CSS_WARMUP;
 
 const searchIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/search.png';
 const CDN_PUBLIC_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
 const MY_SUBSCRIPTION_PLAN_CODE_KEY = 'mozi_my_subscription_plan_code_v1';
-
-/** 进入这些路由时不再盖住页面内容，避免搜索层挡住详情/报警页 */
-const SEARCH_OVERLAY_YIELD_ROUTES = ['/detail', '/pc/alarm'];
 
 function getConversationId(item) {
   return item?.conversationId || item?.conversation_id || item?.id || '';
@@ -238,6 +238,14 @@ export default function PCLayout({ children }) {
     defaultValue: (i18n?.language || '').startsWith('en') ? 'No Favorites' : '暂无收藏自选',
   });
   const [userInfo, setUserInfo] = useState(null);
+
+  // 预取详情路由（JS/CSS），降低首次点进详情的 chunk 竞态
+  useEffect(() => {
+    try {
+      router.prefetch('/detail?symbol=BTC');
+    } catch (_) {}
+  }, [router]);
+
   const [collapsed, setCollapsed] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -253,6 +261,7 @@ export default function PCLayout({ children }) {
       const hasShown = localStorage.getItem('hasShownBindGuide');
       if (!hasShown) {
         setShowBindBenefitCodeModal(true);
+
         localStorage.setItem('hasShownBindGuide', 'true');
       }
     }
@@ -309,10 +318,6 @@ export default function PCLayout({ children }) {
   // 搜索框状态
   const [searchValue, setSearchValue] = useState('');
   const searchRef = useRef('');
-  const [showSearchResults, setShowSearchResults] = useState(false);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  /** 从搜索结果跳转到详情/告警页时暂时让出覆盖层，主动搜索时会重置 */
-  const [searchYieldToPage, setSearchYieldToPage] = useState(false);
   const [showUserPanel, setShowUserPanel] = useState(false);
   const [showUserProfilePopup, setShowUserProfilePopup] = useState(false);
 
@@ -420,14 +425,11 @@ export default function PCLayout({ children }) {
     return () => clearInterval(timer);
   }, []);
 
-  // 搜索功能
+  // 搜索功能：跳转 /pc/search 路由展示结果
   const handleSearch = () => {
     const keyword = searchRef.current.trim();
-    if (keyword) {
-      setSearchYieldToPage(false);
-      setSearchKeyword(keyword);
-      setShowSearchResults(true);
-    }
+    if (!keyword) return;
+    router.push(`/pc/search?keyword=${encodeURIComponent(keyword)}`);
   };
 
   const handleSearchChange = (e) => {
@@ -445,14 +447,10 @@ export default function PCLayout({ children }) {
   const clearSearch = () => {
     setSearchValue('');
     searchRef.current = '';
-    setShowSearchResults(false);
-    setSearchKeyword('');
-    setSearchYieldToPage(false);
+    if (pathname === '/pc/search' || pathname?.startsWith('/pc/search/')) {
+      router.push('/home');
+    }
   };
-
-  const handleSearchYieldToPage = useCallback(() => {
-    setSearchYieldToPage(true);
-  }, []);
 
   /** 顶栏 AI 问答：若搜索框有币种，进入 /ai 并默认提问「{币种}的综合分析」 */
   const handleAiNavigate = () => {
@@ -815,7 +813,6 @@ export default function PCLayout({ children }) {
 
   const goToInviteRewards = useCallback(() => {
     setActiveContent(null);
-    setShowSearchResults(false);
     router.push('/achievement');
   }, [router]);
 
@@ -871,7 +868,6 @@ export default function PCLayout({ children }) {
     // PC 端：发现/社区使用独立路由
     if (key === '/pc/find' || key === '/pc/community') {
       setActiveContent(null);
-      setShowSearchResults(false);
       router.push(key);
       return;
     }
@@ -879,13 +875,11 @@ export default function PCLayout({ children }) {
     // 兼容旧逻辑：如果还有地方用 /find、/community，统一跳转到 PC 路由
     if (key === '/find') {
       setActiveContent(null);
-      setShowSearchResults(false);
       router.push('/pc/find');
       return;
     }
     if (key === '/community') {
       setActiveContent(null);
-      setShowSearchResults(false);
       router.push('/pc/community');
       return;
     }
@@ -893,7 +887,6 @@ export default function PCLayout({ children }) {
     // 我的订阅：非 free 进入 /pc/benefitsPage，free 进入 /subscribe
     if (key === '/subscribe') {
       setActiveContent(null);
-      setShowSearchResults(false);
       let nextRoute = '/subscribe';
       try {
         const planCode = localStorage.getItem(MY_SUBSCRIPTION_PLAN_CODE_KEY);
@@ -937,7 +930,6 @@ export default function PCLayout({ children }) {
       );
       if (activeAiConversationId === conversationId) {
         setActiveContent(null);
-        setShowSearchResults(false);
         router.push('/ai');
       }
     },
@@ -983,11 +975,18 @@ export default function PCLayout({ children }) {
   };
 
   const detailSymbol = searchParams.get('symbol') || '';
-  const shouldShowSearchOverlay =
-    showSearchResults &&
-    !(searchYieldToPage && SEARCH_OVERLAY_YIELD_ROUTES.includes(pathname));
+  const routeSearchKeyword = (searchParams.get('keyword') || '').trim();
+  const isSearchPage =
+    pathname === '/pc/search' || (pathname && pathname.startsWith('/pc/search/'));
 
-  // 当路由变化时，清除 activeContent 与搜索结果覆盖层
+  // 搜索页：顶栏输入框与 URL keyword 同步
+  useEffect(() => {
+    if (!isSearchPage) return;
+    setSearchValue(routeSearchKeyword);
+    searchRef.current = routeSearchKeyword;
+  }, [isSearchPage, routeSearchKeyword]);
+
+  // 当路由变化时，清除 activeContent；离开搜索相关页时按需清空搜索框
   useEffect(() => {
     if (
       pathname !== '/find' &&
@@ -997,13 +996,10 @@ export default function PCLayout({ children }) {
     ) {
       setActiveContent(null);
     }
-    setShowSearchResults(false);
-    setSearchYieldToPage(false);
 
     if (pathname === '/detail' || pathname === '/pc/alarm') {
       setSearchValue('');
       searchRef.current = '';
-      setSearchKeyword('');
     }
   }, [pathname, detailSymbol]);
 
@@ -1397,7 +1393,6 @@ export default function PCLayout({ children }) {
                   }`}
                   onClick={() => {
                     setActiveContent(null);
-                    setShowSearchResults(false);
                     if (pathname !== '/ai') {
                       pushWithRouteBootLoading(router, '/ai');
                       setIsAiChatExpanded(true);
@@ -1460,7 +1455,6 @@ export default function PCLayout({ children }) {
                                 className={styles.pcAiChatRowMain}
                                 onClick={() => {
                                   setActiveContent(null);
-                                  setShowSearchResults(false);
                                   pushWithRouteBootLoading(router, `/ai/${conversationId}`);
                                 }}
                               >
@@ -1583,21 +1577,13 @@ export default function PCLayout({ children }) {
           className={`${styles.content} ${!isHelpPage ? styles.homeContent : ''} ${collapsed ? styles.contentCollapsed : ''} ${isDetailPage ? styles.contentDetail : ''} ${isAiRoute ? styles.contentAi : ''}`}
         >
           <div
-            className={`${styles.contentWrapper} ${isHelpPage ? styles.contentWrapperHelp : ''} ${isDetailPage ? styles.contentWrapperDetail : ''} ${isAiRoute ? styles.contentWrapperAi : ''} ${shouldShowSearchOverlay ? styles.contentWrapperSearch : ''}`}
+            className={`${styles.contentWrapper} ${isHelpPage ? styles.contentWrapperHelp : ''} ${isDetailPage ? styles.contentWrapperDetail : ''} ${isAiRoute ? styles.contentWrapperAi : ''} ${isSearchPage ? styles.contentWrapperSearch : ''}`}
           >
             <div
-              className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''} ${isDetailPage ? styles.contentMainDetail : ''} ${isAiRoute ? styles.contentMainAi : ''} ${shouldShowSearchOverlay ? styles.contentMainSearch : ''}`}
+              className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''} ${isDetailPage ? styles.contentMainDetail : ''} ${isAiRoute ? styles.contentMainAi : ''} ${isSearchPage ? styles.contentMainSearch : ''}`}
             >
               {(() => {
-                if (shouldShowSearchOverlay) {
-                  return (
-                    <PCSearchResults
-                      keyword={searchKeyword}
-                      onClose={() => setShowSearchResults(false)}
-                      onYieldToPage={handleSearchYieldToPage}
-                    />
-                  );
-                } else if (activeContent === '/find') {
+                if (activeContent === '/find') {
                   return <PCFindContent />;
                 } else if (activeContent === '/community') {
                   return <PCCommunityContent />;

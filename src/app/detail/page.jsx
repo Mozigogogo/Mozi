@@ -32,13 +32,6 @@ import { safeBack } from '@/utils/navigation';
 import { markTgAlertDeeplinkHandledBySymbol } from '@/utils/tgAlertDeeplink';
 import { hideDetailNavigationShell } from '@/utils/clientNavigation';
 import { notifyRouteBootReady } from '@/utils/routeBootLoading';
-import {
-  markDetailSurfaceBootDone,
-  peekDetailSurfaceBootDone,
-  waitAnimationFrames,
-  waitForDetailSurfaceSettled,
-} from '@/utils/detailSurfaceBoot';
-import DetailPageLoading from '@/components/DetailPageLoading';
 import { usePcShell } from '@/components/PcShellContext';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
@@ -489,96 +482,11 @@ export default function DetailPage() {
     priceChange1Year: '--'
   });
 
-  // 仅会话内「首次」进入详情页需要内容区遮罩，避免样式 chunk 未稳定时露出乱布局；
-  // 之后切币种 / 再次进入详情不再遮罩。
-  const needSurfaceBootRef = useRef(!peekDetailSurfaceBootDone());
-  const [surfaceReady, setSurfaceReady] = useState(() => !needSurfaceBootRef.current);
-  const [bootOverlayVisible, setBootOverlayVisible] = useState(() => needSurfaceBootRef.current);
-  const [bootOverlayLeaving, setBootOverlayLeaving] = useState(false);
-
+  // CSS 已通过 PCLayout / detail layout 预热，不再用内容遮罩等样式落稳
   useEffect(() => {
-    if (!needSurfaceBootRef.current) {
-      setSurfaceReady(true);
-      setBootOverlayVisible(false);
-      setBootOverlayLeaving(false);
-      hideDetailNavigationShell();
-      notifyRouteBootReady();
-      return undefined;
-    }
-    if (!symbol) {
-      setSurfaceReady(true);
-      setBootOverlayVisible(false);
-      setBootOverlayLeaving(false);
-      needSurfaceBootRef.current = false;
-      markDetailSurfaceBootDone();
-      hideDetailNavigationShell();
-      notifyRouteBootReady();
-      return undefined;
-    }
-    // 首屏 coinInfo 尚未回来时继续遮罩（DOM 也还没准备好）
-    if (loading && isInitialLoad) return undefined;
-
-    const ac = new AbortController();
-    let leaveTimer = 0;
-
-    const finishBoot = () => {
-      if (ac.signal.aborted) return;
-      needSurfaceBootRef.current = false;
-      markDetailSurfaceBootDone();
-      hideDetailNavigationShell();
-      notifyRouteBootReady();
-      setBootOverlayVisible(false);
-      setBootOverlayLeaving(false);
-    };
-
-    (async () => {
-      const getRootEl = () =>
-        isPC ? pcContentLayoutRef.current : mobileRootRef.current;
-
-      // 1) 等真实 DOM 布局/字体落稳（此时内容仍 visibility:hidden，遮罩盖着）
-      await waitForDetailSurfaceSettled(getRootEl, {
-        isPC,
-        signal: ac.signal,
-      });
-      if (ac.signal.aborted) return;
-
-      // 2) 先露出内容但仍盖着遮罩，再二次确认布局，避免揭盖瞬间跳动
-      setSurfaceReady(true);
-      await waitAnimationFrames(2);
-      if (ac.signal.aborted) return;
-
-      await waitForDetailSurfaceSettled(getRootEl, {
-        isPC,
-        timeoutMs: 900,
-        stableFrames: 2,
-        skipFonts: true,
-        signal: ac.signal,
-      });
-      if (ac.signal.aborted) return;
-
-      // 3) 淡出遮罩后再卸掉，减少硬切闪烁
-      setBootOverlayLeaving(true);
-      leaveTimer = window.setTimeout(finishBoot, 180);
-    })();
-
-    return () => {
-      ac.abort();
-      if (leaveTimer) window.clearTimeout(leaveTimer);
-    };
-  }, [symbol, loading, isInitialLoad, isPC]);
-
-  const surfaceBootOverlay =
-    bootOverlayVisible || needSurfaceBootRef.current ? (
-      <div
-        className={`${styles.surfaceBootOverlay}${isPC ? ` ${styles.surfaceBootOverlayPc}` : ''}${
-          bootOverlayLeaving ? ` ${styles.surfaceBootOverlayLeaving}` : ''
-        }`}
-        aria-busy={!surfaceReady}
-        aria-live="polite"
-      >
-        <DetailPageLoading hideNavSkeleton inContent pc={isPC} quiet={bootOverlayLeaving} />
-      </div>
-    ) : null;
+    hideDetailNavigationShell();
+    notifyRouteBootReady();
+  }, []);
 
   const [orderBook, setOrderBook] = useState({
     bids: [],
@@ -1528,7 +1436,6 @@ export default function DetailPage() {
   }, [isUsStock]);
 
   // PC 右下角社区：按 symbol 拉取（不传 userType，与弹幕互不影响）
-  // 首次 surface boot 完成后再拉，减轻首屏 DOM/网络竞争
   useEffect(() => {
     let alive = true;
     rightCommunityMountedRef.current = true;
@@ -1536,7 +1443,7 @@ export default function DetailPage() {
     setRightCommunityPosts([]);
     setRightCommunityPage(1);
     setRightCommunityHasMore(true);
-    if (!isPC || !surfaceReady) {
+    if (!isPC) {
       return () => {
         alive = false;
         rightCommunityMountedRef.current = false;
@@ -1595,14 +1502,13 @@ export default function DetailPage() {
       alive = false;
       rightCommunityMountedRef.current = false;
     };
-  }, [symbol, isPC, surfaceReady]);
+  }, [symbol, isPC]);
 
   // PC K 线弹幕：单独拉真实用户帖（userType=real），不驱动右下角社区
-  // 等 surface 揭盖后再拉，避免首屏额外请求抢主线程
   useEffect(() => {
     let alive = true;
     setBarragePosts([]);
-    if (!isPC || !surfaceReady) return undefined;
+    if (!isPC) return undefined;
 
     const normalizeList = (res) => {
       const listRaw = res?.data;
@@ -1640,7 +1546,7 @@ export default function DetailPage() {
     return () => {
       alive = false;
     };
-  }, [symbol, isPC, surfaceReady]);
+  }, [symbol, isPC]);
 
   const handlePcCommunityScroll = useCallback(
     (e) => {
@@ -3688,13 +3594,9 @@ ${coinInfo.name || symbol} (${symbol})
   if (isPC) {
     return (
       <>
-      <div className={`${styles.surfaceBootWrap} ${styles.surfaceBootWrapPc}`}>
-        {surfaceBootOverlay}
         <div
           ref={pcContentLayoutRef}
-          className={`${styles.pcContentLayout} ${styles.pcContentLayoutFull}${
-            surfaceReady ? ` ${styles.surfaceBootContent}` : ` ${styles.surfaceBootHidden}`
-          }`}
+          className={`${styles.pcContentLayout} ${styles.pcContentLayoutFull}`}
         >
           <aside className={styles.pcContentColLeft}>
             <PCCoinDetail
@@ -3809,14 +3711,11 @@ ${coinInfo.name || symbol} (${symbol})
             </PCCoinDetail>
           </aside>
         </div>
-      </div>
         {oneClickAlarmModalEl}
-        {surfaceReady ? (
-          <FloatingRobotPc
-            message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
-            onClick={() => setPcAiChatOpen(true)}
-          />
-        ) : null}
+        <FloatingRobotPc
+          message={t('detail.robotMessage', { symbol: symbol.toUpperCase() })}
+          onClick={() => setPcAiChatOpen(true)}
+        />
         <AiChatModalPc
           open={pcAiChatOpen}
           onClose={() => setPcAiChatOpen(false)}
@@ -3853,14 +3752,7 @@ ${coinInfo.name || symbol} (${symbol})
         showBorder={false}
       />
 
-      <div className={styles.surfaceBootWrap}>
-        {surfaceBootOverlay}
-        <div
-          ref={mobileRootRef}
-          className={`${styles.container}${
-            surfaceReady ? ` ${styles.surfaceBootContent}` : ` ${styles.surfaceBootHidden}`
-          }`}
-        >
+      <div ref={mobileRootRef} className={styles.container}>
         {renderCoinInfo()}
 
         <TabBar className={styles.tabContainer} activeKey={activeTab} onChange={handleTabChange}>
@@ -3928,7 +3820,6 @@ ${coinInfo.name || symbol} (${symbol})
             </button>
           </div>
         </div>
-      </div>
       </div>
 
       {oneClickAlarmModalEl}

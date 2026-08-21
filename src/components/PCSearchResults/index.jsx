@@ -13,17 +13,16 @@ import { Loading } from '@/components/Loading';
 import isEmpty from 'lodash/isEmpty';
 import styles from './index.module.less';
 
-/** 可交易平台：类型 / 可交易时间段 两列显示开关（死数据列，后续接真实数据时可再打开） */
-const SHOW_PLATFORM_TYPE_AND_PERIOD = false;
-
 /**
  * PC端搜索结果组件
  */
-export default function PCSearchResults({ keyword, onClose, onYieldToPage }) {
+export default function PCSearchResults({ keyword }) {
   const router = useRouter();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [isValidCoin, setIsValidCoin] = useState(false);
+  /** 美股搜索：展示类型 / 可交易时间段，隐藏所属链 */
+  const [isUsStock, setIsUsStock] = useState(false);
   
   // 数据状态
   const [coinInfo, setCoinInfo] = useState([]);
@@ -35,27 +34,44 @@ export default function PCSearchResults({ keyword, onClose, onYieldToPage }) {
   useEffect(() => {
     if (keyword) {
       fetchSearchResults();
+    } else {
+      setLoading(false);
+      setIsValidCoin(false);
+      setCoinInfo([]);
+      setRelatedSections([]);
+      setPlatforms([]);
+      setSpotPairs([]);
+      setDerivativePairs([]);
     }
   }, [keyword]);
 
   const navigateToDetail = (symbol) => {
     const sym = symbol || keyword;
     if (!sym) return;
-    onYieldToPage?.();
-    jump2Detail(sym);
+    jump2Detail(sym, false, isUsStock ? { type: 'usStock' } : undefined);
   };
 
   const fetchSearchResults = async () => {
     setLoading(true);
+    setIsUsStock(false);
     
     try {
-      // 验证是否为有效币种
-      const isCoin = await request({ 
-        url: Interface.IS_COIN, 
-        data: { coin: keyword } 
-      });
+      // 并行：校验币种 + 判断是否美股
+      const [isCoin, stockHeaderRes] = await Promise.all([
+        request({ url: Interface.IS_COIN, data: { coin: keyword } }),
+        request({
+          url: Interface.stock_info,
+          data: { symbol: String(keyword || '').toUpperCase() },
+        }).catch(() => null),
+      ]);
+
+      const usStock =
+        stockHeaderRes?.code === 0 &&
+        !isEmpty(stockHeaderRes?.data) &&
+        Boolean(stockHeaderRes.data.listingMarket || stockHeaderRes.data.symbol);
+      setIsUsStock(usStock);
       
-      if (!isCoin?.data?.isCoin) {
+      if (!isCoin?.data?.isCoin && !usStock) {
         setIsValidCoin(false);
         setLoading(false);
         return;
@@ -79,30 +95,41 @@ export default function PCSearchResults({ keyword, onClose, onYieldToPage }) {
             isFavorite: Boolean(item.favorite || item.isSelfSelected || item.isLiked),
           }))
         );
+      } else {
+        setCoinInfo([]);
       }
 
       // 处理相关板块
       if (areaRes.status === 'fulfilled' && !isEmpty(areaRes.value?.data)) {
         setRelatedSections(areaRes.value.data);
+      } else {
+        setRelatedSections([]);
       }
 
-      // 处理交易平台（类型、可交易时间段为前端死数据）
+      // 处理交易平台（美股：类型 / 可交易时间段为前端死数据；币种不挂这两列）
       if (platformRes.status === 'fulfilled' && !isEmpty(platformRes.value?.data)) {
         setPlatforms(
-          platformRes.value.data.map((item, index) => ({
-            ...item,
-            // 死数据：交替展示现货 / 合约
-            pairType: index % 2 === 0 ? 'spot' : 'contract',
-            // 死数据：按美股常规交易时段（美东时间）
-            tradePeriod: '09:30-16:00 ET',
-          }))
+          platformRes.value.data.map((item, index) =>
+            usStock
+              ? {
+                  ...item,
+                  pairType: index % 2 === 0 ? 'spot' : 'contract',
+                  tradePeriod: '09:30-16:00 ET',
+                }
+              : item
+          )
         );
+      } else {
+        setPlatforms([]);
       }
 
       // 处理交易对
       if (spotRes.status === 'fulfilled' && !isEmpty(spotRes.value?.data)) {
         setSpotPairs(spotRes.value.data.spot || []);
         setDerivativePairs(spotRes.value.data.nonSpot || []);
+      } else {
+        setSpotPairs([]);
+        setDerivativePairs([]);
       }
 
     } catch (error) {
@@ -188,7 +215,6 @@ export default function PCSearchResults({ keyword, onClose, onYieldToPage }) {
     e.stopPropagation();
     const symbol = record?.symbol || record?.key || keyword;
     if (!symbol) return;
-    onYieldToPage?.();
     router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
   };
 
@@ -255,13 +281,15 @@ export default function PCSearchResults({ keyword, onClose, onYieldToPage }) {
     },
   ];
 
-  // 交易平台表格列（每列都设宽度，避免无宽度列吃掉剩余空间导致大空隙）
+  // 交易平台表格列：
+  // - 美股：平台 + 类型 + 可交易时间段 + 手续费列（不展示所属链）
+  // - 币种：平台 + 所属链 + 手续费列（不展示类型 / 时间段）
   const platformColumns = [
     {
       title: t('search.platform'),
       dataIndex: 'exchanges',
       key: 'exchanges',
-      width: SHOW_PLATFORM_TYPE_AND_PERIOD ? '16%' : '28%',
+      width: isUsStock ? '22%' : '28%',
       render: (text, record) => (
         <div className={styles.coinCell}>
           <img src={record.url} alt={text} className={styles.coinIcon} />
@@ -269,43 +297,43 @@ export default function PCSearchResults({ keyword, onClose, onYieldToPage }) {
         </div>
       ),
     },
-    SHOW_PLATFORM_TYPE_AND_PERIOD && {
+    isUsStock && {
       title: t('search.type', { defaultValue: '类型' }),
       dataIndex: 'pairType',
       key: 'pairType',
       align: 'center',
-      width: '10%',
+      width: '14%',
       render: (value) =>
         value === 'contract'
           ? t('search.contract', { defaultValue: '合约' })
           : t('search.spot', { defaultValue: '现货' }),
     },
-    SHOW_PLATFORM_TYPE_AND_PERIOD && {
+    isUsStock && {
       title: t('search.tradePeriod', { defaultValue: '可交易时间段' }),
       dataIndex: 'tradePeriod',
       key: 'tradePeriod',
       align: 'center',
-      width: '16%',
+      width: '22%',
     },
-    {
+    !isUsStock && {
       title: t('search.chain'),
       dataIndex: 'chain',
       key: 'chain',
-      width: SHOW_PLATFORM_TYPE_AND_PERIOD ? '22%' : '28%',
+      width: '28%',
     },
     {
       title: t('search.withdrawFee'),
       dataIndex: 'withdrawfee',
       key: 'withdrawfee',
       align: 'right',
-      width: SHOW_PLATFORM_TYPE_AND_PERIOD ? '18%' : '22%',
+      width: isUsStock ? '21%' : '22%',
     },
     {
       title: t('search.withdrawMin'),
       dataIndex: 'withdrawmin',
       key: 'withdrawmin',
       align: 'right',
-      width: SHOW_PLATFORM_TYPE_AND_PERIOD ? '18%' : '22%',
+      width: isUsStock ? '21%' : '22%',
     },
   ].filter(Boolean);
 
