@@ -1,12 +1,16 @@
 'use client';
 
 import { useMemo, Suspense, useEffect, useState } from 'react';
-import { Card, Table, Tag, Empty } from 'antd';
-import { HeartOutlined, BellOutlined } from '@ant-design/icons';
+import { Card, Table, Tag, Empty, message } from 'antd';
+import { HeartOutlined, HeartFilled, BellOutlined } from '@ant-design/icons';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { jump2Detail } from '@/utils/core';
 import { getPcSearchRoute, validateSearchSymbol } from '@/utils/searchValidate';
+import { request } from '@/utils/request';
+import { Interface } from '@/utils/constants';
+import { completeTask } from '@/api/user';
+import { normalizeUsStockReturnResponse, normalizeUsStockHeaderResponse } from '@/utils/usStockMockData';
 import { Loading } from '@/components/Loading';
 import searchStyles from '@/components/PCSearchResults/index.module.less';
 import styles from './page.module.less';
@@ -17,157 +21,29 @@ const CEX_LOGO = (name) =>
 const STOCK_LOGO = (symbol) =>
   `https://coinlogo-1317406749.cos.ap-shanghai.myqcloud.com/stock/${String(symbol || 'NVDA').toUpperCase()}.png`;
 
-/** 按接口契约构造的演示数据 */
-const MOCK_BY_SYMBOL = {
-  NVDA: {
-    symbol: 'NVDA',
-    name: 'NVIDIA Corporation',
-    logo: STOCK_LOGO('NVDA'),
-    asset_class: 'us_equity',
-    listing_market: 'NASDAQ',
-    sector: 'Technology',
-    session_market: 'US',
-    issuances: ['bStock', 'xStock', 'ondo_equity', 'other'],
-    venues: {
-      spot_exchanges: ['Binance', 'Bitget', 'Bybit', 'Gate', 'Kraken', 'OKX'],
-      perp_exchanges: ['Binance', 'Bitget', 'Bybit', 'HTX', 'Hyperliquid', 'Kraken', 'Kucoin', 'MEXC', 'OKX'],
-    },
-    sessions: [
-      {
-        instrument: 'spot',
-        timezone: 'America/New_York',
-        pre_market: '04:00-09:30',
-        regular: '09:30-16:00',
-        post_market: '16:00-20:00',
-        is_open: true,
-        note: '美股现货代币跟随 NY 时段，闭市停在最后快照（看 ts 判新鲜度）',
-      },
-      {
-        instrument: 'perp',
-        timezone: 'UTC',
-        pre_market: null,
-        regular: '00:00-24:00',
-        post_market: null,
-        is_open: true,
-        note: '合成永续 24/7',
-      },
-    ],
-    fees: [
-      { exchange: 'Binance', instrument: 'spot', taker_fee: null, maker_fee: null },
-      { exchange: 'OKX', instrument: 'spot', taker_fee: null, maker_fee: null },
-      { exchange: 'Hyperliquid', instrument: 'perp', taker_fee: null, maker_fee: null },
-    ],
-    price: {
-      spot: { last_price: '209.54', price_change_percent: '0.28', exchange: 'OKX', ts: 1781777499167 },
-      perp: { last_price: '210.10', price_change_percent: '0.66', exchange: 'Hyperliquid', ts: 1781777499167 },
-    },
-    roi: {
-      price_change_1_day: '1.23',
-      price_change_7_day: '-0.85',
-      price_change_1_month: '5.10',
-      price_change_1_year: '48.30',
-      ref_exchange: 'Hyperliquid',
-    },
-  },
-  AAPL: {
-    symbol: 'AAPL',
-    name: 'Apple Inc.',
-    logo: STOCK_LOGO('AAPL'),
-    asset_class: 'us_equity',
-    listing_market: 'NASDAQ',
-    sector: 'Technology',
-    session_market: 'US',
-    issuances: ['bStock', 'xStock', 'ondo_equity'],
-    venues: {
-      spot_exchanges: ['Binance', 'OKX', 'Bybit', 'Gate'],
-      perp_exchanges: ['Binance', 'OKX', 'Bybit', 'Hyperliquid', 'MEXC'],
-    },
-    sessions: [
-      {
-        instrument: 'spot',
-        timezone: 'America/New_York',
-        pre_market: '04:00-09:30',
-        regular: '09:30-16:00',
-        post_market: '16:00-20:00',
-        is_open: false,
-        note: '美股现货代币跟随 NY 时段',
-      },
-      {
-        instrument: 'perp',
-        timezone: 'UTC',
-        pre_market: null,
-        regular: '00:00-24:00',
-        post_market: null,
-        is_open: true,
-        note: '合成永续 24/7',
-      },
-    ],
-    fees: [
-      { exchange: 'Binance', instrument: 'spot', taker_fee: '0.1%', maker_fee: '0.1%' },
-      { exchange: 'OKX', instrument: 'perp', taker_fee: '0.05%', maker_fee: '0.02%' },
-    ],
-    price: {
-      spot: { last_price: '227.18', price_change_percent: '1.04', exchange: 'Binance', ts: 1781777499167 },
-      perp: { last_price: '227.45', price_change_percent: '1.12', exchange: 'OKX', ts: 1781777499167 },
-    },
-    roi: {
-      price_change_1_day: '1.04',
-      price_change_7_day: '2.10',
-      price_change_1_month: '-1.20',
-      price_change_1_year: '22.40',
-      ref_exchange: 'Binance',
-    },
-  },
-  TSLA: {
-    symbol: 'TSLA',
-    name: 'Tesla, Inc.',
-    logo: STOCK_LOGO('TSLA'),
-    asset_class: 'us_equity',
-    listing_market: 'NASDAQ',
-    sector: 'Consumer Cyclical',
-    session_market: 'US',
-    issuances: ['xStock', 'ondo_equity', 'other'],
-    venues: {
-      spot_exchanges: ['Binance', 'Bitget', 'OKX', 'Kraken'],
-      perp_exchanges: ['Binance', 'Bybit', 'HTX', 'Hyperliquid', 'OKX'],
-    },
-    sessions: [
-      {
-        instrument: 'spot',
-        timezone: 'America/New_York',
-        pre_market: '04:00-09:30',
-        regular: '09:30-16:00',
-        post_market: '16:00-20:00',
-        is_open: true,
-        note: '美股现货代币跟随 NY 时段',
-      },
-      {
-        instrument: 'perp',
-        timezone: 'UTC',
-        pre_market: null,
-        regular: '00:00-24:00',
-        post_market: null,
-        is_open: true,
-        note: '合成永续 24/7',
-      },
-    ],
-    fees: [
-      { exchange: 'Bitget', instrument: 'spot', taker_fee: null, maker_fee: null },
-      { exchange: 'Bybit', instrument: 'perp', taker_fee: '0.055%', maker_fee: '0.02%' },
-    ],
-    price: {
-      spot: { last_price: '248.50', price_change_percent: '-2.28', exchange: 'OKX', ts: 1781777499167 },
-      perp: { last_price: '249.10', price_change_percent: '-1.95', exchange: 'Hyperliquid', ts: 1781777499167 },
-    },
-    roi: {
-      price_change_1_day: '-2.28',
-      price_change_7_day: '3.40',
-      price_change_1_month: '8.60',
-      price_change_1_year: '35.20',
-      ref_exchange: 'Hyperliquid',
-    },
-  },
-};
+/** 交易时段是否开市：兼容 is_open 与 status（平台表开市/休市） */
+function isSessionOpen(session) {
+  if (!session || typeof session !== 'object') return false;
+  if (typeof session.is_open === 'boolean') return session.is_open;
+  const status = String(session.status || '').toLowerCase();
+  return status === 'regular' || status === 'pre_market' || status === 'post_market';
+}
+
+/** sessions.status → 交易时段状态文案 */
+function sessionStatusLabel(status) {
+  const key = String(status || '').toLowerCase();
+  if (key === 'pre_market') return '盘前';
+  if (key === 'regular') return '开市';
+  if (key === 'post_market') return '盘后';
+  if (key === 'closed') return '休市';
+  return status || '--';
+}
+
+function sessionStatusColor(status) {
+  const key = String(status || '').toLowerCase();
+  if (key === 'regular' || key === 'pre_market' || key === 'post_market') return 'success';
+  return 'default';
+}
 
 function formatPct(value) {
   const n = parseFloat(value);
@@ -195,45 +71,42 @@ function formatSessionRange(session) {
   return parts.join(' · ') || '--';
 }
 
+function formatVenuePrice(value) {
+  if (value == null || value === '') return '--';
+  const n = Number(String(value).replace(/,/g, ''));
+  if (!Number.isFinite(n)) return String(value);
+  // 整数部分不为 0：最多保留 3 位小数；小于 1 则保留原精度
+  const formatted = Math.abs(n) >= 1 ? n.toFixed(3) : String(n);
+  return formatted.replace(/\.?0+$/, '') || '0';
+}
+
+/**
+ * 可交易平台行：只取 prices.spot / prices.perp
+ * 现货 → prices.spot；合约 → prices.perp
+ * 页面列固定：平台 / 类型 / 价格 / 状态
+ */
 function buildVenueRows(data) {
-  const spot = data?.venues?.spot_exchanges || [];
-  const perp = data?.venues?.perp_exchanges || [];
-  const feeMap = new Map(
-    (data?.fees || []).map((item) => [`${item.exchange}|${item.instrument}`, item])
-  );
   const sessionMap = new Map((data?.sessions || []).map((item) => [item.instrument, item]));
-  const spotLast = data?.price?.spot?.last_price ?? '--';
-  const perpLast = data?.price?.perp?.last_price ?? '--';
+  const prices = data?.prices || {};
+
+  const pushFromPriceList = (list, instrument, rows) => {
+    (Array.isArray(list) ? list : []).forEach((item, index) => {
+      if (!item?.exchange) return;
+      const session = sessionMap.get(instrument);
+      rows.push({
+        key: `${instrument}-${item.exchange}-${item.pair || item.issuance || index}`,
+        exchange: item.exchange,
+        url: CEX_LOGO(`${item.exchange}.png`),
+        instrument,
+        price: formatVenuePrice(item.last_price),
+        status: session?.status || (isSessionOpen(session) ? 'regular' : 'closed'),
+      });
+    });
+  };
 
   const rows = [];
-  spot.forEach((exchange, index) => {
-    const fee = feeMap.get(`${exchange}|spot`);
-    const session = sessionMap.get('spot');
-    rows.push({
-      key: `spot-${exchange}-${index}`,
-      exchange,
-      url: CEX_LOGO(`${exchange}.png`),
-      instrument: 'spot',
-      price: spotLast,
-      isOpen: session?.is_open,
-      taker_fee: fee?.taker_fee ?? '--',
-      maker_fee: fee?.maker_fee ?? '--',
-    });
-  });
-  perp.forEach((exchange, index) => {
-    const fee = feeMap.get(`${exchange}|perp`);
-    const session = sessionMap.get('perp');
-    rows.push({
-      key: `perp-${exchange}-${index}`,
-      exchange,
-      url: CEX_LOGO(`${exchange}.png`),
-      instrument: 'perp',
-      price: perpLast,
-      isOpen: session?.is_open,
-      taker_fee: fee?.taker_fee ?? '--',
-      maker_fee: fee?.maker_fee ?? '--',
-    });
-  });
+  pushFromPriceList(prices.spot, 'spot', rows);
+  pushFromPriceList(prices.perp, 'perp', rows);
   return rows;
 }
 
@@ -242,11 +115,15 @@ function buildVenueRows(data) {
  * 路由：/pc/us-stock-search?keyword=NVDA
  */
 function UsStockSearchContent() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const keyword = (searchParams.get('keyword') || '').trim().toUpperCase();
   const [gate, setGate] = useState(keyword ? 'loading' : 'invalid');
+  const [assetRow, setAssetRow] = useState(null);
+  const [assetLoading, setAssetLoading] = useState(false);
+  const [searchDetail, setSearchDetail] = useState(null);
+  const [venueTypeFilter, setVenueTypeFilter] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -280,20 +157,173 @@ function UsStockSearchContent() {
     };
   }, [keyword, router]);
 
-  const data = useMemo(() => {
-    if (MOCK_BY_SYMBOL[keyword]) return MOCK_BY_SYMBOL[keyword];
-    // 校验通过但暂无定制 mock：用关键字套一层结构，便于联调
-    return {
-      ...MOCK_BY_SYMBOL.NVDA,
-      symbol: keyword,
-      name: keyword,
-      logo: STOCK_LOGO(keyword),
-    };
+  useEffect(() => {
+    setVenueTypeFilter(null);
   }, [keyword]);
 
-  const venueRows = useMemo(() => buildVenueRows(data), [data]);
+  // 标的信息行：GET /stock/detail/header?symbol=NVDA（与美股详情一致）
+  useEffect(() => {
+    if (gate !== 'ready' || !keyword) {
+      setAssetRow(null);
+      return;
+    }
 
-  const spotPrice = data.price?.spot;
+    let cancelled = false;
+    const fetchAssetHeader = async () => {
+      setAssetLoading(true);
+      try {
+        const res = await request({
+          url: Interface.stock_info,
+          data: { symbol: keyword },
+        });
+        if (cancelled) return;
+
+        const header = normalizeUsStockHeaderResponse(res?.data, { language: i18n.language });
+        if (!header) {
+          setAssetRow(null);
+          return;
+        }
+
+        const sym = String(header.symbol || keyword).trim().toUpperCase();
+        setAssetRow({
+          key: sym,
+          symbol: sym,
+          name: header.name || sym,
+          logo: header.url || STOCK_LOGO(sym),
+          spot: {
+            last_price: header.currentPrice ?? '--',
+            price_change_percent: header.priceChangePercentage_24h ?? header.priceChange_24h,
+          },
+          isFavorite: Boolean(header.isSelfSelected),
+        });
+      } catch (error) {
+        console.error('获取美股标头信息失败:', error);
+        if (!cancelled) setAssetRow(null);
+      } finally {
+        if (!cancelled) setAssetLoading(false);
+      }
+    };
+
+    fetchAssetHeader();
+    return () => {
+      cancelled = true;
+    };
+  }, [gate, keyword, i18n.language]);
+
+  // 相关板块 / 交易时段 / 可交易平台：GET /stock/search/detail
+  useEffect(() => {
+    if (gate !== 'ready' || !keyword) {
+      setSearchDetail(null);
+      return;
+    }
+
+    let cancelled = false;
+    const fetchSearchDetail = async () => {
+      try {
+        const res = await request({
+          url: Interface.STOCK_SEARCH_DETAIL,
+          data: { symbol: keyword },
+        });
+        if (cancelled) return;
+        setSearchDetail(res?.data && typeof res.data === 'object' ? res.data : null);
+      } catch (error) {
+        console.error('获取美股搜索详情失败:', error);
+        if (!cancelled) setSearchDetail(null);
+      }
+    };
+
+    fetchSearchDetail();
+    return () => {
+      cancelled = true;
+    };
+  }, [gate, keyword]);
+
+  const handleToggleFavorite = async (e, record) => {
+    e.stopPropagation();
+
+    const sym = record?.symbol;
+    if (!sym) return;
+
+    const newIsFavorite = !record.isFavorite;
+    setAssetRow((prev) => {
+      if (!prev || prev.symbol !== sym) return prev;
+      return { ...prev, isFavorite: newIsFavorite };
+    });
+
+    try {
+      const url = newIsFavorite ? Interface.ADD_OWN : Interface.CANCEL_OWN;
+      const res = await request({
+        url,
+        method: 'GET',
+        data: { coin: sym },
+      });
+
+      if (res?.data?.isLogin === false) {
+        setAssetRow((prev) => {
+          if (!prev || prev.symbol !== sym) return prev;
+          return { ...prev, isFavorite: !newIsFavorite };
+        });
+        message.warning(t('common.pleaseLogin', { defaultValue: '请先登录' }));
+        return;
+      }
+
+      if (res?.code === 0 || res?.data) {
+        message.success(
+          newIsFavorite
+            ? t('common.addSuccess', { defaultValue: '添加成功' })
+            : t('common.cancelSuccess', { defaultValue: '取消成功' })
+        );
+        if (newIsFavorite) {
+          try {
+            await completeTask('ADD_WATCHLIST');
+          } catch (err) {
+            console.error('上报 ADD_WATCHLIST 失败', err);
+          }
+        }
+        return;
+      }
+
+      setAssetRow((prev) => {
+        if (!prev || prev.symbol !== sym) return prev;
+        return { ...prev, isFavorite: !newIsFavorite };
+      });
+      message.error(res?.msg || t('common.operationFailed', { defaultValue: '操作失败' }));
+    } catch (error) {
+      console.error('自选操作失败:', error);
+      setAssetRow((prev) => {
+        if (!prev || prev.symbol !== sym) return prev;
+        return { ...prev, isFavorite: !newIsFavorite };
+      });
+      message.error(t('common.operationFailed', { defaultValue: '操作失败' }));
+    }
+  };
+
+  const handleAddMonitor = (e, record) => {
+    e.stopPropagation();
+    const sym = record?.symbol || keyword;
+    if (!sym) return;
+    router.push(`/pc/alarm?symbol=${encodeURIComponent(sym)}`);
+  };
+
+  const sectorName = String(searchDetail?.sector || '').trim();
+  const sessionRows = useMemo(() => {
+    const list = Array.isArray(searchDetail?.sessions) ? searchDetail.sessions : [];
+    return list.map((item, index) => ({
+      ...item,
+      key: `${item.instrument || 'session'}-${index}`,
+      is_open: isSessionOpen(item),
+    }));
+  }, [searchDetail]);
+  const venueRows = useMemo(() => buildVenueRows(searchDetail), [searchDetail]);
+  const filteredVenueRows = useMemo(() => {
+    if (!venueTypeFilter) return venueRows;
+    return venueRows.filter((row) => row.instrument === venueTypeFilter);
+  }, [venueRows, venueTypeFilter]);
+  const platformSymbol = String(searchDetail?.symbol || keyword || '').toUpperCase();
+  const roiData = useMemo(
+    () => normalizeUsStockReturnResponse(searchDetail?.roi ?? null),
+    [searchDetail]
+  );
 
   const assetColumns = [
     {
@@ -303,10 +333,7 @@ function UsStockSearchContent() {
       render: (_, record) => (
         <div className={searchStyles.coinCell}>
           <img src={record.logo} alt={record.symbol} className={searchStyles.coinIcon} />
-          <div className={styles.symbolBlock}>
-            <span className={styles.symbolMain}>{record.symbol}</span>
-            <span className={styles.symbolSub}>{record.name}</span>
-          </div>
+          <span className={styles.symbolMain}>{record.symbol}</span>
         </div>
       ),
     },
@@ -326,25 +353,33 @@ function UsStockSearchContent() {
       title: t('home.columns.addFavorites'),
       key: 'favorite',
       align: 'center',
-      render: () => <HeartOutlined className={searchStyles.actionIcon} />,
+      render: (_, record) =>
+        record.isFavorite ? (
+          <HeartFilled
+            className={`${searchStyles.actionIcon} ${searchStyles.actionIconActive}`}
+            onClick={(e) => handleToggleFavorite(e, record)}
+          />
+        ) : (
+          <HeartOutlined
+            className={searchStyles.actionIcon}
+            onClick={(e) => handleToggleFavorite(e, record)}
+          />
+        ),
     },
     {
       title: t('home.columns.addMonitor'),
       key: 'monitor',
       align: 'center',
-      render: () => <BellOutlined className={searchStyles.actionIcon} />,
+      render: (_, record) => (
+        <BellOutlined
+          className={searchStyles.actionIcon}
+          onClick={(e) => handleAddMonitor(e, record)}
+        />
+      ),
     },
   ];
 
-  const assetRows = [
-    {
-      key: data.symbol,
-      symbol: data.symbol,
-      name: data.name,
-      logo: data.logo || STOCK_LOGO(data.symbol),
-      spot: spotPrice,
-    },
-  ];
+  const assetRows = assetRow ? [assetRow] : [];
 
   const venueColumns = [
     {
@@ -365,6 +400,13 @@ function UsStockSearchContent() {
       key: 'instrument',
       align: 'center',
       width: '14%',
+      filterMultiple: false,
+      filteredValue: venueTypeFilter ? [venueTypeFilter] : null,
+      filters: [
+        { text: t('search.spot', { defaultValue: '现货' }), value: 'spot' },
+        { text: t('search.contract', { defaultValue: '合约' }), value: 'perp' },
+      ],
+      onFilter: (value, record) => record.instrument === value,
       render: (value) => instrumentLabel(value, t),
     },
     {
@@ -377,29 +419,13 @@ function UsStockSearchContent() {
     },
     {
       title: '状态',
-      dataIndex: 'isOpen',
-      key: 'isOpen',
+      dataIndex: 'status',
+      key: 'status',
       align: 'center',
       width: '12%',
-      render: (open) => (
-        <Tag color={open ? 'success' : 'default'}>{open ? '开市' : '休市'}</Tag>
+      render: (status) => (
+        <Tag color={sessionStatusColor(status)}>{sessionStatusLabel(status)}</Tag>
       ),
-    },
-    {
-      title: 'Taker',
-      dataIndex: 'taker_fee',
-      key: 'taker_fee',
-      align: 'right',
-      width: '12%',
-      render: (v) => (v == null || v === '' ? '--' : v),
-    },
-    {
-      title: 'Maker',
-      dataIndex: 'maker_fee',
-      key: 'maker_fee',
-      align: 'right',
-      width: '12%',
-      render: (v) => (v == null || v === '' ? '--' : v),
     },
   ];
 
@@ -425,12 +451,12 @@ function UsStockSearchContent() {
     },
     {
       title: '状态',
-      dataIndex: 'is_open',
-      key: 'is_open',
+      dataIndex: 'status',
+      key: 'status',
       align: 'center',
       width: '10%',
-      render: (open) => (
-        <Tag color={open ? 'success' : 'default'}>{open ? '开市' : '休市'}</Tag>
+      render: (status) => (
+        <Tag color={sessionStatusColor(status)}>{sessionStatusLabel(status)}</Tag>
       ),
     },
     {
@@ -443,10 +469,10 @@ function UsStockSearchContent() {
   ];
 
   const roiItems = [
-    { label: '1日', value: data.roi?.price_change_1_day },
-    { label: '7日', value: data.roi?.price_change_7_day },
-    { label: '1月', value: data.roi?.price_change_1_month },
-    { label: '1年', value: data.roi?.price_change_1_year },
+    { label: '1日', value: roiData.priceChange1Day },
+    { label: '7日', value: roiData.priceChange7Day },
+    { label: '1月', value: roiData.priceChange1Month },
+    { label: '1年', value: roiData.priceChange1Year },
   ];
 
   if (gate === 'loading') {
@@ -470,49 +496,52 @@ function UsStockSearchContent() {
   return (
     <div className={styles.page}>
       <div className={`${searchStyles.searchResults} ${styles.results}`}>
-        {/* 1. 标的信息：对齐 price.spot / price.perp */}
-        <Card title={`标的 (${data.symbol})`} className={searchStyles.resultCard}>
+        {/* 1. 标的信息：GET /stock/detail/header */}
+        <Card title={`标的 (${assetRow?.symbol || keyword})`} className={searchStyles.resultCard}>
           <Table
             columns={assetColumns}
             dataSource={assetRows}
             rowKey="key"
             pagination={false}
-            onRow={() => ({
-              onClick: () => jump2Detail(data.symbol, false, { type: 'usStock' }),
+            locale={{ emptyText: assetLoading ? t('common.loading') : t('common.noData') }}
+            onRow={(record) => ({
+              onClick: () => jump2Detail(record.symbol || keyword, false, { type: 'usStock' }),
               style: { cursor: 'pointer' },
             })}
           />
         </Card>
 
         {/* 2. 相关板块：sector */}
-        <Card title={`${t('search.relatedSections')} (1)`} className={searchStyles.resultCard}>
-          <div className={searchStyles.sectionsGrid}>
-            <div className={searchStyles.sectionItem}>
-              <span className={searchStyles.sectionName}>{data.sector}</span>
-            </div>
-          </div>
-        </Card>
-
-        {/* 交易时段：sessions */}
         <Card
-          title={`交易时段 (${(data.sessions || []).length})`}
+          title={`${t('search.relatedSections')} (${sectorName ? 1 : 0})`}
           className={searchStyles.resultCard}
         >
+          {sectorName ? (
+            <div className={searchStyles.sectionsGrid}>
+              <div className={searchStyles.sectionItem}>
+                <span className={searchStyles.sectionName}>{sectorName}</span>
+              </div>
+            </div>
+          ) : (
+            <Empty description={t('common.noData')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          )}
+        </Card>
+
+        {/* 3. 交易时段：sessions.status */}
+        <Card title={`交易时段 (${sessionRows.length})`} className={searchStyles.resultCard}>
           <Table
             columns={sessionColumns}
-            dataSource={(data.sessions || []).map((item, index) => ({
-              ...item,
-              key: `${item.instrument}-${index}`,
-            }))}
+            dataSource={sessionRows}
             rowKey="key"
             pagination={false}
             tableLayout="fixed"
+            locale={{ emptyText: t('common.noData') }}
           />
         </Card>
 
-        {/* 5. 可交易平台：venues + fees + session */}
+        {/* 4. 可交易平台：prices / venues */}
         <Card
-          title={`可交易${data.symbol}平台 (${venueRows.length})`}
+          title={`可交易${platformSymbol}平台 (${filteredVenueRows.length})`}
           className={searchStyles.resultCard}
         >
           <Table
@@ -521,14 +550,16 @@ function UsStockSearchContent() {
             rowKey="key"
             pagination={false}
             tableLayout="fixed"
+            locale={{ emptyText: t('common.noData') }}
+            onChange={(_pagination, filters) => {
+              const next = filters?.instrument?.[0];
+              setVenueTypeFilter(next || null);
+            }}
           />
         </Card>
 
-        {/* 6. 收益表现：roi */}
-        <Card
-          title="收益表现"
-          className={searchStyles.resultCard}
-        >
+        {/* 5. 收益表现：searchDetail.roi */}
+        <Card title="收益表现" className={searchStyles.resultCard}>
           <div className={styles.roiGrid}>
             {roiItems.map((item) => (
               <div key={item.label} className={styles.roiItem}>

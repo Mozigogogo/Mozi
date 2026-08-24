@@ -582,16 +582,16 @@ export function normalizeUsStockReturnResponse(raw) {
 
   return {
     priceChange1Day: formatUsStockRoiValue(
-      pickUsStockRoiField(src, ['priceChange1Day', 'priceChangePercent1Day', 'dayReturn'])
+      pickUsStockRoiField(src, ['priceChange1Day', 'priceChangePercent1Day', 'dayReturn', 'price_change_1_day'])
     ),
     priceChange7Day: formatUsStockRoiValue(
-      pickUsStockRoiField(src, ['priceChange7Day', 'priceChangePercent7Day', 'weekReturn'])
+      pickUsStockRoiField(src, ['priceChange7Day', 'priceChangePercent7Day', 'weekReturn', 'price_change_7_day'])
     ),
     priceChange1Month: formatUsStockRoiValue(
-      pickUsStockRoiField(src, ['priceChange1Month', 'priceChangePercent1Month', 'monthReturn'])
+      pickUsStockRoiField(src, ['priceChange1Month', 'priceChangePercent1Month', 'monthReturn', 'price_change_1_month'])
     ),
     priceChange1Year: formatUsStockRoiValue(
-      pickUsStockRoiField(src, ['priceChange1Year', 'priceChangePercent1Year', 'yearReturn'])
+      pickUsStockRoiField(src, ['priceChange1Year', 'priceChangePercent1Year', 'yearReturn', 'price_change_1_year'])
     ),
   };
 }

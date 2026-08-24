@@ -145,6 +145,8 @@ export const Interface = {
   stock_line: '/stock/detail/kline',
   STOCK_MARKET: '/stock/detail/market',
   STOCK_RETURN: '/stock/detail/getReturnInvestment',
+  // 美股搜索详情（板块 / 交易时段 / 可交易平台）
+  STOCK_SEARCH_DETAIL: '/stock/search/detail',
 
   // 搜索页
   // 币种是否有效
