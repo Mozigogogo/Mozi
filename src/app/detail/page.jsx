@@ -1759,10 +1759,15 @@ export default function DetailPage() {
 
   // 跳转到社区页面
   const jump2Community = () => {
-    if (symbol) {
-      // 通过URL参数传递币种信息，自动切换到币种tab并选中对应币种
-      navigateToOrReload(`/community?tab=currency&coin=${symbol}`);
+    if (!symbol) return;
+    // PC：进 PC 社区币种 tab；移动端：进移动社区币种 tab
+    if (isPC) {
+      navigateToOrReload(
+        `/pc/community?tab=coin&coin=${encodeURIComponent(String(symbol).toUpperCase())}`
+      );
+      return;
     }
+    navigateToOrReload(`/community?tab=currency&coin=${encodeURIComponent(symbol)}`);
   };
 
   // 交易雷达（占位行为，可后续接入具体功能）

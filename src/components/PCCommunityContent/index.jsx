@@ -106,9 +106,22 @@ export default function PCCommunityContent() {
       return;
     }
 
+    // 兼容移动端 currency → PC coin
+    if (tab === 'currency') {
+      setActiveCapsuleTab('coin');
+      return;
+    }
+
     if (CAPSULE_TAB_KEYS.has(tab)) {
       setActiveCapsuleTab(tab);
     }
+  }, [searchParams]);
+
+  // 详情页「查看更多」等入口：?coin=BTC 选中对应币种
+  useEffect(() => {
+    const coin = String(searchParams.get('coin') || '').trim().toUpperCase();
+    if (!coin) return;
+    setSelectedCoin(coin);
   }, [searchParams]);
 
   const getBackendErrorMsg = (err) => {
