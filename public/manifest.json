@@ -1,21 +1,30 @@
 {
-  "name": "墨子数字货币行情社区",
-  "short_name": "墨子",
-  "description": "墨子数字货币行情社区，提供币种行情、社区讨论等功能",
-  "start_url": "/",
+  "name": "墨子 Mozi - 数字货币行情与社区",
+  "short_name": "墨子 Mozi",
+  "description": "墨子（Mozi）提供加密货币与美股行情、板块热度、套利雷达、价格预警与社区讨论。",
+  "start_url": "/home",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#11B787",
+  "lang": "zh-CN",
   "icons": [
     {
-      "src": "/images/new_login/logo.svg",
+      "src": "/favicon.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/images/new_login/logo.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml"
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }

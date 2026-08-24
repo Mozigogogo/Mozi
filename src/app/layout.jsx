@@ -24,6 +24,15 @@ import PerfDebug from "@/components/PerfDebug";
 import TgRootRedirectScript from "@/components/TgRootRedirectScript";
 import TelegramSdkLoader from "@/components/TelegramSdkLoader";
 import TgWcWebviewCheck from "@/components/TgWcWebviewCheck";
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_KEYWORDS,
+  DEFAULT_OG_IMAGE,
+  DEFAULT_TITLE,
+  SITE_NAME_ZH,
+  SITE_URL,
+  buildPageMetadata,
+} from "@/utils/seoConfig";
 
 const geistSans = Inter({
   variable: "--font-geist-sans",
@@ -42,26 +51,56 @@ const chakraPetch = Chakra_Petch({
 });
 
 export const metadata = {
-  title: "墨子 - 数字货币行情社区",
-  description: "墨子数字货币行情社区，提供币种行情、社区讨论等功能",
-  icons: {
-    icon: "/images/new_login/logo.svg",
+  metadataBase: new URL(SITE_URL),
+  applicationName: SITE_NAME_ZH,
+  ...buildPageMetadata({
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    path: '/',
+    keywords: DEFAULT_KEYWORDS,
+    image: DEFAULT_OG_IMAGE,
+  }),
+  title: {
+    default: DEFAULT_TITLE,
+    template: `%s | ${SITE_NAME_ZH}`,
   },
+  icons: {
+    icon: [
+      { url: '/favicon.png', type: 'image/png' },
+      { url: '/images/new_login/logo.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
+  manifest: '/manifest.json',
+  category: 'finance',
+  authors: [{ name: SITE_NAME_ZH, url: SITE_URL }],
+  creator: SITE_NAME_ZH,
+  publisher: SITE_NAME_ZH,
+  formatDetection: {
+    telephone: false,
+    email: false,
+    address: false,
+  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#11B787',
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
         <link rel="icon" href="/images/new_login/logo.svg" type="image/svg+xml" />
-        <link rel="shortcut icon" href="/images/new_login/logo.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/images/new_login/logo.svg" />
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#11B787" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
         {/* Keep only truly global/critical preload asset to avoid stealing bandwidth from home first paint */}
         <link rel="preload" href="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png" as="image" />
         <TgRootRedirectScript />

@@ -1,8 +1,12 @@
-'use client';
+import { buildPageMetadata } from '@/utils/seoConfig';
+import AdminRootLayoutClient from './AdminRootLayoutClient';
 
-import '@/app/admin/admin-shell.css';
-import AdminLayout from '@/components/AdminLayout';
+export const metadata = buildPageMetadata({
+  title: '后台管理',
+  path: '/admin',
+  noIndex: true,
+});
 
 export default function AdminRootLayout({ children }) {
-  return <AdminLayout>{children}</AdminLayout>;
+  return <AdminRootLayoutClient>{children}</AdminRootLayoutClient>;
 }
