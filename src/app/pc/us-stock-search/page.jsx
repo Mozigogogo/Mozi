@@ -21,28 +21,47 @@ const CEX_LOGO = (name) =>
 const STOCK_LOGO = (symbol) =>
   `https://coinlogo-1317406749.cos.ap-shanghai.myqcloud.com/stock/${String(symbol || 'NVDA').toUpperCase()}.png`;
 
-/** 交易时段是否开市：兼容 is_open 与 status（平台表开市/休市） */
-function isSessionOpen(session) {
-  if (!session || typeof session !== 'object') return false;
-  if (typeof session.is_open === 'boolean') return session.is_open;
-  const status = String(session.status || '').toLowerCase();
-  return status === 'regular' || status === 'pre_market' || status === 'post_market';
-}
-
-/** sessions.status → 交易时段状态文案 */
+/** sessions.status 枚举 → 文案 */
 function sessionStatusLabel(status) {
-  const key = String(status || '').toLowerCase();
+  if (status == null || status === '') return '状态源故障降级';
+  const key = String(status).toLowerCase();
   if (key === 'pre_market') return '盘前';
   if (key === 'regular') return '开市';
+  if (key === 'break') return '日内休市';
   if (key === 'post_market') return '盘后';
   if (key === 'closed') return '休市';
-  return status || '--';
+  return String(status);
 }
 
 function sessionStatusColor(status) {
-  const key = String(status || '').toLowerCase();
+  if (status == null || status === '') return 'default';
+  const key = String(status).toLowerCase();
+  if (key === 'regular' || key === 'pre_market' || key === 'post_market') return 'success';
+  if (key === 'break') return 'warning';
+  return 'default';
+}
+
+/** 可交易平台状态：开市 / 休市（regular 等可交易态 → 开市） */
+function venueStatusLabel(status) {
+  if (status == null || status === '') return '状态源故障降级';
+  const key = String(status).toLowerCase();
+  if (key === 'regular' || key === 'pre_market' || key === 'post_market') return '开市';
+  if (key === 'closed' || key === 'break') return '休市';
+  return sessionStatusLabel(status);
+}
+
+function venueStatusColor(status) {
+  if (status == null || status === '') return 'default';
+  const key = String(status).toLowerCase();
   if (key === 'regular' || key === 'pre_market' || key === 'post_market') return 'success';
   return 'default';
+}
+
+function resolveSessionStatus(session) {
+  if (!session || typeof session !== 'object') return null;
+  if (session.status != null && session.status !== '') return session.status;
+  if (typeof session.is_open === 'boolean') return session.is_open ? 'regular' : 'closed';
+  return null;
 }
 
 function formatPct(value) {
@@ -96,10 +115,10 @@ function buildVenueRows(data) {
       rows.push({
         key: `${instrument}-${item.exchange}-${item.pair || item.issuance || index}`,
         exchange: item.exchange,
-        url: CEX_LOGO(`${item.exchange}.png`),
+        url: item.logo || CEX_LOGO(`${item.exchange}.png`),
         instrument,
         price: formatVenuePrice(item.last_price),
-        status: session?.status || (isSessionOpen(session) ? 'regular' : 'closed'),
+        status: resolveSessionStatus(session),
       });
     });
   };
@@ -311,7 +330,6 @@ function UsStockSearchContent() {
     return list.map((item, index) => ({
       ...item,
       key: `${item.instrument || 'session'}-${index}`,
-      is_open: isSessionOpen(item),
     }));
   }, [searchDetail]);
   const venueRows = useMemo(() => buildVenueRows(searchDetail), [searchDetail]);
@@ -424,7 +442,7 @@ function UsStockSearchContent() {
       align: 'center',
       width: '12%',
       render: (status) => (
-        <Tag color={sessionStatusColor(status)}>{sessionStatusLabel(status)}</Tag>
+        <Tag color={venueStatusColor(status)}>{venueStatusLabel(status)}</Tag>
       ),
     },
   ];
