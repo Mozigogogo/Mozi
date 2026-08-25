@@ -1,7 +1,7 @@
 import { SITE_URL } from '@/utils/seoConfig';
 
 /**
- * https://askmozi.com/robots.txt
+ * https://moziai.xyz/robots.txt
  */
 export default function robots() {
   return {

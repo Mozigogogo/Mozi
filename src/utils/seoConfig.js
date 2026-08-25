@@ -1,12 +1,13 @@
 /**
- * 站点 SEO 基础配置（askmozi.com）
- * 可通过 NEXT_PUBLIC_SITE_URL 覆盖正式域名
+ * 站点 SEO 基础配置（前端正式站 moziai.xyz）
+ * askmozi.com 为 AI 服务域名，勿用作 sitemap / canonical
+ * 可通过 NEXT_PUBLIC_SITE_URL 覆盖（生产建议设为 https://moziai.xyz）
  */
 
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.SITE_URL ||
-  'https://askmozi.com'
+  'https://moziai.xyz'
 ).replace(/\/$/, '');
 
 export const SITE_NAME_ZH = '墨子 Mozi';
