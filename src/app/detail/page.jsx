@@ -482,7 +482,7 @@ export default function DetailPage() {
     priceChange1Year: '--'
   });
 
-  // CSS 已通过 PCLayout / detail layout 预热，不再用内容遮罩等样式落稳
+  // 详情 CSS 已由 root layout / detail layout 静态挂载，首屏不再用遮罩兜底
   useEffect(() => {
     hideDetailNavigationShell();
     notifyRouteBootReady();

@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { shouldUsePcLayout } from '@/utils/pcLayoutRoutes';
+import DetailCssWarmupPc from '@/components/DetailCssWarmupPc';
 
 const PCLayout = dynamic(() => import('@/components/PCLayout'), {
   loading: () => null,
@@ -27,8 +28,8 @@ function getPcLayoutServerSnapshot() {
 }
 
 /**
- * PC 壳仍 dynamic（避免移动端打包进整份 PCLayout），
- * 但在识别为 PC 后立刻 prefetch，并依赖 PCLayout 内的详情 CSS 预热。
+ * PC 壳仍 dynamic（避免移动端打包进整份 PCLayout）；
+ * 详情 CSS 由 DetailCssWarmupPc 在识别为 PC 后立即静态挂载，不依赖 PCLayout chunk。
  */
 export default function PcLayoutGate({ children }) {
   const pathname = usePathname();
@@ -40,17 +41,18 @@ export default function PcLayoutGate({ children }) {
 
   useEffect(() => {
     if (!isPC) return undefined;
-    let cancelled = false;
     import('@/components/PCLayout').catch(() => {});
-    return () => {
-      cancelled = true;
-      void cancelled;
-    };
+    return undefined;
   }, [isPC]);
 
-  if (shouldUsePcLayout(pathname, isPC)) {
-    return <PCLayout>{children}</PCLayout>;
-  }
-
-  return children;
+  return (
+    <>
+      {isPC ? <DetailCssWarmupPc /> : null}
+      {shouldUsePcLayout(pathname, isPC) ? (
+        <PCLayout>{children}</PCLayout>
+      ) : (
+        children
+      )}
+    </>
+  );
 }
