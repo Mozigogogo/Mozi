@@ -38,6 +38,7 @@ export default function robots() {
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
-    host: SITE_URL,
+    // Host 只需主机名，不要带 https://
+    host: 'moziai.xyz',
   };
 }

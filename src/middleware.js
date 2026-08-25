@@ -12,6 +12,7 @@ function getRequestHost(request) {
     .split(',')[0]
     .trim()
     .toLowerCase();
+  // 去掉误带的 :3000 等内部端口
   return raw.replace(/:\d+$/, '');
 }
 
@@ -32,6 +33,10 @@ function shouldSkipProdCacheHeaders(pathname) {
   if (pathname.startsWith('/api/')) {
     return true;
   }
+  // sitemap / robots 给搜索引擎干净可缓存响应
+  if (pathname === '/sitemap.xml' || pathname === '/robots.txt') {
+    return true;
+  }
   return /\.(ico|png|jpe?g|gif|webp|svg|woff2?|ttf|eot)$/i.test(pathname);
 }
 
@@ -45,11 +50,11 @@ function isTelegramRequest(request) {
   return false;
 }
 
+/** 强制拼到 https://moziai.xyz，绝不带 :3000 */
 function redirectToCanonical(request) {
-  const target = new URL(request.url);
-  target.protocol = 'https:';
-  target.host = CANONICAL_HOST;
-  return NextResponse.redirect(target, 301);
+  const { pathname, search } = request.nextUrl;
+  const dest = `https://${CANONICAL_HOST}${pathname}${search}`;
+  return NextResponse.redirect(dest, 301);
 }
 
 export function middleware(request) {
@@ -57,12 +62,12 @@ export function middleware(request) {
   const host = getRequestHost(request);
   const isProd = process.env.NODE_ENV === 'production';
 
-  // www → apex（主站统一 moziai.xyz）
+  // www → apex（主站统一 moziai.xyz，且不带内部端口）
   if (isProd && host === 'www.moziai.xyz' && !pathname.startsWith('/api/')) {
     return redirectToCanonical(request);
   }
 
-  // Railway / 预览域名 → 正式站（部署到 Railway 后生效，便于 Google 改收录）
+  // Railway / 预览域名 → 正式站
   if (isProd && isPreviewHost(host) && !pathname.startsWith('/api/')) {
     return redirectToCanonical(request);
   }
@@ -85,7 +90,6 @@ export function middleware(request) {
     "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org https://telegram.org https://t.me;"
   );
 
-  // 缓存：dev 全站禁用；prod 对页面/RSC 再强调一次
   if (!isProd) {
     response.headers.set('Cache-Control', NO_STORE);
     response.headers.set('Pragma', 'no-cache');
@@ -101,6 +105,7 @@ export function middleware(request) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    // 不拦 sitemap / robots，避免额外响应头干扰 Google 抓取
+    '/((?!_next/static|_next/image|favicon.ico|sitemap\\.xml|robots\\.txt).*)',
   ],
 };

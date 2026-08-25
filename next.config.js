@@ -87,13 +87,32 @@ const nextConfig = withLess({
             ],
           },
           {
-            source: '/((?!_next/static|_next/image|api/|favicon.ico|manifest.json).*)',
+            source: '/((?!_next/static|_next/image|api/|favicon.ico|manifest.json|sitemap.xml|robots.txt).*)',
             headers: noStoreDocument,
           },
         ];
 
     return [
       ...cacheHeaders,
+      // 给 Google 更友好的 sitemap / robots 缓存与类型头
+      {
+        source: '/sitemap.xml',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/robots.txt',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, must-revalidate',
+          },
+        ],
+      },
       {
         source: '/tg/:path*',
         headers: [
