@@ -66,11 +66,12 @@ export const metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.png', type: 'image/png' },
-      { url: '/images/new_login/logo.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', type: 'image/png', sizes: '512x512' },
     ],
-    shortcut: '/favicon.png',
-    apple: '/favicon.png',
+    shortcut: '/favicon.ico',
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   manifest: '/manifest.json',
   category: 'finance',
@@ -98,9 +99,10 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="icon" href="/favicon.png" type="image/png" />
-        <link rel="icon" href="/images/new_login/logo.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/favicon.png" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.png" type="image/png" sizes="512x512" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
         {/* Keep only truly global/critical preload asset to avoid stealing bandwidth from home first paint */}
         <link rel="preload" href="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png" as="image" />
         <TgRootRedirectScript />
