@@ -712,8 +712,9 @@ export default function PCCommunityContent() {
 
   // 打开分享弹窗（复制链接 / Twitter / TG / 更多）
   const openShareModal = (post) => {
-    const postId = post?.id;
-    if (!postId) return;
+    if (!post) return;
+    const isTopicShare = Boolean(post.topicId) || String(post.id || '').startsWith('topic-');
+    if (!isTopicShare && !post?.id) return;
     setShareModalPost(post);
     setShareModalOpen(true);
   };
@@ -722,8 +723,72 @@ export default function PCCommunityContent() {
     openShareModal(post);
   };
 
+  const resolveTopicId = (post) => {
+    const raw = post?.topicId ?? detailModalPost?.topicId;
+    if (raw != null && raw !== '') return String(raw);
+    const id = String(post?.id ?? detailModalPost?.id ?? '');
+    if (id.startsWith('topic-')) return id.slice('topic-'.length);
+    return '';
+  };
+
   // 弹窗内点赞（同步更新弹窗计数）
   const handleDetailLike = async (post) => {
+    if (detailModalVariant === 'topic') {
+      const topicId = resolveTopicId(post);
+      if (!topicId) return;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) {
+        message.warning(t('post.messages.pleaseLogin'));
+        return;
+      }
+
+      const currentLiked = Boolean(detailModalPost?.isLiked);
+      const url = currentLiked
+        ? `${Interface.TOPIC_UNLIKE}/${topicId}`
+        : `${Interface.TOPIC_LIKE}/${topicId}`;
+
+      setDetailModalPost((prev) => {
+        if (!prev || resolveTopicId(prev) !== topicId) return prev;
+        return {
+          ...prev,
+          isLiked: !currentLiked,
+          likeCount: currentLiked
+            ? Math.max((prev.likeCount || 0) - 1, 0)
+            : (prev.likeCount || 0) + 1,
+        };
+      });
+
+      try {
+        const res = await request({ url, method: 'GET' });
+        const ok = res?.success === true || res?.code === 0;
+        if (!ok) {
+          throw res;
+        }
+      } catch (error) {
+        const errMsg = getBackendErrorMsg(error);
+        // 后端「已点赞」视为已成功，保持点赞态
+        if (!currentLiked && errMsg && errMsg.includes('已点赞')) {
+          setDetailModalPost((prev) => {
+            if (!prev || resolveTopicId(prev) !== topicId) return prev;
+            return { ...prev, isLiked: true };
+          });
+          return;
+        }
+        setDetailModalPost((prev) => {
+          if (!prev || resolveTopicId(prev) !== topicId) return prev;
+          return {
+            ...prev,
+            isLiked: currentLiked,
+            likeCount: currentLiked
+              ? (prev.likeCount || 0) + 1
+              : Math.max((prev.likeCount || 0) - 1, 0),
+          };
+        });
+        message.error(errMsg || t('common.operationFailed'));
+      }
+      return;
+    }
+
     if (detailModalVariant !== 'post') return;
     const postId = post?.id ?? detailModalPost?.id;
     if (!postId) return;
@@ -777,7 +842,6 @@ export default function PCCommunityContent() {
 
   // 弹窗内分享：同样打开分享弹窗
   const handleDetailShare = (post) => {
-    if (detailModalVariant !== 'post') return;
     openShareModal(post || detailModalPost);
   };
 
@@ -1102,6 +1166,7 @@ export default function PCCommunityContent() {
     setDetailModalLoading(true);
     setDetailModalPost({
       id: `topic-${id}`,
+      topicId: id,
       coverImage: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/post_detail.png',
       authorName: t('pcCommunity.hotRankingTitle'),
       authorAvatar: '/default-avatar.png',
@@ -1112,6 +1177,7 @@ export default function PCCommunityContent() {
       likeCount: 0,
       commentCount: 0,
       shareCount: 0,
+      isLiked: false,
     });
     setDetailModalOpen(true);
 
@@ -1130,6 +1196,13 @@ export default function PCCommunityContent() {
             title: detail?.name || prev.title,
             description: detail?.description || prev.description,
             tags: [String(detail?.name || prev.title || '').replace(/^#/, '')].filter(Boolean),
+            likeCount: Number(
+              detail?.likeCnt ?? detail?.likeCount ?? detail?.likes ?? prev.likeCount ?? 0
+            ) || 0,
+            shareCount: Number(
+              detail?.shareCnt ?? detail?.shareCount ?? prev.shareCount ?? 0
+            ) || 0,
+            isLiked: Boolean(detail?.isLiked ?? detail?.liked ?? prev.isLiked),
           };
         });
       }
@@ -1420,7 +1493,9 @@ export default function PCCommunityContent() {
         hidePreview
         brandLabel=""
         shareUrl={
-          shareModalPost?.id
+          shareModalPost?.topicId
+            ? `${typeof window !== 'undefined' ? window.location.origin : ''}/topicinfo?id=${encodeURIComponent(String(shareModalPost.topicId))}`
+            : shareModalPost?.id
             ? `https://askmozi.com/commentinfo?id=${encodeURIComponent(String(shareModalPost.id))}`
             : ''
         }

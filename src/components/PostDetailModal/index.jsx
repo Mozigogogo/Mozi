@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { SpinLoading } from 'antd-mobile';
 import styles from './index.module.less';
 
@@ -32,6 +32,7 @@ export default function PostDetailModal({
   const [currentUserAvatar, setCurrentUserAvatar] = useState(DEFAULT_AVATAR);
   const [commentValue, setCommentValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const commentListRef = useRef(null);
 
   const resolvedCurrentUserAvatar = useMemo(() => {
     const avatar = String(currentUserAvatar || '').trim();
@@ -117,6 +118,14 @@ export default function PostDetailModal({
   const isTopic = variant === 'topic';
   const listTitle = isTopic ? `共 ${comments.length || commentCount} 条帖子` : `共 ${comments.length || commentCount} 条评论`;
 
+  const handleCommentClick = () => {
+    if (isTopic) {
+      commentListRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    onComment?.(post);
+  };
+
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true">
       <div className={styles.modal}>
@@ -163,7 +172,7 @@ export default function PostDetailModal({
               </div>
 
               <div className={styles.commentTitle}>{listTitle}</div>
-              <div className={styles.commentList}>
+              <div className={styles.commentList} ref={commentListRef}>
                 {comments.length > 0 ? (
                   comments.map((item) => (
                     <div key={item.id} className={styles.commentItem}>
@@ -178,44 +187,42 @@ export default function PostDetailModal({
                     </div>
                   ))
                 ) : (
-                  <div className={styles.emptyComments}>暂无评论</div>
+                  <div className={styles.emptyComments}>{isTopic ? '暂无帖子' : '暂无评论'}</div>
                 )}
               </div>
 
-              {!isTopic && (
-                <div className={styles.actionBar}>
-                  <button
-                    type="button"
-                    className={`${styles.actionBtn} ${isLiked ? styles.actionBtnActive : ''}`}
-                    onClick={() => onLike?.(post)}
-                  >
-                    <img
-                      className={`${styles.actionIconImg} ${isLiked ? styles.actionIconActive : ''}`}
-                      src={isLiked ? likeActiveIcon : likeIcon}
-                      alt="like"
-                      onError={(e) => {
-                        // CDN 里若没有 active 图标，则回退到默认图标 + 颜色高亮
-                        if (e.currentTarget.src.includes('like-active')) {
-                          e.currentTarget.src = likeIcon;
-                        }
-                      }}
-                    />
-                    <span>{likeCount}</span>
-                  </button>
-                  <button type="button" className={styles.actionBtn} onClick={() => onComment?.(post)}>
-                    <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
-                    <span>{commentCount}</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.actionBtn} ${styles.shareBtn}`}
-                    onClick={() => onShare?.(post)}
-                  >
-                    <img className={styles.actionIconImg} src={shareIcon} alt="share" />
-                    <span>{shareCount}</span>
-                  </button>
-                </div>
-              )}
+              <div className={`${styles.actionBar}${isTopic ? ` ${styles.actionBarTopic}` : ''}`}>
+                <button
+                  type="button"
+                  className={`${styles.actionBtn} ${isLiked ? styles.actionBtnActive : ''}`}
+                  onClick={() => onLike?.(post)}
+                >
+                  <img
+                    className={`${styles.actionIconImg} ${isLiked ? styles.actionIconActive : ''}`}
+                    src={isLiked ? likeActiveIcon : likeIcon}
+                    alt="like"
+                    onError={(e) => {
+                      // CDN 里若没有 active 图标，则回退到默认图标 + 颜色高亮
+                      if (e.currentTarget.src.includes('like-active')) {
+                        e.currentTarget.src = likeIcon;
+                      }
+                    }}
+                  />
+                  <span>{likeCount}</span>
+                </button>
+                <button type="button" className={styles.actionBtn} onClick={handleCommentClick}>
+                  <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
+                  <span>{commentCount}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.actionBtn} ${styles.shareBtn}`}
+                  onClick={() => onShare?.(post)}
+                >
+                  <img className={styles.actionIconImg} src={shareIcon} alt="share" />
+                  <span>{shareCount}</span>
+                </button>
+              </div>
 
               {!isTopic && (
                 <div className={styles.inputBar}>

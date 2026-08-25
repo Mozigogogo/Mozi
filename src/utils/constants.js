@@ -201,6 +201,10 @@ export const Interface = {
   HOT_TOPICS_API: '/topic/hot',
   // 话题详情
   TOPIC_DETAIL: '/topic/detail',
+  // 点赞话题（需登录）
+  TOPIC_LIKE: '/topic/like',
+  // 取消点赞话题（需登录）
+  TOPIC_UNLIKE: '/topic/unlike',
   // 话题搜索
   TOPIC_SEARCH: '/topic/search',
 
