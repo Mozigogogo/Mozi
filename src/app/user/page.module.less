@@ -1548,11 +1548,159 @@
 /* 深色模式适配 */
 :global([data-theme="dark"]) {
   .container {
-    background-color: #1a1a1a;
+    background-color: #0f0f0f;
   }
-  
+
+  .topBannerWrapper {
+    background-color: #0f0f0f;
+    background-image: linear-gradient(180deg, #1a2e28 0%, #121816 45%, #0f0f0f 100%);
+  }
+
+  .statsAndActionsWrapper {
+    background: transparent;
+  }
+
+  .contentWrapper {
+    background: #0f0f0f;
+  }
+
+  .sectionSkeleton {
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 100%),
+      #1c1f24;
+    background-size: 200% 100%;
+  }
+
+  .nickname {
+    color: #f3f4f6;
+  }
+
+  .userTag {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .bioRow {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .statValue {
+    color: #f3f4f6;
+  }
+
+  .statLabel {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .profileBtn {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #f3f4f6;
+    box-shadow: none;
+
+    &:active {
+      background: rgba(255, 255, 255, 0.16);
+    }
+  }
+
+  .iconBtn {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.16);
+
+    img {
+      filter: brightness(0) invert(0.85);
+    }
+
+    &:active {
+      background: rgba(255, 255, 255, 0.16);
+    }
+  }
+
+  .actionButtons,
+  .secondaryActions,
+  .horizontalBtn,
+  .pointsSection {
+    background: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
+  .horizontalBtn:active {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .actionText,
+  .btnText {
+    color: #f3f4f6;
+  }
+
+  .btnSubtext {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .pointsTitle {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .pointsValue {
+    color: #34d399;
+  }
+
+  .pointsDailyText {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .pointsDailyValue,
+  .rankNumber,
+  .rankLink {
+    color: #f3f4f6;
+  }
+
+  .pointsDivider {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .pointsRankLabel,
+  .pointsRankValue {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .bgDecoration {
+    opacity: 0.55;
+  }
+
+  .secondaryActions .actionIconImg {
+    filter: brightness(0) invert(0.78);
+  }
+
+  .footer {
+    background: #1c1f24;
+  }
+
   .footerList {
-    box-shadow: var(--card-shadow-dark);
+    background: transparent !important;
+    box-shadow: none;
+    border: none;
+
+    :global {
+      .adm-list,
+      .adm-list-body,
+      .adm-list-item,
+      .adm-list-item-content {
+        background: transparent !important;
+        --adm-color-background: transparent;
+      }
+    }
+  }
+
+  .footerItem,
+  .footerBtn {
+    background: transparent !important;
+  }
+
+  .text {
+    color: #f3f4f6;
   }
   
   .contactTitle {

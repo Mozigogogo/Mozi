@@ -368,6 +368,14 @@
     background-color: #1a1a1a;
     
     :global {
+      .adm-tabs-header {
+        background-color: #1a1a1a;
+      }
+
+      .adm-tabs-tab-list {
+        background-color: #1a1a1a;
+      }
+
       .adm-tabs-tab {
         color: #e0e0e0;
       }
@@ -382,8 +390,13 @@
     background-color: #1a1a1a; // 暗黑模式下整个自选区域深色背景
     
     .ownGridTitle {
-      background-color: #1a1a1a; // 暗黑模式下表头背景色
+      background-color: #1a1a1a !important; // 暗黑模式下表头背景色
       border-bottom-color: #333; // 暗黑模式下边框颜色
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .ownGridTitleItem {
+      color: rgba(255, 255, 255, 0.55);
     }
   }
   
@@ -392,7 +405,7 @@
     
     .gridTitle {
       background-color: #1a1a1a;
-      color: #999;
+      color: rgba(255, 255, 255, 0.55);
     }
   }
 
@@ -411,5 +424,18 @@
   
   .addOwnBtn {
     background-color: #11B787;
+  }
+
+  .rankContainer {
+    :global {
+      .adm-list,
+      .adm-list-body,
+      .adm-list-item,
+      .adm-list-item-content {
+        background: transparent !important;
+        background-color: transparent !important;
+        --adm-color-background: transparent;
+      }
+    }
   }
 }

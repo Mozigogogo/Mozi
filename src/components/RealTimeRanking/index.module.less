@@ -163,3 +163,33 @@
     color: #666;
   }
 }
+
+:global([data-theme='dark']) {
+  .rankingTitle {
+    color: #f3f4f6;
+  }
+
+  .tabBox :global {
+    .adm-tab-bar-wrap {
+      &::after {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .adm-tab-bar-item {
+        color: rgba(255, 255, 255, 0.55);
+      }
+
+      .adm-tab-bar-item-active {
+        color: #11B787;
+      }
+    }
+  }
+
+  .listMore {
+    color: rgba(255, 255, 255, 0.45);
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.78);
+    }
+  }
+}

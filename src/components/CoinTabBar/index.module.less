@@ -42,18 +42,23 @@
 /* 暗黑模式 */
 :global([data-theme="dark"]) {
   .coinTabs {
-    background-color: #1a1a1a;
-    border-bottom-color: #333;
+    background-color: #0f0f0f;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
   }
   
   .coinTab {
-    background-color: #333;
-    color: #999;
+    background-color: #2a2a2a;
+    color: rgba(255, 255, 255, 0.55);
   }
   
   .coinTab.active {
-    background-color: #1890ff;
+    background-color: #11B787;
     color: #fff;
+  }
+
+  .coinTab.more {
+    color: #34d399;
+    background-color: rgba(17, 183, 135, 0.16);
   }
 
   .pcCoinTabs {

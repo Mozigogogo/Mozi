@@ -230,7 +230,11 @@
 /* 暗色模式 */
 :global([data-theme="dark"]) {
   .gridTitle {
-    color: #999;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .gridTitleItem {
+    color: rgba(255, 255, 255, 0.55);
   }
   
   // .gridListItem {
@@ -242,10 +246,23 @@
   }
   
   .emptyData {
-    color: #666;
+    color: rgba(255, 255, 255, 0.45);
   }
   .rankingTopName {
-    color: #ddd;
+    color: #f3f4f6;
+  }
+
+  .rankingNumber {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .simpleRankingNumber {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .logoPlaceholderFull {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.55);
   }
 }
 

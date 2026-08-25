@@ -1005,3 +1005,137 @@
     line-height: 1.4;
   }
 }
+
+:global([data-theme='dark']) {
+  .indexBox::before {
+    background: #0f0f0f;
+  }
+
+  .homeSectionSkeleton {
+    background: rgba(28, 31, 36, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .homeSectionSkeletonCard {
+    box-shadow: none;
+  }
+
+  .homeSectionSkeletonShimmer {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0) 100%
+      ),
+      linear-gradient(180deg, rgba(28, 31, 36, 0.9) 0%, rgba(22, 24, 28, 0.9) 100%);
+  }
+
+  .header .searchBox {
+    background-color: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
+  .header .searchInput,
+  .header .searchInput::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .notice {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .noticeClose {
+    color: rgba(255, 255, 255, 0.45);
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.78);
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .derivativeItem span {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .treemapBox.contentCard {
+    background-color: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
+  .treemapTitle {
+    color: #f3f4f6;
+  }
+
+  .loadingBox {
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .tabItem {
+    color: rgba(255, 255, 255, 0.45);
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    &.active {
+      color: #f3f4f6;
+    }
+  }
+
+  .moreBtn {
+    color: rgba(255, 255, 255, 0.45);
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.78);
+    }
+  }
+
+  .topicCard {
+    background-color: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
+  .topicTitle {
+    color: #f3f4f6;
+  }
+
+  .topicDesc {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .topicDate {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .tabBox :global(.adm-tab-bar-wrap .adm-tab-bar-item) {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .priceText {
+    color: rgba(255, 255, 255, 0.78) !important;
+  }
+
+  .listMore {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .emptyData {
+    background-color: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .robotContainerBg {
+    background: rgba(28, 31, 36, 0.95);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  .robotMessage,
+  .bubbleText {
+    color: #f3f4f6;
+  }
+}

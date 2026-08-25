@@ -24,6 +24,7 @@ import { useAmplitude } from '../../hooks/useAmplitude';
 import { FindEvents } from '../../utils/amplitude';
 import styles from './page.module.less';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/context/ThemeProvider';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, formatUsStockListItem } from '@/utils/usStockMockData';
 
@@ -73,6 +74,7 @@ export default function FindPage() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Find');
+  const { isDark } = useTheme();
   const tabFromUrl = searchParams.get('tab');
   const RANK_LOOPTIME = 5000;
   
@@ -1016,8 +1018,12 @@ const loadingTimerRef = useRef(null);
         <div 
           className={styles.ownGridTitle}
           style={{ 
-            backgroundColor: myOwn.length > 0 ? '#efefef' : '#fff',
-            borderBottom: myOwn.length > 0 ? '1px solid #f0f0f0' : 'none'
+            backgroundColor: myOwn.length > 0
+              ? (isDark ? '#1a1a1a' : '#efefef')
+              : (isDark ? '#1a1a1a' : '#fff'),
+            borderBottom: myOwn.length > 0
+              ? (isDark ? '1px solid #333' : '1px solid #f0f0f0')
+              : 'none'
           }}
         >
           {myOwn.length > 0 && [

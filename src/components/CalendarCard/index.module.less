@@ -224,7 +224,72 @@
 }
 
 :global([data-theme="dark"]) {
-  .enableDark { background: #1f1f1f; box-shadow: 0 2px 8px rgba(255,255,255,0.1); }
+  .card,
+  .enableDark {
+    background: #1c1f24;
+    box-shadow: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .announceTitle,
+  .title {
+    color: #f3f4f6;
+  }
+
+  .announceSubtitle {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .customSwitch {
+    background-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .switchButton {
+    background-color: #f3f4f6;
+  }
+
+  .checked {
+    background-color: #11B787;
+  }
+
+  .headerBar,
+  .grid {
+    background: #1c1f24;
+  }
+
+  .nav:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .weekDayText {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .dayText {
+    color: #f3f4f6;
+  }
+
+  .day:hover:not(.otherMonth):not(.selected) .dayText {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .today .dayText {
+    background-color: rgba(17, 183, 135, 0.2);
+    color: #34d399;
+  }
+
+  .selected .dayText {
+    background-color: #11B787;
+    color: #fff;
+  }
+
+  .otherMonth .dayText {
+    color: rgba(255, 255, 255, 0.25);
+  }
 }
 
 

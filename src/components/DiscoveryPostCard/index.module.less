@@ -546,21 +546,30 @@
 /* 暗黑模式 */
 :global([data-theme="dark"]) {
   .discoveryCard {
-    background: #1f1f1f;
-    box-shadow: 0 2PX 8PX rgba(0, 0, 0, 0.3);
+    background: #1c1f24;
+    box-shadow: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
   
   .discoveryNickname {
-    color: #ffffff;
+    color: #f3f4f6;
+  }
+
+  .discoveryTime {
+    color: rgba(255, 255, 255, 0.45);
   }
   
   .coinInfoLabel,
   .coinInfoValue,
   .actionCount {
-    color: #999999;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .discoveryActionIcon {
+    filter: brightness(0) invert(0.72);
   }
   
   .discoveryActionButtons {
-    border-top-color: #333333;
+    border-top-color: rgba(255, 255, 255, 0.08);
   }
 }

@@ -114,15 +114,33 @@
   }
 
   .gridTitle {
-    color: #999 !important;
+    color: rgba(255, 255, 255, 0.55) !important;
   }
 
   .rankingNumber {
-    color: #e0e0e0 !important;
+    color: #f3f4f6 !important;
   }
 
   .gridConItem {
-    color: #e0e0e0 !important;
+    color: #f3f4f6 !important;
+  }
+
+  .emptyData {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .rankGridDesc {
+    :global(.adm-list),
+    :global(.adm-list-body),
+    :global(.adm-list-item),
+    :global(.adm-list-item-content),
+    :global(.adm-list-item-content-main) {
+      background: transparent !important;
+      background-color: transparent !important;
+      --adm-color-background: transparent;
+      --background-color: transparent;
+      color: #f3f4f6;
+    }
   }
 }
 

@@ -810,53 +810,134 @@
 
 :global([data-theme="dark"]) {
   .container {
-    background-color: #000;
+    background-color: #0f0f0f;
+  }
+
+  .navTransparent {
+    background: #0f0f0f !important;
+  }
+
+  .tabsWrapper,
+  .voteWrapper,
+  .questionWrapper {
+    background: #0f0f0f;
   }
   
   .mainTabs,
   .subTabs {
-    background-color: #1a1a1a;
-    border-bottom-color: #333;
+    background-color: #0f0f0f;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
   }
   
   .tabItem,
   .subTab {
-    color: #999;
+    color: rgba(255, 255, 255, 0.55);
   }
   
   .tabItem.active,
   .subTab.active {
-    color: #1890ff;
+    color: #f3f4f6;
   }
   
   .hotTopics,
   .postItem {
-    background-color: #1a1a1a;
+    background-color: #1c1f24;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .discoveryCard {
+    background: #1c1f24;
+    box-shadow: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .discoveryNickname {
+    color: #f3f4f6;
+  }
+
+  .discoveryTime,
+  .coinInfoLabel,
+  .coinInfoValue {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .discoveryActionBtn .actionCount {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .discoveryActionIcon {
+    filter: brightness(0) invert(0.72);
+  }
+
+  .username {
+    color: #f3f4f6;
+  }
+
+  .postTime {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .postTitle {
+    color: #f3f4f6;
+  }
+
+  .postText {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .badgeLabel {
+    background: rgba(250, 140, 22, 0.16);
+    color: #fb923c;
+  }
+
+  .coinTag {
+    background: rgba(250, 140, 22, 0.16);
+    color: #fb923c;
+    border-color: rgba(250, 140, 22, 0.35);
+  }
+
+  .topicTag {
+    background: rgba(24, 144, 255, 0.16);
+    color: #60a5fa;
+    border-color: rgba(24, 144, 255, 0.35);
+  }
+
+  .postAction {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .actionIconImg {
+    filter: brightness(0) invert(0.72);
   }
   
   .hotTopicItem {
-    border-bottom-color: #333;
+    background: #1c1f24;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
   }
   
   .hotTopicItem:hover {
-    background-color: #333;
+    background-color: rgba(255, 255, 255, 0.04);
   }
   
   .topicTitle {
-    color: #fff;
+    color: #f3f4f6;
   }
   
   .topicDesc,
-  .statItem {
-    color: #999;
+  .statItem,
+  .timeText,
+  .topicCount,
+  .emptyContainer,
+  .noMore {
+    color: rgba(255, 255, 255, 0.45);
   }
   
   .postFooter {
-    border-top-color: #333;
+    border-top-color: rgba(255, 255, 255, 0.08);
   }
   
   .topicItem {
-    border-bottom-color: #333;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
   }
   
   .coinSelectorFullscreen,
@@ -867,36 +948,48 @@
   .selectorHeader,
   .creatorHeader {
     background-color: #1a1a1a;
-    border-bottom-color: #333;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .selectorSearch {
+    background-color: #1a1a1a;
+  }
+
+  .selectorSearchBox :global(.searchBox) {
+    background-color: #161a1e;
   }
   
   .headerTitle,
   .label,
   .coinName {
-    color: #fff;
+    color: #f3f4f6;
   }
   
   .close {
-    color: #999;
+    color: rgba(255, 255, 255, 0.45);
   }
   
   .coinItem {
-    border-bottom-color: #333;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.04);
+    }
   }
   
   .titleInput,
   .descInput {
-    background-color: #333;
-    border-color: #444;
-    color: #fff;
+    background-color: #161a1e;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f3f4f6;
   }
   
   .titleInput:focus,
   .descInput:focus {
-    border-color: #1890ff;
+    border-color: #11B787;
   }
   
   .wordCount {
-    color: #999;
+    color: rgba(255, 255, 255, 0.45);
   }
 }

@@ -1,8 +1,12 @@
 import React from 'react';
 import { RightArrowIcon } from '@/components/Icons';
+import { useTheme } from '@/context/ThemeProvider';
 import styles from '@/app/user/page.module.less';
 
 const PointsSection = ({ pointsData, t, router }) => {
+  const { isDark } = useTheme();
+  const arrowColor = isDark ? 'rgba(255, 255, 255, 0.55)' : 'rgba(15, 23, 42, 1)';
+
   const formatNumber = (num) => {
     return new Intl.NumberFormat().format(num);
   };
@@ -16,7 +20,7 @@ const PointsSection = ({ pointsData, t, router }) => {
             <img className={styles.coinIcon} src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_user/btc.svg" alt="coin" loading="lazy" decoding="async" />
             <span className={styles.pointsValue}>{formatNumber(pointsData.totalPoints)}</span>
             <div className={styles.dailyWrapper}>
-              <RightArrowIcon size={14} color="rgba(15, 23, 42, 1)" />
+              <RightArrowIcon size={14} color={arrowColor} />
               <span className={styles.pointsDailyText}>{t('user.yesterdayPointsText', { defaultValue: '昨日积分' })}</span>
               <span className={styles.pointsDailyValue}>+{pointsData.yesterdayPoints}</span>
             </div>
@@ -41,7 +45,7 @@ const PointsSection = ({ pointsData, t, router }) => {
           </span>
         </div>
         <div className={styles.rankLink}>
-             {t('user.pointsRanking')} <RightArrowIcon size={12} color="rgba(15, 23, 42, 1)" />
+             {t('user.pointsRanking')} <RightArrowIcon size={12} color={arrowColor} />
         </div>
       </div>
       

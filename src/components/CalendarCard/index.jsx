@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RightArrowIcon } from '../Icons';
+import { useTheme } from '@/context/ThemeProvider';
 import styles from './index.module.less';
 
 /**
@@ -10,6 +11,8 @@ import styles from './index.module.less';
  */
 export default function CalendarCard({ onDateChange, onToggleChange, onMonthChange, defaultToggle = true, enableDark = false, eventDates = [] }) {
   const { t, i18n } = useTranslation();
+  const { isDark } = useTheme();
+  const arrowColor = isDark ? 'rgba(255, 255, 255, 0.55)' : '#666';
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const [selectedDate, setSelectedDate] = useState(today);
@@ -137,11 +140,11 @@ export default function CalendarCard({ onDateChange, onToggleChange, onMonthChan
       <div className={styles.content}>
         <div className={styles.headerBar}>
           <div className={styles.nav} onClick={() => changeMonth(-1)}>
-            <RightArrowIcon size={24} color="#666" style={{ transform: 'rotate(180deg)' }} />
+            <RightArrowIcon size={24} color={arrowColor} style={{ transform: 'rotate(180deg)' }} />
           </div>
           <span className={styles.title}>{formatMonthYear()}</span>
           <div className={styles.nav} onClick={() => changeMonth(1)}>
-            <RightArrowIcon size={24} color="#666" />
+            <RightArrowIcon size={24} color={arrowColor} />
           </div>
         </div>
 

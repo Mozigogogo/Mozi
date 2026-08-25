@@ -289,3 +289,57 @@
     opacity: 1;
   }
 }
+
+:global([data-theme='dark']) {
+  .tabItem {
+    color: rgba(255, 255, 255, 0.45);
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    &.active {
+      color: #f3f4f6;
+    }
+  }
+
+  .moreBtn {
+    color: rgba(255, 255, 255, 0.45);
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.78);
+    }
+  }
+
+  .treemapBox.contentCard {
+    background-color: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
+  .treemapTitle {
+    color: #f3f4f6;
+  }
+
+  .topicCard {
+    background-color: #1c1f24;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
+  .topicTitle {
+    color: #f3f4f6;
+  }
+
+  .topicDesc {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .topicDate {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .dot:not(.active) {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}

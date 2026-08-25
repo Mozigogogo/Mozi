@@ -2,7 +2,14 @@
 
 import { useRouter } from 'next/navigation';
 import { safeBack } from '@/utils/navigation';
+import { useTheme } from '@/context/ThemeProvider';
 import styles from './index.less';
+
+function isDefaultLightBg(color) {
+  if (color == null || color === '') return true;
+  const c = String(color).trim().toLowerCase();
+  return c === '#ffffff' || c === '#fff' || c === 'white' || c === 'rgb(255, 255, 255)';
+}
 
 /**
  * 导航栏组件
@@ -16,7 +23,7 @@ import styles from './index.less';
  * @param {boolean} props.showMenu - 是否显示右侧菜单按钮
  * @param {boolean} props.showSearch - 是否显示右侧搜索按钮
  * @param {boolean} props.showBorder - 是否显示底部边框，默认true
- * @param {string} props.backgroundColor - 背景色，默认#ffffff，可传入transparent等
+ * @param {string} props.backgroundColor - 背景色，默认跟随主题（亮白/暗黑）
  * @param {string} props.className - 自定义类名
  */
 export default function NavBar({
@@ -36,8 +43,11 @@ export default function NavBar({
   style,
 }) {
   const router = useRouter();
+  const { isDark } = useTheme();
 
   const textStyle = color ? { color } : {};
+  const resolvedBg =
+    isDefaultLightBg(backgroundColor) && isDark ? '#1a1a1a' : backgroundColor;
 
   const handleBack = () => {
     if (onBack) {
@@ -62,7 +72,7 @@ export default function NavBar({
   return (
     <div 
       className={`${styles.navBar} ${!showBorder ? styles.noBorder : ''} ${!fixed ? styles.asStatic : ''} ${className}`}
-      style={{ backgroundColor, ...style }}
+      style={{ backgroundColor: resolvedBg, ...style }}
     >
       {/* 左侧返回按钮 */}
       <div className={styles.left}>
@@ -147,4 +157,3 @@ export default function NavBar({
     </div>
   );
 }
-

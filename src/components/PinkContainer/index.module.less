@@ -123,3 +123,15 @@
     font-size: 12px;
   }
 }
+
+:global([data-theme='dark']) {
+  .label {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .iconPulse {
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.1) 37%, rgba(255, 255, 255, 0.04) 63%);
+    background-size: 400% 100%;
+  }
+}
