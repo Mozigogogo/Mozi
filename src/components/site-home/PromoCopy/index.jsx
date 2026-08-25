@@ -2,17 +2,24 @@ import AppLink from '@/components/AppLink';
 import GetStartedArrow from '@/components/Icons/GetStartedArrow';
 import styles from './PromoCopy.module.css';
 
-export default function PromoCopy({ title, subtitle, ctaText, href = '/home', className = '' }) {
+export default function PromoCopy({
+  title,
+  subtitle,
+  ctaText,
+  href = '/home',
+  className = '',
+  titleAs: TitleTag = 'h2',
+}) {
   return (
     <div className={`${styles.promoCopy} ${className}`.trim()}>
-      <h2 className={styles.promoTitle}>
+      <TitleTag className={styles.promoTitle}>
         {title.map((line, index) => (
           <span key={line}>
             {index > 0 && <br />}
             {line}
           </span>
         ))}
-      </h2>
+      </TitleTag>
       <p className={styles.promoSubtitle}>
         {subtitle.map((line, index) => (
           <span key={line}>

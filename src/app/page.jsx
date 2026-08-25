@@ -9,15 +9,13 @@ import AlphaSection from '@/components/site-home/AlphaSection/index';
 import KnowledgeSection from '@/components/site-home/KnowledgeSection/index';
 import {
   DEFAULT_DESCRIPTION,
-  SITE_NAME_ZH,
-  SITE_URL,
+  buildBrandJsonLd,
   buildPageMetadata,
 } from '@/utils/seoConfig';
 
 export const metadata = buildPageMetadata({
-  title: '墨子 Mozi - 加密货币行情、预警与社区',
-  description:
-    '墨子官方网站：实时加密行情、板块热度、价格预警、套利雷达与社区讨论，覆盖主流交易所数据。',
+  title: 'MoziInnovations (Mozi / 墨子) - Crypto Markets, Alerts & Community',
+  description: DEFAULT_DESCRIPTION,
   path: '/',
 });
 
@@ -27,27 +25,10 @@ function isTelegramServerRequest(ua = '', referer = '') {
   return false;
 }
 
-const organizationJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: SITE_NAME_ZH,
-  url: SITE_URL,
-  logo: `${SITE_URL}/favicon.png`,
-  description: DEFAULT_DESCRIPTION,
-  sameAs: [
-    'https://t.me/MoziInnovations',
-    'https://x.com/moziinnovation',
-    'https://discord.gg/GJW6h9GNQ8',
-  ],
-};
-
-const websiteJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: SITE_NAME_ZH,
-  url: SITE_URL,
-  description: DEFAULT_DESCRIPTION,
-};
+const { organization: organizationJsonLd, website: websiteJsonLd } =
+  buildBrandJsonLd({
+    description: DEFAULT_DESCRIPTION,
+  });
 
 export default function SiteHomePage() {
   const headerList = headers();
@@ -75,6 +56,20 @@ export default function SiteHomePage() {
         <FlashSection />
         <AlphaSection />
         <KnowledgeSection />
+        <footer className={styles.aboutSeo}>
+          <h2 className={styles.aboutSeoTitle}>
+            MoziInnovations (Mozi / moz) — Crypto Data Intelligence Platform
+          </h2>
+          <p className={styles.aboutSeoEn}>
+            MoziInnovations (also known as Mozi or moz) is a crypto market intelligence
+            platform offering real-time cryptocurrency and US stock data, smart price
+            alerts, sector rotation insights, arbitrage radar, AI Q&amp;A, and a trading
+            community. Official website: https://moziai.xyz
+          </p>
+          <p className={styles.aboutSeoZh}>
+            MoziInnovations（墨子 Mozi，简称 moz）是加密数据智能分析平台，提供实时加密货币与美股行情、智能价格预警、板块轮动、套利雷达、AI 问答与交易社区。官网：https://moziai.xyz
+          </p>
+        </footer>
       </section>
     </main>
   );

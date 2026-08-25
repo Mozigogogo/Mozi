@@ -8,7 +8,8 @@ export default function HeroSection() {
         <div className={styles.leftPane}>
           <PromoCopy
             className={styles.heroLeft}
-            title={['AI Trade', 'Radar']}
+            titleAs="h1"
+            title={['Mozi AI', 'Trade Radar']}
             subtitle={['News, OI & Long/Short depth.', 'AI-calculated Win Rate.']}
             href="/ai"
             ctaText="Get Started"

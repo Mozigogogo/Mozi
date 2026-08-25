@@ -12,20 +12,60 @@ export const SITE_URL = (
 
 export const SITE_NAME_ZH = '墨子 Mozi';
 export const SITE_NAME_EN = 'Mozi';
+/** 公司 / 品牌正式英文名（搜索词 MoziInnovations） */
+export const BRAND_LEGAL_NAME = 'MoziInnovations';
+/** 品牌别名：用于 JSON-LD alternateName、keywords、标题识别 */
+export const BRAND_ALIASES = [
+  '墨子',
+  'Mozi',
+  'MoziInnovations',
+  'Mozi Innovations',
+  'MoziInnovation',
+  'moz',
+  'moziai',
+  'moziai.xyz',
+];
 
-export const DEFAULT_TITLE = '墨子 Mozi - 数字货币行情与社区';
+export const DEFAULT_TITLE =
+  'MoziInnovations (Mozi / 墨子) - Crypto Markets, Alerts & Community';
 export const DEFAULT_DESCRIPTION =
-  '墨子（Mozi）提供加密货币与美股行情、板块热度、套利雷达、价格预警与社区讨论，帮你更快发现交易机会。';
+  'Official site of MoziInnovations (Mozi / moz / 墨子). Real-time crypto & US stock markets, sector heat, smart alerts, arbitrage radar and community. 墨子官方网站：加密行情、预警、套利与社区。moziai.xyz';
+
+export const DEFAULT_TITLE_ZH =
+  '墨子 Mozi（MoziInnovations）- 数字货币行情与社区';
+export const DEFAULT_DESCRIPTION_ZH =
+  '墨子 Mozi（MoziInnovations / moz）官方网站：加密货币与美股行情、板块热度、套利雷达、价格预警与社区讨论。官网 moziai.xyz。';
 
 export const DEFAULT_KEYWORDS = [
   '墨子',
   'Mozi',
+  'MoziInnovations',
+  'Mozi Innovations',
+  'MoziInnovation',
+  'moz',
+  'moziai',
+  'moziai.xyz',
+  // English discovery keywords
+  'crypto',
+  'cryptocurrency',
+  'crypto market',
+  'crypto data',
+  'crypto alerts',
+  'trading alerts',
+  'price alert',
+  'arbitrage',
+  'sector rotation',
+  'market intelligence',
+  'bitcoin',
+  'BTC',
+  'ETH',
+  'US stocks',
+  'crypto community',
+  // Chinese keywords
   '加密货币',
   '数字货币',
   '行情',
   '比特币',
-  'BTC',
-  'ETH',
   '美股',
   '板块',
   '套利',
@@ -61,26 +101,34 @@ export function buildPageMetadata({
     !title ||
     title.includes(SITE_NAME_ZH) ||
     title.includes('Mozi') ||
-    title.includes('墨子');
+    title.includes('墨子') ||
+    title.includes(BRAND_LEGAL_NAME);
   const pageTitle = alreadyBranded
     ? shortTitle
     : `${shortTitle} | ${SITE_NAME_ZH}`;
   const url = absoluteUrl(path);
+  const keywordList = Array.isArray(keywords)
+    ? [...new Set([...keywords, ...BRAND_ALIASES])]
+    : DEFAULT_KEYWORDS;
 
   return {
     // 已含品牌名的标题用 absolute，避免被根 layout template 再拼一次
     title: alreadyBranded ? { absolute: pageTitle } : shortTitle,
     description,
-    keywords,
+    keywords: keywordList,
+    applicationName: `${BRAND_LEGAL_NAME} · ${SITE_NAME_EN}`,
+    authors: [{ name: BRAND_LEGAL_NAME, url: SITE_URL }],
+    creator: BRAND_LEGAL_NAME,
+    publisher: BRAND_LEGAL_NAME,
     alternates: {
       canonical: url,
     },
     openGraph: {
       type,
-      locale: 'zh_CN',
-      alternateLocale: ['en_US'],
+      locale: 'en_US',
+      alternateLocale: ['zh_CN'],
       url,
-      siteName: SITE_NAME_ZH,
+      siteName: `${BRAND_LEGAL_NAME} · ${SITE_NAME_ZH}`,
       title: pageTitle,
       description,
       images: [
@@ -88,7 +136,7 @@ export function buildPageMetadata({
           url: image,
           width: 512,
           height: 512,
-          alt: SITE_NAME_ZH,
+          alt: `${BRAND_LEGAL_NAME} ${SITE_NAME_EN}`,
         },
       ],
     },
@@ -116,6 +164,55 @@ export function buildPageMetadata({
           },
         },
   };
+}
+
+/** Organization + WebSite JSON-LD，强化品牌别名可被搜索引擎关联 */
+export function buildBrandJsonLd({
+  description = DEFAULT_DESCRIPTION,
+} = {}) {
+  const organization = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: BRAND_LEGAL_NAME,
+    legalName: BRAND_LEGAL_NAME,
+    alternateName: BRAND_ALIASES,
+    url: SITE_URL,
+    logo: absoluteUrl('/favicon.png'),
+    image: absoluteUrl('/favicon.png'),
+    description,
+    email: 'notice@moziinnovations.com',
+    knowsLanguage: ['en', 'zh'],
+    sameAs: [
+      'https://t.me/MoziInnovations',
+      'https://x.com/moziinnovation',
+      'https://discord.gg/GJW6h9GNQ8',
+    ],
+  };
+
+  const website = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: BRAND_LEGAL_NAME,
+    alternateName: BRAND_ALIASES,
+    url: SITE_URL,
+    description,
+    inLanguage: ['en', 'zh-CN'],
+    publisher: {
+      '@type': 'Organization',
+      name: BRAND_LEGAL_NAME,
+      url: SITE_URL,
+    },
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${SITE_URL}/pc/search?keyword={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
+  return { organization, website };
 }
 
 /** 需要被 sitemap 收录的公开静态路由 */

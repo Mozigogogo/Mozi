@@ -25,6 +25,7 @@ import TgRootRedirectScript from "@/components/TgRootRedirectScript";
 import TelegramSdkLoader from "@/components/TelegramSdkLoader";
 import TgWcWebviewCheck from "@/components/TgWcWebviewCheck";
 import {
+  BRAND_LEGAL_NAME,
   DEFAULT_DESCRIPTION,
   DEFAULT_KEYWORDS,
   DEFAULT_OG_IMAGE,
@@ -52,7 +53,6 @@ const chakraPetch = Chakra_Petch({
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
-  applicationName: SITE_NAME_ZH,
   ...buildPageMetadata({
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
@@ -75,9 +75,9 @@ export const metadata = {
   },
   manifest: '/manifest.json',
   category: 'finance',
-  authors: [{ name: SITE_NAME_ZH, url: SITE_URL }],
-  creator: SITE_NAME_ZH,
-  publisher: SITE_NAME_ZH,
+  authors: [{ name: BRAND_LEGAL_NAME, url: SITE_URL }],
+  creator: BRAND_LEGAL_NAME,
+  publisher: BRAND_LEGAL_NAME,
   formatDetection: {
     telephone: false,
     email: false,

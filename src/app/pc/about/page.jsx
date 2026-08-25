@@ -67,7 +67,7 @@ export default function PCAboutPage() {
     <div className={styles.pageWrap}>
       <section className={styles.hero}>
         <div className={styles.heroInner}>
-          <img src={LOGO_URL} alt="Mozi" className={styles.heroLogo} />
+          <img src={LOGO_URL} alt="MoziInnovations Mozi" className={styles.heroLogo} />
           <h1 className={styles.heroBrand}>{t('pcAbout.brandName')}</h1>
           <p className={styles.heroLead}>{t('pcAbout.lead')}</p>
         </div>

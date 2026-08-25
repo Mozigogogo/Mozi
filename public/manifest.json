@@ -1,12 +1,12 @@
 {
-  "name": "墨子 Mozi - 数字货币行情与社区",
-  "short_name": "墨子 Mozi",
-  "description": "墨子（Mozi）提供加密货币与美股行情、板块热度、套利雷达、价格预警与社区讨论。",
+  "name": "MoziInnovations (Mozi)",
+  "short_name": "Mozi",
+  "description": "MoziInnovations (Mozi / moz): crypto & US stock markets, smart alerts, sector heat, arbitrage radar and community. 墨子官方行情与社区。",
   "start_url": "/home",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#11B787",
-  "lang": "zh-CN",
+  "lang": "en",
   "icons": [
     {
       "src": "/favicon.svg",
