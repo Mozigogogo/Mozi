@@ -199,12 +199,14 @@ export const Interface = {
   CREATE_TOPIC: '/topic/new',
   // 热门话题
   HOT_TOPICS_API: '/topic/hot',
-  // 话题详情
-  TOPIC_DETAIL: '/topic/detail',
+  // 话题详情 GET /topic/{id}
+  TOPIC_DETAIL: '/topic',
   // 点赞话题（需登录）
   TOPIC_LIKE: '/topic/like',
   // 取消点赞话题（需登录）
   TOPIC_UNLIKE: '/topic/unlike',
+  // 发表话题评论（需登录）
+  TOPIC_COMMENTS_NEW: '/topic/comments/new',
   // 话题搜索
   TOPIC_SEARCH: '/topic/search',
 

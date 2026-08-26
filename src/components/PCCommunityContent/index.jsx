@@ -1009,11 +1009,20 @@ export default function PCCommunityContent() {
     } catch (_) {}
   };
 
-  // 弹窗内提交评论（与移动端一致调用 /comments/new）
+  // 弹窗内提交评论：帖子走 /comments/new；话题走 /topic/comments/new
   const handleDetailSubmitComment = async (content) => {
-    const postId = detailModalPost?.id;
     const nextContent = String(content || '').trim();
-    if (!postId || !nextContent) return false;
+    if (!nextContent) return false;
+    if (nextContent.length > 1000) {
+      message.warning(t('pcCommunity.commentTooLong', { defaultValue: '评论最多 1000 字' }));
+      return false;
+    }
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      message.warning(t('post.messages.pleaseLogin'));
+      return false;
+    }
 
     let currentUser = {};
     try {
@@ -1031,6 +1040,54 @@ export default function PCCommunityContent() {
       time: t('time.justNow'),
       content: nextContent,
     };
+
+    // 话题评论
+    if (detailModalVariant === 'topic') {
+      const topicId = resolveTopicId(detailModalPost);
+      if (!topicId) return false;
+
+      setDetailModalComments((prev) => [optimisticComment, ...prev]);
+      setDetailModalPost((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          commentCount: (prev.commentCount || 0) + 1,
+        };
+      });
+
+      try {
+        const res = await request({
+          url: Interface.TOPIC_COMMENTS_NEW,
+          method: 'POST',
+          data: {
+            topicId: Number(topicId) || topicId,
+            content: nextContent,
+          },
+        });
+        const ok = res?.success === true || res?.code === 0;
+        if (!ok) {
+          throw res;
+        }
+        message.success(t('pcCommunity.commentSendSuccess'));
+        return true;
+      } catch (error) {
+        console.error('提交话题评论失败:', error);
+        setDetailModalComments((prev) => prev.filter((item) => item.id !== tempId));
+        setDetailModalPost((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            commentCount: Math.max((prev.commentCount || 0) - 1, 0),
+          };
+        });
+        message.error(getBackendErrorMsg(error) || t('pcCommunity.commentSendFailed'));
+        return false;
+      }
+    }
+
+    // 帖子评论
+    const postId = detailModalPost?.id;
+    if (!postId) return false;
 
     setDetailModalComments((prev) => [optimisticComment, ...prev]);
     setDetailModalPost((prev) => {
@@ -1082,7 +1139,7 @@ export default function PCCommunityContent() {
           };
         })
       );
-      message.error(t('pcCommunity.commentSendFailed'));
+      message.error(getBackendErrorMsg(error) || t('pcCommunity.commentSendFailed'));
       return false;
     }
   };
@@ -1182,32 +1239,42 @@ export default function PCCommunityContent() {
     setDetailModalOpen(true);
 
     try {
-      // 拉取话题详情（补全 description）
+      // 话题详情：GET /topic/{id}
       const detailRes = await request({
-        url: Interface.TOPIC_DETAIL,
-        data: { id },
+        url: `${Interface.TOPIC_DETAIL}/${encodeURIComponent(id)}`,
+        method: 'GET',
       });
       const detail = detailRes?.data;
       if (detail) {
         setDetailModalPost((prev) => {
           if (!prev || prev.id !== `topic-${id}`) return prev;
+          const title = detail?.name || detail?.title || prev.title;
           return {
             ...prev,
-            title: detail?.name || prev.title,
-            description: detail?.description || prev.description,
-            tags: [String(detail?.name || prev.title || '').replace(/^#/, '')].filter(Boolean),
-            likeCount: Number(
-              detail?.likeCnt ?? detail?.likeCount ?? detail?.likes ?? prev.likeCount ?? 0
+            topicId: String(detail?.id ?? id),
+            title,
+            description:
+              detail?.description ||
+              prev.description ||
+              t('community.actions.noDescription'),
+            tags: [String(title || '').replace(/^#/, '')].filter(Boolean),
+            likeCount: Number(detail?.likeCnt ?? 0) || 0,
+            commentCount: Number(
+              detail?.commentCnt ??
+                detail?.commentCount ??
+                detail?.postCount ??
+                prev.commentCount ??
+                0
             ) || 0,
             shareCount: Number(
               detail?.shareCnt ?? detail?.shareCount ?? prev.shareCount ?? 0
             ) || 0,
-            isLiked: Boolean(detail?.isLiked ?? detail?.liked ?? prev.isLiked),
+            isLiked: Boolean(detail?.isLikedByCurrentUser),
           };
         });
       }
     } catch (e) {
-      // ignore topic detail failure
+      console.error('获取话题详情失败:', e);
     }
 
     try {
@@ -1227,9 +1294,11 @@ export default function PCCommunityContent() {
       setDetailModalComments(mapped);
       setDetailModalPost((prev) => {
         if (!prev || prev.id !== `topic-${id}`) return prev;
+        // 详情接口若已带回评论数则保留；否则用帖子列表长度兜底
+        const fromDetail = Number(prev.commentCount);
         return {
           ...prev,
-          commentCount: mapped.length,
+          commentCount: fromDetail > 0 ? fromDetail : mapped.length,
         };
       });
     } catch (e) {

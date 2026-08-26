@@ -191,7 +191,7 @@ export default function PostDetailModal({
                 )}
               </div>
 
-              <div className={`${styles.actionBar}${isTopic ? ` ${styles.actionBarTopic}` : ''}`}>
+              <div className={styles.actionBar}>
                 <button
                   type="button"
                   className={`${styles.actionBtn} ${isLiked ? styles.actionBtnActive : ''}`}
@@ -224,41 +224,40 @@ export default function PostDetailModal({
                 </button>
               </div>
 
-              {!isTopic && (
-                <div className={styles.inputBar}>
-                  <img
-                    className={styles.inputAvatar}
-                    src={resolvedCurrentUserAvatar}
-                    alt="current user avatar"
-                    onError={(e) => {
-                      e.currentTarget.src = DEFAULT_AVATAR;
+              <div className={styles.inputBar}>
+                <img
+                  className={styles.inputAvatar}
+                  src={resolvedCurrentUserAvatar}
+                  alt="current user avatar"
+                  onError={(e) => {
+                    e.currentTarget.src = DEFAULT_AVATAR;
+                  }}
+                />
+                <div className={styles.inputWrap}>
+                  <input
+                    className={styles.input}
+                    placeholder="说点什么..."
+                    value={commentValue}
+                    maxLength={1000}
+                    onChange={(e) => setCommentValue(e.currentTarget.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSubmitComment();
+                      }
                     }}
                   />
-                  <div className={styles.inputWrap}>
-                    <input
-                      className={styles.input}
-                      placeholder="说点什么..."
-                      value={commentValue}
-                      onChange={(e) => setCommentValue(e.currentTarget.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleSubmitComment();
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className={styles.sendBtn}
-                      onClick={handleSubmitComment}
-                      aria-label="send comment"
-                      disabled={submitting || !String(commentValue || '').trim()}
-                    >
-                      发送
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className={styles.sendBtn}
+                    onClick={handleSubmitComment}
+                    aria-label="send comment"
+                    disabled={submitting || !String(commentValue || '').trim()}
+                  >
+                    发送
+                  </button>
                 </div>
-              )}
+              </div>
             </>
           )}
         </div>
