@@ -529,6 +529,17 @@ export default function DetailPage() {
     applyStockBigDealOrderBook(stockBigDealTab);
   }, [isUsStock, stockBigDealTab, applyStockBigDealOrderBook]);
   const [mySubscription, setMySubscription] = useState(null);
+  /** 登录后订阅接口是否已 settle，避免 VIP/试用判定前先闪积分解锁遮罩 */
+  const [subscriptionSettled, setSubscriptionSettled] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      return !localStorage.getItem('token');
+    } catch {
+      return true;
+    }
+  });
+  /** checkStatus 已基于最新订阅/试用结果跑完一轮 */
+  const [unlockCheckReady, setUnlockCheckReady] = useState(false);
 
   // 注册 createTime 起 30 天内：免遮罩、无倒计时/限时 flag，开放 Top 40 深度
   const { inWindow: withinCreateTime30d } = useIsWithinCreateTimeWindow({ days: 30 });
@@ -552,6 +563,17 @@ export default function DetailPage() {
     };
   }, []);
 
+  // sessionTick 变化时重新读取 token（登录/登出）
+  const isLoggedIn = (() => {
+    void sessionTick;
+    if (typeof window === 'undefined') return false;
+    try {
+      return Boolean(localStorage.getItem('token'));
+    } catch {
+      return false;
+    }
+  })();
+
   const isVipBySubscription = (sub) => {
     if (!sub) return false;
     if (sub?.isVip === true) return true;
@@ -562,6 +584,9 @@ export default function DetailPage() {
   };
 
   const orderBookUnlocked = isBigOrderUnlocked || isCreateTimeGrant;
+  // 必须等订阅 settle + checkStatus 写完解锁态，再决定遮罩（避免登录瞬间闪积分解锁层）
+  const showOrderBookMask =
+    isLoggedIn && unlockCheckReady && !orderBookUnlocked;
   const isVipOrderBook =
     orderBookTag === 'VIP' || isVipBySubscription(mySubscription);
   const orderBookEndTime =
@@ -594,12 +619,14 @@ export default function DetailPage() {
     const token = localStorage.getItem('token');
     if (!token) {
       setMySubscription(null);
+      setSubscriptionSettled(true);
       return;
     }
 
     const CACHE_KEY = 'mozi_my_subscription_cache_v1';
     const TTL = 5 * 60 * 1000; // 5min
     let alive = true;
+    setSubscriptionSettled(false);
 
     // 切号/登录后不要沿用上一账号的短缓存
     if (sessionTick === 0) {
@@ -630,6 +657,9 @@ export default function DetailPage() {
       })
       .catch(() => {
         // 静默失败：继续走本地/试用/积分解锁逻辑
+      })
+      .finally(() => {
+        if (alive) setSubscriptionSettled(true);
       });
 
     return () => {
@@ -639,6 +669,17 @@ export default function DetailPage() {
 
   // 初始化检查解锁状态
   useEffect(() => {
+    // 登录后订阅未返回前：先不展示遮罩，也不要落成「锁定」
+    if (isLoggedIn && !subscriptionSettled) {
+      setUnlockCheckReady(false);
+      return;
+    }
+    // createTime 窗口仍在解析：同样先不揭开遮罩
+    if (withinCreateTime30d == null) {
+      setUnlockCheckReady(false);
+      return;
+    }
+
     const checkStatus = () => {
       // 200积分解锁：全局生效（不依赖 symbol）
       const GLOBAL_UNLOCK_START_KEY = 'mozi_big_order_unlock_start_at_v1';
@@ -649,10 +690,7 @@ export default function DetailPage() {
         setIsBigOrderUnlocked(true);
         setUnlockEndTime(null);
         setOrderBookTag(null);
-        return;
-      }
-      // hook 仍在解析中：先别落成「锁定」，避免闪一下又解锁；由 isCreateTimeGrant 驱动遮罩
-      if (withinCreateTime30d == null) {
+        setUnlockCheckReady(true);
         return;
       }
 
@@ -661,6 +699,7 @@ export default function DetailPage() {
         setIsBigOrderUnlocked(true);
         setUnlockEndTime(null); // VIP 无倒计时
         setOrderBookTag('VIP');
+        setUnlockCheckReady(true);
         return;
       }
 
@@ -676,6 +715,7 @@ export default function DetailPage() {
              setIsBigOrderUnlocked(true);
              setUnlockEndTime(null); // VIP 无倒计时
              setOrderBookTag('VIP');
+             setUnlockCheckReady(true);
              return;
           }
         }
@@ -739,6 +779,7 @@ export default function DetailPage() {
             setIsBigOrderUnlocked(true);
             setUnlockEndTime(null);
             setOrderBookTag(null);
+            setUnlockCheckReady(true);
             return;
           }
         }
@@ -769,6 +810,7 @@ export default function DetailPage() {
             // 注册 30 天内：不展示倒计时 / 限时 flag（与 hook 授权一致）
             setUnlockEndTime(null);
             setOrderBookTag(null);
+            setUnlockCheckReady(true);
             return;
           }
         }
@@ -786,6 +828,7 @@ export default function DetailPage() {
             setIsBigOrderUnlocked(true);
             setUnlockEndTime(endTime);
             setOrderBookTag(t('orderBook.unlocked') || '已解锁');
+            setUnlockCheckReady(true);
             return;
           }
           // 已过期
@@ -799,10 +842,11 @@ export default function DetailPage() {
       setIsBigOrderUnlocked(false);
       setUnlockEndTime(null);
       setOrderBookTag(null);
+      setUnlockCheckReady(true);
     };
 
     checkStatus();
-  }, [symbol, t, mySubscription, sessionTick, withinCreateTime30d]);
+  }, [symbol, t, mySubscription, sessionTick, withinCreateTime30d, isLoggedIn, subscriptionSettled]);
 
   // PC 详情高度调试：默认打印；URL 加 ?debugHeight=1 时额外打完整链路
   useEffect(() => {
@@ -1011,6 +1055,13 @@ export default function DetailPage() {
   const bigDealMsgCountRef = useRef(0);
   const lastOrderBookLogAtRef = useRef(0);
   const lastUnlockChangeLogAtRef = useRef(0);
+
+  // 登出清空大单；登录后由 notifySessionChanged → mozi:tokenUpdated 触发 WS 重连并重新订阅
+  useEffect(() => {
+    if (isLoggedIn) return;
+    hasBigDealDataRef.current = false;
+    setOrderBook({ bids: [], asks: [] });
+  }, [isLoggedIn]);
 
   // 积分/会员解锁后，部分服务端不会在“已订阅但未授权”状态下自动推送数据，
   // 因此需要在 unlock 状态变为 true 时重新订阅 big_deal。
@@ -2665,11 +2716,13 @@ ${coinInfo.name || symbol} (${symbol})
   useEffect(() => {
     // 美股大单走 stock_big_deal WS，不使用 mock
     if (isUsStock) return;
+    // 未登录不灌 mock，避免盖住「请登录查看大单」
+    if (!isLoggedIn) return;
     // 仅在尚未收到真实大单数据时使用 mock，避免覆盖 WS 数据
     if (hasBigDealDataRef.current) return;
     if (orderBook?.bids?.length || orderBook?.asks?.length) return;
     setOrderBook(generateMockOrderBook(coinInfo?.url));
-  }, [symbol, coinInfo?.url, isUsStock]);
+  }, [symbol, coinInfo?.url, isUsStock, isLoggedIn]);
   
   // 监听K线时间周期切换，动态切换订阅
   useEffect(() => {
@@ -2889,13 +2942,13 @@ ${coinInfo.name || symbol} (${symbol})
 
     return (
       <OrderBook 
-        bids={orderBook.bids} 
-        asks={orderBook.asks}
+        bids={isLoggedIn ? orderBook.bids : []} 
+        asks={isLoggedIn ? orderBook.asks : []}
         midPrice={coinInfo?.currentPrice}
         priceTrend={String(coinInfo?.priceChange_24h ?? '').includes('-') ? 'down' : 'up'}
-        endTime={orderBookEndTime}
-        tag={orderBookDisplayTag}
-        showMask={!orderBookUnlocked}
+        endTime={isLoggedIn ? orderBookEndTime : null}
+        tag={isLoggedIn ? orderBookDisplayTag : null}
+        showMask={showOrderBookMask}
         onSubscribe={handleUnlockOrderBook}
         onBuyMembership={handleBuyMembership}
         maxRows={maxRows}
@@ -2908,6 +2961,14 @@ ${coinInfo.name || symbol} (${symbol})
         activeInstrumentTab={stockBigDealTab}
         onInstrumentTabChange={isUsStock ? setStockBigDealTab : undefined}
         strictQuantity={isUsStock}
+        requireLogin={!isLoggedIn}
+        loginHint={t('orderBook.loginRequired')}
+        onLoginRequired={() => {
+          Toast.show({
+            content: t('post.messages.pleaseLogin'),
+            position: 'bottom',
+          });
+        }}
       />
     );
   };

@@ -139,6 +139,10 @@ export default function OrderBook({
   activeInstrumentTab = 'spot',
   onInstrumentTabChange,
   strictQuantity = false,
+  /** 未登录时不展示深度，仅提示登录查看大单 */
+  requireLogin = false,
+  loginHint,
+  onLoginRequired,
 }) {
   const { t, i18n } = useTranslation();
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -331,7 +335,7 @@ export default function OrderBook({
     return Math.abs(midPrice - bestAsk) < Math.abs(midPrice - bestBid);
   }, [askLevels, bidLevels, midPrice, priceTrend]);
 
-  const hasData = askLevels.length > 0 || bidLevels.length > 0;
+  const hasData = !requireLogin && (askLevels.length > 0 || bidLevels.length > 0);
 
   const scrollAsksToBottom = () => {
     const el = asksScrollRef.current;
@@ -511,7 +515,26 @@ export default function OrderBook({
             </div>
           </div>
         ) : (
-          <div className={styles.empty}>{t('orderBook.noData')}</div>
+          <div
+            className={`${styles.empty}${requireLogin ? ` ${styles.emptyLogin}` : ''}`}
+            role={requireLogin && onLoginRequired ? 'button' : undefined}
+            tabIndex={requireLogin && onLoginRequired ? 0 : undefined}
+            onClick={requireLogin && onLoginRequired ? () => onLoginRequired() : undefined}
+            onKeyDown={
+              requireLogin && onLoginRequired
+                ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onLoginRequired();
+                    }
+                  }
+                : undefined
+            }
+          >
+            {requireLogin
+              ? loginHint || t('orderBook.loginRequired')
+              : t('orderBook.noData')}
+          </div>
         )}
       </div>
 

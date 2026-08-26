@@ -2142,6 +2142,7 @@
     "top5": "Top 5 Today",
     "top10": "Top 10 Today",
     "noData": "No order book data",
+    "loginRequired": "Please log in to view large orders",
     "endIn": "Ends in",
     "days": "d",
     "hours": "h",
