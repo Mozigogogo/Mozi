@@ -16,11 +16,31 @@ function formatTime(value) {
   return String(value);
 }
 
+function ListRows({ items, emptyText }) {
+  if (!items?.length) {
+    return <div className={styles.emptyComments}>{emptyText}</div>;
+  }
+  return items.map((item) => (
+    <div key={item.id} className={styles.commentItem}>
+      <img className={styles.commentAvatar} src={item.avatar || '/default-avatar.png'} alt="avatar" />
+      <div className={styles.commentBody}>
+        <div className={styles.commentMeta}>
+          <span className={styles.commentUser}>{item.username || '示例用户'}</span>
+          <span className={styles.commentTime}>{formatTime(item.time || '')}</span>
+        </div>
+        <div className={styles.commentText}>{item.content || ''}</div>
+      </div>
+    </div>
+  ));
+}
+
 export default function PostDetailModal({
   open = false,
   onClose,
   post = {},
   comments = [],
+  /** 话题详情：相关新闻/帖子（与 comments 分离） */
+  newsItems = [],
   variant = 'post', // 'post' | 'topic'
   loading = false,
   onFollow,
@@ -32,6 +52,8 @@ export default function PostDetailModal({
   const [currentUserAvatar, setCurrentUserAvatar] = useState(DEFAULT_AVATAR);
   const [commentValue, setCommentValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  /** 话题详情内容区：comments | news */
+  const [topicTab, setTopicTab] = useState('comments');
   const commentListRef = useRef(null);
 
   const resolvedCurrentUserAvatar = useMemo(() => {
@@ -40,7 +62,11 @@ export default function PostDetailModal({
   }, [currentUserAvatar]);
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open) {
+      setTopicTab('comments');
+      setCommentValue('');
+      return undefined;
+    }
     const onKeyDown = (e) => {
       if (e.key === 'Escape') onClose?.();
     };
@@ -116,11 +142,22 @@ export default function PostDetailModal({
   } = post;
 
   const isTopic = variant === 'topic';
-  const listTitle = isTopic ? `共 ${comments.length || commentCount} 条帖子` : `共 ${comments.length || commentCount} 条评论`;
+  const newsCount = newsItems?.length || 0;
+  // 话题评论数以详情接口 commentCnt（映射为 post.commentCount）为准，不用本地列表长度覆盖
+  const displayCommentCount = isTopic
+    ? Number(commentCount) || 0
+    : comments.length || commentCount || 0;
+  const showNewsTab = isTopic && topicTab === 'news';
+  const listTitle = showNewsTab
+    ? `共 ${newsCount} 条资讯`
+    : `共 ${displayCommentCount} 条评论`;
 
   const handleCommentClick = () => {
     if (isTopic) {
-      commentListRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      setTopicTab('comments');
+      requestAnimationFrame(() => {
+        commentListRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      });
       return;
     }
     onComment?.(post);
@@ -171,23 +208,39 @@ export default function PostDetailModal({
                 </div>
               </div>
 
-              <div className={styles.commentTitle}>{listTitle}</div>
-              <div className={styles.commentList} ref={commentListRef}>
-                {comments.length > 0 ? (
-                  comments.map((item) => (
-                    <div key={item.id} className={styles.commentItem}>
-                      <img className={styles.commentAvatar} src={item.avatar || '/default-avatar.png'} alt="avatar" />
-                      <div className={styles.commentBody}>
-                        <div className={styles.commentMeta}>
-                          <span className={styles.commentUser}>{item.username || '示例用户'}</span>
-                          <span className={styles.commentTime}>{formatTime(item.time || '45分钟前')}</span>
-                        </div>
-                        <div className={styles.commentText}>{item.content || ''}</div>
-                      </div>
-                    </div>
-                  ))
+              {isTopic ? (
+                <div className={styles.topicTabs} role="tablist" aria-label="话题内容切换">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={topicTab === 'comments'}
+                    className={`${styles.topicTab}${topicTab === 'comments' ? ` ${styles.topicTabActive}` : ''}`}
+                    onClick={() => setTopicTab('comments')}
+                  >
+                    评论
+                    <span className={styles.topicTabCount}>{displayCommentCount}</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={topicTab === 'news'}
+                    className={`${styles.topicTab}${topicTab === 'news' ? ` ${styles.topicTabActive}` : ''}`}
+                    onClick={() => setTopicTab('news')}
+                  >
+                    新闻资讯
+                    <span className={styles.topicTabCount}>{newsCount}</span>
+                  </button>
+                </div>
+              ) : null}
+
+              <div className={styles.commentTitle} ref={commentListRef}>
+                {listTitle}
+              </div>
+              <div className={styles.commentList}>
+                {showNewsTab ? (
+                  <ListRows items={newsItems} emptyText="暂无新闻资讯" />
                 ) : (
-                  <div className={styles.emptyComments}>{isTopic ? '暂无帖子' : '暂无评论'}</div>
+                  <ListRows items={comments} emptyText="暂无评论" />
                 )}
               </div>
 
@@ -202,7 +255,6 @@ export default function PostDetailModal({
                     src={isLiked ? likeActiveIcon : likeIcon}
                     alt="like"
                     onError={(e) => {
-                      // CDN 里若没有 active 图标，则回退到默认图标 + 颜色高亮
                       if (e.currentTarget.src.includes('like-active')) {
                         e.currentTarget.src = likeIcon;
                       }
@@ -210,10 +262,12 @@ export default function PostDetailModal({
                   />
                   <span>{likeCount}</span>
                 </button>
-                <button type="button" className={styles.actionBtn} onClick={handleCommentClick}>
-                  <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
-                  <span>{commentCount}</span>
-                </button>
+                {!showNewsTab ? (
+                  <button type="button" className={styles.actionBtn} onClick={handleCommentClick}>
+                    <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
+                    <span>{displayCommentCount}</span>
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className={`${styles.actionBtn} ${styles.shareBtn}`}
@@ -224,40 +278,42 @@ export default function PostDetailModal({
                 </button>
               </div>
 
-              <div className={styles.inputBar}>
-                <img
-                  className={styles.inputAvatar}
-                  src={resolvedCurrentUserAvatar}
-                  alt="current user avatar"
-                  onError={(e) => {
-                    e.currentTarget.src = DEFAULT_AVATAR;
-                  }}
-                />
-                <div className={styles.inputWrap}>
-                  <input
-                    className={styles.input}
-                    placeholder="说点什么..."
-                    value={commentValue}
-                    maxLength={1000}
-                    onChange={(e) => setCommentValue(e.currentTarget.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleSubmitComment();
-                      }
+              {!showNewsTab ? (
+                <div className={styles.inputBar}>
+                  <img
+                    className={styles.inputAvatar}
+                    src={resolvedCurrentUserAvatar}
+                    alt="current user avatar"
+                    onError={(e) => {
+                      e.currentTarget.src = DEFAULT_AVATAR;
                     }}
                   />
-                  <button
-                    type="button"
-                    className={styles.sendBtn}
-                    onClick={handleSubmitComment}
-                    aria-label="send comment"
-                    disabled={submitting || !String(commentValue || '').trim()}
-                  >
-                    发送
-                  </button>
+                  <div className={styles.inputWrap}>
+                    <input
+                      className={styles.input}
+                      placeholder="说点什么..."
+                      value={commentValue}
+                      maxLength={1000}
+                      onChange={(e) => setCommentValue(e.currentTarget.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSubmitComment();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className={styles.sendBtn}
+                      onClick={handleSubmitComment}
+                      aria-label="send comment"
+                      disabled={submitting || !String(commentValue || '').trim()}
+                    >
+                      发送
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </>
           )}
         </div>

@@ -207,6 +207,8 @@ export const Interface = {
   TOPIC_UNLIKE: '/topic/unlike',
   // 发表话题评论（需登录）
   TOPIC_COMMENTS_NEW: '/topic/comments/new',
+  // 话题评论列表
+  TOPIC_COMMENTS_LIST: '/topic/comments',
   // 话题搜索
   TOPIC_SEARCH: '/topic/search',
 

@@ -70,6 +70,8 @@ export default function PCCommunityContent() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailModalPost, setDetailModalPost] = useState(null);
   const [detailModalComments, setDetailModalComments] = useState([]);
+  /** 话题详情：相关新闻/帖子（与评论分离） */
+  const [detailModalNews, setDetailModalNews] = useState([]);
   const [detailModalVariant, setDetailModalVariant] = useState('post'); // 'post' | 'topic'
   const [detailModalLoading, setDetailModalLoading] = useState(false);
   const [detailFollowSubmitting, setDetailFollowSubmitting] = useState(false);
@@ -1151,6 +1153,7 @@ export default function PCCommunityContent() {
     if (!targetPostId) return;
 
     setDetailModalComments([]);
+    setDetailModalNews([]);
     setDetailModalLoading(true);
     setDetailModalVariant('post');
     setDetailModalOpen(true);
@@ -1220,6 +1223,7 @@ export default function PCCommunityContent() {
     if (!id) return;
     setDetailModalVariant('topic');
     setDetailModalComments([]);
+    setDetailModalNews([]);
     setDetailModalLoading(true);
     setDetailModalPost({
       id: `topic-${id}`,
@@ -1244,11 +1248,13 @@ export default function PCCommunityContent() {
         url: `${Interface.TOPIC_DETAIL}/${encodeURIComponent(id)}`,
         method: 'GET',
       });
-      const detail = detailRes?.data;
+      // request 拦截器返回 { code, data, errorMsg }
+      const detail = detailRes?.data ?? null;
       if (detail) {
         setDetailModalPost((prev) => {
           if (!prev || prev.id !== `topic-${id}`) return prev;
           const title = detail?.name || detail?.title || prev.title;
+          const commentCnt = Number(detail?.commentCnt);
           return {
             ...prev,
             topicId: String(detail?.id ?? id),
@@ -1259,13 +1265,8 @@ export default function PCCommunityContent() {
               t('community.actions.noDescription'),
             tags: [String(title || '').replace(/^#/, '')].filter(Boolean),
             likeCount: Number(detail?.likeCnt ?? 0) || 0,
-            commentCount: Number(
-              detail?.commentCnt ??
-                detail?.commentCount ??
-                detail?.postCount ??
-                prev.commentCount ??
-                0
-            ) || 0,
+            // 评论数固定取详情 commentCnt
+            commentCount: Number.isFinite(commentCnt) ? commentCnt : 0,
             shareCount: Number(
               detail?.shareCnt ?? detail?.shareCount ?? prev.shareCount ?? 0
             ) || 0,
@@ -1277,31 +1278,72 @@ export default function PCCommunityContent() {
       console.error('获取话题详情失败:', e);
     }
 
+    // 新闻资讯：帖子字段；评论：user.nickname / user.avatar
+    const mapNewsItem = (item) => ({
+      id: item?.id ?? `${Date.now()}-${Math.random()}`,
+      avatar: item?.avatar || item?.userAvatar || '/default-avatar.png',
+      username:
+        item?.nickName ||
+        item?.nickname ||
+        item?.username ||
+        item?.userName ||
+        t('myNotices.anonymousUser'),
+      time: formatTimeAgo(
+        item?.updatedAt || item?.createdAt || item?.createTime || item?.commentTime
+      ),
+      content: item?.content || item?.title || item?.text || '',
+    });
+
+    const mapCommentItem = (item) => {
+      const user = item?.user || {};
+      return {
+        id: item?.id ?? `${Date.now()}-${Math.random()}`,
+        avatar: user?.avatar || item?.avatar || '/default-avatar.png',
+        username:
+          user?.nickname ||
+          user?.nickName ||
+          item?.nickName ||
+          item?.nickname ||
+          t('myNotices.anonymousUser'),
+        time: formatTimeAgo(
+          item?.updatedAt || item?.createdAt || item?.createTime || item?.commentTime
+        ),
+        content: item?.content || item?.text || '',
+      };
+    };
+
     try {
-      // 拉取话题下帖子列表，用 comments 区域展示
       const postsRes = await request({
         url: `${Interface.TOPIC_POSTS}/${id}`,
         data: { page: 1, size: 20 },
       });
-      const list = Array.isArray(postsRes?.data?.data) ? postsRes.data.data : [];
-      const mapped = list.map((item) => ({
-        id: item?.id,
-        avatar: item?.avatar || '/default-avatar.png',
-        username: item?.nickName || item?.nickname || t('myNotices.anonymousUser'),
-        time: formatTimeAgo(item?.updatedAt || item?.createdAt),
-        content: item?.title || item?.content || '',
-      }));
-      setDetailModalComments(mapped);
-      setDetailModalPost((prev) => {
-        if (!prev || prev.id !== `topic-${id}`) return prev;
-        // 详情接口若已带回评论数则保留；否则用帖子列表长度兜底
-        const fromDetail = Number(prev.commentCount);
-        return {
-          ...prev,
-          commentCount: fromDetail > 0 ? fromDetail : mapped.length,
-        };
-      });
+      const list = Array.isArray(postsRes?.data?.data)
+        ? postsRes.data.data
+        : Array.isArray(postsRes?.data)
+          ? postsRes.data
+          : [];
+      setDetailModalNews(list.map(mapNewsItem));
     } catch (e) {
+      setDetailModalNews([]);
+    }
+
+    try {
+      const commentsRes = await request({
+        url: `${Interface.TOPIC_COMMENTS_LIST}/${encodeURIComponent(id)}`,
+        method: 'GET',
+        data: { page: 1, size: 50 },
+      });
+      const raw = commentsRes?.data;
+      const list = Array.isArray(raw?.data)
+        ? raw.data
+        : Array.isArray(raw?.list)
+          ? raw.list
+          : Array.isArray(raw)
+            ? raw
+            : [];
+      setDetailModalComments(list.map(mapCommentItem));
+    } catch (e) {
+      // 列表接口未就绪时保持空评论，发送成功仍会乐观插入
       setDetailModalComments([]);
     } finally {
       setDetailModalLoading(false);
@@ -1533,12 +1575,14 @@ export default function PCCommunityContent() {
         onClose={() => {
           setDetailModalOpen(false);
           setDetailModalComments([]);
+          setDetailModalNews([]);
           setDetailModalVariant('post');
           setDetailModalLoading(false);
           setDetailFollowSubmitting(false);
         }}
         post={detailModalPost || {}}
         comments={detailModalComments}
+        newsItems={detailModalNews}
         variant={detailModalVariant}
         loading={detailModalLoading}
         onFollow={handleDetailFollow}

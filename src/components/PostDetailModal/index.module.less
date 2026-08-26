@@ -193,6 +193,62 @@
   flex-shrink: 0;
 }
 
+.topicTabs {
+  margin-top: 12PX;
+  display: flex;
+  align-items: center;
+  gap: 8PX;
+  flex-shrink: 0;
+}
+
+.topicTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6PX;
+  height: 32PX;
+  padding: 0 12PX;
+  border: 1PX solid #E5E7EB;
+  border-radius: 8PX;
+  background: #F8FAFC;
+  color: #6B7280;
+  font-size: 13PX;
+  font-weight: 600;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.topicTab:hover {
+  border-color: rgba(17, 183, 135, 0.4);
+  color: #111827;
+}
+
+.topicTabActive {
+  border-color: #11B787;
+  background: #ECFDF5;
+  color: #059669;
+}
+
+.topicTabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18PX;
+  height: 18PX;
+  padding: 0 5PX;
+  border-radius: 999PX;
+  background: rgba(17, 183, 135, 0.15);
+  color: inherit;
+  font-size: 11PX;
+  font-weight: 700;
+  box-sizing: border-box;
+}
+
+.topicTabActive .topicTabCount {
+  background: #11B787;
+  color: #fff;
+}
+
 .commentList {
   flex: 1;
   min-height: 0;
