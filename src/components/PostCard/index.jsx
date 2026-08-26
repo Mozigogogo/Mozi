@@ -165,13 +165,7 @@ function PostCard({
 
         <div className={styles.postMain}>
           <div className={styles.postHeader}>
-            <div
-              className={styles.userInfo}
-              onClick={(e) => {
-                e.stopPropagation();
-                onUserClick?.(post.userId);
-              }}
-            >
+            <div className={styles.userInfo}>
               <div className={styles.userMeta}>
                 <div className={styles.userRow}>
                   <span className={styles.username} title={post.username}>

@@ -170,15 +170,9 @@ export default function DiscoveryPostCard({
         </div>
 
         <div className={styles.postMain}>
-          {/* 用户信息 */}
+          {/* 用户信息（仅头像可进个人主页） */}
           <div className={styles.discoveryHeader}>
-            <div
-              className={styles.discoveryUserInfo}
-              onClick={(e) => {
-                e.stopPropagation();
-                onUserClick?.(post.userId);
-              }}
-            >
+            <div className={styles.discoveryUserInfo}>
               <div className={styles.discoveryUserContent}>
                 <div className={styles.nicknameRow}>
                   <span className={styles.discoveryNickname} title={post.username}>
