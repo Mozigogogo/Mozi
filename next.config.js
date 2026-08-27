@@ -94,14 +94,15 @@ const nextConfig = withLess({
 
     return [
       ...cacheHeaders,
-      // 给 Google 更友好的 sitemap / robots 缓存与类型头
+      // sitemap / robots：仅缓存，不加 X-Frame-Options 等 HTML 安全头
       {
         source: '/sitemap.xml',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=3600, must-revalidate',
+            value: 'public, max-age=86400, must-revalidate',
           },
+          { key: 'Content-Type', value: 'application/xml; charset=utf-8' },
         ],
       },
       {
@@ -109,7 +110,7 @@ const nextConfig = withLess({
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=3600, must-revalidate',
+            value: 'public, max-age=86400, must-revalidate',
           },
         ],
       },
@@ -126,7 +127,7 @@ const nextConfig = withLess({
         ],
       },
       {
-        source: '/((?!tg/).*)',
+        source: '/((?!tg/|sitemap\\.xml|robots\\.txt).*)',
         headers: [
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
