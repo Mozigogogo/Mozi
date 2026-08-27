@@ -27,14 +27,14 @@ export const BRAND_ALIASES = [
 ];
 
 export const DEFAULT_TITLE =
-  'MoziInnovations (Mozi / 墨子) - Crypto Markets, Alerts & Community';
+  'MoziInnovations (Mozi / 墨子) - AI Prediction & Quant Strategy Assistant';
 export const DEFAULT_DESCRIPTION =
-  'Official site of MoziInnovations (Mozi / moz / 墨子). Real-time crypto & US stock markets, sector heat, smart alerts, arbitrage radar and community. 墨子官方网站：加密行情、预警、套利与社区。moziai.xyz';
+  'MoziInnovations (Mozi / moz / 墨子) — crypto data intelligence platform with AI market prediction, quant strategy assistant, smart alerts, arbitrage radar and sector analytics. 墨子：AI 预测、量化策略助手与加密货币数据分析。moziai.xyz';
 
 export const DEFAULT_TITLE_ZH =
-  '墨子 Mozi（MoziInnovations）- 数字货币行情与社区';
+  '墨子 Mozi | AI 预测与量化策略助手 - 加密货币数据分析';
 export const DEFAULT_DESCRIPTION_ZH =
-  '墨子 Mozi（MoziInnovations / moz）官方网站：加密货币与美股行情、板块热度、套利雷达、价格预警与社区讨论。官网 moziai.xyz。';
+  '墨子 Mozi（MoziInnovations / moz）是加密货币数据分析平台，提供 AI 行情预测、量化策略助手、智能预警、套利雷达、板块分析与交易社区。官网 moziai.xyz。';
 
 export const DEFAULT_KEYWORDS = [
   '墨子',
@@ -61,9 +61,18 @@ export const DEFAULT_KEYWORDS = [
   'ETH',
   'US stocks',
   'crypto community',
+  'AI prediction',
+  'quant strategy',
+  'quantitative trading',
+  'crypto analytics',
   // Chinese keywords
   '加密货币',
   '数字货币',
+  '加密货币数据分析',
+  'AI预测',
+  'AI 预测',
+  '量化策略',
+  '量化策略助手',
   '行情',
   '比特币',
   '美股',

@@ -1,7 +1,7 @@
 {
   "name": "MoziInnovations (Mozi)",
   "short_name": "Mozi",
-  "description": "MoziInnovations (Mozi / moz): crypto & US stock markets, smart alerts, sector heat, arbitrage radar and community. 墨子官方行情与社区。",
+  "description": "MoziInnovations (Mozi / moz): AI market prediction, quant strategy assistant, crypto data analytics, smart alerts and arbitrage radar. 墨子：AI 预测、量化策略助手与加密货币数据分析。",
   "start_url": "/home",
   "display": "standalone",
   "background_color": "#ffffff",

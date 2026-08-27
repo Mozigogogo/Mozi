@@ -220,7 +220,7 @@
     "latestPrice": "最新价"
   },
   "home": {
-    "title": "墨子 - 数字货币行情社区",
+    "title": "墨子 - AI 预测与量化策略助手",
     "hotCoins": "热门币种",
     "hotSectors": "热门板块",
     "hotContracts": "热门合约",
@@ -229,7 +229,7 @@
     "opportunities": "热门板块",
     "hotMarkets": "热门板块",
     "topicHot": "话题热榜",
-    "notice": "欢迎使用墨子数字货币行情社区",
+    "notice": "欢迎使用墨子 AI 预测与量化策略助手",
     "aiNotice": "告别手动盯盘！先让AI分析走势，再设置精准报警！",
     "searchPlaceholder": "请输入搜索的币种",
     "noTopics": "暂无话题",

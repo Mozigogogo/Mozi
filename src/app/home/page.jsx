@@ -5,7 +5,7 @@ import { buildPageMetadata } from '@/utils/seoConfig';
 export const metadata = buildPageMetadata({
   title: 'Markets Home | MoziInnovations',
   description:
-    'MoziInnovations (Mozi) markets home: trending coins, gainers & losers, sectors and market overview in real time. 墨子行情首页：热门币种、涨跌榜与板块概览。',
+    'MoziInnovations (Mozi) markets home: AI-driven crypto analytics, trending coins, sectors and quant strategy insights. 墨子行情首页：AI 预测、加密货币数据分析与板块概览。',
   path: '/home',
 });
 

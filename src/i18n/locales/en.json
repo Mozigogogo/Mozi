@@ -220,7 +220,7 @@
     "latestPrice": "Latest Price"
   },
   "home": {
-    "title": "Mozi - Crypto Market Community",
+    "title": "Mozi - AI Prediction & Quant Strategy Assistant",
     "hotCoins": "Hot Coins",
     "hotSectors": "Hot Sectors",
     "hotContracts": "Hot Contracts",
@@ -229,7 +229,7 @@
     "opportunities": "Opportunities",
     "hotMarkets": "Hot Markets",
     "topicHot": "Hot Topics",
-    "notice": "Welcome to Mozi Crypto Market Community",
+    "notice": "Welcome to Mozi AI prediction & quant strategy assistant",
     "aiNotice": "AI analyzes trends—set precise alerts.",
     "searchPlaceholder": "Enter the coin to search",
     "noTopics": "No topics",

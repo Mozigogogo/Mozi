@@ -9,12 +9,13 @@ import AlphaSection from '@/components/site-home/AlphaSection/index';
 import KnowledgeSection from '@/components/site-home/KnowledgeSection/index';
 import {
   DEFAULT_DESCRIPTION,
+  DEFAULT_TITLE,
   buildBrandJsonLd,
   buildPageMetadata,
 } from '@/utils/seoConfig';
 
 export const metadata = buildPageMetadata({
-  title: 'MoziInnovations (Mozi / 墨子) - Crypto Markets, Alerts & Community',
+  title: DEFAULT_TITLE,
   description: DEFAULT_DESCRIPTION,
   path: '/',
 });
@@ -58,16 +59,16 @@ export default function SiteHomePage() {
         <KnowledgeSection />
         <footer className={styles.aboutSeo}>
           <h2 className={styles.aboutSeoTitle}>
-            MoziInnovations (Mozi / moz) — Crypto Data Intelligence Platform
+            MoziInnovations (Mozi / moz) — AI Prediction &amp; Crypto Data Intelligence
           </h2>
           <p className={styles.aboutSeoEn}>
-            MoziInnovations (also known as Mozi or moz) is a crypto market intelligence
-            platform offering real-time cryptocurrency and US stock data, smart price
-            alerts, sector rotation insights, arbitrage radar, AI Q&amp;A, and a trading
-            community. Official website: https://moziai.xyz
+            MoziInnovations (also known as Mozi or moz) is a crypto data intelligence platform
+            offering AI market prediction, quant strategy assistant, smart price alerts, sector
+            rotation insights, arbitrage radar, and a trading community. Official website:
+            https://moziai.xyz
           </p>
           <p className={styles.aboutSeoZh}>
-            MoziInnovations（墨子 Mozi，简称 moz）是加密数据智能分析平台，提供实时加密货币与美股行情、智能价格预警、板块轮动、套利雷达、AI 问答与交易社区。官网：https://moziai.xyz
+            MoziInnovations（墨子 Mozi，简称 moz）是加密货币数据分析平台，提供 AI 行情预测、量化策略助手、智能价格预警、板块轮动、套利雷达与交易社区。官网：https://moziai.xyz
           </p>
         </footer>
       </section>
