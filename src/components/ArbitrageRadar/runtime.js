@@ -199,6 +199,8 @@ export function mountArbitrageRadar(__root, options = {}) {
 
   const onNavigateDetail = typeof options.onNavigateDetail === 'function' ? options.onNavigateDetail : null;
   const onBackToList = typeof options.onBackToList === 'function' ? options.onBackToList : null;
+  const onSwitchToAutoArb =
+    typeof options.onSwitchToAutoArb === 'function' ? options.onSwitchToAutoArb : null;
   const detailOnly = !!options.detailOnly;
 
   const MOBILE_MQ = '(max-width: 768px)';
@@ -231,7 +233,10 @@ export function mountArbitrageRadar(__root, options = {}) {
 <header class="hdr">
   <button type="button" class="hdr-back" id="nav-back" aria-label="${arbT('detail.backAria')}"><svg class="hdr-back-ico" viewBox="0 0 48 48" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M31.7053818,5.11219264 L13.5234393,22.6612572 L13.5234393,22.6612572 C12.969699,23.2125856 12.9371261,24.0863155 13.4257204,24.6755735 L13.5234393,24.7825775 L31.7045714,42.8834676 C31.7795345,42.9580998 31.8810078,43 31.9867879,43 L35.1135102,43 C35.3344241,43 35.5135102,42.8209139 35.5135102,42.6 C35.5135102,42.4936115 35.4711279,42.391606 35.3957362,42.316542 L16.7799842,23.7816937 L16.7799842,23.7816937 L35.3764658,5.6866816 C35.5347957,5.53262122 35.5382568,5.27937888 35.3841964,5.121049 C35.3088921,5.04365775 35.205497,5 35.0975148,5 L31.9831711,5 C31.8795372,5 31.7799483,5.04022164 31.7053818,5.11219264 Z"/></svg></button>
   <div class="hdr-center">
-    <div class="hdr-title" id="hdr-title">${tabLabel(options.initialTab || 'funding')}</div>
+    <div class="hdr-switch" role="tablist" aria-label="arbitrage header switch">
+      <button type="button" class="hdr-switch-tab is-active" id="hdr-title" aria-selected="true">${tabLabel(options.initialTab || 'funding')}</button>
+      <button type="button" class="hdr-switch-tab" id="hdr-auto-arb" aria-selected="false">自动套利</button>
+    </div>
   </div>
 </header>
 <main class="main" id="main"></main>
@@ -2260,6 +2265,16 @@ function showToast(msg) {
     if (detailOnly) backToRadar();
     else goBack();
   });
+
+  __root.querySelector('#hdr-auto-arb')?.addEventListener('click', () => {
+    if (detailOnly) return;
+    if (onSwitchToAutoArb) {
+      onSwitchToAutoArb();
+      return;
+    }
+    showToast('自动套利即将开放');
+  });
+
   syncHeaderTitle();
 
   const onLanguageChanged = () => {

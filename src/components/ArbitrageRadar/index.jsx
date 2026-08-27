@@ -19,6 +19,7 @@ import styles from './index.module.less';
  *   detailLogoUrl?: string;
  *   onNavigateDetail?: (op: object, type: string) => void;
  *   onBackToList?: () => void;
+ *   onSwitchToAutoArb?: () => void;
  * }} props
  */
 export default function ArbitrageRadar({
@@ -33,10 +34,11 @@ export default function ArbitrageRadar({
   detailLogoUrl = '',
   onNavigateDetail,
   onBackToList,
+  onSwitchToAutoArb,
 }) {
   const rootRef = useRef(null);
-  const navRef = useRef({ onNavigateDetail, onBackToList });
-  navRef.current = { onNavigateDetail, onBackToList };
+  const navRef = useRef({ onNavigateDetail, onBackToList, onSwitchToAutoArb });
+  navRef.current = { onNavigateDetail, onBackToList, onSwitchToAutoArb };
 
   // layout 阶段挂载，避免先画空白/骨架再切到内容造成闪一下
   // StrictMode 会 mount→cleanup→mount：推迟 cleanup，同参数二次挂载直接复用实例，避免双请求
@@ -55,6 +57,7 @@ export default function ArbitrageRadar({
       detailLogoUrl,
       onNavigateDetail: (op, type) => navRef.current.onNavigateDetail?.(op, type),
       onBackToList: () => navRef.current.onBackToList?.(),
+      onSwitchToAutoArb: () => navRef.current.onSwitchToAutoArb?.(),
     });
     return () => {
       const token = (root.__arbCleanupToken || 0) + 1;

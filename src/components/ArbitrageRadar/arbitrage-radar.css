@@ -83,6 +83,12 @@
 #mozi-arbitrage-radar .hdr-back-ico{display:block;width:22PX;height:22PX}
 #mozi-arbitrage-radar .hdr-center{flex:1;display:flex;justify-content:center;min-width:0}
 #mozi-arbitrage-radar .hdr-title{font-size:16PX;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mozi-arbitrage-radar .hdr-switch{display:inline-flex;align-items:center;gap:20PX}
+#mozi-arbitrage-radar .hdr-switch-tab{position:relative;height:38PX;padding:0;border:none;background:transparent;color:var(--t2);font-size:15PX;font-weight:600;cursor:pointer;white-space:nowrap;transition:color var(--ease)}
+#mozi-arbitrage-radar .hdr-switch-tab:hover{color:var(--t1)}
+#mozi-arbitrage-radar .hdr-switch-tab.is-active{color:var(--accent)}
+#mozi-arbitrage-radar .hdr-switch-tab.is-active::after{content:'';position:absolute;left:0;right:0;bottom:2PX;height:3PX;border-radius:999PX;background:var(--accent)}
+#mozi-arbitrage-radar.is-mobile .hdr-switch-tab:not(.is-active){display:none}
 
 /* PC：订阅页同款返回按钮 + 标题左对齐 */
 #mozi-arbitrage-radar:not(.is-mobile) .hdr{
@@ -104,6 +110,24 @@
   font-weight:700;
   color:#0f172a;
   line-height:1.3;
+}
+#mozi-arbitrage-radar:not(.is-mobile) .hdr-switch{gap:24PX}
+#mozi-arbitrage-radar:not(.is-mobile) .hdr-switch-tab{
+  height:auto;
+  padding:4PX 2PX 10PX;
+  font-size:20PX;
+  font-weight:600;
+  color:#94a3b8;
+  line-height:1.3;
+}
+#mozi-arbitrage-radar:not(.is-mobile) .hdr-switch-tab.is-active{
+  color:#0f172a;
+  font-weight:700;
+}
+#mozi-arbitrage-radar:not(.is-mobile) .hdr-switch-tab.is-active::after{
+  bottom:0;
+  height:3PX;
+  background:var(--accent);
 }
 #mozi-arbitrage-radar:not(.is-mobile) .hdr-back{
   width:36PX;
@@ -744,6 +768,10 @@
 :root[data-theme='dark'] #mozi-arbitrage-radar:not(.is-mobile) .hdr-title {
   color: #f3f4f6;
 }
+:root[data-theme='dark'] #mozi-arbitrage-radar:not(.is-mobile) .hdr-switch-tab{color:rgba(255,255,255,.62)}
+:root[data-theme='dark'] #mozi-arbitrage-radar:not(.is-mobile) .hdr-switch-tab:hover{color:#f3f4f6}
+:root[data-theme='dark'] #mozi-arbitrage-radar:not(.is-mobile) .hdr-switch-tab.is-active{color:#f3f4f6}
+:root[data-theme='dark'] #mozi-arbitrage-radar:not(.is-mobile) .hdr-switch-tab.is-active::after{background:#34d399}
 
 :root[data-theme='dark'] #mozi-arbitrage-radar:not(.is-mobile) .hdr-back {
   background: rgba(255, 255, 255, 0.08);
