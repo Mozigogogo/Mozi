@@ -201,6 +201,7 @@ export function mountArbitrageRadar(__root, options = {}) {
   const onBackToList = typeof options.onBackToList === 'function' ? options.onBackToList : null;
   const onSwitchToAutoArb =
     typeof options.onSwitchToAutoArb === 'function' ? options.onSwitchToAutoArb : null;
+  const showAutoArbTab = options.showAutoArbTab === true;
   const detailOnly = !!options.detailOnly;
 
   const MOBILE_MQ = '(max-width: 768px)';
@@ -235,7 +236,7 @@ export function mountArbitrageRadar(__root, options = {}) {
   <div class="hdr-center">
     <div class="hdr-switch" role="tablist" aria-label="arbitrage header switch">
       <button type="button" class="hdr-switch-tab is-active" id="hdr-title" aria-selected="true">${tabLabel(options.initialTab || 'funding')}</button>
-      <button type="button" class="hdr-switch-tab" id="hdr-auto-arb" aria-selected="false">自动套利</button>
+      ${showAutoArbTab ? '<button type="button" class="hdr-switch-tab" id="hdr-auto-arb" aria-selected="false">自动套利</button>' : ''}
     </div>
   </div>
 </header>

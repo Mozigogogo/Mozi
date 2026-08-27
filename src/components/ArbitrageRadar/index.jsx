@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { mountArbitrageRadar } from './runtime';
 import './arbitrage-radar.css';
 import styles from './index.module.less';
@@ -36,6 +36,9 @@ export default function ArbitrageRadar({
   onBackToList,
   onSwitchToAutoArb,
 }) {
+  // 内部开关：默认隐藏「自动套利」；需要展示时 setShowAutoArbTab(true)
+  const [showAutoArbTab, setShowAutoArbTab] = useState(false);
+
   const rootRef = useRef(null);
   const navRef = useRef({ onNavigateDetail, onBackToList, onSwitchToAutoArb });
   navRef.current = { onNavigateDetail, onBackToList, onSwitchToAutoArb };
@@ -58,6 +61,7 @@ export default function ArbitrageRadar({
       onNavigateDetail: (op, type) => navRef.current.onNavigateDetail?.(op, type),
       onBackToList: () => navRef.current.onBackToList?.(),
       onSwitchToAutoArb: () => navRef.current.onSwitchToAutoArb?.(),
+      showAutoArbTab: showAutoArbTab,
     });
     return () => {
       const token = (root.__arbCleanupToken || 0) + 1;
@@ -77,6 +81,7 @@ export default function ArbitrageRadar({
     detailMinExchange,
     detailMaxExchange,
     detailLogoUrl,
+    showAutoArbTab,
   ]);
 
   return (
