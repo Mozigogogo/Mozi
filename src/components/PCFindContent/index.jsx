@@ -21,7 +21,7 @@ import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import { savePcAiNav } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
 import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
-import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, sortUsStockByVolume, formatUsStockListItem } from '@/utils/usStockMockData';
+import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, sortUsStockByVolume, formatUsStockListItem, formatUsStockSymbolWithName, getUsStockDisplayName } from '@/utils/usStockMockData';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 import styles from './index.module.less';
 
@@ -31,8 +31,8 @@ const RANK_COMMENT_ICON = '/icons/pc/comment_toolbar.svg';
 /** 行情表 7 列宽比例（与表头 grid 一致；后两列为操作按钮，略窄） */
 const MARKET_TABLE_COL_WIDTHS = ['17.5%', '17.5%', '17.5%', '14.25%', '14.25%', '9.5%', '9.5%'];
 const MARKET_TABLE_COL_TEMPLATE = MARKET_TABLE_COL_WIDTHS.join(' ');
-/** 美股行情表 5 列宽比例（无大单侦测、交易雷达） */
-const US_STOCK_TABLE_COL_WIDTHS = ['20%', '20%', '20%', '20%', '20%'];
+/** 美股行情表 5 列宽比例（Symbol 列加宽以容纳 ticker/公司名） */
+const US_STOCK_TABLE_COL_WIDTHS = ['34%', '16%', '18%', '16%', '16%'];
 const US_STOCK_TABLE_COL_TEMPLATE = US_STOCK_TABLE_COL_WIDTHS.join(' ');
 const US_STOCK_PAGE_SIZE = 20;
 const MARKET_TABLE_SKELETON_ROWS = 10;
@@ -302,12 +302,17 @@ export default function PCFindContent() {
       dataIndex: 'symbol',
       key: 'symbol',
       width: colWidths[0],
-      render: (text, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      render: (text, record) => {
+        const displayName = getUsStockDisplayName(record, { language: i18n.language });
+        return (
+        <div className={styles.marketSymbolCell}>
           <CoinSymbolIcon symbol={text} url={record.url || record.img} size={24} />
-          <span style={{ fontWeight: 500 }}>{text}</span>
+          <span className={styles.marketSymbolText}>
+            {displayName ? formatUsStockSymbolWithName(text, displayName) : text}
+          </span>
         </div>
-      ),
+        );
+      },
     },
     {
       title: t('home.columns.lastPrice'),

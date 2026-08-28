@@ -75,9 +75,30 @@ function formatUsStockQuoteVolume(item, language = 'zh') {
   return '--';
 }
 
+/** 按语言取美股展示名称：中文用 nameCn，英文用 name */
+export function getUsStockDisplayName(item, { language = 'zh' } = {}) {
+  if (!item || typeof item !== 'object') return '';
+  const isZh = String(language || '').toLowerCase().startsWith('zh');
+  if (isZh) {
+    return String(item.nameCn ?? item.name_cn ?? item.name ?? '').trim();
+  }
+  return String(item.name ?? '').trim();
+}
+
+/** 币种列展示：NVDA/英伟达 */
+export function formatUsStockSymbolWithName(symbol, name) {
+  const sym = String(symbol || '').trim();
+  const displayName = String(name || '').trim();
+  if (!sym) return displayName;
+  if (!displayName) return sym;
+  return `${sym}/${displayName}`;
+}
+
 /** 将 /stock/discovery/list 字段映射为行情表展示字段 */
 export function formatUsStockListItem(item, { language = 'zh' } = {}) {
   const symbol = String(item?.symbol ?? item?.underlying ?? '').trim();
+  const name = String(item?.name ?? '').trim();
+  const nameCn = String(item?.nameCn ?? item?.name_cn ?? '').trim();
   const lastPrice = item?.lastPrice ?? item?.currentPrice ?? item?.spotPrice;
   const priceChange = item?.priceChange ?? item?.priceChange24h;
   const priceChangePercent = item?.priceChangePercent ?? item?.priceChangePercentage24h;
@@ -85,6 +106,8 @@ export function formatUsStockListItem(item, { language = 'zh' } = {}) {
   return {
     key: symbol,
     symbol,
+    name,
+    nameCn,
     url: item?.logo ?? item?.url ?? item?.img ?? '',
     totalVolume: formatUsStockQuoteVolume(item, language),
     currentPrice: formatUsStockLastPrice(lastPrice),

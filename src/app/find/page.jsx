@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, Grid, PullToRefresh } from 'antd-mobile';
 import HighlightArea from '../../components/HighlightArea';
@@ -26,7 +26,7 @@ import styles from './page.module.less';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/context/ThemeProvider';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
-import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, formatUsStockListItem } from '@/utils/usStockMockData';
+import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, formatUsStockListItem, formatUsStockSymbolWithName, getUsStockDisplayName } from '@/utils/usStockMockData';
 
 // 过滤交易所名称中的.com，避免文字过长溢出
 const sanitizeExchangeName = (name) => {
@@ -39,7 +39,8 @@ const sanitizeExchangeName = (name) => {
 };
 
 // 市场标题组件（用于行情数据格式化）
-const MarketTitle = ({ url, symbol, totalVolume }) => {
+const MarketTitle = ({ url, symbol, totalVolume, name }) => {
+  const displaySymbol = name ? formatUsStockSymbolWithName(symbol, name) : symbol;
   return (
     <div className={styles.rankTitle}>
       <CoinSymbolIcon
@@ -49,7 +50,7 @@ const MarketTitle = ({ url, symbol, totalVolume }) => {
         className={styles.rankImg}
       />
       <div>
-        <div className={styles.rankCoin}>{symbol}</div>
+        <div className={styles.rankCoin}>{displaySymbol}</div>
         <div className={styles.rankCoinDesc}>{totalVolume}</div>
       </div>
     </div>
@@ -87,7 +88,7 @@ const [marketData, setMarketData] = useState([]);
 const [marketHasMore, setMarketHasMore] = useState(true);
 const marketPageNo = useRef(1);
 const marketPageSize = 8;
-const [usStockData, setUsStockData] = useState([]);
+const [usStockRows, setUsStockRows] = useState([]);
 const [usStockLoading, setUsStockLoading] = useState(true);
 const [usStockHasMore, setUsStockHasMore] = useState(true);
 const [isUsStockLoadingMore, setIsUsStockLoadingMore] = useState(false);
@@ -621,6 +622,28 @@ const loadingTimerRef = useRef(null);
     }
   };
 
+  const buildUsStockGridRow = useCallback(
+    (row) => ({
+      coin: (
+        <MarketTitle
+          url={row.url}
+          symbol={row.symbol}
+          name={getUsStockDisplayName(row, { language: i18n.language })}
+          totalVolume={row.totalVolume}
+        />
+      ),
+      desc: <MarketDesc currentPrice={row.currentPrice} priceChange24h={row.priceChange24h} />,
+      priceChangePercentage24h: <HighlightArea value={row.priceChangePercentage24h} />,
+      key: row.symbol,
+    }),
+    [i18n.language]
+  );
+
+  const usStockGridData = useMemo(
+    () => usStockRows.map(buildUsStockGridRow),
+    [usStockRows, buildUsStockGridRow]
+  );
+
   const loadUsStockData = async (isRefresh = false) => {
     const seq = ++usStockReqSeqRef.current;
     try {
@@ -635,20 +658,14 @@ const loadingTimerRef = useRef(null);
           pageNo: usStockPageNo.current,
           pageSize: usStockPageSize,
         });
-        const tempUsStock = mockPage.list.map((item) => {
-          const row = formatUsStockListItem(item, { language: i18n.language });
-          return {
-            coin: <MarketTitle url={row.url} symbol={row.symbol} totalVolume={row.totalVolume} />,
-            desc: <MarketDesc currentPrice={row.currentPrice} priceChange24h={row.priceChange24h} />,
-            priceChangePercentage24h: <HighlightArea value={row.priceChangePercentage24h} />,
-            key: row.symbol,
-          };
-        });
+        const rows = mockPage.list.map((item) =>
+          formatUsStockListItem(item, { language: i18n.language })
+        );
 
         if (usStockPageNo.current === 1) {
-          setUsStockData(tempUsStock);
+          setUsStockRows(rows);
         } else {
-          setUsStockData((prev) => [...prev, ...tempUsStock]);
+          setUsStockRows((prev) => [...prev, ...rows]);
         }
 
         setUsStockHasMore(mockPage.hasMore);
@@ -676,20 +693,14 @@ const loadingTimerRef = useRef(null);
         return;
       }
 
-      const tempUsStock = response.data.list.map((item) => {
-        const row = formatUsStockListItem(item, { language: i18n.language });
-        return {
-          coin: <MarketTitle url={row.url} symbol={row.symbol} totalVolume={row.totalVolume} />,
-          desc: <MarketDesc currentPrice={row.currentPrice} priceChange24h={row.priceChange24h} />,
-          priceChangePercentage24h: <HighlightArea value={row.priceChangePercentage24h} />,
-          key: row.symbol,
-        };
-      });
+      const rows = response.data.list.map((item) =>
+        formatUsStockListItem(item, { language: i18n.language })
+      );
 
       if (usStockPageNo.current === 1) {
-        setUsStockData(tempUsStock);
+        setUsStockRows(rows);
       } else {
-        setUsStockData((prev) => [...prev, ...tempUsStock]);
+        setUsStockRows((prev) => [...prev, ...rows]);
       }
 
       if (response.data.list.length < usStockPageSize) {
@@ -807,7 +818,7 @@ const loadingTimerRef = useRef(null);
   useEffect(() => {
     if (pageActiveKey === 'market' && marketData.length === 0) {
       loadMarketData();
-    } else if (pageActiveKey === 'usStock' && usStockData.length === 0) {
+    } else if (pageActiveKey === 'usStock' && usStockRows.length === 0) {
       loadUsStockData();
     } else if (pageActiveKey === 'rank') {
       // 加载所有排行榜数据
@@ -889,7 +900,7 @@ const loadingTimerRef = useRef(null);
     let timerId;
 
     const loop = async () => {
-      if (!cancelled && needLoop.current && usStockData.length > 0) {
+      if (!cancelled && needLoop.current && usStockRows.length > 0) {
         await loadUsStockData(true);
       }
       if (!cancelled) timerId = setTimeout(loop, 5000);
@@ -902,7 +913,7 @@ const loadingTimerRef = useRef(null);
       clearTimeout(timerId);
       usStockReqSeqRef.current += 1;
     };
-  }, [pageActiveKey, usStockData.length]);
+  }, [pageActiveKey, usStockRows.length]);
 
   // 切换页面标签
   const handlePageTabChange = (key) => {
@@ -1177,7 +1188,7 @@ const loadingTimerRef = useRef(null);
     <>
       {renderMarketGrid({
         loading: usStockLoading,
-        data: usStockData,
+        data: usStockGridData,
         isError: isUsStockError,
         hasMore: usStockHasMore,
         isLoadingMore: isUsStockLoadingMore,
