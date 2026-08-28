@@ -397,6 +397,12 @@ const ONCHAIN_DETECT_RESULT_CACHE_MS = Math.max(
   Math.min(3_600_000, parseInt(process.env.ONCHAIN_DETECT_RESULT_CACHE_MS || '300000', 10) || 300_000),
 );
 
+/** EVM 无链上下文时最多尝试的链数，0 表示尝试全部已配置链 */
+const ONCHAIN_DETECT_FALLBACK_MAX = Math.max(
+  0,
+  Math.min(100, parseInt(process.env.ONCHAIN_DETECT_FALLBACK_MAX || '0', 10) || 0),
+);
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -472,4 +478,5 @@ module.exports = {
   GOPLUS_TIMEOUT_MS,
   ONCHAIN_DETECT_REPLY_COOLDOWN_MS,
   ONCHAIN_DETECT_RESULT_CACHE_MS,
+  ONCHAIN_DETECT_FALLBACK_MAX,
 };

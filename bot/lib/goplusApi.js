@@ -1,18 +1,13 @@
 'use strict';
 
 /**
- * GoPlus Security API：EVM / BSC / Solana 代币安全检测
+ * GoPlus Security API：全链代币安全检测（EVM / Tron / Solana / Sui）
  * 文档：https://docs.gopluslabs.io/reference/api-overview
  */
 
 const crypto = require('crypto');
 const { isBlackHoleOwner } = require('./onchainAddressMatch');
-
-const CHAIN_LABEL = {
-  eth: 'ETH',
-  bsc: 'BSC',
-  sol: 'Solana',
-};
+const { getChainLabel, getChainByKey } = require('./goplusChains');
 
 /** @type {{ token: string, expireAt: number } | null} */
 let accessTokenCache = null;
@@ -130,7 +125,7 @@ function analyzeEvmLiquidity(data) {
 
 /**
  * @param {object} raw
- * @param {'eth' | 'bsc' | 'sol'} chain
+ * @param {string} chain
  */
 function analyzeEvmTokenSecurity(raw, chain) {
   const data = raw && typeof raw === 'object' ? raw : {};
@@ -189,7 +184,7 @@ function analyzeEvmTokenSecurity(raw, chain) {
 
   return {
     chain,
-    chainLabel: CHAIN_LABEL[chain] || chain.toUpperCase(),
+    chainLabel: getChainLabel(chain),
     tokenName: String(data.token_name || data.token_symbol || '').trim(),
     tokenSymbol: String(data.token_symbol || '').trim(),
     items,
@@ -251,7 +246,7 @@ function analyzeSolanaTokenSecurity(raw) {
 
   return {
     chain: 'sol',
-    chainLabel: CHAIN_LABEL.sol,
+    chainLabel: getChainLabel('sol'),
     tokenName,
     tokenSymbol,
     items,
@@ -261,14 +256,82 @@ function analyzeSolanaTokenSecurity(raw) {
 }
 
 /**
+ * @param {object} raw
+ */
+function analyzeSuiTokenSecurity(raw) {
+  const data = raw && typeof raw === 'object' ? raw : {};
+  const items = [];
+
+  const blacklist = data.blacklist && typeof data.blacklist === 'object' ? data.blacklist : {};
+  if (truthyFlag(blacklist.value)) {
+    items.push({ level: 'danger', key: 'sui_blacklist' });
+  } else if (falsyFlag(blacklist.value)) {
+    items.push({ level: 'ok', key: 'sui_not_blacklisted' });
+  }
+
+  const upgradeable =
+    data.contract_upgradeable && typeof data.contract_upgradeable === 'object'
+      ? data.contract_upgradeable
+      : {};
+  if (truthyFlag(upgradeable.value)) {
+    items.push({ level: 'warn', key: 'sui_upgradeable' });
+  } else if (falsyFlag(upgradeable.value)) {
+    items.push({ level: 'ok', key: 'sui_not_upgradeable' });
+  }
+
+  const holderCount = Number(data.holder_count) || 0;
+  if (holderCount > 0) {
+    items.push({ level: 'ok', key: 'sui_has_holders', count: holderCount });
+  } else {
+    items.push({ level: 'warn', key: 'sui_low_holders' });
+  }
+
+  const tokenName = String(data.name || data.symbol || '').trim();
+  const tokenSymbol = String(data.symbol || '').trim();
+
+  let risk = 'low';
+  const dangerCount = items.filter((i) => i.level === 'danger').length;
+  const warnCount = items.filter((i) => i.level === 'warn').length;
+  if (dangerCount >= 2) risk = 'extreme';
+  else if (dangerCount >= 1) risk = 'high';
+  else if (warnCount >= 1) risk = 'medium';
+
+  return {
+    chain: 'sui',
+    chainLabel: getChainLabel('sui'),
+    tokenName,
+    tokenSymbol,
+    items,
+    risk,
+    raw: data,
+  };
+}
+
+function findResultEntry(result, address) {
+  if (!result || typeof result !== 'object') return null;
+  const addr = String(address || '').trim();
+  if (result[addr]) return result[addr];
+  const key = Object.keys(result).find((k) => k.toLowerCase() === addr.toLowerCase());
+  return key ? result[key] : null;
+}
+
+/**
  * @param {object} config
- * @param {{ chain: 'eth' | 'bsc' | 'sol', chainId?: string, address: string }} target
+ * @param {{
+ *   chain: string,
+ *   chainId?: string,
+ *   address: string,
+ *   addressType?: 'evm' | 'sol' | 'tron' | 'sui',
+ * }} target
  */
 async function fetchTokenSecurity(config, target) {
   const address = String(target.address || '').trim();
   if (!address) return { ok: false, error: 'empty_address' };
 
-  if (target.chain === 'sol') {
+  const chainDef = getChainByKey(target.chain);
+  const addressType = target.addressType || chainDef?.addressType || 'evm';
+
+  if (addressType === 'sol' || target.chain === 'sol') {
     const res = await goplusGet(config, 'api/v1/solana/token_security', {
       contract_addresses: address,
     });
@@ -276,12 +339,28 @@ async function fetchTokenSecurity(config, target) {
     if (!res.ok || code !== 1) {
       return { ok: false, error: res.json?.message || 'api_error', status: res.status };
     }
-    const raw = res.json?.result?.[address];
+    const raw = findResultEntry(res.json?.result, address);
     if (!raw) return { ok: false, error: 'not_found' };
     return { ok: true, analysis: analyzeSolanaTokenSecurity(raw) };
   }
 
-  const chainId = target.chainId || (target.chain === 'bsc' ? '56' : '1');
+  if (addressType === 'sui' || target.chain === 'sui') {
+    const res = await goplusGet(config, 'api/v1/sui/token_security', {
+      contract_addresses: address,
+    });
+    const code = Number(res.json?.code);
+    if (!res.ok || code !== 1) {
+      return { ok: false, error: res.json?.message || 'api_error', status: res.status };
+    }
+    const raw = findResultEntry(res.json?.result, address);
+    if (!raw) return { ok: false, error: 'not_found' };
+    return { ok: true, analysis: analyzeSuiTokenSecurity(raw) };
+  }
+
+  const chainId =
+    target.chainId ||
+    chainDef?.goplusId ||
+    (target.chain === 'bsc' ? '56' : target.chain === 'tron' ? 'tron' : '1');
   const res = await goplusGet(config, `api/v1/token_security/${chainId}`, {
     contract_addresses: address,
   });
@@ -289,17 +368,15 @@ async function fetchTokenSecurity(config, target) {
   if (!res.ok || code !== 1) {
     return { ok: false, error: res.json?.message || 'api_error', status: res.status };
   }
-  const key = Object.keys(res.json?.result || {}).find(
-    (k) => k.toLowerCase() === address.toLowerCase(),
-  );
-  const raw = key ? res.json.result[key] : null;
+  const raw = findResultEntry(res.json?.result, address);
   if (!raw) return { ok: false, error: 'not_found' };
-  return { ok: true, analysis: analyzeEvmTokenSecurity(raw, target.chain === 'bsc' ? 'bsc' : 'eth') };
+  const chainKey = chainDef?.key || target.chain || 'eth';
+  return { ok: true, analysis: analyzeEvmTokenSecurity(raw, chainKey) };
 }
 
 module.exports = {
   fetchTokenSecurity,
   analyzeEvmTokenSecurity,
   analyzeSolanaTokenSecurity,
-  CHAIN_LABEL,
+  analyzeSuiTokenSecurity,
 };

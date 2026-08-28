@@ -365,6 +365,13 @@ const i18n = {
       sol_low_liquidity: '流动性较低或暂无 DEX 数据',
       sol_trusted: 'GoPlus 信任列表代币',
       evm_trusted: 'GoPlus 信任列表代币',
+      sui_blacklist: '代币在黑名单中',
+      sui_not_blacklisted: '未检测到黑名单标记',
+      sui_upgradeable: '合约可升级（存在修改风险）',
+      sui_not_upgradeable: '合约不可升级',
+      sui_has_holders: (opts) =>
+        opts?.count ? `存在持有人数据（${opts.count.toLocaleString()}）` : '存在持有人数据',
+      sui_low_holders: '持有人数据较少或暂无',
     },
     floodObserveSettingsIntro:
       '🚫 <b>防刷屏与观察期</b>\n\n选择群进入详细配置。防刷屏限制短时发消息频率；观察期限制新成员高风险消息类型。',
@@ -1019,6 +1026,13 @@ const i18n = {
       sol_low_liquidity: 'Low liquidity or no DEX data',
       sol_trusted: 'GoPlus trusted token',
       evm_trusted: 'GoPlus trusted token',
+      sui_blacklist: 'Token is blacklisted',
+      sui_not_blacklisted: 'No blacklist flag detected',
+      sui_upgradeable: 'Contract is upgradeable (modification risk)',
+      sui_not_upgradeable: 'Contract is not upgradeable',
+      sui_has_holders: (opts) =>
+        opts?.count ? `Holder data available (${opts.count.toLocaleString()})` : 'Holder data available',
+      sui_low_holders: 'Few or no holder records',
     },
     floodObserveSettingsIntro:
       '🚫 <b>Anti-flood & observe</b>\n\nPick a group to configure. Anti-flood limits burst messaging; observe restricts high-risk message types for new members.',

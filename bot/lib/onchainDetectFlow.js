@@ -6,6 +6,7 @@
 
 const { extractOnchainAddresses, truncateAddress } = require('./onchainAddressMatch');
 const { fetchTokenSecurity } = require('./goplusApi');
+const { getEvmFallbackChains } = require('./goplusChains');
 const {
   fetchGroupSecurityConfig,
   isOnchainDetectEnabled,
@@ -67,9 +68,11 @@ function itemLine(texts, item) {
   const entry = texts.onchainDetectItem?.[item.key];
   let text = item.key;
   if (typeof entry === 'function') {
-    text = entry(
-      item.days != null || item.tvl != null ? { days: item.days, tvl: item.tvl } : undefined,
-    );
+    const opts =
+      item.days != null || item.tvl != null || item.count != null
+        ? { days: item.days, tvl: item.tvl, count: item.count }
+        : undefined;
+    text = entry(opts);
   } else if (typeof entry === 'string') {
     text = entry;
   }
@@ -107,21 +110,51 @@ function buildResultHtml(texts, address, analysis) {
 
 /**
  * @param {object} config
- * @param {{ chain: string, chainId?: string, address: string }} target
+ * @param {{
+ *   chain: string,
+ *   chainId?: string,
+ *   address: string,
+ *   addressType?: string,
+ *   evmFallback?: boolean,
+ * }} target
  */
 async function fetchSecurityWithFallback(config, target) {
-  const res = await fetchTokenSecurity(config, target);
-  if (res.ok) return res;
+  const tried = new Set();
+  const markTried = (chain, chainId) => tried.add(`${chain}:${chainId}`);
 
-  // 0x 地址未标明链时，ETH 查不到则回退 BSC
-  if (
-    res.error === 'not_found' &&
-    target.chain === 'eth' &&
-    String(target.address).startsWith('0x')
-  ) {
-    const bscTarget = { chain: 'bsc', chainId: '56', address: target.address };
-    const bscRes = await fetchTokenSecurity(config, bscTarget);
-    if (bscRes.ok) return { ...bscRes, resolvedChain: 'bsc' };
+  markTried(target.chain, target.chainId);
+
+  let res = await fetchTokenSecurity(config, target);
+  if (res.ok) return res;
+  if (!target.evmFallback || target.addressType !== 'evm') return res;
+
+  const allFallback = getEvmFallbackChains();
+  const maxFallback = Number(config.ONCHAIN_DETECT_FALLBACK_MAX);
+  const fallbackChains =
+    Number.isFinite(maxFallback) && maxFallback > 0
+      ? allFallback.slice(0, maxFallback)
+      : allFallback;
+
+  for (const chainDef of fallbackChains) {
+    const id = `${chainDef.key}:${chainDef.goplusId}`;
+    if (tried.has(id)) continue;
+    markTried(chainDef.key, chainDef.goplusId);
+
+    const attempt = await fetchTokenSecurity(config, {
+      ...target,
+      chain: chainDef.key,
+      chainId: chainDef.goplusId,
+      evmFallback: false,
+    });
+    if (attempt.ok) {
+      return {
+        ...attempt,
+        resolvedChain: chainDef.key,
+        resolvedChainId: chainDef.goplusId,
+      };
+    }
+    if (attempt.error !== 'not_found') return attempt;
+    res = attempt;
   }
   return res;
 }
@@ -211,8 +244,12 @@ async function handleGroupOnchainDetect(ctx, config, getTexts) {
       return { handled: true };
     }
     analysis = res.analysis;
-    if (res.resolvedChain === 'bsc') {
-      target = { ...target, chain: 'bsc', chainId: '56' };
+    if (res.resolvedChain) {
+      target = {
+        ...target,
+        chain: res.resolvedChain,
+        chainId: res.resolvedChainId || target.chainId,
+      };
     }
     setCachedAnalysis(chat.id, target.chain, target.address, analysis, resultTtlMs);
   }
