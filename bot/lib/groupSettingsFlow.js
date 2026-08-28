@@ -14,6 +14,7 @@ function buildGroupSettingsHubKeyboard(texts) {
     [Markup.button.callback(texts.groupSettingsScheduleBtn, 'gs:ps')],
     [Markup.button.callback(texts.groupSettingsJoinVerifyBtn, 'gs:jv')],
     [Markup.button.callback(texts.groupSettingsFloodObserveBtn, 'gs:fo')],
+    [Markup.button.callback(texts.groupSettingsSecurityBtn, 'gs:sc')],
   ]);
 }
 

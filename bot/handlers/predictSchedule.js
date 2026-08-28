@@ -3,6 +3,7 @@
  * - 定时推送 AI 信号卡（原逻辑保留）
  * - 新成员入群验证配置
  * - 防刷屏 + 新成员观察期
+ * - 链上识别 + 防冒充管理员
  */
 
 const {
@@ -33,6 +34,14 @@ const {
   handleFloodSetNumberField,
   handleFloodSetAction,
 } = require('../lib/floodObserveSettingsFlow');
+const {
+  handleGroupSecurityOpenList,
+  handleGroupSecurityOpenDetail,
+  handleOnchainDetectToggle,
+  handleImpersonateAdminToggle,
+  handleGroupSecurityQuery,
+  handleGroupSecuritySaveGroup,
+} = require('../lib/groupSecuritySettingsFlow');
 const { tgGroupListLog } = require('../lib/tgGroupListDebug');
 
 /**
@@ -100,6 +109,15 @@ function registerPredictSchedule(bot, config, { getTexts }) {
   bot.action('gs:fo', async (ctx) => {
     try {
       await handleFloodObserveOpenList(ctx, config, getTexts);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action('gs:sc', async (ctx) => {
+    try {
+      await handleGroupSecurityOpenList(ctx, config, getTexts);
     } catch {
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
@@ -374,6 +392,75 @@ function registerPredictSchedule(bot, config, { getTexts }) {
         'observeDurationHours',
         ctx.match[2],
       );
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  // —— 链上识别 + 防冒充管理员 ——
+  bot.action('sc:noop', async (ctx) => {
+    const texts = getTexts(ctx.from?.language_code || 'en');
+    await ctx.answerCbQuery(texts.joinVerifySettingsNoopToast || '请点击下方选项').catch(() => {});
+  });
+
+  bot.action('sc:list', async (ctx) => {
+    try {
+      await handleGroupSecurityOpenList(ctx, config, getTexts);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action('sc:r', async (ctx) => {
+    try {
+      await handleGroupSecurityOpenList(ctx, config, getTexts);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^sc:g:(-?\d+)$/, async (ctx) => {
+    try {
+      await handleGroupSecurityOpenDetail(ctx, config, getTexts, ctx.match[1]);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^sc:od:(-?\d+):(0|1)$/, async (ctx) => {
+    try {
+      await handleOnchainDetectToggle(ctx, config, getTexts, ctx.match[1], ctx.match[2] === '1');
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^sc:ia:(-?\d+):(0|1)$/, async (ctx) => {
+    try {
+      await handleImpersonateAdminToggle(ctx, config, getTexts, ctx.match[1], ctx.match[2] === '1');
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^sc:q:(-?\d+)$/, async (ctx) => {
+    try {
+      await handleGroupSecurityQuery(ctx, config, getTexts, ctx.match[1]);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^sc:sv:(-?\d+)$/, async (ctx) => {
+    try {
+      await handleGroupSecuritySaveGroup(ctx, config, getTexts, ctx.match[1]);
     } catch {
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});

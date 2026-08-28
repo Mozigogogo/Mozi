@@ -281,7 +281,75 @@ const i18n = {
     groupSettingsScheduleBtn: '⏰ 定时推送 AI 信号卡',
     groupSettingsJoinVerifyBtn: '🛡️ 新成员入群验证',
     groupSettingsFloodObserveBtn: '🚫 防刷屏与观察期',
+    groupSettingsSecurityBtn: '🔍 链上识别与防冒充',
     groupSettingsBackBtn: '« 返回',
+    groupSecuritySettingsIntro:
+      '🔍 <b>链上识别与防冒充</b>\n\n选择群进入详细配置。链上识别检测群内链上地址；防冒充管理员拦截伪装管理员的账号。',
+    groupSecuritySettingsGroupLine: (title, onchainOn, impersonateOn) => {
+      const o = onchainOn ? '链上开' : '链上关';
+      const i = impersonateOn ? '防冒充开' : '防冒充关';
+      return `• <b>${title}</b> — ${o} · ${i}`;
+    },
+    groupSecuritySettingsDetailHtml: (title, onchainOnOff, impersonateOnOff, memberCount, groupId) =>
+      `🔍 <b>${title}</b> · 链上识别与防冒充\n\n` +
+      `群 ID：<code>${groupId}</code>\n` +
+      `成员数：<b>${memberCount}</b>\n\n` +
+      `<b>链上识别</b>（onchainDetectEnabled）\n` +
+      `开关：<b>${onchainOnOff}</b>\n\n` +
+      `<b>防冒充管理员</b>（impersonateAdminEnabled）\n` +
+      `开关：<b>${impersonateOnOff}</b>`,
+    groupSecuritySettingsSavedToast: '已保存',
+    groupSecurityOnchainSection: '链上识别',
+    groupSecurityOnchainEnableBtn: '开启链上识别',
+    groupSecurityOnchainDisableBtn: '关闭链上识别',
+    groupSecurityOnchainEnabledToast: '已开启链上识别',
+    groupSecurityOnchainDisabledToast: '已关闭链上识别',
+    groupSecurityImpersonateSection: '防冒充管理员',
+    groupSecurityImpersonateEnableBtn: '开启防冒充',
+    groupSecurityImpersonateDisableBtn: '关闭防冒充',
+    groupSecurityImpersonateEnabledToast: '已开启防冒充管理员',
+    groupSecurityImpersonateDisabledToast: '已关闭防冒充管理员',
+    groupSecurityQueryBtn: '查群',
+    groupSecurityListBtn: '群列表',
+    groupSecuritySaveBtn: '保存群',
+    groupSecurityQueryToast: '已刷新群信息',
+    groupSecuritySaveToast: '群信息已保存',
+    impersonateAdminBlockHtml: (mention, adminName) =>
+      `🚫 ${mention}：检测到昵称疑似冒充管理员${adminName ? `（<b>${adminName}</b>）` : ''}，消息已删除。`,
+    onchainDetectHeaderNormal: (chain) => `🔍 合约安全检测 · ${chain}`,
+    onchainDetectHeaderDanger: (chain) => `🚨 高风险合约警告 · ${chain}`,
+    onchainDetectAddressLabel: '地址',
+    onchainDetectRiskLabel: '综合风险',
+    onchainDetectDataSource: '数据来源: GoPlus Security',
+    onchainDetectDisclaimer: '⚠️ 仅供参考，不构成投资建议，请自行研判',
+    onchainDetectRiskExtreme: '极高，请勿交互',
+    onchainDetectRiskHigh: '高',
+    onchainDetectRiskMedium: '中等',
+    onchainDetectRiskLow: '较低',
+    onchainDetectFetchFailed: '⚠️ 合约安全检测暂时不可用，请稍后再试。',
+    onchainDetectItem: {
+      honeypot_yes: '检测到蜂蜜罐机制（只能买不能卖）',
+      honeypot_no: '未检测到蜂蜜罐',
+      liquidity_locked: (opts) =>
+        opts?.days ? `流动性已锁定（${opts.days}天）` : '流动性已锁定',
+      liquidity_unlocked: '流动性未锁定',
+      open_source_yes: '合约已开源',
+      open_source_no: '合约未开源',
+      owner_renounced: '合约所有者权限已放弃',
+      owner_not_renounced: '合约所有者权限未放弃（存在修改风险）',
+      hidden_mint: '存在隐藏增发函数',
+      sol_mintable: '代币可增发',
+      sol_not_mintable: '未检测到增发权限',
+      sol_freezable: '账户可被冻结',
+      sol_not_freezable: '未检测到冻结权限',
+      sol_closable: '代币程序可被关闭',
+      sol_not_closable: '未检测到关闭权限',
+      sol_has_liquidity: (opts) =>
+        opts?.tvl ? `存在流动性（TVL ≈ $${Math.round(opts.tvl).toLocaleString()}）` : '存在流动性',
+      sol_low_liquidity: '流动性较低或暂无 DEX 数据',
+      sol_trusted: 'GoPlus 信任列表代币',
+      evm_trusted: 'GoPlus 信任列表代币',
+    },
     floodObserveSettingsIntro:
       '🚫 <b>防刷屏与观察期</b>\n\n选择群进入详细配置。防刷屏限制短时发消息频率；观察期限制新成员高风险消息类型。',
     floodObserveSettingsGroupLine: (title, floodOn, observeOn) => {
@@ -851,7 +919,75 @@ const i18n = {
     groupSettingsScheduleBtn: '⏰ Scheduled AI signal push',
     groupSettingsJoinVerifyBtn: '🛡️ New member verification',
     groupSettingsFloodObserveBtn: '🚫 Anti-flood & observe',
+    groupSettingsSecurityBtn: '🔍 On-chain & anti-impersonate',
     groupSettingsBackBtn: '« Back',
+    groupSecuritySettingsIntro:
+      '🔍 <b>On-chain detect & anti-impersonate</b>\n\nPick a group to configure. On-chain detect scans on-chain addresses; anti-impersonate blocks fake admin accounts.',
+    groupSecuritySettingsGroupLine: (title, onchainOn, impersonateOn) => {
+      const o = onchainOn ? 'on-chain on' : 'on-chain off';
+      const i = impersonateOn ? 'anti-imp on' : 'anti-imp off';
+      return `• <b>${title}</b> — ${o} · ${i}`;
+    },
+    groupSecuritySettingsDetailHtml: (title, onchainOnOff, impersonateOnOff, memberCount, groupId) =>
+      `🔍 <b>${title}</b> · On-chain & anti-impersonate\n\n` +
+      `Group ID: <code>${groupId}</code>\n` +
+      `Members: <b>${memberCount}</b>\n\n` +
+      `<b>On-chain detect</b> (onchainDetectEnabled)\n` +
+      `Status: <b>${onchainOnOff}</b>\n\n` +
+      `<b>Anti-impersonate admin</b> (impersonateAdminEnabled)\n` +
+      `Status: <b>${impersonateOnOff}</b>`,
+    groupSecuritySettingsSavedToast: 'Saved',
+    groupSecurityOnchainSection: 'On-chain detect',
+    groupSecurityOnchainEnableBtn: 'Enable on-chain',
+    groupSecurityOnchainDisableBtn: 'Disable on-chain',
+    groupSecurityOnchainEnabledToast: 'On-chain detect enabled',
+    groupSecurityOnchainDisabledToast: 'On-chain detect disabled',
+    groupSecurityImpersonateSection: 'Anti-impersonate admin',
+    groupSecurityImpersonateEnableBtn: 'Enable anti-impersonate',
+    groupSecurityImpersonateDisableBtn: 'Disable anti-impersonate',
+    groupSecurityImpersonateEnabledToast: 'Anti-impersonate enabled',
+    groupSecurityImpersonateDisabledToast: 'Anti-impersonate disabled',
+    groupSecurityQueryBtn: 'Query group',
+    groupSecurityListBtn: 'Group list',
+    groupSecuritySaveBtn: 'Save group',
+    groupSecurityQueryToast: 'Group info refreshed',
+    groupSecuritySaveToast: 'Group saved',
+    impersonateAdminBlockHtml: (mention, adminName) =>
+      `🚫 ${mention}: Your display name may impersonate an admin${adminName ? ` (<b>${adminName}</b>)` : ''}. Message removed.`,
+    onchainDetectHeaderNormal: (chain) => `🔍 Contract security · ${chain}`,
+    onchainDetectHeaderDanger: (chain) => `🚨 High-risk contract · ${chain}`,
+    onchainDetectAddressLabel: 'Address',
+    onchainDetectRiskLabel: 'Overall risk',
+    onchainDetectDataSource: 'Data source: GoPlus Security',
+    onchainDetectDisclaimer: '⚠️ For reference only. Not investment advice.',
+    onchainDetectRiskExtreme: 'Extremely high — do not interact',
+    onchainDetectRiskHigh: 'High',
+    onchainDetectRiskMedium: 'Medium',
+    onchainDetectRiskLow: 'Low',
+    onchainDetectFetchFailed: '⚠️ Security check unavailable. Please try again later.',
+    onchainDetectItem: {
+      honeypot_yes: 'Honeypot detected (buy only, cannot sell)',
+      honeypot_no: 'No honeypot detected',
+      liquidity_locked: (opts) =>
+        opts?.days ? `Liquidity locked (${opts.days}d)` : 'Liquidity locked',
+      liquidity_unlocked: 'Liquidity not locked',
+      open_source_yes: 'Contract is open source',
+      open_source_no: 'Contract is not open source',
+      owner_renounced: 'Ownership renounced',
+      owner_not_renounced: 'Ownership not renounced (modification risk)',
+      hidden_mint: 'Hidden mint function detected',
+      sol_mintable: 'Token is mintable',
+      sol_not_mintable: 'No mint authority detected',
+      sol_freezable: 'Accounts can be frozen',
+      sol_not_freezable: 'No freeze authority detected',
+      sol_closable: 'Token program can be closed',
+      sol_not_closable: 'No close authority detected',
+      sol_has_liquidity: (opts) =>
+        opts?.tvl ? `Liquidity present (TVL ≈ $${Math.round(opts.tvl).toLocaleString()})` : 'Liquidity present',
+      sol_low_liquidity: 'Low liquidity or no DEX data',
+      sol_trusted: 'GoPlus trusted token',
+      evm_trusted: 'GoPlus trusted token',
+    },
     floodObserveSettingsIntro:
       '🚫 <b>Anti-flood & observe</b>\n\nPick a group to configure. Anti-flood limits burst messaging; observe restricts high-risk message types for new members.',
     floodObserveSettingsGroupLine: (title, floodOn, observeOn) => {

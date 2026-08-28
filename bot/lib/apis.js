@@ -2014,6 +2014,58 @@ function parseFloodObserveFields(raw) {
 }
 
 /**
+ * 解析链上识别 + 防冒充管理员字段（缺省均为开启）
+ * @param {object | null | undefined} raw
+ */
+function parseFlag01(raw, defaultValue = 1) {
+  if (raw == null || raw === '') return defaultValue;
+  if (typeof raw === 'boolean') return raw ? 1 : 0;
+  if (typeof raw === 'number') return raw === 1 ? 1 : 0;
+  const s = String(raw).trim().toLowerCase();
+  if (s === '1' || s === 'true' || s === 'yes' || s === 'on') return 1;
+  if (s === '0' || s === 'false' || s === 'no' || s === 'off') return 0;
+  return defaultValue;
+}
+
+function parseGroupSecurityFields(raw) {
+  const src = raw && typeof raw === 'object' ? raw : {};
+  const nested =
+    src.groupSecurity && typeof src.groupSecurity === 'object' ? src.groupSecurity : {};
+
+  return {
+    onchainDetectEnabled: parseFlag01(
+      src.onchainDetectEnabled ?? src.onchain_detect_enabled ?? nested.onchainDetectEnabled ?? nested.onchain_detect_enabled,
+      1,
+    ),
+    impersonateAdminEnabled: parseFlag01(
+      src.impersonateAdminEnabled ??
+        src.impersonate_admin_enabled ??
+        nested.impersonateAdminEnabled ??
+        nested.impersonate_admin_enabled,
+      1,
+    ),
+  };
+}
+
+/**
+ * @param {object} item
+ * @param {object} row
+ */
+function appendGroupSecuritySaveFields(item, row) {
+  if (!row || typeof row !== 'object') return;
+  if (row.onchainDetectEnabled != null) {
+    const v = Number(row.onchainDetectEnabled) ? 1 : 0;
+    item.onchainDetectEnabled = v;
+    item.onchain_detect_enabled = v;
+  }
+  if (row.impersonateAdminEnabled != null) {
+    const v = Number(row.impersonateAdminEnabled) ? 1 : 0;
+    item.impersonateAdminEnabled = v;
+    item.impersonate_admin_enabled = v;
+  }
+}
+
+/**
  * @param {object} item
  * @param {object} row
  */
@@ -2103,6 +2155,7 @@ function parseTgStatsGroupListItem(raw) {
   const status = statusRaw == null || !Number.isFinite(Number(statusRaw)) ? null : Number(statusRaw);
   const joinVerify = parseJoinVerifyFields(raw);
   const floodObserve = parseFloodObserveFields(raw);
+  const groupSecurity = parseGroupSecurityFields(raw);
 
   const toMs = (v) => {
     if (v == null || v === '') return null;
@@ -2132,6 +2185,7 @@ function parseTgStatsGroupListItem(raw) {
     createdAtMs,
     ...joinVerify,
     ...floodObserve,
+    ...groupSecurity,
   };
 }
 
@@ -2321,6 +2375,7 @@ async function postTgStatsGroupSave({
       }
       appendJoinVerifySaveFields(item, row);
       appendFloodObserveSaveFields(item, row);
+      appendGroupSecuritySaveFields(item, row);
       return item;
     })
     .filter((row) => Number.isFinite(row.groupId));
@@ -2450,6 +2505,8 @@ async function getTgStatsGroupGet({
       ok: res.ok,
       groupId: group?.groupId ?? null,
       joinVerifyEnabled: group?.joinVerifyEnabled ?? null,
+      onchainDetectEnabled: group?.onchainDetectEnabled ?? null,
+      impersonateAdminEnabled: group?.impersonateAdminEnabled ?? null,
       text: text.slice(0, 2000),
     });
     apiDebug('GET /tg/stats/group/get →', {
@@ -2458,6 +2515,8 @@ async function getTgStatsGroupGet({
       ok: res.ok,
       joinVerifyEnabled: group?.joinVerifyEnabled,
       joinVerifyMode: group?.joinVerifyMode,
+      onchainDetectEnabled: group?.onchainDetectEnabled,
+      impersonateAdminEnabled: group?.impersonateAdminEnabled,
       bodyPreview: text.slice(0, 500),
     });
     return out;
@@ -4530,6 +4589,8 @@ module.exports = {
   parseTgStatsGroupListItem,
   parseJoinVerifyFields,
   parseFloodObserveFields,
+  parseGroupSecurityFields,
+  parseFlag01,
   postTgStatsCommand,
   postTgChatSave,
   getTgChatGet,

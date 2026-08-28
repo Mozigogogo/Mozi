@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * 按群拉取完整群管配置（入群验证 + 防刷屏 + 观察期）
+ * 按群拉取完整群管配置（入群验证 + 防刷屏 + 观察期 + 链上识别 + 防冒充）
  * GET /tg/stats/group/get（进程内 TTL 缓存）
  */
 
@@ -9,6 +9,7 @@ const {
   getTgStatsGroupGet,
   parseJoinVerifyFields,
   parseFloodObserveFields,
+  parseGroupSecurityFields,
 } = require('./apis');
 
 /** @type {Map<string, { expireAt: number; config: object }>} */
@@ -18,6 +19,7 @@ function defaultGroupModerationConfig() {
   return {
     ...parseJoinVerifyFields({}),
     ...parseFloodObserveFields({}),
+    ...parseGroupSecurityFields({}),
   };
 }
 
@@ -59,6 +61,7 @@ async function fetchGroupModerationConfig(config, groupId) {
     ? {
         ...parseJoinVerifyFields(group),
         ...parseFloodObserveFields(group),
+        ...parseGroupSecurityFields(group),
       }
     : defaultGroupModerationConfig();
 

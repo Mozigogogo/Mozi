@@ -358,6 +358,45 @@ const PREDICT_AUTO_PUBLISH_ENABLED = !/^0|false|no$/i.test(
   String(process.env.PREDICT_AUTO_PUBLISH_ENABLED ?? '1').trim(),
 );
 
+/** 群链上合约识别总开关，默认开启；ONCHAIN_DETECT_ENABLED=0 关闭 */
+const ONCHAIN_DETECT_ENABLED = !/^0|false|no$/i.test(
+  String(process.env.ONCHAIN_DETECT_ENABLED ?? '1').trim(),
+);
+
+/** 链上识别过程日志，默认开启；ONCHAIN_DETECT_LOG=0 关闭 */
+const ONCHAIN_DETECT_LOG = !/^0|false|no$/i.test(
+  String(process.env.ONCHAIN_DETECT_LOG ?? '1').trim(),
+);
+
+/** GoPlus API 根地址 */
+const GOPLUS_API_BASE_URL = (
+  process.env.GOPLUS_API_BASE_URL || 'https://api.gopluslabs.io'
+)
+  .trim()
+  .replace(/\/+$/, '');
+
+/** GoPlus 控制台 app_key / app_secret（可选，不设则走免鉴权限额） */
+const GOPLUS_APP_KEY = String(process.env.GOPLUS_APP_KEY || '').trim();
+const GOPLUS_APP_SECRET = String(process.env.GOPLUS_APP_SECRET || '').trim();
+
+/** GoPlus 请求超时（毫秒） */
+const GOPLUS_TIMEOUT_MS = Math.max(
+  3_000,
+  Math.min(60_000, parseInt(process.env.GOPLUS_TIMEOUT_MS || '15000', 10) || 15_000),
+);
+
+/** 同群同地址回复冷却（毫秒），默认 60s */
+const ONCHAIN_DETECT_REPLY_COOLDOWN_MS = Math.max(
+  0,
+  Math.min(3_600_000, parseInt(process.env.ONCHAIN_DETECT_REPLY_COOLDOWN_MS || '60000', 10) || 60_000),
+);
+
+/** GoPlus 结果缓存 TTL（毫秒），默认 5min */
+const ONCHAIN_DETECT_RESULT_CACHE_MS = Math.max(
+  0,
+  Math.min(3_600_000, parseInt(process.env.ONCHAIN_DETECT_RESULT_CACHE_MS || '300000', 10) || 300_000),
+);
+
 module.exports = {
   BOT_TOKEN,
   APP_URL,
@@ -425,4 +464,12 @@ module.exports = {
   PREDICT_AUTO_PUBLISH_SYMBOL,
   PREDICT_AUTO_PUBLISH_TIME,
   PREDICT_AUTO_PUBLISH_ENABLED,
+  ONCHAIN_DETECT_ENABLED,
+  ONCHAIN_DETECT_LOG,
+  GOPLUS_API_BASE_URL,
+  GOPLUS_APP_KEY,
+  GOPLUS_APP_SECRET,
+  GOPLUS_TIMEOUT_MS,
+  ONCHAIN_DETECT_REPLY_COOLDOWN_MS,
+  ONCHAIN_DETECT_RESULT_CACHE_MS,
 };

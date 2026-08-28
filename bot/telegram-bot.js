@@ -15,6 +15,8 @@
  * 群消息违禁词：handlers/wordFilter.js（GET /tg/stats/moderation/keywords/list；1/2 警告、3 禁言、4 踢出；任意链接禁止）
  * 群慢速模式：handlers/slowMode.js（按群 flood* 配置；T 秒内超 N 条 → 删超出；1–3 按 floodAction，≥4 踢出）
  * 新成员观察期：handlers/observePeriod.js（验证通过后限制转发/邀请等；允许文本/图片/贴纸/GIF/视频/语音；链接始终禁）
+ * 群链上识别：handlers/onchainDetect.js（正则匹配 EVM/BSC/Solana 地址 → GoPlus；受 onchainDetectEnabled 控制）
+ * 防冒充管理员：handlers/impersonateAdmin.js（受 impersonateAdminEnabled 控制）
  * 斜杠指令调用：middleware/tgCommandUsage.js（按窗口聚合 count，定时 POST /tg/stats/command；/register、/bind_ref、/start 除外）
  * /ai、/chat：未注册时 save 提问 + 群内「注册」按钮；注册成功后 on-registered 事件驱动群内重放；见 tgChatRegisterWatcher
  */
@@ -50,6 +52,8 @@ const { registerJoinVerify } = require('./handlers/joinVerify');
 const { registerWordFilter } = require('./handlers/wordFilter');
 const { registerSlowMode } = require('./handlers/slowMode');
 const { registerObservePeriod } = require('./handlers/observePeriod');
+const { registerOnchainDetect } = require('./handlers/onchainDetect');
+const { registerImpersonateAdmin } = require('./handlers/impersonateAdmin');
 const { createResumePendingAiChatOnPrivate } = require('./middleware/resumePendingAiChatOnPrivate');
 const { createTgCommandUsageMiddleware } = require('./middleware/tgCommandUsage');
 const {
@@ -76,6 +80,8 @@ registerJoinVerify(bot, config, i18nApi);
 registerWordFilter(bot, config, i18nApi);
 registerObservePeriod(bot, config, i18nApi);
 registerSlowMode(bot, config, i18nApi);
+registerOnchainDetect(bot, config, i18nApi);
+registerImpersonateAdmin(bot, config, i18nApi);
 /** /config 优先注册，避免私聊中间件网络请求拖慢或无响应 */
 registerPredictSchedule(bot, config, i18nApi);
 
