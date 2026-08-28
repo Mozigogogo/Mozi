@@ -52,8 +52,10 @@ import {
   WS_EVENTS,
   PLATFORMS,
   KLINE_PERIODS,
+  STOCK_KLINE_INTERVALS,
   createTickerChannel,
   createKlineChannel,
+  createStockKlineChannel,
   createStockMarketChannel,
   createStockBigDealChannel,
 } from '../../utils/websocketProtocol';
@@ -66,11 +68,20 @@ import {
   getMockUsStockPage,
   normalizeUsStockHeaderResponse,
   normalizeUsStockKlineResponse,
+  resolveUsStockKlineHasMore,
+  applyUsStockWsRealtimeKline,
+  prependUsStockKlineHistorical,
+  rebuildUsStockKlineRawFromChart,
   normalizeUsStockMarketResponse,
   normalizeUsStockReturnResponse,
   buildUsStockHeaderInfoPanels,
 } from '@/utils/usStockMockData';
 import styles from './page.module.less';
+
+const US_STOCK_KLINE_PERIODS = ['hour', 'day', 'week', 'month'];
+
+const createUsStockKlinePeriodMap = (value) =>
+  Object.fromEntries(US_STOCK_KLINE_PERIODS.map((key) => [key, value]));
 
 const PC_MEDIA_QUERY = '(min-width: 1024px)';
 
@@ -475,6 +486,26 @@ export default function DetailPage() {
   const klineSwitchGenRef = useRef(0);
   /** 最近一次成功绘制的 K 线（含所属周期），切换时暂留画面防闪烁 */
   const paintedKlineRef = useRef({ period: 'hour', data: null });
+  const usStockKlinePageRef = useRef(createUsStockKlinePeriodMap(1));
+  const usStockKlineHasMoreRef = useRef(createUsStockKlinePeriodMap(true));
+  const usStockKlineLoadingMoreRef = useRef(createUsStockKlinePeriodMap(false));
+  const activeKlineTabRef = useRef(activeKlineTab);
+  const [usStockKlineHasMore, setUsStockKlineHasMore] = useState(createUsStockKlinePeriodMap(true));
+  const [usStockKlineLoadingMoreMap, setUsStockKlineLoadingMoreMap] = useState(
+    createUsStockKlinePeriodMap(false)
+  );
+
+  useEffect(() => {
+    activeKlineTabRef.current = activeKlineTab;
+  }, [activeKlineTab]);
+
+  const setUsStockKlinePeriodLoadingMore = (period, loading) => {
+    usStockKlineLoadingMoreRef.current = {
+      ...usStockKlineLoadingMoreRef.current,
+      [period]: loading,
+    };
+    setUsStockKlineLoadingMoreMap((prev) => ({ ...prev, [period]: loading }));
+  };
   const [roiData, setRoiData] = useState({
     priceChange1Day: '--',
     priceChange7Day: '--',
@@ -1302,11 +1333,47 @@ export default function DetailPage() {
         const [open, close, low, high] = item;
         return [parseFloat(open), parseFloat(close), parseFloat(low), parseFloat(high)];
       }),
-      categoryData: apiData.categoryData
+      categoryData: apiData.categoryData,
+      ...(Array.isArray(apiData._rawData) && apiData._rawData.length > 0
+        ? { _rawData: apiData._rawData }
+        : {}),
     };
   };
 
   // 获取K线数据（仅在WebSocket失败时使用；force 用于美股 mock 首屏）
+  const fetchUsStockKlinePage = async (period, page) => {
+    const interval = STOCK_KLINE_INTERVALS[period];
+    if (!interval) {
+      return { data: null, hasMore: false, rawPayload: null };
+    }
+
+    if (US_STOCK_USE_MOCK) {
+      const mock = getMockUsStockKline(symbol, interval, page);
+      return {
+        data: mock,
+        hasMore: resolveUsStockKlineHasMore(mock),
+        rawPayload: mock,
+      };
+    }
+
+    try {
+      const response = await request({
+        url: Interface.stock_line,
+        data: { symbol, interval, page },
+      });
+      const rawPayload = response?.data;
+      const normalized = normalizeUsStockKlineResponse(rawPayload);
+      return {
+        data: normalized,
+        hasMore: resolveUsStockKlineHasMore(rawPayload),
+        rawPayload,
+      };
+    } catch (err) {
+      console.error(`美股K线获取失败 interval=${interval} page=${page}`, err);
+      return { data: null, hasMore: false, rawPayload: null };
+    }
+  };
+
   const fetchKlineData = async ({ silent = false, force = false } = {}) => {
     if (!symbol) return;
     
@@ -1319,41 +1386,143 @@ export default function DetailPage() {
     
     try {
       const lineUrl = isUsStock ? Interface.stock_line : Interface.coin_line;
-      const fetchOne = async (type) => {
-        if (isUsStock && US_STOCK_USE_MOCK) {
-          return { data: getMockUsStockKline(symbol, type) };
+      const fetchOne = async (periodKeyOrType) => {
+        if (isUsStock) {
+          return fetchUsStockKlinePage(periodKeyOrType, 1);
         }
+
         const response = await request({
           url: lineUrl,
-          data: { symbol, type },
+          data: { symbol, type: periodKeyOrType },
         });
-        if (isUsStock) {
-          return { data: normalizeUsStockKlineResponse(response?.data) };
-        }
         return response;
       };
 
-      // 并行获取四个时间维度的K线数据
-      const [hourData, dayData, weekData, monthData] = await Promise.all([
-        fetchOne(1),
-        fetchOne(2),
-        fetchOne(3),
-        fetchOne(4),
-      ]);
+      if (isUsStock) {
+        const periodResults = await Promise.all(
+          US_STOCK_KLINE_PERIODS.map(async (period) => {
+            // 该周期已翻页：保留现有数据与页码，不覆盖
+            if (Number(usStockKlinePageRef.current[period]) > 1) {
+              return { period, skip: true };
+            }
+            const result = await fetchUsStockKlinePage(period, 1);
+            return { period, skip: false, ...result };
+          })
+        );
 
-      // 更新K线数据
-      setKlineData({
-        hour: transformKlineData(hourData?.data),
-        day: transformKlineData(dayData?.data),
-        week: transformKlineData(weekData?.data),
-        month: transformKlineData(monthData?.data)
-      });
+        setKlineData((prev) => {
+          const next = { ...prev };
+          periodResults.forEach(({ period, skip, data }) => {
+            if (!skip && data) {
+              next[period] = transformKlineData(data);
+            }
+          });
+          return next;
+        });
+
+        const nextHasMore = { ...usStockKlineHasMoreRef.current };
+        const nextPage = { ...usStockKlinePageRef.current };
+        periodResults.forEach(({ period, skip, hasMore }) => {
+          if (!skip) {
+            nextPage[period] = 1;
+            nextHasMore[period] = Boolean(hasMore);
+          }
+        });
+        usStockKlinePageRef.current = nextPage;
+        usStockKlineHasMoreRef.current = nextHasMore;
+        setUsStockKlineHasMore(nextHasMore);
+      } else {
+        const [hourData, dayData, weekData, monthData] = await Promise.all([
+          fetchOne(1),
+          fetchOne(2),
+          fetchOne(3),
+          fetchOne(4),
+        ]);
+
+        setKlineData({
+          hour: transformKlineData(hourData?.data),
+          day: transformKlineData(dayData?.data),
+          week: transformKlineData(weekData?.data),
+          month: transformKlineData(monthData?.data),
+        });
+      }
     } catch (error) {
       console.error('获取K线数据失败:', error);
     } finally {
       setKlineLoading(false);
     }
   };
+
+  /** 美股 K 线左滑翻页：1h / 1d / 1w / 1mon 共用同一套逻辑 */
+  const fetchUsStockKlineMore = useCallback(async (periodKey) => {
+    if (!isUsStock || !symbol) return;
+
+    const period = periodKey || activeKlineTabRef.current;
+    if (!US_STOCK_KLINE_PERIODS.includes(period)) return;
+    if (usStockKlineLoadingMoreRef.current[period]) return;
+    if (!usStockKlineHasMoreRef.current[period]) return;
+
+    const interval = STOCK_KLINE_INTERVALS[period];
+    if (!interval) return;
+
+    setUsStockKlinePeriodLoadingMore(period, true);
+
+    const loadedPage = Math.max(1, Number(usStockKlinePageRef.current[period]) || 1);
+    const nextPage = loadedPage + 1;
+    usStockKlinePageRef.current = {
+      ...usStockKlinePageRef.current,
+      [period]: nextPage,
+    };
+
+    try {
+      const { data: pageData, rawPayload } = await fetchUsStockKlinePage(
+        period,
+        nextPage
+      );
+
+      if (!pageData?.values?.length) {
+        usStockKlineHasMoreRef.current = {
+          ...usStockKlineHasMoreRef.current,
+          [period]: false,
+        };
+        setUsStockKlineHasMore((prev) => ({ ...prev, [period]: false }));
+        return;
+      }
+
+      const respondedPage = Number(rawPayload?.page);
+      const confirmedPage =
+        Number.isFinite(respondedPage) && respondedPage > 0
+          ? Math.max(nextPage, respondedPage)
+          : nextPage;
+      usStockKlinePageRef.current = {
+        ...usStockKlinePageRef.current,
+        [period]: confirmedPage,
+      };
+
+      setKlineData((prev) => {
+        const merged = prependUsStockKlineHistorical(prev[period], pageData);
+        return {
+          ...prev,
+          [period]: transformKlineData(merged),
+        };
+      });
+
+      const stillHasMore = resolveUsStockKlineHasMore(rawPayload);
+      usStockKlineHasMoreRef.current = {
+        ...usStockKlineHasMoreRef.current,
+        [period]: stillHasMore,
+      };
+      setUsStockKlineHasMore((prev) => ({ ...prev, [period]: stillHasMore }));
+    } catch (error) {
+      console.error(`美股K线翻页失败 period=${period}:`, error);
+      usStockKlinePageRef.current = {
+        ...usStockKlinePageRef.current,
+        [period]: loadedPage,
+      };
+    } finally {
+      setUsStockKlinePeriodLoadingMore(period, false);
+    }
+  }, [isUsStock, symbol]);
   
   // 获取市场数据
   const fetchMarketData = async ({ silent = false } = {}) => {
@@ -1980,6 +2149,11 @@ ${coinInfo.name || symbol} (${symbol})
     setStockBigDealTab('spot');
     setStockBigDealHasPerp(false);
     stockBigDealRawRef.current = { spot: null, perp: null };
+    usStockKlinePageRef.current = createUsStockKlinePeriodMap(1);
+    usStockKlineHasMoreRef.current = createUsStockKlinePeriodMap(true);
+    usStockKlineLoadingMoreRef.current = createUsStockKlinePeriodMap(false);
+    setUsStockKlineHasMore(createUsStockKlinePeriodMap(true));
+    setUsStockKlineLoadingMoreMap(createUsStockKlinePeriodMap(false));
     
     // 设置首次加载超时（1分钟）
     initialLoadTimeoutRef.current = setTimeout(() => {
@@ -1994,9 +2168,8 @@ ${coinInfo.name || symbol} (${symbol})
     fetchCoinInfo();
     fetchMarketData();
     fetchROIData();
-    // 美股 K 线走 HTTP（/stock/detail/kline），不依赖 WS
+    // 美股：HTTP 首屏拉一次；实时走 stock_kline WS
     if (isUsStock) {
-      useHttpFallbackRef.current = true;
       fetchKlineData({ force: true });
     }
     
@@ -2035,17 +2208,16 @@ ${coinInfo.name || symbol} (${symbol})
       }
       
       // 停止HTTP降级模式（如果已启动）
-      // 美股 K 线走 HTTP 轮询，跨所市场走 WS stock_market
+      // 美股：跨所市场 / K线 / 大单走 WS；header/ROI 仍可短轮询兜底
       if (isUsStock) {
         stopHttpFallback();
-        useHttpFallbackRef.current = true;
+        useHttpFallbackRef.current = false;
         if (pollingTimerRef.current) {
           clearInterval(pollingTimerRef.current);
         }
         pollingTimerRef.current = setInterval(() => {
           if (needLoop.current) {
             fetchCoinInfo({ silent: true });
-            fetchKlineData({ silent: true, force: true });
             fetchROIData({ silent: true });
           }
         }, LOOPTIME);
@@ -2059,17 +2231,36 @@ ${coinInfo.name || symbol} (${symbol})
         }).catch(err => {
           console.error('订阅 stock_market 失败:', err);
         });
+
+        // 订阅美股 K 线（默认 1h）
+        const stockKlineChannel = createStockKlineChannel(
+          [symbol],
+          STOCK_KLINE_INTERVALS.hour
+        );
+        ws.subscribe([stockKlineChannel]).then((response) => {
+          if (response?.data?.channels?.[0]?.channelId) {
+            currentKlineChannelRef.current = response.data.channels[0].channelId;
+            currentKlinePeriodRef.current = 'hour';
+          }
+        }).catch(err => {
+          console.error('订阅 stock_kline 失败:', err);
+          // WS 失败时回退 HTTP 拉 K 线
+          useHttpFallbackRef.current = true;
+          fetchKlineData({ force: true });
+        });
       } else {
         stopHttpFallback();
       }
       
-      // 订阅 Ticker 数据（实时价格）
-      const tickerChannel = createTickerChannel([symbol], 5000);
-      ws.subscribe([tickerChannel]).catch(err => {
-        console.error('订阅 Ticker 失败:', err);
-      });
+      // 订阅 Ticker 数据（实时价格）— 美股暂不订 crypto ticker
+      if (!isUsStock) {
+        const tickerChannel = createTickerChannel([symbol], 5000);
+        ws.subscribe([tickerChannel]).catch(err => {
+          console.error('订阅 Ticker 失败:', err);
+        });
+      }
       
-      // 订阅 K线数据（1小时）— 美股不走 WS
+      // 订阅加密 K线数据（1小时）
       if (!isUsStock) {
         const klineChannel = createKlineChannel([symbol], KLINE_PERIODS.ONE_HOUR, 100);
         ws.subscribe([klineChannel]).then((response) => {
@@ -2177,7 +2368,7 @@ ${coinInfo.name || symbol} (${symbol})
       }
     });
     
-    // 监听 K线数据更新 - 更新 headerData 和 klineData
+    // 监听加密 K线数据更新
     ws.on(WS_EVENTS.KLINE, (data) => {
       if (!data.data) return;
 
@@ -2535,6 +2726,41 @@ ${coinInfo.name || symbol} (${symbol})
       }
     });
 
+    // 监听美股 K 线（stock_kline）— 仅更新最新一根，历史由 HTTP 提供
+    ws.on(WS_EVENTS.STOCK_KLINE, (data) => {
+      if (!isUsStock || !data?.data) return;
+
+      const msgChannelId = data.channelId ?? data.data?.channelId ?? null;
+      if (
+        msgChannelId &&
+        currentKlineChannelRef.current &&
+        msgChannelId !== currentKlineChannelRef.current
+      ) {
+        return;
+      }
+
+      const currentPeriod = currentKlinePeriodRef.current;
+      setKlineData((prev) => {
+        const existingChart = prev[currentPeriod];
+        const existingRaw = rebuildUsStockKlineRawFromChart(existingChart);
+        const chartData = applyUsStockWsRealtimeKline(data.data, existingRaw);
+        if (!chartData?.values?.length) return prev;
+        return {
+          ...prev,
+          [currentPeriod]: chartData,
+        };
+      });
+
+      setKlineLoading(false);
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+        if (initialLoadTimeoutRef.current) {
+          clearTimeout(initialLoadTimeoutRef.current);
+          initialLoadTimeoutRef.current = null;
+        }
+      }
+    });
+
     // 监听美股跨所市场实时数据（stock_market）
     ws.on(WS_EVENTS.STOCK_MARKET, (data) => {
       if (!isUsStock) return;
@@ -2704,6 +2930,9 @@ ${coinInfo.name || symbol} (${symbol})
       bigDealChannelIdRef.current = null;
       stockBigDealChannelRef.current = null;
       stockBigDealRawRef.current = { spot: null, perp: null };
+      usStockKlinePageRef.current = createUsStockKlinePeriodMap(1);
+      usStockKlineHasMoreRef.current = createUsStockKlinePeriodMap(true);
+      usStockKlineLoadingMoreRef.current = createUsStockKlinePeriodMap(false);
       
       // 断开 WebSocket
       if (wsRef.current) {
@@ -2734,16 +2963,6 @@ ${coinInfo.name || symbol} (${symbol})
     
     if (!symbol) return;
 
-    const periodMap = {
-      'hour': KLINE_PERIODS.ONE_HOUR,
-      'day': KLINE_PERIODS.ONE_DAY,
-      'week': KLINE_PERIODS.ONE_WEEK,
-      'month': KLINE_PERIODS.ONE_MONTH
-    };
-    
-    const newPeriod = periodMap[activeKlineTab];
-    if (!newPeriod) return;
-
     const targetTab = activeKlineTab;
     const switchGen = ++klineSwitchGenRef.current;
 
@@ -2751,27 +2970,89 @@ ${coinInfo.name || symbol} (${symbol})
     currentKlinePeriodRef.current = targetTab;
     setKlineLoading(true);
 
-    // HTTP 降级 / 美股：各周期通常已预取，短暂轻 loading 后结束
-    if (isUsStock || useHttpFallbackRef.current) {
+    const finishSwitchLoading = () => {
       const timer = window.setTimeout(() => {
         if (switchGen === klineSwitchGenRef.current) {
           setKlineLoading(false);
         }
       }, 320);
       return () => window.clearTimeout(timer);
+    };
+
+    // HTTP 降级：各周期通常已预取
+    if (useHttpFallbackRef.current) {
+      return finishSwitchLoading();
+    }
+
+    // 美股：走 stock_kline WS 切换订阅
+    if (isUsStock) {
+      const newInterval = STOCK_KLINE_INTERVALS[targetTab];
+      if (!newInterval) {
+        return finishSwitchLoading();
+      }
+
+      if (
+        !wsRef.current ||
+        !isWsAuthenticatedRef.current ||
+        wsConnectionStatusRef.current !== 'connected'
+      ) {
+        return finishSwitchLoading();
+      }
+
+      const switchStockKlineSubscription = async () => {
+        const ws = wsRef.current;
+        if (!ws) {
+          setKlineLoading(false);
+          return;
+        }
+
+        try {
+          if (currentKlineChannelRef.current) {
+            const oldChannelId = currentKlineChannelRef.current;
+            currentKlineChannelRef.current = null;
+            await ws.unsubscribe([oldChannelId]);
+          }
+
+          if (switchGen !== klineSwitchGenRef.current) return;
+
+          const stockKlineChannel = createStockKlineChannel([symbol], newInterval);
+          const response = await ws.subscribe([stockKlineChannel]);
+
+          if (switchGen !== klineSwitchGenRef.current) return;
+
+          if (response?.data?.channels?.[0]?.channelId) {
+            currentKlineChannelRef.current = response.data.channels[0].channelId;
+          }
+          currentKlinePeriodRef.current = targetTab;
+        } catch (err) {
+          if (switchGen !== klineSwitchGenRef.current) return;
+          console.error('切换 stock_kline 订阅失败:', err);
+          setKlineLoading(false);
+        }
+      };
+
+      switchStockKlineSubscription();
+      return finishSwitchLoading();
+    }
+
+    const periodMap = {
+      hour: KLINE_PERIODS.ONE_HOUR,
+      day: KLINE_PERIODS.ONE_DAY,
+      week: KLINE_PERIODS.ONE_WEEK,
+      month: KLINE_PERIODS.ONE_MONTH,
+    };
+
+    const newPeriod = periodMap[targetTab];
+    if (!newPeriod) {
+      return finishSwitchLoading();
     }
     
     // 检查WebSocket连接状态
     if (!wsRef.current || !isWsAuthenticatedRef.current || wsConnectionStatusRef.current !== 'connected') {
-      const timer = window.setTimeout(() => {
-        if (switchGen === klineSwitchGenRef.current) {
-          setKlineLoading(false);
-        }
-      }, 320);
-      return () => window.clearTimeout(timer);
+      return finishSwitchLoading();
     }
     
-    // 执行订阅切换
+    // 执行加密 K 线订阅切换
     const switchKlineSubscription = async () => {
       const ws = wsRef.current;
       if (!ws) {
@@ -2780,23 +3061,19 @@ ${coinInfo.name || symbol} (${symbol})
       }
       
       try {
-        // 1. 如果有旧的订阅，先取消
         if (currentKlineChannelRef.current) {
           const oldChannelId = currentKlineChannelRef.current;
           currentKlineChannelRef.current = null;
           await ws.unsubscribe([oldChannelId]);
         }
         
-        // 被更新的切换抢占则退出
         if (switchGen !== klineSwitchGenRef.current) return;
 
-        // 2. 订阅新的K线数据
         const klineChannel = createKlineChannel([symbol], newPeriod, 100);
         const response = await ws.subscribe([klineChannel]);
 
         if (switchGen !== klineSwitchGenRef.current) return;
         
-        // 3. 保存新的频道ID；周期 ref 已在切换开始时更新
         if (response?.data?.channels?.[0]?.channelId) {
           currentKlineChannelRef.current = response.data.channels[0].channelId;
         }
@@ -3104,6 +3381,13 @@ ${coinInfo.name || symbol} (${symbol})
                     block: 'start',
                   })
               : undefined
+          }
+          onLoadMoreHistorical={
+            isUsStock ? () => fetchUsStockKlineMore(activeKlineTab) : undefined
+          }
+          hasMoreHistorical={isUsStock ? Boolean(usStockKlineHasMore[activeKlineTab]) : false}
+          loadingMoreHistorical={
+            isUsStock ? Boolean(usStockKlineLoadingMoreMap[activeKlineTab]) : false
           }
         />
       </div>

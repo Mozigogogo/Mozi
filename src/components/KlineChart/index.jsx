@@ -445,6 +445,10 @@ const KlineChart = ({
   barrageItems,
   /** 点击弹幕跳转帖子详情 */
   onBarragePostClick,
+  /** 左滑到最早可见 K 线时加载更早历史（HTTP 翻页） */
+  onLoadMoreHistorical,
+  hasMoreHistorical = false,
+  loadingMoreHistorical = false,
 }) => {
   const { t, i18n } = useTranslation();
   const chartRef = useRef(null);
@@ -471,6 +475,53 @@ const KlineChart = ({
   const prevActiveKeyRef = useRef(activeKey);
   const userInteractedRef = useRef(false);
   const programmaticRangeUpdateRef = useRef(false);
+  const onLoadMoreHistoricalRef = useRef(onLoadMoreHistorical);
+  const loadingMoreHistoricalRef = useRef(loadingMoreHistorical);
+  const loadMoreCooldownRef = useRef(false);
+  const LOAD_MORE_LEFT_THRESHOLD = 5;
+
+  const tryLoadMoreHistorical = (range) => {
+    if (!range || !onLoadMoreHistoricalRef.current) return;
+    if (loadingMoreHistoricalRef.current || loadMoreCooldownRef.current) return;
+    if (programmaticRangeUpdateRef.current) return;
+    if (range.from > LOAD_MORE_LEFT_THRESHOLD) return;
+
+    loadMoreCooldownRef.current = true;
+    onLoadMoreHistoricalRef.current();
+    window.setTimeout(() => {
+      loadMoreCooldownRef.current = false;
+    }, 1200);
+  };
+  const scrollEnabledOptions = {
+    handleScroll: {
+      mouseWheel: true,
+      pressedMouseMove: true,
+      horzTouchDrag: true,
+      vertTouchDrag: false,
+    },
+    handleScale: {
+      axisPressedMouseMove: { time: true, price: true },
+      mouseWheel: true,
+      pinch: true,
+    },
+  };
+
+  const getDefaultVisibleBars = (dataLen) => {
+    if (onLoadMoreHistorical) {
+      // 日/周/月数据往往偏少：至少留几根在左侧外，方便拖动触发翻页
+      const target = isPC ? 28 : 22;
+      const leaveHidden = Math.min(8, Math.max(2, Math.floor(dataLen * 0.2)));
+      const capped = Math.min(target, Math.max(1, dataLen - leaveHidden));
+      return Math.min(Math.max(1, dataLen - 1), capped);
+    }
+    if (isPC) return Math.min(dataLen, 80);
+    return Math.min(dataLen, 40);
+  };
+
+  useEffect(() => {
+    onLoadMoreHistoricalRef.current = onLoadMoreHistorical;
+    loadingMoreHistoricalRef.current = loadingMoreHistorical;
+  }, [onLoadMoreHistorical, loadingMoreHistorical]);
   const [macdLegend, setMacdLegend] = useState({ hist: null, dif: null, dea: null });
   const [skdjLegend, setSkdjLegend] = useState({ k: null, d: null, j: null });
   const debugTag = '[KlineChartDebug]';
@@ -754,6 +805,7 @@ const KlineChart = ({
     const chart = createChart(chartRef.current, {
       autoSize: true,
       attributionLogo: false,
+      ...scrollEnabledOptions,
       layout: {
         background: { color: 'transparent' },
         textColor: '#8E8E8E',
@@ -797,7 +849,8 @@ const KlineChart = ({
       timeScale: {
         borderVisible: false,
         timeVisible: true,
-        fixLeftEdge: true,
+        // 翻页模式下允许拖出左边缘，日/周/月少量 K 线也能继续左滑请求
+        fixLeftEdge: !onLoadMoreHistorical,
         fixRightEdge: true,
         shiftVisibleRangeOnNewBar: false,
         minimumHeight: 14,
@@ -832,6 +885,7 @@ const KlineChart = ({
         userInteractedRef.current = true;
       }
       syncNavigatorRange(range);
+      tryLoadMoreHistorical(range);
       if (debugEnabled) {
         console.log(debugTag, 'visible-range-change', {
           from: Number(range.from?.toFixed?.(2) ?? range.from),
@@ -1178,36 +1232,55 @@ const KlineChart = ({
     skdjChartInstance.current?.applyOptions(barSpacingOpts);
 
     const dataLen = chartType === 'line' ? lineData.length : candleData.length;
+    const addedCount = Math.max(0, dataLen - prevDataLen);
+    const isHistoricalPrepend =
+      addedCount > 1 &&
+      userInteractedRef.current &&
+      visibleRange &&
+      visibleRange.from <= LOAD_MORE_LEFT_THRESHOLD + addedCount;
     if (dataLen > 0) {
       if (shouldFollowLatest) {
         const to = dataLen - 1;
-        const from = isInitialOrPeriodReset ? 0 : Math.max(0, to - 35);
-        if (debugEnabled) console.log(debugTag, 'apply-follow-latest', { from, to });
+        const visibleBars = getDefaultVisibleBars(dataLen);
+        const from = Math.max(0, to - visibleBars + 1);
+        if (debugEnabled) console.log(debugTag, 'apply-follow-latest', { from, to, visibleBars });
         programmaticRangeUpdateRef.current = true;
         chart.timeScale().setVisibleLogicalRange({ from, to });
         syncNavigatorRange({ from, to });
         queueMicrotask(() => {
           programmaticRangeUpdateRef.current = false;
+          if (userInteractedRef.current) {
+            tryLoadMoreHistorical(chart.timeScale().getVisibleLogicalRange());
+          }
         });
       } else if (visibleRange) {
-        // WebSocket 刷新时重建 series 可能触发时间轴回到最新，手动恢复用户当前视窗
-        const maxTo = dataLen - 1;
-        const span = Math.max(1, visibleRange.to - visibleRange.from);
-        const clampedTo = Math.min(visibleRange.to, maxTo);
-        const clampedFrom = Math.max(0, clampedTo - span);
+        let nextFrom;
+        let nextTo;
+        if (isHistoricalPrepend) {
+          // HTTP 翻页 prepend 后保持用户当前视窗位置
+          nextFrom = visibleRange.from + addedCount;
+          nextTo = visibleRange.to + addedCount;
+        } else {
+          // WebSocket 刷新时重建 series 可能触发时间轴回到最新，手动恢复用户当前视窗
+          const maxTo = dataLen - 1;
+          const span = Math.max(1, visibleRange.to - visibleRange.from);
+          nextTo = Math.min(visibleRange.to, maxTo);
+          nextFrom = Math.max(0, nextTo - span);
+        }
         if (debugEnabled) {
           console.log(debugTag, 'restore-visible-range', {
-            from: Number(clampedFrom.toFixed(2)),
-            to: Number(clampedTo.toFixed(2)),
-            span: Number(span.toFixed(2)),
-            maxTo,
+            from: Number(nextFrom.toFixed(2)),
+            to: Number(nextTo.toFixed(2)),
+            isHistoricalPrepend,
+            addedCount,
           });
         }
         programmaticRangeUpdateRef.current = true;
-        chart.timeScale().setVisibleLogicalRange({ from: clampedFrom, to: clampedTo });
-        syncNavigatorRange({ from: clampedFrom, to: clampedTo });
+        chart.timeScale().setVisibleLogicalRange({ from: nextFrom, to: nextTo });
+        syncNavigatorRange({ from: nextFrom, to: nextTo });
         queueMicrotask(() => {
           programmaticRangeUpdateRef.current = false;
+          tryLoadMoreHistorical(chart.timeScale().getVisibleLogicalRange());
         });
       }
     }
@@ -1226,7 +1299,19 @@ const KlineChart = ({
     }
     prevDataLenRef.current = dataLen;
     prevActiveKeyRef.current = activeKey;
-  }, [data, dataPeriod, chartType, isPC, activeKey, loading, refreshing, i18n.language]);
+  }, [data, dataPeriod, chartType, isPC, activeKey, loading, refreshing, i18n.language, onLoadMoreHistorical]);
+
+  // 确保图表可横向拖动；翻页模式放开左边缘
+  useEffect(() => {
+    if (!chartInstance.current) return;
+    chartInstance.current.applyOptions({
+      ...scrollEnabledOptions,
+      timeScale: {
+        fixLeftEdge: !onLoadMoreHistorical,
+        fixRightEdge: true,
+      },
+    });
+  }, [isPC, onLoadMoreHistorical]);
 
   const chartTypeLineBtn = onChartTypeChange ? (
     <button

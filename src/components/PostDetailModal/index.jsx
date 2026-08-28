@@ -53,7 +53,7 @@ export default function PostDetailModal({
   const [commentValue, setCommentValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
   /** 话题详情内容区：comments | news */
-  const [topicTab, setTopicTab] = useState('comments');
+  const [topicTab, setTopicTab] = useState('news');
   const commentListRef = useRef(null);
 
   const resolvedCurrentUserAvatar = useMemo(() => {
@@ -63,7 +63,7 @@ export default function PostDetailModal({
 
   useEffect(() => {
     if (!open) {
-      setTopicTab('comments');
+      setTopicTab('news');
       setCommentValue('');
       return undefined;
     }
@@ -213,22 +213,22 @@ export default function PostDetailModal({
                   <button
                     type="button"
                     role="tab"
-                    aria-selected={topicTab === 'comments'}
-                    className={`${styles.topicTab}${topicTab === 'comments' ? ` ${styles.topicTabActive}` : ''}`}
-                    onClick={() => setTopicTab('comments')}
-                  >
-                    评论
-                    <span className={styles.topicTabCount}>{displayCommentCount}</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
                     aria-selected={topicTab === 'news'}
                     className={`${styles.topicTab}${topicTab === 'news' ? ` ${styles.topicTabActive}` : ''}`}
                     onClick={() => setTopicTab('news')}
                   >
                     新闻资讯
                     <span className={styles.topicTabCount}>{newsCount}</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={topicTab === 'comments'}
+                    className={`${styles.topicTab}${topicTab === 'comments' ? ` ${styles.topicTabActive}` : ''}`}
+                    onClick={() => setTopicTab('comments')}
+                  >
+                    评论
+                    <span className={styles.topicTabCount}>{displayCommentCount}</span>
                   </button>
                 </div>
               ) : null}

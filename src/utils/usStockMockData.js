@@ -435,6 +435,18 @@ function formatUsStockKlineDtLabel(dt) {
   return s;
 }
 
+/** 美股 K 线 HTTP 分页每页条数（与后端约定） */
+export const US_STOCK_KLINE_PAGE_SIZE = 50;
+
+/** 是否还有更早历史：直接使用接口 has_more 字段 */
+export function resolveUsStockKlineHasMore(payload) {
+  if (!payload || typeof payload !== 'object') return false;
+  if (payload.has_more != null) return Boolean(payload.has_more);
+  // mock / 兼容 camelCase
+  if (payload.hasMore != null) return Boolean(payload.hasMore);
+  return false;
+}
+
 /** 将 GET /stock/detail/kline 响应映射为 KlineChart 结构 */
 export function normalizeUsStockKlineResponse(raw) {
   if (!raw || typeof raw !== 'object') return null;
@@ -450,32 +462,215 @@ export function normalizeUsStockKlineResponse(raw) {
 
   const values = [];
   const categoryData = [];
+  const rawBars = [];
 
   sorted.forEach((item) => {
     if (!item || typeof item !== 'object') return;
-    const open = parseFloat(item.openPrice ?? item.open ?? 0);
-    const close = parseFloat(item.closePrice ?? item.close ?? 0);
-    const low = parseFloat(item.lowPrice ?? item.low ?? 0);
-    const high = parseFloat(item.highPrice ?? item.high ?? 0);
-    if (![open, close, low, high].every((n) => Number.isFinite(n))) return;
-    values.push([open, close, low, high]);
-    categoryData.push(formatUsStockKlineDtLabel(item.dt));
+    const bar = normalizeUsStockKlineBar(item);
+    if (!bar) return;
+    values.push([bar.open, bar.close, bar.low, bar.high]);
+    categoryData.push(formatUsStockKlineDtLabel(bar.dt));
+    rawBars.push(bar);
   });
 
   if (values.length === 0) return null;
-  return { values, categoryData };
+  return {
+    values,
+    categoryData,
+    _rawData: rawBars,
+    hasMore: resolveUsStockKlineHasMore(raw),
+  };
 }
 
-/** 详情 K 线 mock，对齐 GET /stock/detail/kline */
-export function getMockUsStockKline(symbol, type = 1) {
-  const item = findMockListItem(symbol);
-  const basePrice = Number(item.currentPrice) || 100;
-  const dataCount = type === 1 ? 24 : type === 2 ? 30 : type === 3 ? 12 : 6;
-  const timeInterval = type === 1 ? 3600 : type === 2 ? 86400 : type === 3 ? 604800 : 2592000;
+/** 将更早一页 K 线 prepend 到现有序列（按 dt 去重、升序） */
+export function prependUsStockKlineHistorical(existingChart, olderPage) {
+  if (!olderPage?.values?.length) return existingChart;
+
+  const existingRaw = rebuildUsStockKlineRawFromChart(existingChart);
+  const olderRaw = Array.isArray(olderPage._rawData) && olderPage._rawData.length > 0
+    ? olderPage._rawData
+    : rebuildUsStockKlineRawFromChart(olderPage);
+
+  if (olderRaw.length === 0) return existingChart;
+
+  const byDt = new Map();
+  [...olderRaw, ...existingRaw].forEach((bar) => {
+    const normalized = normalizeUsStockKlineBar(bar);
+    if (normalized?.dt) byDt.set(String(normalized.dt), normalized);
+  });
+
+  const merged = [...byDt.values()].sort(
+    (a, b) => parseUsStockKlineDt(a.dt) - parseUsStockKlineDt(b.dt)
+  );
+  return buildUsStockKlineChartFromBars(merged) || existingChart;
+}
+
+function normalizeUsStockKlineBar(item) {
+  if (!item || typeof item !== 'object') return null;
+  const open = parseFloat(item.open_price ?? item.openPrice ?? item.open ?? 0);
+  const close = parseFloat(item.close_price ?? item.closePrice ?? item.close ?? 0);
+  const low = parseFloat(item.low_price ?? item.lowPrice ?? item.low ?? 0);
+  const high = parseFloat(item.high_price ?? item.highPrice ?? item.high ?? 0);
+  if (![open, close, low, high].every((n) => Number.isFinite(n))) return null;
+
+  let dt = item.dt;
+  if (!dt && item.ts != null) {
+    const ts = Number(item.ts);
+    if (Number.isFinite(ts)) {
+      const date = new Date(ts);
+      dt = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}`;
+    }
+  }
+
+  return {
+    dt,
+    ts: item.ts != null ? Number(item.ts) : parseUsStockKlineDt(dt),
+    open,
+    close,
+    low,
+    high,
+    closed: item.closed,
+    volume: item.volume,
+    quote_volume: item.quote_volume,
+  };
+}
+
+function isUsStockKlineBarShape(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const hasPrice =
+    value.open_price != null ||
+    value.openPrice != null ||
+    value.open != null;
+  const hasTime = value.dt != null || value.ts != null;
+  return hasPrice && hasTime;
+}
+
+function mergeUsStockKlineBarIntoSeries(existingBars, incomingBar) {
+  const normalized = normalizeUsStockKlineBar(incomingBar);
+  if (!normalized?.dt) return existingBars;
+
+  const next = Array.isArray(existingBars) ? [...existingBars] : [];
+  if (next.length === 0) return next;
+
+  const last = next[next.length - 1];
+  if (String(last.dt) === String(normalized.dt)) {
+    next[next.length - 1] = normalized;
+    return next;
+  }
+
+  const lastTime = parseUsStockKlineDt(last.dt);
+  const realTime = parseUsStockKlineDt(normalized.dt);
+  if (Number.isFinite(lastTime) && Number.isFinite(realTime)) {
+    if (realTime > lastTime) {
+      next.push(normalized);
+    } else if (realTime === lastTime) {
+      next[next.length - 1] = normalized;
+    }
+    return next;
+  }
+
+  next.push(normalized);
+  return next;
+}
+
+function buildUsStockKlineChartFromBars(rawBars) {
+  if (!Array.isArray(rawBars) || rawBars.length === 0) return null;
+
+  const merged = rawBars.map(normalizeUsStockKlineBar).filter(Boolean);
+  if (merged.length === 0) return null;
+
   const values = [];
   const categoryData = [];
-  let currentTime = Math.floor(Date.now() / 1000) - dataCount * timeInterval;
-  let currentPrice = basePrice * 0.96;
+  merged.forEach((item) => {
+    values.push([item.open, item.close, item.low, item.high]);
+    categoryData.push(formatUsStockKlineDtLabel(item.dt));
+  });
+
+  return { values, categoryData, _rawData: merged };
+}
+
+/** WS 仅更新最新一根 K 线（历史走 HTTP，与加密 realKlineData 逻辑一致） */
+export function applyUsStockWsRealtimeKline(payload, existingRawBars = []) {
+  if (!payload || typeof payload !== 'object') return null;
+
+  const existing = Array.isArray(existingRawBars) ? existingRawBars : [];
+  // 尚无 HTTP 历史时忽略 WS 单点，避免只画一根 K 线
+  if (existing.length === 0) return null;
+
+  let realtimeBar = null;
+  if (isUsStockKlineBarShape(payload)) {
+    realtimeBar = payload;
+  } else if (payload.klineData?.realKlineData) {
+    realtimeBar = payload.klineData.realKlineData;
+  } else if (isUsStockKlineBarShape(payload.realKlineData)) {
+    realtimeBar = payload.realKlineData;
+  } else if (Array.isArray(payload.list) && payload.list.length === 1) {
+    realtimeBar = payload.list[0];
+  }
+
+  if (!realtimeBar) return null;
+
+  return buildUsStockKlineChartFromBars(
+    mergeUsStockKlineBarIntoSeries(existing, realtimeBar)
+  );
+}
+
+/** @deprecated 使用 applyUsStockWsRealtimeKline */
+export function mergeUsStockWsKlinePayload(payload, existingRawBars = []) {
+  return applyUsStockWsRealtimeKline(payload, existingRawBars);
+}
+
+/** 从 HTTP 图表数据还原 _rawData（兼容旧缓存） */
+export function rebuildUsStockKlineRawFromChart(chartData) {
+  if (!chartData || typeof chartData !== 'object') return [];
+  if (Array.isArray(chartData._rawData) && chartData._rawData.length > 0) {
+    return chartData._rawData;
+  }
+  const { values, categoryData } = chartData;
+  if (!Array.isArray(values) || !Array.isArray(categoryData)) return [];
+  return values
+    .map((item, index) => {
+      if (!Array.isArray(item) || item.length < 4) return null;
+      const [open, close, low, high] = item;
+      return {
+        dt: categoryData[index],
+        open: parseFloat(open),
+        close: parseFloat(close),
+        low: parseFloat(low),
+        high: parseFloat(high),
+      };
+    })
+    .filter(Boolean);
+}
+
+/** 详情 K 线 mock，对齐 GET /stock/detail/kline?interval=&page= */
+export function getMockUsStockKline(symbol, intervalOrType = '1h', page = 1) {
+  const item = findMockListItem(symbol);
+  const basePrice = Number(item.currentPrice) || 100;
+  const interval =
+    typeof intervalOrType === 'string'
+      ? intervalOrType
+      : ({ 1: '1h', 2: '1d', 3: '1w', 4: '1mon' }[intervalOrType] || '1h');
+  const meta = {
+    '1m': { count: 60, step: 60 },
+    '5m': { count: 60, step: 300 },
+    '15m': { count: 48, step: 900 },
+    '1h': { count: 24, step: 3600 },
+    '1d': { count: 30, step: 86400 },
+    '1w': { count: 12, step: 604800 },
+    '1mon': { count: 6, step: 2592000 },
+    '1M': { count: 6, step: 2592000 },
+  }[interval] || { count: 24, step: 3600 };
+  const dataCount = meta.count;
+  const timeInterval = meta.step;
+  const safePage = Math.max(1, Number(page) || 1);
+  const values = [];
+  const categoryData = [];
+  let currentTime =
+    Math.floor(Date.now() / 1000) -
+    dataCount * timeInterval -
+    (safePage - 1) * dataCount * timeInterval;
+  let currentPrice = basePrice * (0.96 - (safePage - 1) * 0.02);
 
   for (let i = 0; i < dataCount; i++) {
     const open = currentPrice;
@@ -491,7 +686,7 @@ export function getMockUsStockKline(symbol, type = 1) {
     ]);
     const date = new Date(currentTime * 1000);
     categoryData.push(
-      type === 1
+      interval === '1h' || interval === '1m' || interval === '5m' || interval === '15m'
         ? `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:00`
         : `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
     );
@@ -499,7 +694,7 @@ export function getMockUsStockKline(symbol, type = 1) {
     currentPrice = close;
   }
 
-  return { values, categoryData };
+  return { values, categoryData, has_more: safePage < 3 };
 }
 
 const MOCK_EXCHANGE_ROWS = [

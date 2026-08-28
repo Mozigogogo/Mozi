@@ -26,6 +26,7 @@ export const WS_EVENTS = {
   MARKET_OVERVIEW: 'market_overview',
   STOCK_MARKET: 'stock_market',      // 美股跨所市场数据
   STOCK_BIG_DEAL: 'stock_big_deal',  // 美股大单侦测
+  STOCK_KLINE: 'stock_kline',        // 美股 K 线
   
   // AI 对话
   AI_CHAT: 'ai_chat',
@@ -50,7 +51,23 @@ export const CHANNEL_TYPES = {
   MARKET_OVERVIEW: 'market_overview', // 市场概览
   STOCK_MARKET: 'stock_market',      // 美股跨所市场数据
   STOCK_BIG_DEAL: 'stock_big_deal',  // 美股大单侦测
+  STOCK_KLINE: 'stock_kline',        // 美股 K 线
 };
+
+/** 美股详情 K 线 interval（与 REST 一致；月线用 1mon，1M 兼容） */
+export const STOCK_KLINE_INTERVALS = {
+  hour: '1h',
+  day: '1d',
+  week: '1w',
+  month: '1mon',
+};
+
+export function normalizeStockKlineInterval(interval) {
+  const raw = String(interval || '').trim();
+  if (!raw) return '1h';
+  if (raw === '1M') return '1mon';
+  return raw;
+}
 
 // ==================== 平台类型常量 ====================
 export const PLATFORMS = {
@@ -319,6 +336,26 @@ export function createStockBigDealChannel(symbols) {
   return {
     type: CHANNEL_TYPES.STOCK_BIG_DEAL,
     symbols: symbols,
+  };
+}
+
+/**
+ * 创建美股 K 线频道配置
+ * channelId 规则：stock_kline:NVDA:1h（symbol 大写 + interval 规范小写）
+ * @param {Array} symbols - 股票符号列表，如 ['NVDA']
+ * @param {string} interval - 周期：1m/5m/15m/1h/1d/1w/1mon（1M 兼容为月）
+ * @returns {object} 频道配置
+ */
+export function createStockKlineChannel(symbols, interval = '1h') {
+  const normalizedInterval = normalizeStockKlineInterval(interval);
+  return {
+    type: CHANNEL_TYPES.STOCK_KLINE,
+    symbols: (symbols || []).map((s) => String(s || '').toUpperCase()).filter(Boolean),
+    params: {
+      interval: normalizedInterval,
+      // 兼容后端 period 别名
+      period: normalizedInterval,
+    },
   };
 }
 
