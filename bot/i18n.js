@@ -314,8 +314,24 @@ const i18n = {
     groupSecuritySaveBtn: '保存群',
     groupSecurityQueryToast: '已刷新群信息',
     groupSecuritySaveToast: '群信息已保存',
-    impersonateAdminBlockHtml: (mention, adminName) =>
-      `🚫 ${mention}：检测到昵称疑似冒充管理员${adminName ? `（<b>${adminName}</b>）` : ''}，消息已删除。`,
+    impersonateAdminBlockHtml: (mention, adminName, similarity) =>
+      `🚫 ${mention}：检测到昵称疑似冒充管理员${adminName ? `（<b>${adminName}</b>）` : ''}，相似度 <b>${similarity}%</b>，消息已删除。`,
+    impersonateAdminKickGroupHtml: (mention, adminName, similarity) =>
+      `🚫 已移出疑似冒充管理员的成员 ${mention}${adminName ? `（与管理员 <b>${adminName}</b> 相似度 <b>${similarity}%</b>）` : ''}。`,
+    impersonateAdminHighRiskDmHtml: (chatTitle, memberMention, adminName, similarity) =>
+      `⚠️ <b>防冒充告警 · 高风险</b>\n\n` +
+      `群：<b>${chatTitle}</b>\n` +
+      `新成员：${memberMention}\n` +
+      `相似管理员：${adminName ? `<b>${adminName}</b>` : '—'}\n` +
+      `相似度：<b>${similarity}%</b>\n\n` +
+      `已自动踢出该成员，请核实。`,
+    impersonateAdminMediumRiskDmHtml: (chatTitle, memberMention, adminName, similarity) =>
+      `⚠️ <b>防冒充提醒 · 中风险</b>\n\n` +
+      `群：<b>${chatTitle}</b>\n` +
+      `新成员：${memberMention}\n` +
+      `相似管理员：${adminName ? `<b>${adminName}</b>` : '—'}\n` +
+      `相似度：<b>${similarity}%</b>\n\n` +
+      `请人工确认是否为冒充账号。`,
     onchainDetectHeaderNormal: (chain) => `🔍 合约安全检测 · ${chain}`,
     onchainDetectHeaderDanger: (chain) => `🚨 高风险合约警告 · ${chain}`,
     onchainDetectAddressLabel: '地址',
@@ -952,8 +968,24 @@ const i18n = {
     groupSecuritySaveBtn: 'Save group',
     groupSecurityQueryToast: 'Group info refreshed',
     groupSecuritySaveToast: 'Group saved',
-    impersonateAdminBlockHtml: (mention, adminName) =>
-      `🚫 ${mention}: Your display name may impersonate an admin${adminName ? ` (<b>${adminName}</b>)` : ''}. Message removed.`,
+    impersonateAdminBlockHtml: (mention, adminName, similarity) =>
+      `🚫 ${mention}: Your display name may impersonate an admin${adminName ? ` (<b>${adminName}</b>)` : ''}, similarity <b>${similarity}%</b>. Message removed.`,
+    impersonateAdminKickGroupHtml: (mention, adminName, similarity) =>
+      `🚫 Removed ${mention} for possible admin impersonation${adminName ? ` (similar to <b>${adminName}</b>, <b>${similarity}%</b>)` : ''}.`,
+    impersonateAdminHighRiskDmHtml: (chatTitle, memberMention, adminName, similarity) =>
+      `⚠️ <b>Anti-impersonate alert · High risk</b>\n\n` +
+      `Group: <b>${chatTitle}</b>\n` +
+      `New member: ${memberMention}\n` +
+      `Similar to admin: ${adminName ? `<b>${adminName}</b>` : '—'}\n` +
+      `Similarity: <b>${similarity}%</b>\n\n` +
+      `Member was auto-removed. Please verify.`,
+    impersonateAdminMediumRiskDmHtml: (chatTitle, memberMention, adminName, similarity) =>
+      `⚠️ <b>Anti-impersonate notice · Medium risk</b>\n\n` +
+      `Group: <b>${chatTitle}</b>\n` +
+      `New member: ${memberMention}\n` +
+      `Similar to admin: ${adminName ? `<b>${adminName}</b>` : '—'}\n` +
+      `Similarity: <b>${similarity}%</b>\n\n` +
+      `Please manually confirm whether this is impersonation.`,
     onchainDetectHeaderNormal: (chain) => `🔍 Contract security · ${chain}`,
     onchainDetectHeaderDanger: (chain) => `🚨 High-risk contract · ${chain}`,
     onchainDetectAddressLabel: 'Address',
