@@ -2048,6 +2048,20 @@ function parseGroupSecurityFields(raw) {
 }
 
 /**
+ * 解析违禁词过滤开关（缺省开启，与历史全局默认一致）
+ * @param {object | null | undefined} raw
+ */
+function parseKeywordFilterFields(raw) {
+  const src = raw && typeof raw === 'object' ? raw : {};
+  return {
+    keywordFilterEnabled: parseFlag01(
+      src.keywordFilterEnabled ?? src.keyword_filter_enabled,
+      1,
+    ),
+  };
+}
+
+/**
  * @param {object} item
  * @param {object} row
  */
@@ -2062,6 +2076,19 @@ function appendGroupSecuritySaveFields(item, row) {
     const v = Number(row.impersonateAdminEnabled) ? 1 : 0;
     item.impersonateAdminEnabled = v;
     item.impersonate_admin_enabled = v;
+  }
+}
+
+/**
+ * @param {object} item
+ * @param {object} row
+ */
+function appendKeywordFilterSaveFields(item, row) {
+  if (!row || typeof row !== 'object') return;
+  if (row.keywordFilterEnabled != null) {
+    const v = Number(row.keywordFilterEnabled) ? 1 : 0;
+    item.keywordFilterEnabled = v;
+    item.keyword_filter_enabled = v;
   }
 }
 
@@ -2156,6 +2183,7 @@ function parseTgStatsGroupListItem(raw) {
   const joinVerify = parseJoinVerifyFields(raw);
   const floodObserve = parseFloodObserveFields(raw);
   const groupSecurity = parseGroupSecurityFields(raw);
+  const keywordFilter = parseKeywordFilterFields(raw);
 
   const toMs = (v) => {
     if (v == null || v === '') return null;
@@ -2186,6 +2214,7 @@ function parseTgStatsGroupListItem(raw) {
     ...joinVerify,
     ...floodObserve,
     ...groupSecurity,
+    ...keywordFilter,
   };
 }
 
@@ -2376,6 +2405,7 @@ async function postTgStatsGroupSave({
       appendJoinVerifySaveFields(item, row);
       appendFloodObserveSaveFields(item, row);
       appendGroupSecuritySaveFields(item, row);
+      appendKeywordFilterSaveFields(item, row);
       return item;
     })
     .filter((row) => Number.isFinite(row.groupId));
@@ -4590,6 +4620,7 @@ module.exports = {
   parseJoinVerifyFields,
   parseFloodObserveFields,
   parseGroupSecurityFields,
+  parseKeywordFilterFields,
   parseFlag01,
   postTgStatsCommand,
   postTgChatSave,

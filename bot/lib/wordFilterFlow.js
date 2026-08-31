@@ -18,6 +18,7 @@ const {
   wordFilterLog,
 } = require('./wordFilterKeywords');
 const { bumpWordFilterWarn } = require('./wordFilterWarnStore');
+const { fetchGroupModerationConfig } = require('./joinVerifyConfig');
 const {
   postModerationViolationReport,
   getModerationViolationCount,
@@ -239,11 +240,18 @@ async function resolveViolationCount(config, groupId, telegramId) {
 async function handleGroupWordFilter(ctx, config, getTexts) {
   // 链接禁止始终生效（不依赖违禁词开关 / 观察期）
   const shouldBlockLinks = Boolean(config.WORD_FILTER_BLOCK_LINKS);
-  const keywordsEnabled = Boolean(config?.WORD_FILTER_ENABLED);
-  if (!shouldBlockLinks && !keywordsEnabled) return { handled: false };
+  const globalKeywordsEnabled = Boolean(config?.WORD_FILTER_ENABLED);
 
   const chat = ctx.chat;
   if (!isGroupChat(chat)) return { handled: false };
+
+  let keywordsEnabled = globalKeywordsEnabled;
+  if (globalKeywordsEnabled) {
+    const groupCfg = await fetchGroupModerationConfig(config, chat.id);
+    keywordsEnabled = groupCfg.keywordFilterEnabled === 1;
+  }
+
+  if (!shouldBlockLinks && !keywordsEnabled) return { handled: false };
 
   const user = ctx.from;
   if (!user?.id || user.is_bot) return { handled: false };

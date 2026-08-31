@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * /config 群配置中心：入口菜单（定时推送 / 新成员验证 / 防刷屏与观察期）
+ * /config 群配置中心：入口菜单（定时推送 / 新成员验证 / 防刷屏与观察期 / 违禁词）
  */
 
 const { Markup } = require('telegraf');
@@ -15,6 +15,7 @@ function buildGroupSettingsHubKeyboard(texts) {
     [Markup.button.callback(texts.groupSettingsJoinVerifyBtn, 'gs:jv')],
     [Markup.button.callback(texts.groupSettingsFloodObserveBtn, 'gs:fo')],
     [Markup.button.callback(texts.groupSettingsSecurityBtn, 'gs:sc')],
+    [Markup.button.callback(texts.groupSettingsWordFilterBtn, 'gs:wf')],
   ]);
 }
 

@@ -6,13 +6,13 @@
  * /ai、/chat、/bigorder：统一 POST 主栈 /ai/agent/stream（type=analyze|chat|bigorder）；/ai、/chat 成功后扣积分
  * 群内 @Bot 自然语言：POST /ai/agent/route（handlers/agentMention.js）
  * /price：handlers/price.js + lib/apis.js（GET /detail/header，默认 BTC，简报格式）
- * /predict、/config：handlers/predict.js、handlers/predictSchedule.js（/config：定时推送 + 入群验证 + 防刷屏与观察期；每日自动发布见 lib/predictAutoPublishScheduler.js）
+ * /predict、/config：handlers/predict.js、handlers/predictSchedule.js（/config：定时推送 + 入群验证 + 防刷屏与观察期 + 违禁词；每日自动发布见 lib/predictAutoPublishScheduler.js）
  * /help：handlers/help.js（群内仅私聊发全文，防刷屏）
  * /balance：handlers/balance.js（GET /user/datainfo；私聊直接回复，群内尝试私信用户，路径见 USER_DATA_INFO_PATH）
  * my_chat_member、/bind_ref：handlers/groupReferrer.js（入群自动绑定群主邀请码；/bind_ref 仅群主可重绑）
  * my_chat_member、群名/头像变更：handlers/tgGroupStats.js（POST /tg/stats/group/save 群档案；POST /tg/stats/group/leave 退群）
  * new_chat_members / chat_member：handlers/joinVerify.js（GET /tg/stats/group/get 读入群验证配置）
- * 群消息违禁词：handlers/wordFilter.js（GET /tg/stats/moderation/keywords/list；1/2 警告、3 禁言、4 踢出；任意链接禁止）
+ * 群消息违禁词：handlers/wordFilter.js（GET /tg/stats/moderation/keywords/list；按群 keywordFilterEnabled 开关；1/2 警告、3 禁言、4 踢出；任意链接禁止）
  * 群慢速模式：handlers/slowMode.js（按群 flood* 配置；T 秒内超 N 条 → 删超出；1–3 按 floodAction，≥4 踢出）
  * 新成员观察期：handlers/observePeriod.js（验证通过后限制转发/邀请等；允许文本/图片/贴纸/GIF/视频/语音；链接始终禁）
  * 群链上识别：handlers/onchainDetect.js（全链地址正则 → GoPlus；受 onchainDetectEnabled 控制）

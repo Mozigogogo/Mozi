@@ -10,6 +10,7 @@ const {
   parseJoinVerifyFields,
   parseFloodObserveFields,
   parseGroupSecurityFields,
+  parseKeywordFilterFields,
 } = require('./apis');
 
 /** @type {Map<string, { expireAt: number; config: object }>} */
@@ -20,6 +21,7 @@ function defaultGroupModerationConfig() {
     ...parseJoinVerifyFields({}),
     ...parseFloodObserveFields({}),
     ...parseGroupSecurityFields({}),
+    ...parseKeywordFilterFields({}),
   };
 }
 
@@ -62,6 +64,7 @@ async function fetchGroupModerationConfig(config, groupId) {
         ...parseJoinVerifyFields(group),
         ...parseFloodObserveFields(group),
         ...parseGroupSecurityFields(group),
+        ...parseKeywordFilterFields(group),
       }
     : defaultGroupModerationConfig();
 

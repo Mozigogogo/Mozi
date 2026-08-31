@@ -4,6 +4,7 @@
  * - 新成员入群验证配置
  * - 防刷屏 + 新成员观察期
  * - 链上识别 + 防冒充管理员
+ * - 违禁词过滤
  */
 
 const {
@@ -42,6 +43,11 @@ const {
   handleGroupSecurityQuery,
   handleGroupSecuritySaveGroup,
 } = require('../lib/groupSecuritySettingsFlow');
+const {
+  handleKeywordFilterOpenList,
+  handleKeywordFilterOpenDetail,
+  handleKeywordFilterToggleEnabled,
+} = require('../lib/wordFilterSettingsFlow');
 const { tgGroupListLog } = require('../lib/tgGroupListDebug');
 
 /**
@@ -118,6 +124,15 @@ function registerPredictSchedule(bot, config, { getTexts }) {
   bot.action('gs:sc', async (ctx) => {
     try {
       await handleGroupSecurityOpenList(ctx, config, getTexts);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action('gs:wf', async (ctx) => {
+    try {
+      await handleKeywordFilterOpenList(ctx, config, getTexts);
     } catch {
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
@@ -461,6 +476,48 @@ function registerPredictSchedule(bot, config, { getTexts }) {
   bot.action(/^sc:sv:(-?\d+)$/, async (ctx) => {
     try {
       await handleGroupSecuritySaveGroup(ctx, config, getTexts, ctx.match[1]);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  // —— 违禁词过滤 ——
+  bot.action('wf:noop', async (ctx) => {
+    const texts = getTexts(ctx.from?.language_code || 'en');
+    await ctx.answerCbQuery(texts.joinVerifySettingsNoopToast || '请点击下方选项').catch(() => {});
+  });
+
+  bot.action('wf:list', async (ctx) => {
+    try {
+      await handleKeywordFilterOpenList(ctx, config, getTexts);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action('wf:r', async (ctx) => {
+    try {
+      await handleKeywordFilterOpenList(ctx, config, getTexts);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^wf:g:(-?\d+)$/, async (ctx) => {
+    try {
+      await handleKeywordFilterOpenDetail(ctx, config, getTexts, ctx.match[1]);
+    } catch {
+      const texts = getTexts(ctx.from?.language_code || 'en');
+      await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});
+    }
+  });
+
+  bot.action(/^wf:e:(-?\d+):(0|1)$/, async (ctx) => {
+    try {
+      await handleKeywordFilterToggleEnabled(ctx, config, getTexts, ctx.match[1], ctx.match[2] === '1');
     } catch {
       const texts = getTexts(ctx.from?.language_code || 'en');
       await ctx.answerCbQuery(texts.predictScheduleFetchFailed, { show_alert: true }).catch(() => {});

@@ -257,7 +257,7 @@ const i18n = {
     predictListResultUp: '\n✅ 结果：涨',
     predictListResultDown: '\n✅ 结果：跌',
     predictSchedulePrivateOnly:
-      '请私聊本机器人发送 <code>/config</code>，用于管理群配置（定时推送 / 入群验证 / 防刷屏与观察期）。',
+      '请私聊本机器人发送 <code>/config</code>，用于管理群配置（定时推送 / 入群验证 / 防刷屏与观察期 / 违禁词）。',
     predictScheduleLoading: '⏳ 正在加载你的群列表…',
     predictScheduleNeedLogin:
       '需要先完成 Mozi 账户绑定。请先 <code>/register</code> 或完成注册后再试。',
@@ -282,6 +282,7 @@ const i18n = {
     groupSettingsJoinVerifyBtn: '🛡️ 新成员入群验证',
     groupSettingsFloodObserveBtn: '🚫 防刷屏与观察期',
     groupSettingsSecurityBtn: '🔍 链上识别与防冒充',
+    groupSettingsWordFilterBtn: '🚫 违禁词过滤',
     groupSettingsBackBtn: '« 返回',
     groupSecuritySettingsIntro:
       '🔍 <b>链上识别与防冒充</b>\n\n选择群进入详细配置。链上识别检测群内链上地址；防冒充管理员拦截伪装管理员的账号。',
@@ -540,6 +541,22 @@ const i18n = {
     wordFilterMuteHtml: (mention, sec) =>
       `${mention}: 多次违规，已禁言 <b>${Math.ceil(sec / 3600)}</b> 小时。`,
     wordFilterKickHtml: (mention) => `${mention}: 多次违规，已移出本群。`,
+    wordFilterSettingsIntro:
+      '🚫 <b>违禁词过滤</b>\n\n选择群进入详细配置。开启后，群内消息将按后台词库进行违禁词检测（链接禁止始终生效）。',
+    wordFilterSettingsGroupLine: (title, enabled) => {
+      const status = enabled ? '已开启' : '已关闭';
+      return `• <b>${title}</b> — ${status}`;
+    },
+    wordFilterSettingsDetailHtml: (title, onOff) =>
+      `🚫 <b>${title}</b> · 违禁词过滤\n\n` +
+      `开关：<b>${onOff}</b>\n\n` +
+      `开启后，本群消息将匹配后台违禁词库；关闭后仅保留链接禁止等基础规则。`,
+    wordFilterSettingsSectionSwitch: '违禁词开关',
+    wordFilterSettingsEnableBtn: '开启违禁词',
+    wordFilterSettingsDisableBtn: '关闭违禁词',
+    wordFilterSettingsEnabledToast: '已开启违禁词过滤',
+    wordFilterSettingsDisabledToast: '已关闭违禁词过滤',
+    wordFilterSettingsSavedToast: '已保存',
     slowModeMuteHtml: (mention, windowSec, maxMessages, muteSec, count, maxWarn) =>
       `${mention}: <b>${windowSec}</b> 秒内发送超过 <b>${maxMessages}</b> 条，超出已删，禁言 <b>${Math.ceil(muteSec / 60)}</b> 分钟（刷屏违规 <b>${count}/${maxWarn}</b>；满 4 次将踢出）。`,
     slowModeKickHtml: (mention, count) =>
@@ -562,7 +579,7 @@ const i18n = {
 📈 涨跌预测（免费）
 /predict        发起 24 小时涨跌竞猜（前 6 小时可下注；群内点按钮私聊 Bot，确认后发布到该群）
 /predict list   查看本群竞猜列表
-/config  群主：群配置（定时推送 / 入群验证 / 防刷屏与观察期）
+/config  群主：群配置（定时推送 / 入群验证 / 防刷屏与观察期 / 违禁词）
 
 🔔 告警设置（免费）
 /alert          跳转 App 配置价格告警
@@ -918,7 +935,7 @@ const i18n = {
     predictListResultUp: '\n✅ Result: Up',
     predictListResultDown: '\n✅ Result: Down',
     predictSchedulePrivateOnly:
-      'DM this bot and send <code>/config</code> to manage group settings (scheduled push / join verification / anti-flood & observe).',
+      'DM this bot and send <code>/config</code> to manage group settings (scheduled push / join verification / anti-flood & observe / banned words).',
     predictScheduleLoading: '⏳ Loading your groups…',
     predictScheduleNeedLogin: 'Please bind your Mozi account first (<code>/register</code>), then try again.',
     predictScheduleFetchFailed: 'Could not load your groups. Please try again later.',
@@ -943,6 +960,7 @@ const i18n = {
     groupSettingsJoinVerifyBtn: '🛡️ New member verification',
     groupSettingsFloodObserveBtn: '🚫 Anti-flood & observe',
     groupSettingsSecurityBtn: '🔍 On-chain & anti-impersonate',
+    groupSettingsWordFilterBtn: '🚫 Banned words filter',
     groupSettingsBackBtn: '« Back',
     groupSecuritySettingsIntro:
       '🔍 <b>On-chain detect & anti-impersonate</b>\n\nPick a group to configure. On-chain detect scans on-chain addresses; anti-impersonate blocks fake admin accounts.',
@@ -1187,6 +1205,22 @@ const i18n = {
       `${mention}: Repeated violations — muted for <b>${Math.ceil(sec / 3600)}</b> hour(s).`,
     wordFilterKickHtml: (mention) =>
       `${mention}: Repeated violations — removed from the group.`,
+    wordFilterSettingsIntro:
+      '🚫 <b>Banned words filter</b>\n\nPick a group to configure. When enabled, messages are checked against the moderation keyword list (link blocking always applies).',
+    wordFilterSettingsGroupLine: (title, enabled) => {
+      const status = enabled ? 'On' : 'Off';
+      return `• <b>${title}</b> — ${status}`;
+    },
+    wordFilterSettingsDetailHtml: (title, onOff) =>
+      `🚫 <b>${title}</b> · Banned words\n\n` +
+      `Switch: <b>${onOff}</b>\n\n` +
+      `When on, messages are matched against the keyword list. When off, only base rules (e.g. link blocking) apply.`,
+    wordFilterSettingsSectionSwitch: 'Keyword filter switch',
+    wordFilterSettingsEnableBtn: 'Enable filter',
+    wordFilterSettingsDisableBtn: 'Disable filter',
+    wordFilterSettingsEnabledToast: 'Banned words filter enabled',
+    wordFilterSettingsDisabledToast: 'Banned words filter disabled',
+    wordFilterSettingsSavedToast: 'Saved',
     slowModeMuteHtml: (mention, windowSec, maxMessages, muteSec, count, maxWarn) =>
       `${mention}: more than <b>${maxMessages}</b> msgs in <b>${windowSec}</b>s — excess deleted, muted <b>${Math.ceil(muteSec / 60)}</b> min (flood <b>${count}/${maxWarn}</b>; kick at 4).`,
     slowModeKickHtml: (mention, count) =>
@@ -1209,7 +1243,7 @@ const i18n = {
 📈 Up/down poll (free)
 /predict         Start a 24-hour poll (6 hours to bet; tap button to DM bot; publishes back to source group)
 /predict list    List polls in this group
-/config  Group owners: settings (scheduled push / join verification / anti-flood & observe)
+/config  Group owners: settings (scheduled push / join verification / anti-flood & observe / banned words)
 
 🔔 Alerts (free)
 /alert           Open app to set price alerts
