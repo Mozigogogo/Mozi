@@ -1,6 +1,6 @@
 /**
- * 构建时生成静态 sitemap.xml 到 public/，由 nginx/Next 直接托管。
- * 业内常见做法：避免 App Router metadata route 在 GSC 出现 Couldn't fetch。
+ * 本地校验 / 预览用：将 sitemap 写入 public/sitemap.xml。
+ * 生产环境请使用 src/app/sitemap.js（Next.js Metadata Route），勿与 public/sitemap.xml 同时存在。
  */
 import { writeFileSync } from 'fs';
 import { dirname, join } from 'path';
