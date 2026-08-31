@@ -102,7 +102,7 @@ function formatVenuePrice(value) {
 /**
  * 可交易平台行：只取 prices.spot / prices.perp
  * 现货 → prices.spot；合约 → prices.perp
- * 页面列固定：平台 / 类型 / 价格 / 状态
+ * 页面列固定：平台 / 类型 / 发行方类型 / 交易对 / 价格 / 状态
  */
 function buildVenueRows(data) {
   const sessionMap = new Map((data?.sessions || []).map((item) => [item.instrument, item]));
@@ -117,6 +117,8 @@ function buildVenueRows(data) {
         exchange: item.exchange,
         url: item.logo || CEX_LOGO(`${item.exchange}.png`),
         instrument,
+        issuance: item.issuance ?? '--',
+        pair: item.pair ?? '--',
         price: formatVenuePrice(item.last_price),
         status: resolveSessionStatus(session),
       });
@@ -404,7 +406,7 @@ function UsStockSearchContent() {
       title: t('search.platform'),
       dataIndex: 'exchange',
       key: 'exchange',
-      width: '22%',
+      width: '18%',
       render: (text, record) => (
         <div className={searchStyles.coinCell}>
           <img src={record.url} alt={text} className={searchStyles.coinIcon} />
@@ -417,7 +419,7 @@ function UsStockSearchContent() {
       dataIndex: 'instrument',
       key: 'instrument',
       align: 'center',
-      width: '14%',
+      width: '10%',
       filterMultiple: false,
       filteredValue: venueTypeFilter ? [venueTypeFilter] : null,
       filters: [
@@ -428,11 +430,27 @@ function UsStockSearchContent() {
       render: (value) => instrumentLabel(value, t),
     },
     {
+      title: '发行方类型',
+      dataIndex: 'issuance',
+      key: 'issuance',
+      align: 'center',
+      width: '14%',
+      render: (value) => value ?? '--',
+    },
+    {
+      title: '交易对',
+      dataIndex: 'pair',
+      key: 'pair',
+      align: 'center',
+      width: '16%',
+      render: (value) => value ?? '--',
+    },
+    {
       title: '价格',
       dataIndex: 'price',
       key: 'price',
       align: 'right',
-      width: '16%',
+      width: '12%',
       render: (value) => value ?? '--',
     },
     {
@@ -440,7 +458,7 @@ function UsStockSearchContent() {
       dataIndex: 'status',
       key: 'status',
       align: 'center',
-      width: '12%',
+      width: '10%',
       render: (status) => (
         <Tag color={venueStatusColor(status)}>{venueStatusLabel(status)}</Tag>
       ),
