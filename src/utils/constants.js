@@ -410,6 +410,10 @@ export const Interface = {
   ADD_ALERT_CONFIG: '/user/alert/config/add',
   // 修改告警配置
   UPDATE_ALERT_CONFIG: '/user/alert/config/update',
+  // Web 告警 SSE 推送（后端待实现）
+  ALERT_PUSH_STREAM: '/user/alert/push/stream',
+  // Web 告警轮询降级（后端待实现）
+  ALERT_TRIGGERS_RECENT: '/user/alert/triggers/recent',
 
   // 积分
   // 获取用户积分

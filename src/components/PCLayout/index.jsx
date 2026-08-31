@@ -52,6 +52,7 @@ import styles from './index.module.less';
 import AISearchBadge from './AISearchBadge';
 // 预热详情页 CSS：用户在 PC 壳内任意页时已加载，首次进 /detail 不再 FOUC
 import { DETAIL_CSS_WARMUP } from '@/app/detail/detailCssWarmup';
+import WebAlarmNotifier from '@/components/WebAlarmNotifier';
 
 void DETAIL_CSS_WARMUP;
 
@@ -1730,6 +1731,9 @@ export default function PCLayout({ children }) {
           userId: userInfo?.userId || userInfo?.id,
         }}
       />
+
+      <WebAlarmNotifier />
+
     </Layout>
     </PcShellContext.Provider>
   );

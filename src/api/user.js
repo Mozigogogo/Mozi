@@ -56,6 +56,9 @@ function normalizeAlertWritePayload(config, { mergeExisting = false } = {}) {
   if (webhookEnabled !== undefined && webhookEnabled !== 0 && webhookEnabled !== 1) {
     return { success: false, error: '开关值必须为 0 或 1' };
   }
+  if (payload.webEnabled !== undefined && payload.webEnabled !== 0 && payload.webEnabled !== 1) {
+    return { success: false, error: '开关值必须为 0 或 1' };
+  }
 
   if (phoneEnabled === 1 && !phoneTrim) {
     return { success: false, error: '开启电话告警时，手机号不能为空' };

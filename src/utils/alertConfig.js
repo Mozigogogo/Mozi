@@ -185,6 +185,7 @@ export function buildFullAlertConfigPayload(patch = {}, existing = null) {
   merged.emailEnabled = toAlertFlag(merged.emailEnabled, 0);
   merged.smsEnabled = toAlertFlag(merged.smsEnabled, 0);
   merged.webhookEnabled = toAlertFlag(merged.webhookEnabled, 0);
+  merged.webEnabled = toAlertFlag(merged.webEnabled, 0);
   merged.tgEnabled = toAlertFlag(merged.tgEnabled, 0);
   merged.wechatEnabled = toAlertFlag(merged.wechatEnabled, 0);
 
@@ -222,6 +223,7 @@ export function pickAlertConfigFromDatainfo(datainfo) {
     datainfo.emailEnabled != null ||
     datainfo.smsEnabled != null ||
     datainfo.webhookEnabled != null ||
+    datainfo.webEnabled != null ||
     datainfo.webhookUrls != null ||
     datainfo.alertFrequency != null ||
     datainfo.tgEnabled != null ||
@@ -242,6 +244,7 @@ export function pickAlertConfigFromDatainfo(datainfo) {
   if (datainfo.emailEnabled != null) out.emailEnabled = datainfo.emailEnabled;
   if (datainfo.smsEnabled != null) out.smsEnabled = datainfo.smsEnabled;
   if (datainfo.webhookEnabled != null) out.webhookEnabled = datainfo.webhookEnabled;
+  if (datainfo.webEnabled != null) out.webEnabled = datainfo.webEnabled;
   if (Array.isArray(datainfo.webhookUrls)) out.webhookUrls = datainfo.webhookUrls;
   if (datainfo.alertFrequency != null) out.alertFrequency = datainfo.alertFrequency;
   if (datainfo.tgEnabled != null) out.tgEnabled = datainfo.tgEnabled;

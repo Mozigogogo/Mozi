@@ -74,6 +74,7 @@ function PCAlarmContent() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [webhookEnabled, setWebhookEnabled] = useState(false);
+  const [webEnabled, setWebEnabled] = useState(false);
   const [webhookUrls, setWebhookUrls] = useState(['']);
   const [alertFrequency, setAlertFrequency] = useState('daily');
   const [webhookError, setWebhookError] = useState('');
@@ -92,6 +93,7 @@ function PCAlarmContent() {
     if (cfg.emailEnabled !== undefined) setEmailEnabled(Number(cfg.emailEnabled) === 1);
     if (cfg.smsEnabled !== undefined) setSmsEnabled(Number(cfg.smsEnabled) === 1);
     if (cfg.webhookEnabled !== undefined) setWebhookEnabled(isAlertFlagOn(cfg.webhookEnabled));
+    if (cfg.webEnabled !== undefined) setWebEnabled(isAlertFlagOn(cfg.webEnabled));
     setWebhookUrls(parseWebhookUrlsFromConfig(cfg));
     setAlertFrequency(alertFrequencyFromApi(cfg.alertFrequency));
   }, []);
@@ -819,6 +821,7 @@ function PCAlarmContent() {
         emailEnabled: emailEnabled ? 1 : 0,
         smsEnabled: smsEnabled ? 1 : 0,
         webhookEnabled: webhookEnabled ? 1 : 0,
+        webEnabled: webEnabled ? 1 : 0,
         webhookUrls: webhookCheck.urls,
         alertFrequency: alertFrequencyToApi(alertFrequency),
         wechatEnabled: 0,
@@ -841,6 +844,7 @@ function PCAlarmContent() {
       if (result?.success) {
         if (typeof window !== 'undefined') {
           localStorage.setItem('alertConfig', JSON.stringify(result.data));
+          window.dispatchEvent(new CustomEvent('mozi:webAlarmConfigChanged'));
         }
         Toast.show({ content: t('oneClickAlarm.enableSuccess') });
       } else {
@@ -1254,6 +1258,20 @@ function PCAlarmContent() {
               </div>
               <p className={styles.sideFieldHint}>{t('oneClickAlarm.webhookHint')}</p>
               {webhookError && <div className={styles.sideFieldError}>{webhookError}</div>}
+
+              <div className={styles.sideItem}>
+                <div className={styles.sideItemLabel}>
+                  <img src={`${ALERT_ICON_CDN}/hook_alert.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
+                  <span>{t('oneClickAlarm.webAlarm', { defaultValue: 'Web告警' })}</span>
+                </div>
+                <Switch
+                  className={styles.compactSwitch}
+                  checked={webEnabled}
+                  onChange={setWebEnabled}
+                  style={{ '--checked-color': '#11B787' }}
+                />
+              </div>
+              <p className={styles.sideFieldHint}>{t('oneClickAlarm.webAlarmHint', { defaultValue: '开启后，价格触发告警时将在页面右上角弹出提示' })}</p>
 
               <button
                 type="button"
