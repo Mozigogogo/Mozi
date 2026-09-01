@@ -25,6 +25,7 @@ export default function FloatingRobotPc({ message, targetPath = '/ai', onClick }
 
   const handleRobotClick = () => {
     trackEvent(HomeEvents.AI_CLICKED, {
+      platform: 'pc',
       targetPath: onClick ? null : targetPath,
       robotState: 'pc',
       message: message || undefined,

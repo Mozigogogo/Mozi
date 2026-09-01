@@ -53,6 +53,8 @@ import AISearchBadge from './AISearchBadge';
 // 预热详情页 CSS：用户在 PC 壳内任意页时已加载，首次进 /detail 不再 FOUC
 import { DETAIL_CSS_WARMUP } from '@/app/detail/detailCssWarmup';
 import WebAlarmNotifier from '@/components/WebAlarmNotifier';
+import usePcAmplitude from '@/hooks/usePcAmplitude';
+import { PCEvents, trackPcEvent } from '@/utils/pcAmplitude';
 
 void DETAIL_CSS_WARMUP;
 
@@ -231,6 +233,7 @@ export default function PCLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  usePcAmplitude(pathname, searchParams);
   const { formatValue, formatPrice, formatSmallDecimal } = useFormatNumber();
   const { t, i18n } = useTranslation();
   const { isDark } = useTheme();
@@ -436,6 +439,10 @@ export default function PCLayout({ children }) {
     setSearchSubmitting(true);
     try {
       const type = await validateSearchSymbol(keyword);
+      trackPcEvent(PCEvents.SEARCH_SUBMITTED, {
+        keyword,
+        searchType: type || 'unknown',
+      });
       if (type === 'stock') {
         router.push(getPcSearchRoute('stock', keyword));
         return;
@@ -832,6 +839,7 @@ export default function PCLayout({ children }) {
   }, [t, i18n.language]);
 
   const goToInviteRewards = useCallback(() => {
+    trackPcEvent(PCEvents.FOOTER_LINK_CLICKED, { linkKey: 'inviteRewards' });
     setActiveContent(null);
     router.push('/achievement');
   }, [router]);
@@ -885,6 +893,7 @@ export default function PCLayout({ children }) {
   );
 
   const handleMenuClick = ({ key }) => {
+    trackPcEvent(PCEvents.NAV_CLICKED, { menuKey: key });
     // PC 端：发现/社区使用独立路由
     if (key === '/pc/find' || key === '/pc/community') {
       setActiveContent(null);
@@ -1036,7 +1045,13 @@ export default function PCLayout({ children }) {
           <div className={styles.menuBtn} onClick={() => setCollapsed(!collapsed)}>
             <MenuOutlined />
           </div>
-          <div className={styles.logo} onClick={() => router.push('/home')}>
+          <div
+            className={styles.logo}
+            onClick={() => {
+              trackPcEvent(PCEvents.LOGO_CLICKED);
+              router.push('/home');
+            }}
+          >
             <div className={styles.logoIcon}>
               <Image src={`${CDN_PUBLIC_PREFIX}/images/community/loadding.png`} alt="Mozi" width={37} height={37} />
             </div>
@@ -1281,6 +1296,7 @@ export default function PCLayout({ children }) {
                             type="button"
                             className={`${styles.pcWatchlistRow} ${isRowActive ? styles.pcWatchlistRowActive : ''}`}
                             onClick={() => {
+                              trackPcEvent(PCEvents.FAVORITE_SYMBOL_CLICKED, { symbol: sym });
                               setActiveContent(null);
                               jump2Detail(sym);
                             }}
@@ -1374,6 +1390,7 @@ export default function PCLayout({ children }) {
                             isAlertRowActive ? styles.pcAlertEntryActive : ''
                           }`}
                           onClick={() => {
+                            trackPcEvent(PCEvents.ALARM_SYMBOL_CLICKED, { symbol: item.symbol });
                             setActiveContent(null);
                             router.push(`/pc/alarm?symbol=${encodeURIComponent(item.symbol)}`);
                           }}
@@ -1552,7 +1569,10 @@ export default function PCLayout({ children }) {
                             key={item.key}
                             href={item.href}
                             className={styles.footerLink}
-                            onClick={() => setActiveContent(null)}
+                            onClick={() => {
+                              trackPcEvent(PCEvents.FOOTER_LINK_CLICKED, { linkKey: item.key });
+                              setActiveContent(null);
+                            }}
                           >
                             {item.label}
                           </Link>

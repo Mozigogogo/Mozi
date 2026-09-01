@@ -233,6 +233,10 @@ export const AIEvents = {
   INPUT_FOCUSED: 'AI_Input_Focused'
 };
 
+import { PCEvents } from './pcAmplitude';
+
+export { PCEvents };
+
 export { isAmplitudeEnabled };
 
 export default {
@@ -246,5 +250,6 @@ export default {
   FindEvents,
   CommunityEvents,
   ProfileEvents,
-  AIEvents
+  AIEvents,
+  PCEvents,
 };
