@@ -18,7 +18,7 @@ export const useAmplitude = (pageName, options = {}) => {
     autocapture = true
   } = options;
 
-  // 初始化 Amplitude（仅生产环境）
+  // 初始化 Amplitude（生产 / develop / test 预发环境）
   useEffect(() => {
     if (isAmplitudeEnabled()) {
       initAmplitude({ sampleRate, autocapture }).catch((error) => {

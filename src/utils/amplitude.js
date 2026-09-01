@@ -10,19 +10,24 @@ const AMPLITUDE_API_KEY = '262796006c5ab5404c5974f95aa77991';
 const AMPLITUDE_CORE_URL = 'https://cdn.amplitude.com/libs/analytics-browser-2.11.1-min.js.gz';
 const SESSION_REPLAY_URL = 'https://cdn.amplitude.com/libs/plugin-session-replay-browser-1.23.2-min.js.gz';
 
+/** 启用 Amplitude 的环境（生产 + develop/test 预发；本地 development 不上报） */
+const AMPLITUDE_ENABLED_ENVS = new Set(['production', 'develop', 'test']);
+
 /**
- * 检查是否应该启用 Amplitude（仅生产环境）
+ * 检查是否应该启用 Amplitude
  */
 const isAmplitudeEnabled = () => {
-  // 只在生产环境启用 Amplitude
-  const isProduction = process.env.NEXT_PUBLIC_APP_ENV === 'production';
-  
-  if (!isProduction) {
-    console.log('[Amplitude] 当前环境:', process.env.NEXT_PUBLIC_APP_ENV || 'development', '- 已禁用');
+  const appEnv = process.env.NEXT_PUBLIC_APP_ENV || 'development';
+  const enabled = AMPLITUDE_ENABLED_ENVS.has(appEnv);
+
+  if (!enabled) {
+    console.log('[Amplitude] 当前环境:', appEnv, '- 已禁用');
   }
-  
-  return isProduction;
+
+  return enabled;
 };
+
+const getAmplitudeAppEnv = () => process.env.NEXT_PUBLIC_APP_ENV || 'development';
 
 /**
  * 初始化 Amplitude
@@ -67,6 +72,7 @@ export const initAmplitude = (options = {}) => {
         }
       });
       window.amplitude.isInitialized = true;
+      window.amplitude.setUserProperties({ appEnv: '${getAmplitudeAppEnv()}' });
     `;
 
     // 按顺序加载脚本
@@ -106,6 +112,7 @@ export const trackEvent = (eventName, eventProperties = {}) => {
   }
 
   const defaultProperties = {
+    appEnv: getAmplitudeAppEnv(),
     timestamp: new Date().toISOString(),
     userAgent: navigator.userAgent,
     referrer: document.referrer,
