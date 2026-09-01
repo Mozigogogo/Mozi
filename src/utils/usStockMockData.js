@@ -437,25 +437,63 @@ export function getMockUsStockHeader(symbol) {
   });
 }
 
+/** UTC：YYYY-MM-DDTHH:mm:ss（与 timestamp 一一对应） */
+export function formatUsStockKlineDtFromTimestamp(timestampMs) {
+  const ms = Number(timestampMs);
+  if (!Number.isFinite(ms)) return '';
+  const d = new Date(ms);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+}
+
+/** 读取毫秒时间戳：优先 timestamp，过渡期兼容 ts */
+export function resolveUsStockKlineTimestamp(item) {
+  if (!item || typeof item !== 'object') return null;
+  if (item.timestamp != null && item.timestamp !== '') {
+    const n = Number(item.timestamp);
+    if (Number.isFinite(n)) return n;
+  }
+  if (item.ts != null && item.ts !== '') {
+    const n = Number(item.ts);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
 function parseUsStockKlineDt(dt) {
   if (dt == null || dt === '') return 0;
-  const s = String(dt).trim();
-  const m = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})(?:\s+(\d{1,2})(?::(\d{2}))?)?$/);
-  if (m) {
-    const [, y, mo, d, h = '0', min = '0'] = m;
-    return new Date(Number(y), Number(mo) - 1, Number(d), Number(h), Number(min)).getTime();
+  let s = String(dt).trim().replace(/\.\d{3}Z$/i, '').replace(/Z$/i, '');
+
+  const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/);
+  if (isoMatch) {
+    const [, y, mo, d, h, min, sec] = isoMatch;
+    return Date.UTC(Number(y), Number(mo) - 1, Number(d), Number(h), Number(min), Number(sec));
   }
-  const t = new Date(s).getTime();
+
+  // 过渡期兼容旧格式：YYYY/MM/DD、YYYY/MM/DD HH
+  const slashMatch = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})(?:\s+(\d{1,2})(?::(\d{2}))?)?$/);
+  if (slashMatch) {
+    const [, y, mo, d, h = '0', min = '0'] = slashMatch;
+    return Date.UTC(Number(y), Number(mo) - 1, Number(d), Number(h), Number(min), 0);
+  }
+
+  const t = Date.parse(s);
   return Number.isFinite(t) ? t : 0;
 }
 
 function formatUsStockKlineDtLabel(dt) {
   if (dt == null || dt === '') return '';
-  const s = String(dt).trim();
-  if (/^\d{4}\/\d{1,2}\/\d{1,2}\s+\d{1,2}$/.test(s)) {
-    return `${s}:00`;
+  return String(dt).trim().replace(/\.\d{3}Z$/i, '').replace(/Z$/i, '');
+}
+
+function resolveUsStockKlineBarTimestamp(item) {
+  const fromField = resolveUsStockKlineTimestamp(item);
+  if (fromField != null) return fromField;
+  if (item?.dt != null && item.dt !== '') {
+    const parsed = parseUsStockKlineDt(item.dt);
+    return parsed > 0 ? parsed : null;
   }
-  return s;
+  return null;
 }
 
 /** 美股 K 线 HTTP 分页每页条数（与后端约定） */
@@ -480,7 +518,7 @@ export function normalizeUsStockKlineResponse(raw) {
   }
 
   const sorted = [...list].sort(
-    (a, b) => parseUsStockKlineDt(a?.dt) - parseUsStockKlineDt(b?.dt)
+    (a, b) => resolveUsStockKlineBarTimestamp(a) - resolveUsStockKlineBarTimestamp(b)
   );
 
   const values = [];
@@ -505,7 +543,7 @@ export function normalizeUsStockKlineResponse(raw) {
   };
 }
 
-/** 将更早一页 K 线 prepend 到现有序列（按 dt 去重、升序） */
+/** 将更早一页 K 线 prepend 到现有序列（按 timestamp 去重、升序） */
 export function prependUsStockKlineHistorical(existingChart, olderPage) {
   if (!olderPage?.values?.length) return existingChart;
 
@@ -516,15 +554,13 @@ export function prependUsStockKlineHistorical(existingChart, olderPage) {
 
   if (olderRaw.length === 0) return existingChart;
 
-  const byDt = new Map();
+  const byTimestamp = new Map();
   [...olderRaw, ...existingRaw].forEach((bar) => {
     const normalized = normalizeUsStockKlineBar(bar);
-    if (normalized?.dt) byDt.set(String(normalized.dt), normalized);
+    if (normalized?.timestamp != null) byTimestamp.set(normalized.timestamp, normalized);
   });
 
-  const merged = [...byDt.values()].sort(
-    (a, b) => parseUsStockKlineDt(a.dt) - parseUsStockKlineDt(b.dt)
-  );
+  const merged = [...byTimestamp.values()].sort((a, b) => a.timestamp - b.timestamp);
   return buildUsStockKlineChartFromBars(merged) || existingChart;
 }
 
@@ -536,18 +572,15 @@ function normalizeUsStockKlineBar(item) {
   const high = parseFloat(item.high_price ?? item.highPrice ?? item.high ?? 0);
   if (![open, close, low, high].every((n) => Number.isFinite(n))) return null;
 
-  let dt = item.dt;
-  if (!dt && item.ts != null) {
-    const ts = Number(item.ts);
-    if (Number.isFinite(ts)) {
-      const date = new Date(ts);
-      dt = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}`;
-    }
-  }
+  const timestamp = resolveUsStockKlineBarTimestamp(item);
+  if (timestamp == null) return null;
+
+  const dt = formatUsStockKlineDtFromTimestamp(timestamp);
 
   return {
+    timestamp,
+    ts: timestamp,
     dt,
-    ts: item.ts != null ? Number(item.ts) : parseUsStockKlineDt(dt),
     open,
     close,
     low,
@@ -564,35 +597,29 @@ function isUsStockKlineBarShape(value) {
     value.open_price != null ||
     value.openPrice != null ||
     value.open != null;
-  const hasTime = value.dt != null || value.ts != null;
+  const hasTime = resolveUsStockKlineBarTimestamp(value) != null;
   return hasPrice && hasTime;
 }
 
+/** 按 timestamp 合并：相同则更新最后一根，更大则追加 */
 function mergeUsStockKlineBarIntoSeries(existingBars, incomingBar) {
   const normalized = normalizeUsStockKlineBar(incomingBar);
-  if (!normalized?.dt) return existingBars;
+  if (normalized?.timestamp == null) return existingBars;
 
   const next = Array.isArray(existingBars) ? [...existingBars] : [];
   if (next.length === 0) return next;
 
   const last = next[next.length - 1];
-  if (String(last.dt) === String(normalized.dt)) {
+  const lastTs = last?.timestamp ?? resolveUsStockKlineBarTimestamp(last);
+  const newTs = normalized.timestamp;
+
+  if (lastTs === newTs) {
     next[next.length - 1] = normalized;
     return next;
   }
-
-  const lastTime = parseUsStockKlineDt(last.dt);
-  const realTime = parseUsStockKlineDt(normalized.dt);
-  if (Number.isFinite(lastTime) && Number.isFinite(realTime)) {
-    if (realTime > lastTime) {
-      next.push(normalized);
-    } else if (realTime === lastTime) {
-      next[next.length - 1] = normalized;
-    }
-    return next;
+  if (newTs > lastTs) {
+    next.push(normalized);
   }
-
-  next.push(normalized);
   return next;
 }
 
@@ -612,7 +639,7 @@ function buildUsStockKlineChartFromBars(rawBars) {
   return { values, categoryData, _rawData: merged };
 }
 
-/** WS 仅更新最新一根 K 线（历史走 HTTP，与加密 realKlineData 逻辑一致） */
+/** WS 仅更新最新一根 K 线（历史走 HTTP）；合并以 timestamp 为准 */
 export function applyUsStockWsRealtimeKline(payload, existingRawBars = []) {
   if (!payload || typeof payload !== 'object') return null;
 
@@ -620,22 +647,27 @@ export function applyUsStockWsRealtimeKline(payload, existingRawBars = []) {
   // 尚无 HTTP 历史时忽略 WS 单点，避免只画一根 K 线
   if (existing.length === 0) return null;
 
-  let realtimeBar = null;
-  if (isUsStockKlineBarShape(payload)) {
-    realtimeBar = payload;
-  } else if (payload.klineData?.realKlineData) {
-    realtimeBar = payload.klineData.realKlineData;
+  let bars = [];
+  if (Array.isArray(payload.bars) && payload.bars.length > 0) {
+    bars = payload.bars;
+  } else if (isUsStockKlineBarShape(payload)) {
+    bars = [payload];
+  } else if (payload.klineData?.realKlineData && isUsStockKlineBarShape(payload.klineData.realKlineData)) {
+    bars = [payload.klineData.realKlineData];
   } else if (isUsStockKlineBarShape(payload.realKlineData)) {
-    realtimeBar = payload.realKlineData;
-  } else if (Array.isArray(payload.list) && payload.list.length === 1) {
-    realtimeBar = payload.list[0];
+    bars = [payload.realKlineData];
+  } else if (Array.isArray(payload.list) && payload.list.length > 0) {
+    bars = payload.list;
   }
 
-  if (!realtimeBar) return null;
+  if (bars.length === 0) return null;
 
-  return buildUsStockKlineChartFromBars(
-    mergeUsStockKlineBarIntoSeries(existing, realtimeBar)
-  );
+  let series = existing.map((bar) => normalizeUsStockKlineBar(bar)).filter(Boolean);
+  bars.forEach((bar) => {
+    series = mergeUsStockKlineBarIntoSeries(series, bar);
+  });
+
+  return buildUsStockKlineChartFromBars(series);
 }
 
 /** @deprecated 使用 applyUsStockWsRealtimeKline */
@@ -647,7 +679,7 @@ export function mergeUsStockWsKlinePayload(payload, existingRawBars = []) {
 export function rebuildUsStockKlineRawFromChart(chartData) {
   if (!chartData || typeof chartData !== 'object') return [];
   if (Array.isArray(chartData._rawData) && chartData._rawData.length > 0) {
-    return chartData._rawData;
+    return chartData._rawData.map((bar) => normalizeUsStockKlineBar(bar)).filter(Boolean);
   }
   const { values, categoryData } = chartData;
   if (!Array.isArray(values) || !Array.isArray(categoryData)) return [];
@@ -655,8 +687,13 @@ export function rebuildUsStockKlineRawFromChart(chartData) {
     .map((item, index) => {
       if (!Array.isArray(item) || item.length < 4) return null;
       const [open, close, low, high] = item;
+      const dt = categoryData[index];
+      const timestamp = parseUsStockKlineDt(dt);
+      if (!timestamp) return null;
       return {
-        dt: categoryData[index],
+        timestamp,
+        ts: timestamp,
+        dt: formatUsStockKlineDtFromTimestamp(timestamp),
         open: parseFloat(open),
         close: parseFloat(close),
         low: parseFloat(low),
@@ -687,8 +724,7 @@ export function getMockUsStockKline(symbol, intervalOrType = '1h', page = 1) {
   const dataCount = meta.count;
   const timeInterval = meta.step;
   const safePage = Math.max(1, Number(page) || 1);
-  const values = [];
-  const categoryData = [];
+  const list = [];
   let currentTime =
     Math.floor(Date.now() / 1000) -
     dataCount * timeInterval -
@@ -701,23 +737,21 @@ export function getMockUsStockKline(symbol, intervalOrType = '1h', page = 1) {
     const close = open + change;
     const high = Math.max(open, close) + Math.random() * basePrice * 0.004;
     const low = Math.min(open, close) - Math.random() * basePrice * 0.004;
-    values.push([
-      open.toFixed(2),
-      close.toFixed(2),
-      low.toFixed(2),
-      high.toFixed(2),
-    ]);
-    const date = new Date(currentTime * 1000);
-    categoryData.push(
-      interval === '1h' || interval === '1m' || interval === '5m' || interval === '15m'
-        ? `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:00`
-        : `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
-    );
+    const timestamp = currentTime * 1000;
+    list.push({
+      timestamp,
+      dt: formatUsStockKlineDtFromTimestamp(timestamp),
+      open_price: open.toFixed(2),
+      high_price: high.toFixed(2),
+      low_price: low.toFixed(2),
+      close_price: close.toFixed(2),
+      closed: true,
+    });
     currentTime += timeInterval;
     currentPrice = close;
   }
 
-  return { values, categoryData, has_more: safePage < 3 };
+  return { list, has_more: safePage < 3 };
 }
 
 const MOCK_EXCHANGE_ROWS = [

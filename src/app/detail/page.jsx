@@ -1349,8 +1349,9 @@ export default function DetailPage() {
 
     if (US_STOCK_USE_MOCK) {
       const mock = getMockUsStockKline(symbol, interval, page);
+      const normalized = normalizeUsStockKlineResponse(mock);
       return {
-        data: mock,
+        data: normalized,
         hasMore: resolveUsStockKlineHasMore(mock),
         rawPayload: mock,
       };
