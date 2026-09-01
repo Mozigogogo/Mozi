@@ -529,6 +529,8 @@ export default function DetailPage() {
   
   // 大单侦测解锁状态
   const [isBigOrderUnlocked, setIsBigOrderUnlocked] = useState(false);
+  /** 服务端已授权推送大单（订阅成功或收到推送），与本地 VIP/积分判断互补 */
+  const [serverBigDealAuthorized, setServerBigDealAuthorized] = useState(false);
   const [unlockEndTime, setUnlockEndTime] = useState(null);
   const [orderBookTag, setOrderBookTag] = useState(null);
   const [stockBigDealTab, setStockBigDealTab] = useState('spot');
@@ -614,7 +616,7 @@ export default function DetailPage() {
     return plan !== 'FREE' && plan !== '0' && plan !== 'NONE';
   };
 
-  const orderBookUnlocked = isBigOrderUnlocked || isCreateTimeGrant;
+  const orderBookUnlocked = isBigOrderUnlocked || isCreateTimeGrant || serverBigDealAuthorized;
   // 必须等订阅 settle + checkStatus 写完解锁态，再决定遮罩（避免登录瞬间闪积分解锁层）
   const showOrderBookMask =
     isLoggedIn && unlockCheckReady && !orderBookUnlocked;
@@ -643,6 +645,24 @@ export default function DetailPage() {
     if (tier === 'lite') return 20;
     return 5;
   };
+
+  const grantBigDealFromServer = useCallback(() => {
+    setServerBigDealAuthorized(true);
+    setUnlockCheckReady(true);
+  }, []);
+
+  const isBigDealSubscribeAuthorized = useCallback((response) => {
+    if (!response || typeof response !== 'object') return false;
+    const code = response.code ?? response.data?.code ?? response.data?.channels?.[0]?.code;
+    if (code === 200 || code === 0) return true;
+    const channelId = response.data?.channels?.[0]?.channelId;
+    return Boolean(channelId);
+  }, []);
+
+  const grantBigDealFromServerRef = useRef(grantBigDealFromServer);
+  const isBigDealSubscribeAuthorizedRef = useRef(isBigDealSubscribeAuthorized);
+  grantBigDealFromServerRef.current = grantBigDealFromServer;
+  isBigDealSubscribeAuthorizedRef.current = isBigDealSubscribeAuthorized;
 
   // 查询当前用户订阅/权益（用于详情页解锁逻辑等）
   useEffect(() => {
@@ -1087,12 +1107,25 @@ export default function DetailPage() {
   const lastOrderBookLogAtRef = useRef(0);
   const lastUnlockChangeLogAtRef = useRef(0);
 
+  const lastBigDealAuthTokenRef = useRef(null);
+
   // 登出清空大单；登录后由 notifySessionChanged → mozi:tokenUpdated 触发 WS 重连并重新订阅
   useEffect(() => {
     if (isLoggedIn) return;
     hasBigDealDataRef.current = false;
+    setServerBigDealAuthorized(false);
+    lastBigDealAuthTokenRef.current = null;
     setOrderBook({ bids: [], asks: [] });
   }, [isLoggedIn]);
+
+  // 仅 token 变化时重置服务端授权，避免 postLogin 重复通知导致遮罩闪回
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token') || '';
+    if (token === lastBigDealAuthTokenRef.current) return;
+    lastBigDealAuthTokenRef.current = token;
+    setServerBigDealAuthorized(false);
+  }, [sessionTick]);
 
   // 积分/会员解锁后，部分服务端不会在“已订阅但未授权”状态下自动推送数据，
   // 因此需要在 unlock 状态变为 true 时重新订阅 big_deal。
@@ -1129,6 +1162,9 @@ export default function DetailPage() {
         if (channelId) {
           if (isUsStock) stockBigDealChannelRef.current = channelId;
           else bigDealChannelIdRef.current = channelId;
+        }
+        if (isBigDealSubscribeAuthorizedRef.current(response)) {
+          grantBigDealFromServerRef.current();
         }
       } catch (e) {
         console.error('[big_deal] resubscribe after unlock failed:', e);
@@ -2283,6 +2319,9 @@ ${coinInfo.name || symbol} (${symbol})
             console.log('[WS][detail][stock_big_deal] subscribe_response:', response);
             const channelId = response?.data?.channels?.[0]?.channelId;
             if (channelId) stockBigDealChannelRef.current = channelId;
+            if (isBigDealSubscribeAuthorizedRef.current(response)) {
+              grantBigDealFromServerRef.current();
+            }
           })
           .catch((err) => {
             console.error('订阅 stock_big_deal 失败:', err);
@@ -2294,6 +2333,9 @@ ${coinInfo.name || symbol} (${symbol})
             console.log('[WS][detail][big_deal] subscribe_response:', response);
             const channelId = response?.data?.channels?.[0]?.channelId;
             if (channelId) bigDealChannelIdRef.current = channelId;
+            if (isBigDealSubscribeAuthorizedRef.current(response)) {
+              grantBigDealFromServerRef.current();
+            }
           })
           .catch((err) => {
             console.error('订阅 big_deal 失败:', err);
@@ -2780,6 +2822,8 @@ ${coinInfo.name || symbol} (${symbol})
       const data = msg?.data;
       if (!data) return;
 
+      grantBigDealFromServerRef.current();
+
       const msgSymbol = String(data?.symbol || '').toUpperCase();
       const currentSymbol = String(symbol || '').toUpperCase();
       if (msgSymbol && currentSymbol && msgSymbol !== currentSymbol) return;
@@ -2807,6 +2851,8 @@ ${coinInfo.name || symbol} (${symbol})
       const data = msg?.data;
 
       if (!data) return;
+
+      grantBigDealFromServerRef.current();
 
       const toNumber = (v) => {
         if (v === null || v === undefined) return null;
