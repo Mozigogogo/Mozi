@@ -27,6 +27,9 @@ export default function WebAlarmNotifier() {
     () => (typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '')
   );
   const authRefreshRef = useRef(0);
+  const lastTokenRef = useRef(
+    typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''
+  );
 
   const syncPushEnabled = useCallback(() => {
     setPushEnabled(readPushEnabled());
@@ -35,8 +38,11 @@ export default function WebAlarmNotifier() {
   const refreshAuthAndReconnect = useCallback(async () => {
     const requestId = ++authRefreshRef.current;
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+    const prevToken = lastTokenRef.current;
+    const tokenChanged = token !== prevToken;
 
     setAuthToken(token);
+    lastTokenRef.current = token;
 
     if (!token) {
       clearAlertConfigCache();
@@ -44,8 +50,10 @@ export default function WebAlarmNotifier() {
       return;
     }
 
-    // 先断开旧连接，避免换号后仍用上一用户的 token / 配置
-    setPushEnabled(false);
+    // 仅在 token 真正变化时，先断开旧连接，避免换号后仍用上一用户的 token / 配置
+    if (tokenChanged) {
+      setPushEnabled(false);
+    }
 
     await fetchAlertConfig(true);
     if (requestId !== authRefreshRef.current) return;
