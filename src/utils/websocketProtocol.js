@@ -27,6 +27,7 @@ export const WS_EVENTS = {
   STOCK_MARKET: 'stock_market',      // 美股跨所市场数据
   STOCK_BIG_DEAL: 'stock_big_deal',  // 美股大单侦测
   STOCK_KLINE: 'stock_kline',        // 美股 K 线
+  ALERT: 'alert',                    // 网页告警推送
   
   // AI 对话
   AI_CHAT: 'ai_chat',
@@ -52,6 +53,7 @@ export const CHANNEL_TYPES = {
   STOCK_MARKET: 'stock_market',      // 美股跨所市场数据
   STOCK_BIG_DEAL: 'stock_big_deal',  // 美股大单侦测
   STOCK_KLINE: 'stock_kline',        // 美股 K 线
+  ALERT: 'alert',                   // 网页告警
 };
 
 /** 美股详情 K 线 interval（与 REST 一致；月线用 1mon，1M 兼容） */
@@ -260,6 +262,13 @@ export function createTickerChannel(symbols, interval = 5000) {
     params: {
       interval: interval
     }
+  };
+}
+
+/** 网页告警频道（无需 symbols） */
+export function createAlertChannel() {
+  return {
+    type: CHANNEL_TYPES.ALERT,
   };
 }
 

@@ -10,6 +10,10 @@ const PCLayout = dynamic(() => import('@/components/PCLayout'), {
   loading: () => null,
 });
 
+const WebAlarmNotifier = dynamic(() => import('@/components/WebAlarmNotifier'), {
+  ssr: false,
+});
+
 const PC_MEDIA_QUERY = '(min-width: 1024px)';
 
 function subscribePcLayout(onStoreChange) {
@@ -42,12 +46,14 @@ export default function PcLayoutGate({ children }) {
   useEffect(() => {
     if (!isPC) return undefined;
     import('@/components/PCLayout').catch(() => {});
+    import('@/components/WebAlarmNotifier').catch(() => {});
     return undefined;
   }, [isPC]);
 
   return (
     <>
       {isPC ? <DetailCssWarmupPc /> : null}
+      {isPC ? <WebAlarmNotifier /> : null}
       {shouldUsePcLayout(pathname, isPC) ? (
         <PCLayout>{children}</PCLayout>
       ) : (
