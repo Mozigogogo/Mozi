@@ -26,7 +26,7 @@ import styles from './page.module.less';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/context/ThemeProvider';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
-import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, formatUsStockListItem, formatUsStockSymbolWithName, getUsStockDisplayName } from '@/utils/usStockMockData';
+import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, formatUsStockListItem, getUsStockDisplayName } from '@/utils/usStockMockData';
 
 // 过滤交易所名称中的.com，避免文字过长溢出
 const sanitizeExchangeName = (name) => {
@@ -40,7 +40,6 @@ const sanitizeExchangeName = (name) => {
 
 // 市场标题组件（用于行情数据格式化）
 const MarketTitle = ({ url, symbol, totalVolume, name }) => {
-  const displaySymbol = name ? formatUsStockSymbolWithName(symbol, name) : symbol;
   return (
     <div className={styles.rankTitle}>
       <CoinSymbolIcon
@@ -50,7 +49,14 @@ const MarketTitle = ({ url, symbol, totalVolume, name }) => {
         className={styles.rankImg}
       />
       <div>
-        <div className={styles.rankCoin}>{displaySymbol}</div>
+        {name ? (
+          <>
+            <div className={styles.rankCoin}>{symbol}</div>
+            <div className={styles.rankCoinName}>{name}</div>
+          </>
+        ) : (
+          <div className={styles.rankCoin}>{symbol}</div>
+        )}
         <div className={styles.rankCoinDesc}>{totalVolume}</div>
       </div>
     </div>

@@ -21,7 +21,7 @@ import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import { savePcAiNav } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
 import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
-import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, sortUsStockByVolume, formatUsStockListItem, formatUsStockSymbolWithName, getUsStockDisplayName } from '@/utils/usStockMockData';
+import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, sortUsStockByVolume, formatUsStockListItem, getUsStockDisplayName } from '@/utils/usStockMockData';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 import styles from './index.module.less';
 
@@ -296,7 +296,7 @@ export default function PCFindContent() {
 
   const mapUsStockListItem = (item) => formatUsStockListItem(item, { language: i18n.language });
 
-  const buildBaseMarketColumns = (colWidths) => [
+  const buildBaseMarketColumns = (colWidths, { stackedUsStockName = false } = {}) => [
     {
       title: t('home.columns.symbol'),
       dataIndex: 'symbol',
@@ -307,9 +307,14 @@ export default function PCFindContent() {
         return (
         <div className={styles.marketSymbolCell}>
           <CoinSymbolIcon symbol={text} url={record.url || record.img} size={24} />
-          <span className={styles.marketSymbolText}>
-            {displayName ? formatUsStockSymbolWithName(text, displayName) : text}
-          </span>
+          {stackedUsStockName && displayName ? (
+            <div className={styles.marketSymbolTextStack}>
+              <span className={styles.marketSymbolTicker}>{text}</span>
+              <span className={styles.marketSymbolName}>{displayName}</span>
+            </div>
+          ) : (
+            <span className={styles.marketSymbolText}>{text}</span>
+          )}
         </div>
         );
       },
@@ -430,7 +435,7 @@ export default function PCFindContent() {
   const marketColumns = [...buildBaseMarketColumns(MARKET_TABLE_COL_WIDTHS), ...marketActionColumns];
 
   // 表格列配置 - 美股行情（无操作列）
-  const usStockColumns = buildBaseMarketColumns(US_STOCK_TABLE_COL_WIDTHS);
+  const usStockColumns = buildBaseMarketColumns(US_STOCK_TABLE_COL_WIDTHS, { stackedUsStockName: true });
 
   // 表格列配置 - 自选
   const selfColumns = [
