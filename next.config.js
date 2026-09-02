@@ -36,6 +36,10 @@ const nextConfig = withLess({
       //   destination: 'https://askmozi.com/:path*',
       // },
       {
+        source: '/autoarb/api/:path*',
+        destination: `${API_BASE_URL}/autoarb/api/:path*`,
+      },
+      {
         source: '/api/:path*',
         destination: `${API_BASE_URL}/:path*`,
       },

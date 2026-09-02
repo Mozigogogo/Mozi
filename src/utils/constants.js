@@ -49,6 +49,9 @@ export const getTgAlertMiniAppLink = (symbol) => {
 // 接口基础URL - 使用代理路径避免跨域
 export const INTERFACE_URL = '/api';
 
+/** AutoArb 独立后端（Vault 等），见 https://moziinnovations.com/autoarb/api/ */
+export const AUTOARB_API_URL = '/autoarb/api';
+
 /** 大单侦测：浏览器直连 Python 后端（需后端 CORS + Redis） */
 export const BIGORDER_CHAT_API = CONFIG_BIGORDER_CHAT_API;
 
@@ -297,9 +300,9 @@ export const Interface = {
   CRYPTO_ARB_DETAIL_BASIS: '/crypto_arb/detail/basis',
   CRYPTO_ARB_DETAIL_OI: '/crypto_arb/detail/oi_change',
 
-  // AutoArb Vault
-  VAULT_EXCHANGES: '/v1/vault/exchanges',
-  VAULT_CREDENTIALS: '/v1/vault/credentials',
+  // AutoArb Vault（独立服务 /autoarb/api）
+  VAULT_EXCHANGES: '/autoarb/api/v1/vault/exchanges',
+  VAULT_CREDENTIALS: '/autoarb/api/v1/vault/credentials',
   // 所有币种
   ALL_COIN: '/derivatives/allcoin',
   // 所有交易所

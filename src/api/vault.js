@@ -3,8 +3,21 @@
  */
 
 import { request } from '../utils/request';
-import { Interface } from '../utils/constants';
+import { AUTOARB_API_URL, Interface } from '../utils/constants';
 import { mergeVaultExchange, mergeVaultCredential } from '../utils/vaultExchanges';
+
+/**
+ * Vault 接口走 AutoArb 独立服务（/autoarb/api），与主站 /api 分离。
+ * axios 对以 / 开头的 url 会忽略 baseURL(/api)，直接请求同源路径。
+ */
+async function vaultRequest(options) {
+  const path = String(options.url || '');
+  const url =
+    path.startsWith('/autoarb/') || path.startsWith('http')
+      ? path
+      : `${AUTOARB_API_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  return request({ ...options, url });
+}
 
 /**
  * 获取支持托管的交易所列表
@@ -20,7 +33,7 @@ import { mergeVaultExchange, mergeVaultCredential } from '../utils/vaultExchange
  * }>>}
  */
 export async function fetchVaultExchanges() {
-  const res = await request({
+  const res = await vaultRequest({
     url: Interface.VAULT_EXCHANGES,
     method: 'GET',
   });
@@ -42,7 +55,7 @@ export async function fetchVaultExchanges() {
  * GET /v1/vault/credentials
  */
 export async function fetchVaultCredentials() {
-  const res = await request({
+  const res = await vaultRequest({
     url: Interface.VAULT_CREDENTIALS,
     method: 'GET',
   });
@@ -118,7 +131,7 @@ export async function saveVaultCredentials({
     body.label = trimmedLabel.slice(0, 64);
   }
 
-  const res = await request({
+  const res = await vaultRequest({
     url: Interface.VAULT_CREDENTIALS,
     method: 'POST',
     data: body,
