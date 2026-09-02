@@ -21,6 +21,7 @@ import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import { savePcAiNav } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
 import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
+import { localizeMoneyFmt } from '@/utils/formatMoney';
 import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, sortUsStockByVolume, formatUsStockListItem, getUsStockDisplayName } from '@/utils/usStockMockData';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 import styles from './index.module.less';
@@ -118,6 +119,22 @@ export default function PCFindContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, i18n } = useTranslation();
+
+  const formatRankLocalizedMoney = useCallback((val) => {
+    if (val == null || val === '' || val === '--') return '--';
+    return localizeMoneyFmt(val, i18n.language);
+  }, [i18n.language]);
+
+  const getRankSecondaryMetric = useCallback((item, type) => {
+    if (type === 'exchange') return item.metric ?? '--';
+    if (type === 'volume') return formatRankLocalizedMoney(item.usd);
+    if (type === 'surge') {
+      const raw = item.movers ?? item.priceRange ?? '--';
+      if (raw === '--' || raw == null || String(raw).includes('%')) return raw ?? '--';
+      return `${raw}%`;
+    }
+    return item.priceRange ?? item.usd ?? item.volume_24h ?? item.movers ?? '--';
+  }, [formatRankLocalizedMoney]);
   
   const [activeTab, setActiveTab] = useState('market');
   const [marketViewMode, setMarketViewMode] = useState('table'); // table | calendar
@@ -332,6 +349,7 @@ export default function PCFindContent() {
       key: 'totalVolume',
       align: 'right',
       width: colWidths[2],
+      render: (value) => formatRankLocalizedMoney(value),
     },
     {
       title: t('discover.columns.change24hValue'),
@@ -1482,7 +1500,7 @@ export default function PCFindContent() {
                               TOP 3 <span>{t('discover.tabs.rank')}</span>
                             </div>
                             <div className={styles.rankTopInfoSub}>
-                              {t('common.realTime', { defaultValue: '实时更新' })}
+                              {t('exchangeRank.realTimeUpdate')}
                             </div>
                           </div>
                           <span className={styles.rankTopInfoTag}>Top100</span>
@@ -1639,13 +1657,19 @@ export default function PCFindContent() {
                                     ? t('discover.exchange.columns.volume24h')
                                     : t('home.columns.lastPrice', { defaultValue: '最新价' })}
                                 </span>
-                                <span className={styles.rankTopCardValue}>{item.last ?? '--'}</span>
+                                <span className={styles.rankTopCardValue}>
+                                  {rankActiveType === 'exchange'
+                                    ? formatRankLocalizedMoney(item.last)
+                                    : (item.last ?? '--')}
+                                </span>
                               </div>
                               <div className={styles.rankTopCardMetricRow}>
                                 <span className={styles.rankTopCardMetricLabel}>
                                   {rankActiveType === 'exchange'
                                     ? `${t('discover.exchange.columns.markets')}/${t('discover.exchange.columns.coins')}`
-                                    : t('home.columns.change24h', { defaultValue: '涨幅' })}
+                                    : rankActiveType === 'volume'
+                                      ? t('discover.columns.turnover')
+                                      : t('home.columns.change24h', { defaultValue: '涨幅' })}
                                 </span>
                                 <div
                                   className={`${styles.rankTopCardChange} ${
@@ -1656,9 +1680,7 @@ export default function PCFindContent() {
                                         : styles.positive
                                   }`}
                                 >
-                                  {rankActiveType === 'exchange'
-                                    ? item.metric
-                                    : item.priceRange ?? item.usd ?? item.volume_24h ?? item.movers ?? '--'}
+                                  {getRankSecondaryMetric(item, rankActiveType)}
                                 </div>
                               </div>
                             </div>
@@ -1753,21 +1775,14 @@ export default function PCFindContent() {
                               />
                               <span className={styles.rankCoinSymbol}>{row.symbol}</span>
                             </div>
-                            <div className={`${styles.rankColRight} ${styles.rankPrice}`}>{row.last ?? '--'}</div>
+                            <div className={`${styles.rankColRight} ${styles.rankPrice}`}>
+                              {rankActiveType === 'exchange'
+                                ? formatRankLocalizedMoney(row.last)
+                                : (row.last ?? '--')}
+                            </div>
                             <div className={styles.rankColCenter}>
                               {(() => {
-                                const pillValue =
-                                  rankActiveType === 'exchange'
-                                    ? row.metric
-                                    : row.priceRange ?? row.usd ?? row.volume_24h ?? row.movers ?? '--';
-                                const displayPillValue =
-                                  rankActiveType === 'surge' &&
-                                  pillValue !== '--' &&
-                                  pillValue !== null &&
-                                  pillValue !== undefined &&
-                                  !String(pillValue).includes('%')
-                                    ? `${pillValue}%`
-                                    : pillValue;
+                                const pillValue = getRankSecondaryMetric(row, rankActiveType);
                                 const digitCount = String(pillValue ?? '')
                                   .replace(/[^0-9]/g, '')
                                   .length;
@@ -1783,7 +1798,7 @@ export default function PCFindContent() {
                                       : styles.positive
                                 } ${isLong ? styles.rankChangePillSmall : ''}`}
                               >
-                                {displayPillValue}
+                                {pillValue}
                               </span>
                                 );
                               })()}
