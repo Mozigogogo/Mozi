@@ -4,15 +4,7 @@
   flex-shrink: 0;
   display: block;
   box-sizing: border-box;
-  /* 部分品牌 logo 是白色/透明背景，在亮色主题下会隐形；
-     给圆形图标一个深色底，确保在任何背景下都清晰可见 */
-  background: #1c1f24;
-}
-
-:global([data-theme="dark"]) {
-  .icon {
-    background: rgba(255, 255, 255, 0.08);
-  }
+  background: transparent;
 }
 
 .fallback {
