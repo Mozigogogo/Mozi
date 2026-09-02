@@ -1,0 +1,56 @@
+/* ── 2. Embedded mode ─────────────────────────────────────────────────────── */
+
+#mozi-arbitrage-radar.is-embedded {
+  min-height: 0;
+  background: #fff;
+  overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+#mozi-arbitrage-radar.is-embedded .hdr {
+  display: none;
+}
+#mozi-arbitrage-radar.is-embedded .main {
+  max-width: 100%;
+  min-width: 0;
+  padding: 16px 12px 20px;
+  overflow: hidden;
+}
+#mozi-arbitrage-radar.is-embedded .intro-strip {
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+#mozi-arbitrage-radar.is-embedded .type-tabs {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+#mozi-arbitrage-radar.is-embedded .ttab {
+  padding: 10px 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#mozi-arbitrage-radar.is-embedded .tbl-wrap {
+  max-width: 100%;
+  overflow: hidden;
+}
+#mozi-arbitrage-radar.is-embedded .tbl-hscroll.show {
+  display: block;
+}
+#mozi-arbitrage-radar.is-embedded thead th,
+#mozi-arbitrage-radar.is-embedded td {
+  padding: 10px 8px;
+}
+#mozi-arbitrage-radar.is-embedded .sym-name {
+  font-size: 13px;
+}
+#mozi-arbitrage-radar.is-embedded .sym-ico {
+  width: 26px;
+  height: 26px;
+  font-size: 10px;
+}
+#mozi-arbitrage-radar.is-embedded .warn-tag {
+  margin-left: 4px;
+  padding: 2px 5px;
+  font-size: 9px;
+}

@@ -1,0 +1,61 @@
+/* ── 8. Light-theme shadows & polish ──────────────────────────────────────── */
+.mozi-autoarb .hdr {
+  box-shadow: 0 1px 0 var(--border);
+}
+.mozi-autoarb .api-block,
+.mozi-autoarb .step-card,
+.mozi-autoarb .strat-card,
+.mozi-autoarb .plan-card,
+.mozi-autoarb .sec-item,
+.mozi-autoarb .threat-model,
+.mozi-autoarb .sim-card {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.07),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.mozi-autoarb .strat-card:hover {
+  box-shadow: 0 4px 16px rgba(180, 83, 9, 0.1);
+}
+.mozi-autoarb .plan-card.featured {
+  box-shadow: 0 0 24px rgba(180, 83, 9, 0.12);
+}
+.mozi-autoarb .risk-panel,
+.mozi-autoarb .activity-panel,
+.mozi-autoarb .capital-panel {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+.mozi-autoarb .scard {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+.mozi-autoarb .emergency-bar {
+  background: rgba(220, 38, 38, 0.05);
+  border-color: rgba(220, 38, 38, 0.18);
+}
+.mozi-autoarb .ds-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+.mozi-autoarb .wizard-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+.mozi-autoarb .vault-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+.mozi-autoarb .type-opt {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.mozi-autoarb .type-opt.selected {
+  box-shadow: 0 0 0 2px var(--gold);
+}
+.mozi-autoarb tbody tr:hover td {
+  background: #f8fafc;
+}
+.mozi-autoarb .hero-bg {
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 50%,
+    rgba(180, 83, 9, 0.05) 0%,
+    transparent 70%
+  );
+}
+.mozi-autoarb .confirm-box {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}

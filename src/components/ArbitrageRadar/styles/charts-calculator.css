@@ -1,0 +1,309 @@
+/* ── 10. Charts, grids & calculator ─────────────────────────────────────── */
+
+/* Charts */
+#mozi-arbitrage-radar .chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+#mozi-arbitrage-radar .chart-card-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+#mozi-arbitrage-radar .chart-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--t2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+#mozi-arbitrage-radar .chart-legend {
+  display: flex;
+  gap: 14px;
+}
+#mozi-arbitrage-radar .leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--t3);
+}
+#mozi-arbitrage-radar .leg-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+#mozi-arbitrage-radar .chart-svg-wrap {
+  position: relative;
+}
+#mozi-arbitrage-radar .c-tooltip {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  padding: 7px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+  white-space: nowrap;
+  z-index: 10;
+  color: var(--t1);
+}
+
+/* Metric grids */
+#mozi-arbitrage-radar .g2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+#mozi-arbitrage-radar .g3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+@media (max-width: 660px) {
+  #mozi-arbitrage-radar .g2,
+  #mozi-arbitrage-radar .g3 {
+    grid-template-columns: 1fr;
+  }
+}
+#mozi-arbitrage-radar .card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+}
+#mozi-arbitrage-radar .card-t {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 14px;
+}
+#mozi-arbitrage-radar .met-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+#mozi-arbitrage-radar .met-row:last-child {
+  border-bottom: none;
+}
+#mozi-arbitrage-radar .met-l {
+  font-size: 12px;
+  color: var(--t2);
+}
+#mozi-arbitrage-radar .met-v {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+}
+#mozi-arbitrage-radar .chg-up {
+  color: var(--pos);
+}
+#mozi-arbitrage-radar .chg-dn {
+  color: var(--danger);
+}
+
+/* Profit calculator */
+#mozi-arbitrage-radar .calc-card {
+  background: var(--card);
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--r);
+  padding: 20px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+#mozi-arbitrage-radar .calc-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+#mozi-arbitrage-radar .calc-t {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#mozi-arbitrage-radar .inp-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+#mozi-arbitrage-radar .inp-g {
+  flex: 1;
+  min-width: 130px;
+}
+#mozi-arbitrage-radar .inp-lbl {
+  font-size: 11px;
+  color: var(--t3);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+#mozi-arbitrage-radar .inp-wrap {
+  position: relative;
+}
+#mozi-arbitrage-radar .inp-pfx {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--t3);
+  font-family: var(--mono);
+  font-size: 12px;
+  pointer-events: none;
+}
+#mozi-arbitrage-radar .inp-f {
+  width: 100%;
+  padding: 8px 10px 8px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  color: var(--t1);
+  font-family: var(--mono);
+  font-size: 13px;
+  transition: border-color var(--ease);
+  outline: none;
+}
+#mozi-arbitrage-radar .inp-f:focus {
+  border-color: var(--accent);
+}
+#mozi-arbitrage-radar .inp-f.np {
+  padding-left: 10px;
+}
+#mozi-arbitrage-radar .pbtns {
+  display: flex;
+  gap: 4px;
+}
+#mozi-arbitrage-radar .pbtn {
+  flex: 1;
+  padding: 8px 4px;
+  border-radius: var(--rs);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--t2);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--ease);
+  text-align: center;
+}
+#mozi-arbitrage-radar .pbtn.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+#mozi-arbitrage-radar .pbtn:hover {
+  border-color: var(--border-lit);
+  color: var(--t1);
+}
+#mozi-arbitrage-radar .steps-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+#mozi-arbitrage-radar .step-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+#mozi-arbitrage-radar .step-row:last-child {
+  border-bottom: none;
+}
+#mozi-arbitrage-radar .step-n {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#mozi-arbitrage-radar .step-txt {
+  font-size: 12px;
+  color: var(--t2);
+  flex: 1;
+}
+#mozi-arbitrage-radar .step-amt {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--t1);
+}
+#mozi-arbitrage-radar .res-table {
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  overflow: hidden;
+}
+#mozi-arbitrage-radar .res-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.3s;
+}
+#mozi-arbitrage-radar .res-row:last-child {
+  border-bottom: none;
+}
+#mozi-arbitrage-radar .res-row.tot {
+  background: rgba(0, 184, 144, 0.08);
+}
+#mozi-arbitrage-radar .res-l {
+  font-size: 12px;
+  color: var(--t2);
+}
+#mozi-arbitrage-radar .res-v {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+#mozi-arbitrage-radar .res-v.p {
+  color: var(--pos);
+}
+#mozi-arbitrage-radar .res-v.n {
+  color: var(--danger);
+}
+#mozi-arbitrage-radar .res-v.tot {
+  color: var(--accent);
+  font-size: 15px;
+}
+#mozi-arbitrage-radar .flash {
+  animation: flashbg 0.4s ease;
+}
+@keyframes flashbg {
+  0% {
+    background: rgba(0, 184, 144, 0.14);
+  }
+  100% {
+    background: transparent;
+  }
+}

@@ -1,0 +1,109 @@
+/* ── 7. Skeleton & intro strip ────────────────────────────────────────────── */
+#mozi-arbitrage-radar .skel-row {
+  pointer-events: none;
+  animation: arb-skel-row 1.2s ease infinite;
+}
+#mozi-arbitrage-radar .skel-row:hover {
+  background: transparent;
+}
+#mozi-arbitrage-radar .skel {
+  display: inline-block;
+  background: linear-gradient(90deg, #eef2f6 25%, #f7f9fc 37%, #eef2f6 63%);
+  background-size: 400% 100%;
+  animation: arb-skel 1.2s ease infinite;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+#mozi-arbitrage-radar .skel-num {
+  width: 18px;
+  height: 12px;
+}
+#mozi-arbitrage-radar .skel-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+#mozi-arbitrage-radar .skel-sym-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#mozi-arbitrage-radar .skel-line {
+  height: 12px;
+}
+#mozi-arbitrage-radar .skel-badge {
+  width: 58px;
+  height: 22px;
+  border-radius: 4px;
+}
+#mozi-arbitrage-radar .skel-stars {
+  width: 72px;
+  height: 12px;
+}
+#mozi-arbitrage-radar .skel-w40 {
+  width: 40px;
+}
+#mozi-arbitrage-radar .skel-w48 {
+  width: 48px;
+}
+#mozi-arbitrage-radar .skel-w64 {
+  width: 64px;
+}
+#mozi-arbitrage-radar .skel-w72 {
+  width: 72px;
+}
+#mozi-arbitrage-radar .skel-w88 {
+  width: 88px;
+}
+@keyframes arb-skel {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+@keyframes arb-skel-row {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Intro onboarding strip */
+#mozi-arbitrage-radar .intro-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 22px;
+}
+#mozi-arbitrage-radar .intro-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+}
+#mozi-arbitrage-radar .intro-icon {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+#mozi-arbitrage-radar .intro-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--t1);
+  margin-bottom: 4px;
+}
+#mozi-arbitrage-radar .intro-desc {
+  font-size: 11px;
+  color: var(--t3);
+  line-height: 1.6;
+}
+@media (max-width: 700px) {
+  #mozi-arbitrage-radar .intro-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+}

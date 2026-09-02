@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
+import './styles/landing.css';
 
 const SECURITY_META = [
   ['var(--pos-dim)', '🔐'],

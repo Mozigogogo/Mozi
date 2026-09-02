@@ -27,6 +27,9 @@ export * from './vip';
 // AI / Agent 相关
 export * from './ai';
 
+// AutoArb Vault
+export * from './vault';
+
 // 未来可以添加更多 API 模块
 // export * from './trading';
 

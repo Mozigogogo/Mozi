@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FEE_ASSUMPTIONS, OPPORTUNITIES, RISK_PRESETS } from './data';
 import { Sparkline, Tip } from './charts';
+import './styles/wizard.css';
 
 const STRAT_TYPES = ['funding', 'spread', 'basis'];
 const TOGGLE_KEYS = ['negFunding', 'basisReduce', 'dayStop', 'marginAlert'];

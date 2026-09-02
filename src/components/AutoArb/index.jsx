@@ -7,7 +7,7 @@ import Dashboard from './Dashboard';
 import Vault from './Vault';
 import Wizard from './Wizard';
 import { INITIAL_STRATEGIES, NAV_ITEMS } from './data';
-import './autoarb.css';
+import './index.css';
 
 /**
  * @param {{ onSwitchToRadar?: () => void; className?: string }} props

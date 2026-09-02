@@ -1,0 +1,73 @@
+/* ── 1. Reset, tokens & scrollbars ──────────────────────────────────────── */
+
+#mozi-arbitrage-radar *,
+#mozi-arbitrage-radar *::before,
+#mozi-arbitrage-radar *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+#mozi-arbitrage-radar {
+  /* Surfaces */
+  --bg: #f5f7fa;
+  --surface: #f8fafc;
+  --card: #ffffff;
+  --border: #e5eaf0;
+  --border-lit: #d0d7e2;
+
+  /* Brand & semantic */
+  --accent: #00b890;
+  --accent-dim: rgba(0, 184, 144, 0.1);
+  --accent-glow: rgba(0, 184, 144, 0.28);
+  --warn: #d97706;
+  --warn-dim: rgba(217, 119, 6, 0.1);
+  --danger: #ef4444;
+  --pos: #059669;
+  --blue: #2563eb;
+  --blue-dim: rgba(37, 99, 235, 0.1);
+  --purple: #7c3aed;
+  --purple-dim: rgba(124, 58, 237, 0.1);
+  --orange: #ea580c;
+  --orange-dim: rgba(234, 88, 12, 0.1);
+
+  /* Typography */
+  --t1: #1a1f36;
+  --t2: #667085;
+  --t3: #98a2b3;
+  --mono: "JetBrains Mono", monospace;
+  --sans: "Inter", sans-serif;
+  --display: "Space Grotesk", sans-serif;
+
+  /* Layout & motion */
+  --r: 10px;
+  --rs: 6px;
+  --ease: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  font-family: var(--sans);
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--t1);
+  min-height: calc(100vh - 88px);
+  overflow: visible;
+  border-radius: 12px;
+  position: relative;
+}
+
+/* PC 列表/详情跟布局白底对齐，去掉灰底 */
+#mozi-arbitrage-radar:not(.is-mobile) {
+  background: transparent;
+}
+
+#mozi-arbitrage-radar ::-webkit-scrollbar {
+  width: 4px;
+}
+
+#mozi-arbitrage-radar ::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+#mozi-arbitrage-radar ::-webkit-scrollbar-thumb {
+  background: var(--border-lit);
+  border-radius: 2px;
+}

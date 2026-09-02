@@ -1,0 +1,66 @@
+/* ── 4. Main layout & tabs ────────────────────────────────────────────────── */
+#mozi-arbitrage-radar .main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 24px 80px;
+}
+/* 仅显式加 .is-enter 时做轻位移，避免首屏 opacity:0→1 整页闪一下 */
+#mozi-arbitrage-radar .view.is-enter {
+  animation: vin 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes vin {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Tabs */
+#mozi-arbitrage-radar .type-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#mozi-arbitrage-radar .type-tabs::-webkit-scrollbar {
+  display: none;
+}
+#mozi-arbitrage-radar .ttab {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--t2);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all var(--ease);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+#mozi-arbitrage-radar .ttab .tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+}
+#mozi-arbitrage-radar .ttab.on .tab-dot {
+  opacity: 1;
+}
+#mozi-arbitrage-radar .ttab.on {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+#mozi-arbitrage-radar .ttab:hover {
+  color: var(--t1);
+}

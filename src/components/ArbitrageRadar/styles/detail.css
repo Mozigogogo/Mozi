@@ -1,0 +1,235 @@
+/* ── 9. Detail view ───────────────────────────────────────────────────────── */
+#mozi-arbitrage-radar .back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--rs);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--t2);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--ease);
+  margin-bottom: 22px;
+}
+#mozi-arbitrage-radar .back-btn:hover {
+  color: var(--t1);
+  border-color: var(--t3);
+}
+#mozi-arbitrage-radar .back-btn-ico {
+  display: block;
+  flex-shrink: 0;
+}
+#mozi-arbitrage-radar.is-detail-only .hdr {
+  display: none;
+}
+#mozi-arbitrage-radar.is-detail-only:not(.is-mobile) .hdr {
+  display: flex;
+}
+#mozi-arbitrage-radar.is-detail-only:not(.is-mobile) .back-btn {
+  display: none;
+}
+#mozi-arbitrage-radar.is-detail-only .main {
+  padding: 16px 16px 32px;
+}
+#mozi-arbitrage-radar.is-detail-only:not(.is-mobile) {
+  background: transparent;
+  min-height: 0;
+  border-radius: 0;
+}
+#mozi-arbitrage-radar.is-mobile.is-detail-only .main {
+  padding: 12px 16px 28px;
+}
+#mozi-arbitrage-radar .det-hdr {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+#mozi-arbitrage-radar .det-left {
+}
+#mozi-arbitrage-radar .det-ttl {
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#mozi-arbitrage-radar .det-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+#mozi-arbitrage-radar .cntd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--t2);
+}
+#mozi-arbitrage-radar .cntd-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--t1);
+  background: var(--surface);
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+#mozi-arbitrage-radar .det-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+#mozi-arbitrage-radar .big-val {
+  font-family: var(--mono);
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1;
+}
+#mozi-arbitrage-radar .big-label {
+  font-size: 11px;
+  color: var(--t2);
+  margin-top: 4px;
+}
+#mozi-arbitrage-radar .big-sub {
+  font-size: 11px;
+  color: var(--t2);
+  margin-top: 5px;
+}
+#mozi-arbitrage-radar .type-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border: 1px solid;
+}
+#mozi-arbitrage-radar .type-chip-spread {
+  background: var(--blue-dim);
+  border-color: rgba(37, 99, 235, 0.3);
+  color: var(--blue);
+}
+#mozi-arbitrage-radar .type-chip-basis {
+  background: var(--purple-dim);
+  border-color: rgba(124, 58, 237, 0.3);
+  color: var(--purple);
+}
+#mozi-arbitrage-radar .type-chip-oi {
+  background: var(--orange-dim);
+  border-color: rgba(234, 88, 12, 0.3);
+  color: var(--orange);
+}
+#mozi-arbitrage-radar .xaxis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--t3);
+  padding: 0 4px;
+}
+#mozi-arbitrage-radar .signal-card {
+  border-radius: var(--r);
+  padding: 18px;
+  margin-bottom: 14px;
+  border: 1px solid;
+}
+#mozi-arbitrage-radar .signal-hdr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+#mozi-arbitrage-radar .signal-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+#mozi-arbitrage-radar .signal-ttl {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 17px;
+}
+#mozi-arbitrage-radar .signal-desc {
+  font-size: 13px;
+  color: var(--t2);
+  line-height: 1.75;
+}
+#mozi-arbitrage-radar .info-box {
+  background: rgba(37, 99, 235, 0.05);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--r);
+  padding: 15px 18px;
+  margin-bottom: 14px;
+}
+#mozi-arbitrage-radar .info-t {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--blue);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+#mozi-arbitrage-radar .info-li {
+  font-size: 12px;
+  color: var(--t2);
+  padding: 3px 0 3px 14px;
+  position: relative;
+  line-height: 1.65;
+}
+#mozi-arbitrage-radar .info-li::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--blue);
+  font-size: 10px;
+}
+#mozi-arbitrage-radar .calc-desc {
+  font-size: 11px;
+  color: var(--t2);
+  margin-bottom: 16px;
+}
+#mozi-arbitrage-radar .calc-card-blue {
+  border-color: var(--blue-dim);
+}
+#mozi-arbitrage-radar .calc-card-blue::before {
+  background: linear-gradient(90deg, var(--blue), transparent);
+}
+#mozi-arbitrage-radar .calc-card-purple {
+  border-color: var(--purple-dim);
+}
+#mozi-arbitrage-radar .calc-card-purple::before {
+  background: linear-gradient(90deg, var(--purple), transparent);
+}
+#mozi-arbitrage-radar .skel-w120 {
+  width: 120px;
+}
+#mozi-arbitrage-radar .skel-w24 {
+  width: 24px;
+}
+#mozi-arbitrage-radar .fund-big {
+  font-family: var(--mono);
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+#mozi-arbitrage-radar .fund-sub {
+  font-size: 11px;
+  color: var(--t2);
+  margin-top: 5px;
+}
+#mozi-arbitrage-radar .fund-ann {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--t1);
+  margin-top: 4px;
+}

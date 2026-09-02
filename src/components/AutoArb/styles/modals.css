@@ -1,0 +1,541 @@
+/* ── 9. Pro upgrade (modals, tooltips, strategy detail) ───────────────────── */
+.mozi-autoarb .modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 5vh 20px;
+  overflow-y: auto;
+}
+.mozi-autoarb .modal-overlay.open {
+  display: flex;
+}
+.mozi-autoarb .modal-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  max-width: 720px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+  animation: modalIn 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mozi-autoarb .modal-box.wide {
+  max-width: 920px;
+}
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.mozi-autoarb .modal-hdr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.mozi-autoarb .modal-hdr-ico {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.mozi-autoarb .modal-title {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 700;
+}
+.mozi-autoarb .modal-sub {
+  font-size: 11px;
+  color: var(--t3);
+  margin-top: 2px;
+}
+.mozi-autoarb .modal-close {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--t3);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--ease);
+}
+.mozi-autoarb .modal-close:hover {
+  color: var(--t1);
+  border-color: var(--border-lit);
+}
+.mozi-autoarb .modal-body {
+  padding: 22px 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.mozi-autoarb .modal-footer {
+  display: flex;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+/* 术语提示 tooltip */
+.mozi-autoarb .tip-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.mozi-autoarb .tip-ico {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--t2);
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  flex-shrink: 0;
+}
+.mozi-autoarb .tip-ico:hover {
+  background: var(--gold);
+  color: #000;
+}
+.mozi-autoarb .tip-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  background: var(--t1);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.55;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ease);
+  z-index: 50;
+  font-weight: 400;
+}
+.mozi-autoarb .tip-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--t1);
+}
+.mozi-autoarb .tip-wrap:hover .tip-bubble {
+  opacity: 1;
+}
+/* 风险预设条 */
+.mozi-autoarb .preset-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.mozi-autoarb .preset-btn {
+  padding: 10px 8px;
+  border-radius: var(--r);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--ease);
+}
+.mozi-autoarb .preset-btn:hover {
+  border-color: var(--border-lit);
+}
+.mozi-autoarb .preset-btn.on {
+  border-color: var(--gold);
+  background: var(--gold-dim);
+}
+.mozi-autoarb .preset-name {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.mozi-autoarb .preset-desc {
+  font-size: 9.5px;
+  color: var(--t3);
+  line-height: 1.4;
+}
+/* 参数校验提示 */
+.mozi-autoarb .param-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--rs);
+  background: var(--warn-dim);
+  border: 1px solid rgba(180, 83, 9, 0.3);
+  font-size: 11px;
+  color: var(--t2);
+  margin-bottom: 14px;
+  line-height: 1.55;
+}
+.mozi-autoarb .param-warn.danger {
+  background: var(--danger-dim);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+.mozi-autoarb .param-ok {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: var(--rs);
+  background: var(--pos-dim);
+  border: 1px solid rgba(5, 150, 105, 0.25);
+  font-size: 11px;
+  color: var(--pos);
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+/* 机会选择器（Wizard Step2） */
+.mozi-autoarb .opp-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.mozi-autoarb .opp-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all var(--ease);
+}
+.mozi-autoarb .opp-item:hover {
+  border-color: var(--border-lit);
+}
+.mozi-autoarb .opp-item.selected {
+  border-color: var(--gold);
+  background: var(--gold-dim);
+}
+.mozi-autoarb .opp-sym {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 13px;
+  width: 88px;
+  flex-shrink: 0;
+}
+.mozi-autoarb .opp-ex {
+  font-size: 10px;
+  color: var(--t3);
+  margin-top: 1px;
+}
+.mozi-autoarb .opp-spark {
+  width: 70px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.mozi-autoarb .opp-ann {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 14px;
+  width: 70px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.mozi-autoarb .opp-depth {
+  font-size: 10px;
+  color: var(--t3);
+  width: 110px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.mozi-autoarb .opp-detail {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.mozi-autoarb .opp-detail-spark {
+  flex-shrink: 0;
+}
+/* 实时预估条 */
+.mozi-autoarb .live-estimate {
+  position: sticky;
+  bottom: 0;
+  background: var(--card);
+  border: 1.5px solid var(--gold);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin-top: 4px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+}
+.mozi-autoarb .le-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mozi-autoarb .le-lbl {
+  font-size: 10.5px;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.mozi-autoarb .le-val {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 15px;
+}
+.mozi-autoarb .le-breakdown {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 10.5px;
+  color: var(--t3);
+}
+.mozi-autoarb .le-breakdown span b {
+  color: var(--t2);
+  font-family: var(--mono);
+}
+/* 策略详情弹窗 */
+.mozi-autoarb .leg-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+.mozi-autoarb .leg-table th {
+  text-align: left;
+  font-size: 10px;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+.mozi-autoarb .leg-table td {
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.mozi-autoarb .leg-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+.mozi-autoarb .leg-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.mozi-autoarb .detail-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.mozi-autoarb .dm-item {
+  background: var(--surface);
+  border-radius: var(--rs);
+  padding: 10px;
+  text-align: center;
+}
+.mozi-autoarb .dm-lbl {
+  font-size: 9px;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+.mozi-autoarb .dm-val {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+}
+.mozi-autoarb .detail-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 18px 0 10px;
+}
+.mozi-autoarb .detail-section-title:first-child {
+  margin-top: 0;
+}
+.mozi-autoarb .exec-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.mozi-autoarb .exec-tl-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11.5px;
+}
+.mozi-autoarb .exec-tl-item:last-child {
+  border-bottom: none;
+}
+.mozi-autoarb .exec-tl-time {
+  font-family: var(--mono);
+  color: var(--t3);
+  width: 70px;
+  flex-shrink: 0;
+  font-size: 10.5px;
+}
+.mozi-autoarb .stress-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.mozi-autoarb .stress-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  padding: 11px 12px;
+}
+.mozi-autoarb .stress-scenario {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mozi-autoarb .stress-outcome {
+  font-size: 10.5px;
+  color: var(--t2);
+  line-height: 1.5;
+}
+/* 信号雷达面板 */
+.mozi-autoarb .radar-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+.mozi-autoarb .radar-item {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.mozi-autoarb .radar-item:last-child {
+  border-bottom: none;
+}
+.mozi-autoarb .radar-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.mozi-autoarb .radar-sym {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.mozi-autoarb .radar-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+.mozi-autoarb .radar-bar-track {
+  height: 5px;
+  background: var(--surface);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+.mozi-autoarb .radar-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+.mozi-autoarb .radar-threshold {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 9px;
+  background: var(--t1);
+}
+.mozi-autoarb .radar-note {
+  font-size: 9.5px;
+  color: var(--t3);
+  margin-top: 4px;
+}
+/* 容量与克隆等杂项 */
+.mozi-autoarb .capacity-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--t3);
+  margin-top: 6px;
+}
+.mozi-autoarb .field-locked {
+  opacity: 0.55;
+  pointer-events: none;
+  position: relative;
+}
+.mozi-autoarb .locked-badge {
+  font-size: 9px;
+  color: var(--t3);
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+}
+.mozi-autoarb .risk-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+.mozi-autoarb .risk-ack input {
+  margin-top: 2px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+.mozi-autoarb .risk-ack-text {
+  font-size: 11.5px;
+  color: var(--t2);
+  line-height: 1.55;
+}

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ACTIVITY_TEMPLATES, DONUT_SEGMENTS } from './data';
 import { ActivityText, Donut, Gauge, Modal, Sparkline, Tip } from './charts';
+import './styles/dashboard.css';
 
 function daysSince(dateStr) {
   return Math.max(

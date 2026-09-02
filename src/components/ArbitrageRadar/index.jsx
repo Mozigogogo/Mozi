@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from 'react';
 import { mountArbitrageRadar } from './runtime';
-import './arbitrage-radar.css';
+import './radar.css';
 import styles from './index.module.less';
 
 /**

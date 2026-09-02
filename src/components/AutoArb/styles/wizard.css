@@ -1,0 +1,262 @@
+/* ── 6. Strategy wizard ───────────────────────────────────────────────────── */
+.mozi-autoarb .wizard-layout {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 40px 0;
+}
+.mozi-autoarb .wizard-progress {
+  display: flex;
+  align-items: center;
+  margin-bottom: 32px;
+}
+.mozi-autoarb .wp-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+.mozi-autoarb .wp-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--t3);
+  transition: all var(--ease);
+}
+.mozi-autoarb .wp-circle.done {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #000;
+}
+.mozi-autoarb .wp-circle.current {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.mozi-autoarb .wp-label {
+  font-size: 10px;
+  color: var(--t3);
+  text-align: center;
+  white-space: nowrap;
+}
+.mozi-autoarb .wp-label.current {
+  color: var(--gold);
+}
+.mozi-autoarb .wp-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  margin: 0 6px;
+  margin-bottom: 18px;
+  transition: background var(--ease);
+}
+.mozi-autoarb .wp-line.done {
+  background: var(--gold);
+}
+.mozi-autoarb .wizard-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 28px;
+  margin-bottom: 16px;
+}
+.mozi-autoarb .wz-title {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.mozi-autoarb .wz-sub {
+  font-size: 13px;
+  color: var(--t2);
+  margin-bottom: 24px;
+  line-height: 1.65;
+}
+.mozi-autoarb .type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.mozi-autoarb .type-opt {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  cursor: pointer;
+  transition: all var(--ease);
+  text-align: center;
+}
+.mozi-autoarb .type-opt:hover {
+  border-color: var(--border-lit);
+}
+.mozi-autoarb .type-opt.selected {
+  border-color: var(--gold);
+  background: var(--gold-dim);
+}
+.mozi-autoarb .type-opt-ico {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+.mozi-autoarb .type-opt-name {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.mozi-autoarb .type-opt-ann {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.mozi-autoarb .type-opt-desc {
+  font-size: 11px;
+  color: var(--t3);
+  line-height: 1.55;
+}
+.mozi-autoarb .config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.mozi-autoarb .range-row {
+  margin-bottom: 16px;
+}
+.mozi-autoarb .range-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.mozi-autoarb .range-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.mozi-autoarb .range-val {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.mozi-autoarb .range-input {
+  width: 100%;
+  accent-color: var(--gold);
+  height: 4px;
+}
+.mozi-autoarb .sim-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.mozi-autoarb .sim-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 12px;
+}
+.mozi-autoarb .sim-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.mozi-autoarb .sim-row:last-child {
+  border-bottom: none;
+}
+.mozi-autoarb .sim-l {
+  font-size: 12px;
+  color: var(--t2);
+}
+.mozi-autoarb .sim-v {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+.mozi-autoarb .paper-note {
+  background: var(--gold-dim);
+  border: 1px solid rgba(180, 83, 9, 0.25);
+  border-radius: var(--rs);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: var(--t2);
+  line-height: 1.65;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+/* Landing — edge cases */
+.mozi-autoarb .edge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.mozi-autoarb .edge-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+}
+.mozi-autoarb .edge-cat {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.mozi-autoarb .edge-cat.exec {
+  background: var(--blue-dim);
+  color: var(--blue);
+}
+.mozi-autoarb .edge-cat.risk {
+  background: var(--danger-dim);
+  color: var(--danger);
+}
+.mozi-autoarb .edge-cat.ops {
+  background: var(--purple-dim);
+  color: var(--purple);
+}
+.mozi-autoarb .edge-cat.legal {
+  background: var(--gold-dim);
+  color: var(--gold);
+}
+.mozi-autoarb .edge-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+.mozi-autoarb .edge-item:last-child {
+  border-bottom: none;
+}
+.mozi-autoarb .edge-q {
+  color: var(--t2);
+  flex: 1;
+}
+.mozi-autoarb .edge-a {
+  color: var(--t3);
+  font-size: 10px;
+  margin-top: 2px;
+  line-height: 1.55;
+}

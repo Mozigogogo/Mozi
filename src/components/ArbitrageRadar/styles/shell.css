@@ -1,0 +1,15 @@
+/* ── 13. Shell integration overrides ──────────────────────────────────────── */
+
+#mozi-arbitrage-radar .hdr {
+  border-radius: 12px 12px 0 0;
+}
+#mozi-arbitrage-radar:not(.is-mobile) .hdr {
+  border-radius: 0;
+}
+#mozi-arbitrage-radar .hdr .logo,
+#mozi-arbitrage-radar .hdr .btn-p {
+  display: none !important;
+}
+#mozi-arbitrage-radar .nav {
+  margin-left: 0;
+}

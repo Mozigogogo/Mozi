@@ -498,6 +498,28 @@
     "subBefore": "你的 API 密钥经过 AES-256 加密存储，Mozi 服务器",
     "subStrong": "只能执行交易操作",
     "subAfter": "，无法转移资产。建议创建仅限交易权限（无提币）的专用密钥。",
+    "list": {
+      "title": "已接入的 API 密钥",
+      "sub": "每个交易所可保存一套密钥，用于自动套利策略执行。",
+      "add": "+ 新增 API 密钥",
+      "loading": "正在加载密钥列表...",
+      "loadError": "加载密钥列表失败",
+      "retry": "重试",
+      "emptyTitle": "还没有接入任何 API 密钥",
+      "emptySub": "添加交易所 API 密钥后，即可创建并运行自动套利策略。",
+      "emptyCta": "新增 API 密钥",
+      "colExchange": "交易所",
+      "colLabel": "备注",
+      "colKey": "API Key",
+      "colUpdated": "更新时间",
+      "colStatus": "状态",
+      "noLabel": "未命名",
+      "statusActive": "已验证",
+      "statusPending": "待验证"
+    },
+    "wizard": {
+      "cancel": "← 返回列表"
+    },
     "steps": [
       "选择交易所",
       "输入密钥",
@@ -507,6 +529,10 @@
     "step1": {
       "title": "选择交易所",
       "sub": "选择你要连接的交易所。你可以随时添加更多，每个交易所独立管理。",
+      "loadingExchanges": "正在加载支持的交易所...",
+      "loadError": "加载交易所列表失败，已显示本地列表",
+      "unavailable": "该交易所暂不支持新建托管",
+      "maintenance": "暂不可用",
       "apiGuideBefore": "{{exchange}} 创建 API 步骤：",
       "apiGuideSteps": "进入账户设置 → API 管理 → 创建新密钥 → 勾选「合约交易」和「现货交易」→ ",
       "apiGuideWithdrawOff": "取消勾选提币权限",
@@ -540,7 +566,10 @@
         "subAccountDesc": "超出所需，建议不开启"
       },
       "back": "← 返回",
-      "validate": "验证密钥 →"
+      "validate": "验证密钥 →",
+      "missingFields": "请填写 API Key 和 API Secret",
+      "noExchange": "请先选择可用的交易所",
+      "saveFailed": "密钥保存失败，请检查填写内容后重试"
     },
     "step3": {
       "titleDone": "验证成功",
@@ -586,7 +615,10 @@
       "hyperliquid": "美股代币+加密永续，推荐",
       "binance": "流动性最强",
       "okx": "多策略覆盖",
-      "kraken": "美股现货代币"
+      "kraken": "美股现货代币",
+      "gate": "现货+合约覆盖",
+      "kucoin": "山寨币覆盖广",
+      "mexc": "山寨币流动性"
     },
     "toast": {
       "ipCopied": "IP 已复制：{{ip}}",

@@ -498,6 +498,28 @@
     "subBefore": "Your API keys are stored with AES-256 encryption. Mozi servers ",
     "subStrong": "can only execute trades",
     "subAfter": " — not transfer assets. Create dedicated trade-only keys (no withdrawals).",
+    "list": {
+      "title": "Connected API keys",
+      "sub": "One key set per exchange for automated arbitrage strategies.",
+      "add": "+ Add API key",
+      "loading": "Loading API keys...",
+      "loadError": "Failed to load API keys",
+      "retry": "Retry",
+      "emptyTitle": "No API keys connected yet",
+      "emptySub": "Add an exchange API key to create and run automated arbitrage strategies.",
+      "emptyCta": "Add API key",
+      "colExchange": "Exchange",
+      "colLabel": "Label",
+      "colKey": "API Key",
+      "colUpdated": "Updated",
+      "colStatus": "Status",
+      "noLabel": "Unnamed",
+      "statusActive": "Verified",
+      "statusPending": "Pending"
+    },
+    "wizard": {
+      "cancel": "← Back to list"
+    },
     "steps": [
       "Select exchange",
       "Enter keys",
@@ -507,6 +529,10 @@
     "step1": {
       "title": "Select exchange",
       "sub": "Choose the exchange to connect. Add more anytime — each is managed separately.",
+      "loadingExchanges": "Loading supported exchanges...",
+      "loadError": "Failed to load exchanges. Showing cached list.",
+      "unavailable": "This exchange is not available for new connections yet",
+      "maintenance": "Unavailable",
       "apiGuideBefore": "{{exchange}} — steps to create API:",
       "apiGuideSteps": "Account settings → API management → Create new key → Enable \"Futures\" and \"Spot trading\" → ",
       "apiGuideWithdrawOff": "Disable withdrawals",
@@ -540,7 +566,10 @@
         "subAccountDesc": "Beyond what we need — keep disabled"
       },
       "back": "← Back",
-      "validate": "Verify keys →"
+      "validate": "Verify keys →",
+      "missingFields": "Please enter API Key and API Secret",
+      "noExchange": "Please select an available exchange",
+      "saveFailed": "Failed to save credentials. Please check your keys and try again."
     },
     "step3": {
       "titleDone": "Verification successful",
@@ -586,7 +615,10 @@
       "hyperliquid": "US stock tokens + crypto perps, recommended",
       "binance": "Strongest liquidity",
       "okx": "Multi-strategy coverage",
-      "kraken": "US stock spot tokens"
+      "kraken": "US stock spot tokens",
+      "gate": "Spot + perp coverage",
+      "kucoin": "Wide altcoin coverage",
+      "mexc": "Altcoin liquidity"
     },
     "toast": {
       "ipCopied": "IP copied: {{ip}}",

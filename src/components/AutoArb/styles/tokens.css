@@ -1,0 +1,71 @@
+/* ── 1. Reset & design tokens ───────────────────────────────────────────── */
+
+.mozi-autoarb,
+.mozi-autoarb *,
+.mozi-autoarb *::before,
+.mozi-autoarb *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.mozi-autoarb {
+  /* Surfaces */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --border: #e4e9f0;
+  --border-lit: #cdd5e0;
+
+  /* Brand & semantic */
+  --accent: #00957a;
+  --accent-dim: rgba(0, 149, 122, 0.1);
+  --gold: #b45309;
+  --gold-dim: rgba(180, 83, 9, 0.1);
+  --gold-glow: rgba(180, 83, 9, 0.22);
+  --warn: #b45309;
+  --warn-dim: rgba(180, 83, 9, 0.09);
+  --danger: #dc2626;
+  --danger-dim: rgba(220, 38, 38, 0.07);
+  --pos: #059669;
+  --pos-dim: rgba(5, 150, 105, 0.09);
+  --blue: #2563eb;
+  --blue-dim: rgba(37, 99, 235, 0.09);
+  --purple: #7c3aed;
+  --purple-dim: rgba(124, 58, 237, 0.09);
+
+  /* Typography */
+  --t1: #0f172a;
+  --t2: #475569;
+  --t3: #94a3b8;
+  --t4: #cbd5e1;
+  --mono: "JetBrains Mono", monospace;
+  --sans: "Inter", sans-serif;
+  --display: "Space Grotesk", sans-serif;
+
+  /* Layout & motion */
+  --r: 10px;
+  --rs: 6px;
+  --ease: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  font-family: var(--sans);
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--t1);
+  min-height: 100%;
+  position: relative;
+}
+
+.mozi-autoarb ::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mozi-autoarb ::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+.mozi-autoarb ::-webkit-scrollbar-thumb {
+  background: var(--border-lit);
+  border-radius: 2px;
+}

@@ -1,0 +1,113 @@
+/* ── 2. Header & layout ─────────────────────────────────────────────────── */
+.mozi-autoarb .hdr {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  height: 54px;
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 20px;
+}
+.mozi-autoarb .logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.mozi-autoarb .logo svg {
+  width: 22px;
+  height: 22px;
+}
+.mozi-autoarb .logo-pipe {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.mozi-autoarb .logo-sub {
+  font-size: 13px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gold), #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.mozi-autoarb .nav {
+  display: flex;
+  gap: 2px;
+}
+.mozi-autoarb .nbtn {
+  padding: 5px 13px;
+  border-radius: var(--rs);
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--t2);
+  transition: all var(--ease);
+}
+.mozi-autoarb .nbtn:hover {
+  color: var(--t1);
+  background: var(--surface);
+}
+.mozi-autoarb .nbtn.on {
+  color: var(--gold);
+  background: var(--gold-dim);
+}
+.mozi-autoarb .hdr-r {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mozi-autoarb .live-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--pos-dim);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--pos);
+}
+.mozi-autoarb .live-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--pos);
+  animation: blink 2s ease infinite;
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+.mozi-autoarb .cta-btn {
+  padding: 6px 16px;
+  border-radius: var(--rs);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--gold), #fbbf24);
+  color: #000;
+  border: none;
+  transition: all var(--ease);
+}
+.mozi-autoarb .cta-btn:hover {
+  box-shadow: 0 0 16px var(--gold-glow);
+  transform: translateY(-1px);
+}

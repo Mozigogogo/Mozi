@@ -1,0 +1,149 @@
+/* ── 14. Dark theme ───────────────────────────────────────────────────────── */
+:root[data-theme="dark"] #mozi-arbitrage-radar {
+  background: transparent;
+  color: #f3f4f6;
+  --bg: #0f1114;
+  --surface: #1c1f24;
+  --card: #1c1f24;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-lit: rgba(255, 255, 255, 0.14);
+  --accent: #11b787;
+  --accent-dim: rgba(17, 183, 135, 0.16);
+  --accent-glow: rgba(17, 183, 135, 0.28);
+  --warn: #fbbf24;
+  --warn-dim: rgba(251, 191, 36, 0.12);
+  --danger: #f87171;
+  --pos: #34d399;
+  --blue: #60a5fa;
+  --blue-dim: rgba(96, 165, 250, 0.12);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167, 139, 250, 0.12);
+  --orange: #fb923c;
+  --orange-dim: rgba(251, 146, 60, 0.12);
+  --t1: #f3f4f6;
+  --t2: rgba(255, 255, 255, 0.55);
+  --t3: rgba(255, 255, 255, 0.45);
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar.is-embedded {
+  background: transparent;
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar ::-webkit-scrollbar-track {
+  background: #0f1114;
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar:not(.is-mobile) .hdr-title {
+  color: #f3f4f6;
+}
+:root[data-theme="dark"] #mozi-arbitrage-radar:not(.is-mobile) .hdr-switch-tab {
+  color: rgba(255, 255, 255, 0.62);
+}
+:root[data-theme="dark"]
+  #mozi-arbitrage-radar:not(.is-mobile)
+  .hdr-switch-tab:hover {
+  color: #f3f4f6;
+}
+:root[data-theme="dark"]
+  #mozi-arbitrage-radar:not(.is-mobile)
+  .hdr-switch-tab.is-active {
+  color: #f3f4f6;
+}
+:root[data-theme="dark"]
+  #mozi-arbitrage-radar:not(.is-mobile)
+  .hdr-switch-tab.is-active::after {
+  background: #34d399;
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar:not(.is-mobile) .hdr-back {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f3f4f6;
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar:not(.is-mobile) .hdr-back:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar .tbl-hscroll,
+:root[data-theme="dark"] #mozi-arbitrage-radar .tbl-hscroll::-webkit-scrollbar,
+:root[data-theme="dark"]
+  #mozi-arbitrage-radar
+  .tbl-hscroll::-webkit-scrollbar-track,
+:root[data-theme="dark"]
+  #mozi-arbitrage-radar
+  .tbl-hscroll::-webkit-scrollbar-corner {
+  background: #161a1e;
+  scrollbar-color: rgba(255, 255, 255, 0.2) #161a1e;
+}
+
+:root[data-theme="dark"]
+  #mozi-arbitrage-radar
+  .tbl-hscroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+:root[data-theme="dark"]
+  #mozi-arbitrage-radar
+  .tbl-hscroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+:root[data-theme="dark"]
+  #mozi-arbitrage-radar
+  .tbl-body-scroll.is-busy::before {
+  background: rgba(15, 17, 20, 0.72);
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar .skel {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 25%,
+    rgba(255, 255, 255, 0.1) 37%,
+    rgba(255, 255, 255, 0.06) 63%
+  );
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar .tip-ico {
+  background: #1c1f24;
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar .tg-wrap {
+  background: #161a1e;
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar .tg-msg {
+  background: #1c1f24;
+}
+
+:root[data-theme="dark"] #mozi-arbitrage-radar #toast {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="dark"] .mozi-arb-tip-float {
+  background: #1c1f24;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f3f4f6;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="dark"] .mozi-arb-tip-float.is-spot-ex .spot-ex-pop-title,
+:root[data-theme="dark"] .mozi-arb-tip-float.is-spot-ex .spot-ex-top {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+:root[data-theme="dark"] .mozi-arb-tip-float.is-spot-ex .spot-ex-top {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="dark"] .mozi-arb-tip-float.is-spot-ex .spot-ex-empty {
+  color: rgba(255, 255, 255, 0.45);
+}

@@ -1,0 +1,17 @@
+/* Mozi Arbitrage Radar — entry (global styles, split by feature) */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+
+@import './styles/tokens.css';
+@import './styles/embedded.css';
+@import './styles/header.css';
+@import './styles/layout-tabs.css';
+@import './styles/table.css';
+@import './styles/tooltips.css';
+@import './styles/skeleton-intro.css';
+@import './styles/mobile.css';
+@import './styles/detail.css';
+@import './styles/charts-calculator.css';
+@import './styles/risk-subscription.css';
+@import './styles/toast-help.css';
+@import './styles/shell.css';
+@import './styles/dark-theme.css';
