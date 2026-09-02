@@ -4,6 +4,8 @@ import { initReactI18next } from 'react-i18next';
 // 导入翻译资源
 import zh from './locales/zh.json';
 import en from './locales/en.json';
+import autoArbZh from './locales/autoArb.zh.json';
+import autoArbEn from './locales/autoArb.en.json';
 
 /**
  * SSR / 首屏 hydration 必须使用同一语言，避免
@@ -26,8 +28,8 @@ export function readStoredLanguage() {
 // 配置 i18n：初始化一律用 SSR 默认语言
 i18n.use(initReactI18next).init({
   resources: {
-    zh: { translation: zh },
-    en: { translation: en },
+    zh: { translation: { ...zh, autoArb: autoArbZh } },
+    en: { translation: { ...en, autoArb: autoArbEn } },
   },
   lng: I18N_SSR_DEFAULT_LNG,
   fallbackLng: 'en',

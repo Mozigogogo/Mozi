@@ -2356,6 +2356,8 @@
   },
   "arbitrageRadar": {
     "title": "Arbitrage",
+    "autoArb": "Auto Arb",
+    "autoArbComingSoon": "Auto arb coming soon",
     "tabs": {
       "funding": "Funding Arb",
       "spread": "Spot Spread",

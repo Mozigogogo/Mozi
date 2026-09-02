@@ -1,0 +1,728 @@
+{
+  "meta": {
+    "title": "Auto Arb",
+    "description": "Mozi AutoArb: connect exchange APIs and automate Funding, cross-exchange spread, and basis arbitrage strategies."
+  },
+  "nav": {
+    "landing": "Overview",
+    "dashboard": "Strategies",
+    "vault": "API Keys",
+    "wizard": "New Strategy"
+  },
+  "confirm": {
+    "title": "Emergency stop all strategies",
+    "desc": "This immediately pauses all running arbitrage strategies and sends close signals.",
+    "descStrong": "Existing hedged positions will not be closed automatically",
+    "descEnd": " — you must handle them manually. Continue?",
+    "cancel": "Cancel",
+    "confirm": "Stop all"
+  },
+  "toast": {
+    "emergencyStopped": "All strategies stopped — please review positions",
+    "freeSignup": "Sign up free to get started",
+    "contactPro": "Contact us to upgrade to Pro",
+    "contactBiz": "BD@mozi.fund"
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "Fully automated arbitrage engine",
+      "titleLine1": "Let algorithms hunt",
+      "titleLine2": "arbitrage",
+      "titleLine3": " — you collect the returns",
+      "sub": "Connect your exchange APIs. Mozi AutoArb monitors crypto and tokenized US stock arbitrage 24/7 and auto-executes Cash & Carry, cross-exchange spread, and basis strategies.",
+      "ctaPrimary": "Create your first strategy",
+      "ctaSecondary": "View demo dashboard →"
+    },
+    "stats": {
+      "volume": "Cumulative arb volume",
+      "apr": "Avg. annual net return",
+      "success": "Order success rate",
+      "lossEvents": "User fund loss events"
+    },
+    "howItWorks": {
+      "eyebrow": "How it works",
+      "title": "Start auto arb in four steps",
+      "sub": "From API connection to your first arb profit — under 15 minutes",
+      "steps": [
+        {
+          "title": "Connect API keys",
+          "desc": "Create trade-only API keys (no withdrawals) on your exchange and submit them over an encrypted channel. Keys are stored with AES-256; servers never see plaintext."
+        },
+        {
+          "title": "Configure strategy",
+          "desc": "Pick arb type, assets, capital, and risk controls. Historical data helps estimate return ranges and set realistic expectations."
+        },
+        {
+          "title": "Paper-trade validation",
+          "desc": "New strategies run a mandatory 72-hour paper period to validate signals and risk triggers with zero capital at risk."
+        },
+        {
+          "title": "Go live",
+          "desc": "After paper trading passes, start live with a small cap (default ≤20% of your limit). Size ramps up automatically as performance stabilizes."
+        }
+      ]
+    },
+    "strategies": {
+      "eyebrow": "Strategies",
+      "title": "Three proven arbitrage strategies",
+      "sub": "Each has its own risk model and backtest history",
+      "statLabels": {
+        "histApr": "Historical APR",
+        "maxDd": "Max drawdown",
+        "dirRisk": "Directional risk",
+        "minCapital": "Min. capital",
+        "singleReturn": "Per-trade return",
+        "frequency": "Execution frequency",
+        "capitalUse": "Capital lock-up",
+        "basisRisk": "Basis risk",
+        "holdPeriod": "Hold period"
+      },
+      "funding": {
+        "name": "Funding arb (Cash & Carry)",
+        "desc": "Long spot + short perp for near-neutral exposure while collecting funding. Hyperliquid settles hourly — strong annualized effect.",
+        "dirRisk": "Near neutral",
+        "frequency": "1–10/day"
+      },
+      "spread": {
+        "name": "Cross-exchange spread",
+        "desc": "Monitor the same asset across venues — buy low, sell high. Execution window 1–30 min; net spread after fees is profit.",
+        "capitalUse": "Brief"
+      },
+      "basis": {
+        "name": "Basis arb",
+        "desc": "Trade perp vs spot basis: long spot + short perp to earn basis convergence and funding together.",
+        "basisRisk": "Medium",
+        "holdPeriod": "1–30 days"
+      }
+    },
+    "security": {
+      "eyebrow": "Security",
+      "title": "Fund safety comes first",
+      "sub": "We cannot withdraw your assets — only execute trades you authorize",
+      "items": [
+        {
+          "title": "Trade-only API keys — withdrawals disabled",
+          "desc": "We require withdrawal permission off on exchange APIs. Even if keys leak, attackers cannot move funds — only trade."
+        },
+        {
+          "title": "AES-256 + HSM encryption",
+          "desc": "Keys are encrypted with your account password on submit, then HSM-encrypted at rest. The database stores ciphertext only."
+        },
+        {
+          "title": "Fixed IP whitelist",
+          "desc": "Execution servers use fixed egress IPs. Set an exchange IP whitelist so unknown callers are rejected."
+        },
+        {
+          "title": "Real-time anomaly detection + circuit breaker",
+          "desc": "Every trade passes slippage, position, and margin checks. Anomalies halt the strategy and notify you immediately."
+        }
+      ],
+      "threatTitle": "Threat model & mitigations",
+      "threatStatus": {
+        "solved": "Covered",
+        "partial": "Partial"
+      },
+      "threatModel": [
+        { "threat": "API key leak", "desc": "No withdrawals + IP whitelist — attacker cannot profit", "status": "solved" },
+        { "threat": "Server breach", "desc": "Ciphertext only; HSM physically isolated", "status": "solved" },
+        { "threat": "Strategy logic bug", "desc": "Paper period + small live start + circuit breaker", "status": "solved" },
+        { "threat": "Exchange maintenance", "desc": "Positions unchanged; reconnect after maintenance", "status": "solved" },
+        { "threat": "Funding turns negative", "desc": "Auto-pause and notify for manual decision", "status": "solved" },
+        { "threat": "Basis blow-out", "desc": "Margin threshold triggers de-risking", "status": "solved" },
+        { "threat": "Regulatory change", "desc": "Geo detection + compliant shutdown", "status": "partial" },
+        { "threat": "Exchange insolvency (FTX-style)", "desc": "≤30% per venue + rapid exit playbook", "status": "partial" }
+      ]
+    },
+    "pricing": {
+      "eyebrow": "Pricing",
+      "title": "Pay for usage, aligned with outcomes",
+      "sub": "All plans include a 7-day full-feature trial — no card required",
+      "perMonth": "/mo",
+      "plans": [
+        {
+          "name": "Observer",
+          "price": "Free",
+          "sub": "Signal monitoring + manual execution hints — no auto orders",
+          "btn": "Get started",
+          "features": [
+            { "text": "Real-time arb signals", "included": true },
+            { "text": "Telegram / email alerts", "included": true },
+            { "text": "Manual execution guide", "included": true },
+            { "text": "Up to 3 watch strategies", "included": true },
+            { "text": "Auto execution", "included": false },
+            { "text": "Background runtime", "included": false }
+          ]
+        },
+        {
+          "name": "Auto",
+          "price": "$49",
+          "sub": "Auto execution, up to $50,000 total exposure",
+          "btn": "7-day free trial",
+          "features": [
+            { "text": "Up to 5 concurrent strategies", "included": true },
+            { "text": "Up to $50,000 total exposure", "included": true },
+            { "text": "Full risk toolkit", "included": true },
+            { "text": "Real-time P&L dashboard", "included": true },
+            { "text": "API key management", "included": true },
+            { "text": "Email + TG alerts", "included": true }
+          ]
+        },
+        {
+          "name": "Pro",
+          "price": "$149",
+          "sub": "Unlimited strategies, up to $500,000 exposure",
+          "btn": "Contact to upgrade",
+          "features": [
+            { "text": "Unlimited concurrent strategies", "included": true },
+            { "text": "Up to $500,000 exposure", "included": true },
+            { "text": "Priority execution queue", "included": true },
+            { "text": "Custom strategy parameters", "included": true },
+            { "text": "API access", "included": true },
+            { "text": "Dedicated support", "included": true }
+          ]
+        },
+        {
+          "name": "Enterprise",
+          "price": "Custom",
+          "sub": "No exposure cap, white-label, SLA",
+          "btn": "Contact sales",
+          "features": [
+            { "text": "No exposure cap", "included": true },
+            { "text": "Dedicated execution nodes", "included": true },
+            { "text": "Market data API", "included": true },
+            { "text": "Compliance report export", "included": true },
+            { "text": "Private deployment option", "included": true },
+            { "text": "24/7 dedicated support", "included": true }
+          ]
+        }
+      ],
+      "bizNote": {
+        "title": "How we make money (transparent)",
+        "items": [
+          "Subscription: primary revenue — SaaS model unrelated to your P&L, so we optimize infrastructure, not gamble your capital.",
+          "No performance fee: we do not take a cut of profits. 100% stays with you.",
+          "Data services: aggregated anonymous market data sold to institutions — no personal data.",
+          "Future: platform fees (strategy marketplace), strategy NFTs (share/sell templates)."
+        ]
+      }
+    },
+    "edgeCases": {
+      "eyebrow": "Edge cases",
+      "title": "We plan for what can go wrong",
+      "categories": {
+        "exec": "Execution risk",
+        "risk": "Risk controls",
+        "ops": "Operational stability"
+      },
+      "items": {
+        "exec": [
+          ["Spread vanishes mid-execution", "Abort if slippage exceeds threshold (default 0.15%) — logged as missed opportunity"],
+          ["Partial fill", "Hold open leg, wait to complete or flatten on timeout to avoid one-sided exposure"],
+          ["Duplicate triggers", "Redis distributed lock — one opportunity per account executes once"],
+          ["Network timeout", "Idempotent retry with order ID — no duplicate orders"],
+          ["Exchange error codes", "Retry transient errors; pause strategy and alert on permanent errors"]
+        ],
+        "risk": [
+          ["Margin below warning line", "Alert at 50%, auto de-risk at 40%, force close at 30%"],
+          ["Funding turns negative", "Pause new entries after 3 negative settlements; notify user"],
+          ["Basis expands sharply (>1.5%)", "Cut size to 50%, alert, restore when basis normalizes"],
+          ["Daily loss limit hit", "No new entries for the day; existing positions maintained"],
+          ["Liquidity dries up", "Order-book depth check — skip entry if below threshold"]
+        ],
+        "ops": [
+          ["Scheduled maintenance", "Detect announcements, pause early, verify after maintenance"],
+          ["API key revoked", "Stop related strategies immediately and alert for re-auth"],
+          ["Rate limits", "Adaptive queue — prioritize stops, delay new entries"],
+          ["Server restart", "State persisted in Redis — strategies resume without duplicate opens"],
+          ["Clock skew", "NTP sync + server timestamp validation for funding settlement timing"]
+        ]
+      }
+    }
+  },
+  "dashboard": {
+    "emergencyBar": {
+      "runningCount": "{{count}} strategies running",
+      "totalPosition": "Total position",
+      "todayPnl": "Today's net P&L",
+      "stopAll": "Emergency stop all"
+    },
+    "stats": {
+      "totalCapital": "Total capital deployed",
+      "activeStrategies": "Across {{count}} active strategies",
+      "cumulativePnl": "Cumulative net P&L",
+      "totalReturn": "{{pct}}% total return",
+      "todayPnl": "Today's P&L",
+      "lastUpdated": "Last updated just now",
+      "overallRisk": "Overall risk",
+      "riskLow": "Low",
+      "riskScore": "Risk score {{score}}/100",
+      "execSuccess": "Execution success rate",
+      "execSuccessSub": "Last 30 days {{ok}}/{{total}} trades"
+    },
+    "strategyList": {
+      "title": "Strategy list",
+      "newStrategy": "+ New strategy"
+    },
+    "strategyTypes": {
+      "funding": "Funding arb",
+      "spread": "Spot spread",
+      "basis": "Basis arb"
+    },
+    "status": {
+      "running": "Running",
+      "paused": "Paused",
+      "stopped": "Stopped"
+    },
+    "metrics": {
+      "positionCapital": "Position capital",
+      "cumulativePnl": "Cumulative P&L",
+      "returnPct": "Return",
+      "riskScore": "Risk score"
+    },
+    "actions": {
+      "pause": "Pause",
+      "resume": "Resume",
+      "config": "Config",
+      "detail": "Details",
+      "clone": "Clone",
+      "stop": "Stop"
+    },
+    "riskPanel": {
+      "title": "Risk dashboard",
+      "healthy": "Healthy",
+      "fundUsage": "Fund usage",
+      "maxRiskStrategy": "Highest-risk strategy",
+      "overallRisk": "Overall risk",
+      "dailyLossLimit": "Daily loss limit",
+      "maxMarginUse": "Max margin usage",
+      "maxSlippage": "Max slippage per trade",
+      "autoEmergencyStop": "Auto emergency stop",
+      "negFundingPause": "Pause on negative funding",
+      "timeoutAlert": "Timeout alerts"
+    },
+    "radar": {
+      "title": "Signal radar",
+      "noRunning": "No running strategies",
+      "paused": "Paused",
+      "qualified": "Qualified",
+      "threshold": "Threshold {{pct}}%",
+      "pausedNote": "Strategy paused — no new entries even if signal qualifies",
+      "armedNote": "Signal meets entry criteria — waiting for next engine poll",
+      "belowThreshold": "{{pct}}% below trigger threshold"
+    },
+    "capital": {
+      "title": "Capital allocation",
+      "totalPosition": "Total exposure"
+    },
+    "donut": {
+      "nvda": "NVDA C&C",
+      "ethSpread": "ETH cross-ex",
+      "tslaBasis": "TSLA basis",
+      "idle": "Idle"
+    },
+    "activity": {
+      "title": "Live activity log",
+      "justNow": "Just now",
+      "text": {
+        "fundingCollected": " collected funding ",
+        "spreadDetectedPrefix": "Detected ",
+        "spreadDetected": " cross-exchange spread ",
+        "spreadExecuted": ", arb executed",
+        "marginHealthy": " margin ratio ",
+        "marginHealthySuffix": ", healthy",
+        "negFundingPause": " negative funding — entries paused",
+        "oiRise": " OI up ",
+        "oiSignal": ", signal strengthened",
+        "dailySettlement": " daily net P&L settled ",
+        "riskCheckPass": "Risk check passed — all margin ratios normal",
+        "fundingAnnRise": " Funding APR rose to ",
+        "basisExpand": " basis widened to 0.31% — entries paused, waiting for convergence",
+        "apiVerified": "API key periodic verification complete — permissions OK",
+        "spreadExecutedShort": ", executed"
+      },
+      "initial": [
+        {
+          "ico": "⚡",
+          "time": "justNow",
+          "parts": [
+            { "t": "strong", "v": "NVDA Cash & Carry" },
+            { "t": "text", "v": " collected funding " },
+            { "t": "pos", "v": "+$8.13" }
+          ]
+        },
+        {
+          "ico": "✅",
+          "time": "1m",
+          "parts": [
+            { "t": "text", "v": "Detected " },
+            { "t": "strong", "v": "BTC/USDT" },
+            { "t": "text", "v": " cross-exchange spread " },
+            { "t": "pos", "v": "0.82%" },
+            { "t": "text", "v": ", executed" }
+          ]
+        },
+        {
+          "ico": "🛡️",
+          "time": "3m",
+          "parts": [{ "t": "text", "v": "Risk check passed — all margin ratios normal" }]
+        },
+        {
+          "ico": "📊",
+          "time": "5m",
+          "parts": [
+            { "t": "strong", "v": "NVDA" },
+            { "t": "text", "v": " Funding APR rose to " },
+            { "t": "pos", "v": "259%" }
+          ]
+        },
+        {
+          "ico": "⚠️",
+          "time": "8m",
+          "parts": [
+            { "t": "strong", "v": "TSLA" },
+            { "t": "text", "v": " basis widened to 0.31% — entries paused, waiting for convergence" }
+          ]
+        },
+        {
+          "ico": "🔑",
+          "time": "12m",
+          "parts": [{ "t": "text", "v": "API key periodic verification complete — permissions OK" }]
+        }
+      ]
+    },
+    "toast": {
+      "paused": "Strategy paused — positions unchanged",
+      "resumed": "Strategy resumed",
+      "paramsUpdated": "Strategy parameters updated",
+      "cloneConfig": "Loaded config from \"{{name}}\" — adjust and create",
+      "closeSent": "Close signal sent..."
+    },
+    "detail": {
+      "runningDays": "Running {{days}} days",
+      "adjustParams": "Adjust parameters",
+      "close": "Close",
+      "cumulativePnl": "Cumulative P&L",
+      "returnPct": "Return",
+      "marginRatio": "Margin ratio",
+      "leverage": "Leverage",
+      "isolated": "Isolated",
+      "cross": "Cross",
+      "pnlTrend": "P&L trend (last 14 days)",
+      "positions": "Positions (hedged legs)",
+      "execHistory": "Execution history",
+      "stressTitle": "What happens in extreme scenarios",
+      "table": {
+        "role": "Role",
+        "symbol": "Symbol",
+        "entry": "Entry",
+        "current": "Current",
+        "qty": "Qty"
+      }
+    },
+    "edit": {
+      "title": "Adjust strategy parameters",
+      "sub": "{{name}} · Only some fields can be changed while running",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "leverage": "Leverage",
+      "marginMode": "Margin mode",
+      "lockedWhileRunning": "Locked while running",
+      "minProfitThreshold": "Min. net profit threshold",
+      "dailyLossLimit": "Max daily loss limit",
+      "effectiveNextCycle": "Changes take effect next cycle — current positions unaffected"
+    },
+    "stress": {
+      "funding": [
+        {
+          "icon": "📉",
+          "title": "If funding turns sharply negative",
+          "outcome": "After 3 consecutive negative settlements, new entries pause automatically. Existing positions are kept and you are notified — no forced close."
+        },
+        {
+          "icon": "🏦",
+          "title": "If the exchange goes down",
+          "outcome": "Position state is persisted. After reconnect, positions are reconciled before deciding whether to continue — no blind re-entry."
+        },
+        {
+          "icon": "⚡",
+          "title": "If spot leg fills but perp leg fails",
+          "outcome": "Immediately market-close the filled spot leg. Slippage from the rollback is reflected in net strategy P&L."
+        },
+        {
+          "icon": "📊",
+          "title": "If margin ratio falls below 35% liquidation line",
+          "outcome": "Forced de-risking triggers to protect principal, with immediate alert."
+        }
+      ],
+      "spread": [
+        {
+          "icon": "⏱",
+          "title": "If spread vanishes at order time",
+          "outcome": "Abort if slippage exceeds tolerance — logged as missed opportunity, no forced fill."
+        },
+        {
+          "icon": "🔀",
+          "title": "If only one exchange leg fills",
+          "outcome": "If the other leg is not confirmed within 1.5s, immediately market-rollback the filled leg to avoid overnight naked exposure."
+        },
+        {
+          "icon": "🌐",
+          "title": "If an exchange API is rate-limited",
+          "outcome": "Adaptive backoff retry; skip this opportunity after max retries without affecting other strategies."
+        }
+      ],
+      "basis": [
+        {
+          "icon": "📐",
+          "title": "If basis expands beyond 1.5%",
+          "outcome": "Auto cut size to 50%, wait for basis to converge before restoring — no hard carry of exposure."
+        },
+        {
+          "icon": "📉",
+          "title": "If funding turns negative during hold",
+          "outcome": "Counted as actual daily loss; if daily loss limit hits, no new entries for the day."
+        },
+        {
+          "icon": "🏦",
+          "title": "If scheduled exchange maintenance",
+          "outcome": "Detect maintenance announcements early, pause strategy, verify connection after maintenance before resuming."
+        }
+      ]
+    },
+    "tooltips": {
+      "slippage": "Slippage: difference between expected and actual fill price, often due to thin depth or volatility."
+    }
+  },
+  "vault": {
+    "title": "API key management",
+    "subBefore": "Your API keys are stored with AES-256 encryption. Mozi servers ",
+    "subStrong": "can only execute trades",
+    "subAfter": " — not transfer assets. Create dedicated trade-only keys (no withdrawals).",
+    "steps": [
+      "Select exchange",
+      "Enter keys",
+      "Verify permissions",
+      "IP whitelist"
+    ],
+    "step1": {
+      "title": "Select exchange",
+      "sub": "Choose the exchange to connect. Add more anytime — each is managed separately.",
+      "apiGuideBefore": "{{exchange}} — steps to create API:",
+      "apiGuideSteps": "Account settings → API management → Create new key → Enable \"Futures\" and \"Spot trading\" → ",
+      "apiGuideWithdrawOff": "Disable withdrawals",
+      "apiGuideAfter": " → Save key",
+      "next": "Next: enter keys →"
+    },
+    "step2": {
+      "title": "Enter {{exchange}} API keys",
+      "warningTitle": "Security notice",
+      "warningWithdrawBefore": "Confirm API keys have ",
+      "warningWithdrawStrong": "withdrawals disabled",
+      "warningWithdrawAfter": " — this is the most important safeguard",
+      "warningEncrypt": "Keys are AES-256 encrypted after submit — irreversible; even Mozi staff cannot view them",
+      "warningIp": "Also set an IP whitelist on {{exchange}} (Mozi server IPs provided in the next step)",
+      "apiKey": "API Key",
+      "apiSecret": "API Secret",
+      "note": "Label",
+      "required": "Required",
+      "optional": "Optional",
+      "apiKeyPlaceholder": "Paste your API Key (~40 characters)",
+      "apiSecretPlaceholder": "Paste your API Secret (~64 characters)",
+      "notePlaceholder": "e.g. Mozi-AutoArb-dedicated",
+      "perms": {
+        "futuresTitle": "Futures trading",
+        "futuresDesc": "Required for funding arb",
+        "spotTitle": "Spot trading",
+        "spotDesc": "Required for Cash & Carry spot leg",
+        "withdrawTitle": "Withdrawals (must be off)",
+        "withdrawDesc": "We never need this permission",
+        "subAccountTitle": "Sub-account management",
+        "subAccountDesc": "Beyond what we need — keep disabled"
+      },
+      "back": "← Back",
+      "validate": "Verify keys →"
+    },
+    "step3": {
+      "titleDone": "Verification successful",
+      "titlePending": "Verifying keys...",
+      "subDone": "API key saved securely. Permissions verified — you can configure strategies.",
+      "subPending": "Connecting to {{exchange}} and checking permissions, please wait...",
+      "checks": [
+        "Connect to exchange API endpoint",
+        "Validate API key format",
+        "Confirm account balance is readable (read-only check)",
+        "Verify trading permissions are enabled",
+        "Confirm withdrawals are disabled",
+        "AES-256 encrypt and store securely"
+      ],
+      "passSummary": "Verified",
+      "passDetail": " · {{exchange}} balance readable · Futures + spot enabled · Withdrawals off · Key encrypted",
+      "reenter": "← Re-enter",
+      "next": "Set IP whitelist →",
+      "back": "← Back",
+      "simulate": "Simulate verification"
+    },
+    "step4": {
+      "title": "Set IP whitelist (strongly recommended)",
+      "sub": "Add the IPs below to your {{exchange}} whitelist. Requests from other IPs are rejected — even if keys leak.",
+      "serverIps": "Mozi server IPs (click to copy)",
+      "clickCopy": "Click to copy",
+      "howToTitle": "How to set IP whitelist on {{exchange}}",
+      "howToItems": [
+        "Log in to {{exchange}} → API management → find the key you just created",
+        "Click \"Edit\" → add all IPs above to the whitelist",
+        "Save and wait ~2 minutes for changes to apply",
+        "If skipped, the API can be called from any IP — higher risk"
+      ],
+      "back": "← Back",
+      "finish": "Finish setup, create strategy →"
+    },
+    "exchangeTypes": {
+      "perp": "Perp",
+      "spotPerp": "Spot + Perp",
+      "xStock": "xStock"
+    },
+    "exchanges": {
+      "hyperliquid": "US stock tokens + crypto perps, recommended",
+      "binance": "Strongest liquidity",
+      "okx": "Multi-strategy coverage",
+      "kraken": "US stock spot tokens"
+    },
+    "toast": {
+      "ipCopied": "IP copied: {{ip}}",
+      "ip": "IP: {{ip}}",
+      "connected": "{{exchange}} connected! Create a strategy now"
+    }
+  },
+  "wizard": {
+    "title": "New arbitrage strategy",
+    "subtitle": "All new strategies run a 72h paper period first; live trading starts only after signals are validated.",
+    "steps": ["Select type", "Configure", "Risk controls", "Paper confirm"],
+    "nav": {
+      "nextConfigure": "Next: configure →",
+      "nextRisk": "Next: risk controls →",
+      "nextConfirm": "Next: paper confirm →",
+      "prev": "← Back",
+      "launch": "Start paper trading"
+    },
+    "step1": {
+      "title": "Select arbitrage strategy type",
+      "sub": "Each strategy suits different markets and risk profiles — start with funding arb.",
+      "types": {
+        "funding": {
+          "name": "Funding arb",
+          "ann": "8-30%/yr",
+          "desc": "Long spot + short perp to collect funding. Near-neutral, lowest risk — best for beginners."
+        },
+        "spread": {
+          "name": "Cross-exchange spread",
+          "ann": "5-20%/yr",
+          "desc": "Buy low, sell high across venues. Fast execution, but needs APIs on multiple exchanges."
+        },
+        "basis": {
+          "name": "Basis arb",
+          "ann": "10-25%/yr",
+          "desc": "Profit from perp/spot basis convergence. Understand basis risk — for experienced users."
+        }
+      }
+    },
+    "step2": {
+      "title": "Configure {{type}} parameters",
+      "sub": "Pick a live opportunity we're monitoring — not a random asset and hope.",
+      "pickLabel": "Select target opportunity (sorted by APR, live)",
+      "depth": "Capacity ${{amount}}K",
+      "oppDetail": "<strong>{{pair}}</strong> ({{exchange}}) 7d APR ranged <strong class=\"mono\">{{min}}%–{{max}}%</strong>, currently <strong class=\"mono\" style=\"color:var(--accent)\">{{current}}%</strong>.",
+      "cryptoStockNote": "Tokenized US stock — watch for extra premium during US market closures.",
+      "leverage": "Leverage",
+      "leverageMin": "1x (no leverage)",
+      "marginMode": "Margin mode",
+      "isolated": "Isolated",
+      "isolatedDesc": "Risk isolated — one strategy liquidation won't affect others",
+      "cross": "Cross",
+      "crossDesc": "Higher capital efficiency, but risks are linked",
+      "capital": "Capital (USD)",
+      "minProfit": "Min. net profit threshold (skip if below)",
+      "capacityHigh": "⚠️ Capital is {{pct}}% of this opportunity's depth — actual slippage may exceed estimate",
+      "capacityOk": "Depth ~${{depth}}K; your {{pct}}% share — slippage impact should be small",
+      "estimateLabel": "Est. net APR after fees/slippage",
+      "oppAnn": "Opportunity APR",
+      "feeAssumption": "Fee assumption",
+      "slipAssumption": "Leverage slippage assumption",
+      "dailyEst": "Est. daily",
+      "perYear": "/yr"
+    },
+    "step3": {
+      "title": "Risk parameters",
+      "sub": "These rules protect your capital — use a preset if unsure",
+      "dailyLoss": "Max daily loss limit",
+      "marginWarn": "Min. margin warning line",
+      "marginWarnVal": "50% (de-risk below)",
+      "marginLiq": "Min. margin liquidation line",
+      "marginLiqVal": "35% (force close below)",
+      "maxSlippage": "Max slippage tolerance",
+      "maxSlippageVal": "0.15% (skip trade if exceeded)",
+      "negFunding": "Consecutive negative funding threshold",
+      "negFundingVal": "3 times (pause entries)",
+      "maxTrades": "Max executions per day",
+      "maxTradesVal": "50 trades",
+      "marginWarnDanger": "At {{leverage}}x leverage, a {{loss}}% daily loss limit may exceed what margin can absorb (~{{safe}}%) — violent moves may liquidate before the limit triggers. Lower leverage or the loss limit.",
+      "marginWarnOk": "At these settings, the daily loss limit should trigger before liquidation — risk order is healthy",
+      "toggles": {
+        "negFunding": { "label": "Auto-pause on negative funding", "desc": "Pause entries when funding turns negative" },
+        "basisReduce": { "label": "Auto de-risk on basis expansion", "desc": "Cut to 50% when basis > 1.5%" },
+        "dayStop": { "label": "Stop new entries on daily loss", "desc": "No new trades after daily loss limit" },
+        "marginAlert": { "label": "Low margin alerts", "desc": "Push alerts before margin gets tight" }
+      }
+    },
+    "presets": {
+      "conservative": { "name": "Conservative", "desc": "Capital preservation first, slower returns" },
+      "balanced": { "name": "Balanced", "desc": "Balanced risk/return (recommended)" },
+      "aggressive": { "name": "Aggressive", "desc": "Higher return target, more volatility" },
+      "custom": { "name": "Custom", "desc": "Tune all parameters manually" }
+    },
+    "step4": {
+      "paperTitle": "Paper trading period (72 hours)",
+      "paperDesc": "New strategies run on a paper account for 72 hours with no real orders. We validate logic, risk triggers, and return estimates. Only after passing can you switch to live.",
+      "confirmTitle": "Strategy configuration review",
+      "confirmSub": "Review carefully — some parameters cannot be changed after launch",
+      "summaryTitle": "Configuration summary",
+      "returnsTitle": "Expected return range (from live opportunity data — not a backtest guarantee)",
+      "riskTitle": "Risk notice:",
+      "riskBody": "Arb strategies are not risk-free. Extreme markets can cause losses. Only deploy capital you can afford to lose.",
+      "riskAck": "I have read the risks and configuration above. I understand paper results do not guarantee live performance and accept the associated risk.",
+      "fields": {
+        "type": "Strategy type",
+        "asset": "Target asset",
+        "exchange": "Primary exchange",
+        "leverageMode": "Leverage / margin mode",
+        "capital": "Capital deployed",
+        "minProfit": "Min. profit threshold",
+        "dailyLoss": "Daily loss limit",
+        "mode": "Run mode",
+        "modeValue": "72h paper, then live"
+      },
+      "returns": {
+        "neutral": "Net APR (base case)",
+        "neutralNote": "Opportunity APR − fee assumption − leverage slippage",
+        "optimistic": "Net APR (optimistic)",
+        "optimisticNote": "Funding stays elevated",
+        "pessimistic": "Net APR (pessimistic)",
+        "pessimisticNote": "Funding fades / slippage above assumption",
+        "annualUsd": "Est. annual USD return",
+        "annualUsdNote": "Based on {{pct}}% base-case APR",
+        "dailyUsd": "Est. daily return",
+        "dailyUsdNote": "Not guaranteed"
+      }
+    },
+    "tooltips": {
+      "funding": "Funding rate: periodic payment between longs and shorts on perps to anchor price to spot. When positive, longs pay shorts.",
+      "basis": "Basis: gap between perp and spot. Basis arb goes long spot + short perp to earn convergence.",
+      "marginRatio": "Margin ratio: equity vs required margin. Lower ratio = closer to liquidation.",
+      "slippage": "Slippage: difference between expected and actual fill price.",
+      "leverage": "Leverage: control larger perp exposure with less margin. Higher leverage = larger margin swings."
+    },
+    "toast": {
+      "created": "Strategy created! 72-hour paper period started..."
+    }
+  }
+}

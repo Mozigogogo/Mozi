@@ -1,10 +1,10 @@
 /** Mock data for Mozi AutoArb (from mozi-autoarb-pro.html) */
 
 export const NAV_ITEMS = [
-  { id: 'landing', label: '产品介绍' },
-  { id: 'dashboard', label: '策略中心' },
-  { id: 'vault', label: 'API 管理' },
-  { id: 'wizard', label: '新建策略' },
+  { id: 'landing', labelKey: 'autoArb.nav.landing' },
+  { id: 'dashboard', labelKey: 'autoArb.nav.dashboard' },
+  { id: 'vault', labelKey: 'autoArb.nav.vault' },
+  { id: 'wizard', labelKey: 'autoArb.nav.wizard' },
 ];
 
 export const INITIAL_STRATEGIES = [
@@ -12,6 +12,7 @@ export const INITIAL_STRATEGIES = [
     id: 1,
     name: 'NVDA Cash & Carry',
     type: 'Funding 套利',
+    typeKey: 'funding',
     icon: '⚡',
     exchange: 'Hyperliquid',
     status: 'running',
@@ -74,6 +75,7 @@ export const INITIAL_STRATEGIES = [
     id: 2,
     name: 'ETH/BTC 跨所价差',
     type: '现货价差',
+    typeKey: 'spread',
     icon: '🔀',
     exchange: 'Binance→OKX',
     status: 'running',
@@ -133,6 +135,7 @@ export const INITIAL_STRATEGIES = [
     id: 3,
     name: 'TSLA 基差套利',
     type: '基差套利',
+    typeKey: 'basis',
     icon: '📐',
     exchange: 'Hyperliquid',
     status: 'paused',
@@ -374,19 +377,21 @@ export const FEE_ASSUMPTIONS = {
 };
 
 export const EXCHANGES = [
-  { name: 'Hyperliquid', type: 'Perp', ico: '⚡', note: '美股代币+加密永续，推荐' },
-  { name: 'Binance', type: '现货+Perp', ico: '🟡', note: '流动性最强' },
-  { name: 'OKX', type: '现货+Perp', ico: '⬜', note: '多策略覆盖' },
-  { name: 'Bybit', type: '现货+Perp', ico: '🟠', note: '' },
-  { name: 'Bitget', type: 'Perp', ico: '🔵', note: '' },
-  { name: 'Kraken', type: 'xStock', ico: '🟣', note: '美股现货代币' },
+  { id: 'hyperliquid', name: 'Hyperliquid', typeKey: 'perp', ico: '⚡', noteKey: 'hyperliquid' },
+  { id: 'binance', name: 'Binance', typeKey: 'spotPerp', ico: '🟡', noteKey: 'binance' },
+  { id: 'okx', name: 'OKX', typeKey: 'spotPerp', ico: '⬜', noteKey: 'okx' },
+  { id: 'bybit', name: 'Bybit', typeKey: 'spotPerp', ico: '🟠' },
+  { id: 'bitget', name: 'Bitget', typeKey: 'perp', ico: '🔵' },
+  { id: 'kraken', name: 'Kraken', typeKey: 'xStock', ico: '🟣', noteKey: 'kraken' },
 ];
 
+export const VAULT_SERVER_IPS = ['52.194.18.42', '18.181.62.91', '13.114.88.203'];
+
 export const DONUT_SEGMENTS = [
-  { v: 15000, c: '#00CCA0', n: 'NVDA C&C', label: '$15,000' },
-  { v: 8000, c: '#3B82F6', n: 'ETH跨所', label: '$8,000' },
-  { v: 5000, c: '#8B5CF6', n: 'TSLA基差', label: '$5,000' },
-  { v: 7000, c: '#CBD5E1', n: '闲置', label: '$7,000' },
+  { v: 15000, c: '#00CCA0', key: 'nvda', label: '$15,000' },
+  { v: 8000, c: '#3B82F6', key: 'ethSpread', label: '$8,000' },
+  { v: 5000, c: '#8B5CF6', key: 'tslaBasis', label: '$5,000' },
+  { v: 7000, c: '#CBD5E1', key: 'idle', label: '$7,000' },
 ];
 
 export const THREAT_MODEL = [
@@ -532,57 +537,57 @@ export const ACTIVITY_TEMPLATES = [
   {
     ico: '⚡',
     strat: 'NVDA Cash & Carry',
-    build: (s) => [
+    build: (s, tx) => [
       { t: 'strong', v: s },
-      { t: 'text', v: ' 收取 Funding 费率 ' },
+      { t: 'text', v: tx.fundingCollected },
       { t: 'pos', v: `+$${(Math.random() * 8 + 2).toFixed(2)}` },
     ],
   },
   {
     ico: '✅',
     strat: 'ETH/BTC 跨所价差',
-    build: (s) => [
-      { t: 'text', v: '检测到 ' },
+    build: (s, tx) => [
+      { t: 'text', v: tx.spreadDetectedPrefix || 'Detected ' },
       { t: 'strong', v: s },
-      { t: 'text', v: ' 跨所价差 ' },
+      { t: 'text', v: tx.spreadDetected },
       { t: 'pos', v: `${(Math.random() * 0.5 + 0.6).toFixed(2)}%` },
-      { t: 'text', v: '，已执行套利' },
+      { t: 'text', v: tx.spreadExecuted },
     ],
   },
   {
     ico: '🛡️',
     strat: 'NVDA Cash & Carry',
-    build: (s) => [
+    build: (s, tx) => [
       { t: 'strong', v: s },
-      { t: 'text', v: ' 保证金率 ' },
+      { t: 'text', v: tx.marginHealthy },
       { t: 'mono', v: '62%' },
-      { t: 'text', v: '，健康' },
+      { t: 'text', v: tx.marginHealthySuffix },
     ],
   },
   {
     ico: '⚠️',
     strat: 'TSLA 基差套利',
-    build: (s) => [
+    build: (s, tx) => [
       { t: 'strong', v: s },
-      { t: 'text', v: ' Funding 出现负费率，暂停入场' },
+      { t: 'text', v: tx.negFundingPause },
     ],
   },
   {
     ico: '📊',
     strat: 'ETH/BTC 跨所价差',
-    build: (s) => [
+    build: (s, tx) => [
       { t: 'strong', v: s },
-      { t: 'text', v: ' OI 上升 ' },
+      { t: 'text', v: tx.oiRise },
       { t: 'blue', v: '+12.3%' },
-      { t: 'text', v: '，信号增强' },
+      { t: 'text', v: tx.oiSignal },
     ],
   },
   {
     ico: '💰',
     strat: 'NVDA Cash & Carry',
-    build: (s) => [
+    build: (s, tx) => [
       { t: 'strong', v: s },
-      { t: 'text', v: ' 日净收益结算 ' },
+      { t: 'text', v: tx.dailySettlement },
       { t: 'pos', v: `+$${(Math.random() * 50 + 20).toFixed(2)}` },
     ],
   },

@@ -1,12 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import {
-  ACTIVITY_TEMPLATES,
-  DONUT_SEGMENTS,
-  INITIAL_ACTIVITY,
-  STRESS_BY_TYPE,
-} from './data';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ACTIVITY_TEMPLATES, DONUT_SEGMENTS } from './data';
 import { ActivityText, Donut, Gauge, Modal, Sparkline, Tip } from './charts';
 
 function daysSince(dateStr) {
@@ -42,6 +38,19 @@ function buildRadarItems(strategies) {
     });
 }
 
+function buildInitialActivity(t) {
+  const initial = t('autoArb.dashboard.activity.initial', { returnObjects: true }) || [];
+  return initial.map((item, i) => ({
+    id: `a${i + 1}`,
+    ico: item.ico,
+    parts: item.parts,
+    time:
+      item.time === 'justNow'
+        ? t('autoArb.dashboard.activity.justNow')
+        : item.time,
+  }));
+}
+
 /**
  * @param {{
  *   strategies: Array<object>;
@@ -60,7 +69,15 @@ export default function Dashboard({
   onEmergencyConfirm,
   onStartWizard,
 }) {
-  const [activityLog, setActivityLog] = useState(INITIAL_ACTIVITY);
+  const { t, i18n } = useTranslation();
+  const D = (key, opts) => t(`autoArb.dashboard.${key}`, opts);
+
+  const initialActivity = useMemo(
+    () => buildInitialActivity(t),
+    [t, i18n.language],
+  );
+
+  const [activityLog, setActivityLog] = useState(initialActivity);
   const [autoStop, setAutoStop] = useState(true);
   const [negFundingPause, setNegFundingPause] = useState(true);
   const [timeoutAlert, setTimeoutAlert] = useState(true);
@@ -70,6 +87,10 @@ export default function Dashboard({
   const [editLoss, setEditLoss] = useState(5);
   const actIdRef = useRef(100);
 
+  useEffect(() => {
+    setActivityLog(initialActivity);
+  }, [initialActivity]);
+
   const detailStrat = strategies.find((s) => s.id === detailId);
   const editStrat = strategies.find((s) => s.id === editId);
 
@@ -78,6 +99,11 @@ export default function Dashboard({
   const totalDailyPnl = strategies.reduce((s, x) => s + x.dailyPnl, 0);
   const running = strategies.filter((s) => s.status === 'running').length;
   const radarItems = buildRadarItems(strategies);
+
+  const activityText = useMemo(
+    () => t('autoArb.dashboard.activity.text', { returnObjects: true }) || {},
+    [t, i18n.language],
+  );
 
   useEffect(() => {
     const pnlInterval = setInterval(() => {
@@ -95,16 +121,16 @@ export default function Dashboard({
     const scheduleNext = () => {
       const delay = 4000 + Math.random() * 5000;
       return setTimeout(() => {
-        const t =
+        const tmpl =
           ACTIVITY_TEMPLATES[Math.floor(Math.random() * ACTIVITY_TEMPLATES.length)];
         actIdRef.current += 1;
         setActivityLog((prev) =>
           [
             {
               id: `live-${actIdRef.current}`,
-              ico: t.ico,
-              parts: t.build(t.strat),
-              time: '刚刚',
+              ico: tmpl.ico,
+              parts: tmpl.build(tmpl.strat, activityText),
+              time: t('autoArb.dashboard.activity.justNow'),
             },
             ...prev,
           ].slice(0, 12),
@@ -118,20 +144,20 @@ export default function Dashboard({
       clearInterval(pnlInterval);
       clearTimeout(actTimer);
     };
-  }, [onStrategiesChange]);
+  }, [onStrategiesChange, activityText, t]);
 
   const pauseStrat = (id) => {
     onStrategiesChange((prev) =>
       prev.map((s) => (s.id === id ? { ...s, status: 'paused' } : s)),
     );
-    onToast('⏸ 策略已暂停，当前仓位维持不变');
+    onToast(`⏸ ${D('toast.paused')}`);
   };
 
   const resumeStrat = (id) => {
     onStrategiesChange((prev) =>
       prev.map((s) => (s.id === id ? { ...s, status: 'running' } : s)),
     );
-    onToast('▶ 策略已恢复运行');
+    onToast(`▶ ${D('toast.resumed')}`);
   };
 
   const openEdit = (s) => {
@@ -148,23 +174,30 @@ export default function Dashboard({
       ),
     );
     setEditId(null);
-    onToast('✅ 策略参数已更新');
+    onToast(`✅ ${D('toast.paramsUpdated')}`);
   };
 
   const cloneStrat = (s) => {
     onStartWizard?.(s);
-    onToast(`已带入「${s.name}」的配置，可调整后创建新策略`);
+    onToast(D('toast.cloneConfig', { name: s.name }));
   };
 
-  const stresses =
-    STRESS_BY_TYPE[detailStrat?.type] || STRESS_BY_TYPE['Funding 套利'];
+  const stresses = useMemo(() => {
+    const key = detailStrat?.typeKey || 'funding';
+    return t(`autoArb.dashboard.stress.${key}`, { returnObjects: true }) || [];
+  }, [detailStrat?.typeKey, t, i18n.language]);
+
+  const strategyTypeLabel = (typeKey) =>
+    D(`strategyTypes.${typeKey || 'funding'}`);
 
   return (
     <div className="view">
       <div className="emergency-bar">
         <div className="eb-text">
-          ⚡ <strong>{running} 个策略运行中</strong> · 总仓位 $
-          {totalCapital.toLocaleString()} · 今日净收益{' '}
+          ⚡{' '}
+          <strong>{D('emergencyBar.runningCount', { count: running })}</strong> ·{' '}
+          {D('emergencyBar.totalPosition')} ${totalCapital.toLocaleString()} ·{' '}
+          {D('emergencyBar.todayPnl')}{' '}
           <strong
             style={{
               color: totalDailyPnl >= 0 ? 'var(--pos)' : 'var(--danger)',
@@ -174,20 +207,22 @@ export default function Dashboard({
           </strong>
         </div>
         <button type="button" className="stop-btn" onClick={onEmergencyConfirm}>
-          🛑 紧急停止全部
+          🛑 {D('emergencyBar.stopAll')}
         </button>
       </div>
 
       <div className="dash-stats">
         <div className="ds-card">
-          <div className="ds-lbl">💼 投入总资金</div>
+          <div className="ds-lbl">💼 {D('stats.totalCapital')}</div>
           <div className="ds-val" style={{ color: 'var(--t1)' }}>
             ${totalCapital.toLocaleString()}
           </div>
-          <div className="ds-sub">跨 {running} 个活跃策略</div>
+          <div className="ds-sub">
+            {D('stats.activeStrategies', { count: running })}
+          </div>
         </div>
         <div className="ds-card">
-          <div className="ds-lbl">📈 累计净收益</div>
+          <div className="ds-lbl">📈 {D('stats.cumulativePnl')}</div>
           <div
             className="ds-val"
             style={{ color: totalPnl >= 0 ? 'var(--pos)' : 'var(--danger)' }}
@@ -195,11 +230,13 @@ export default function Dashboard({
             {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}
           </div>
           <div className="ds-sub">
-            +{(totalCapital ? (totalPnl / totalCapital) * 100 : 0).toFixed(2)}% 总回报
+            {D('stats.totalReturn', {
+              pct: (totalCapital ? (totalPnl / totalCapital) * 100 : 0).toFixed(2),
+            })}
           </div>
         </div>
         <div className="ds-card">
-          <div className="ds-lbl">📅 今日收益</div>
+          <div className="ds-lbl">📅 {D('stats.todayPnl')}</div>
           <div
             className="ds-val"
             style={{
@@ -208,21 +245,23 @@ export default function Dashboard({
           >
             {totalDailyPnl >= 0 ? '+' : ''}${totalDailyPnl.toFixed(2)}
           </div>
-          <div className="ds-sub">最后更新 刚刚</div>
+          <div className="ds-sub">{D('stats.lastUpdated')}</div>
         </div>
         <div className="ds-card">
-          <div className="ds-lbl">🛡️ 综合风险</div>
+          <div className="ds-lbl">🛡️ {D('stats.overallRisk')}</div>
           <div className="ds-val" style={{ color: 'var(--pos)' }}>
-            低
+            {D('stats.riskLow')}
           </div>
-          <div className="ds-sub">风险分 28/100</div>
+          <div className="ds-sub">{D('stats.riskScore', { score: 28 })}</div>
         </div>
         <div className="ds-card">
-          <div className="ds-lbl">⚡ 执行成功率</div>
+          <div className="ds-lbl">⚡ {D('stats.execSuccess')}</div>
           <div className="ds-val" style={{ color: 'var(--pos)' }}>
             99.4%
           </div>
-          <div className="ds-sub">过去30天 114/115笔</div>
+          <div className="ds-sub">
+            {D('stats.execSuccessSub', { ok: 114, total: 115 })}
+          </div>
         </div>
       </div>
 
@@ -245,7 +284,7 @@ export default function Dashboard({
                 letterSpacing: '.07em',
               }}
             >
-              策略列表
+              {D('strategyList.title')}
             </div>
             <button
               type="button"
@@ -261,7 +300,7 @@ export default function Dashboard({
               }}
               onClick={() => onNavigate('wizard')}
             >
-              + 新建策略
+              {D('strategyList.newStrategy')}
             </button>
           </div>
           <div className="strat-list">
@@ -269,12 +308,14 @@ export default function Dashboard({
               <StratCard
                 key={s.id}
                 s={s}
+                typeLabel={strategyTypeLabel(s.typeKey)}
+                t={t}
                 onPause={() => pauseStrat(s.id)}
                 onResume={() => resumeStrat(s.id)}
                 onConfig={() => openEdit(s)}
                 onDetail={() => setDetailId(s.id)}
                 onClone={() => cloneStrat(s)}
-                onStop={() => onToast('已发送平仓信号...')}
+                onStop={() => onToast(D('toast.closeSent'))}
               />
             ))}
           </div>
@@ -283,37 +324,41 @@ export default function Dashboard({
         <div className="right-panel">
           <div className="risk-panel">
             <div className="rp-title">
-              风控仪表盘
+              {D('riskPanel.title')}
               <span className="tag tag-pos" style={{ fontSize: 9 }}>
-                健康
+                {D('riskPanel.healthy')}
               </span>
             </div>
             <div className="gauges-row">
-              <Gauge pct={0.28} color="#10B981" label="资金使用" />
-              <Gauge pct={0.62} color="#F59E0B" label="最高风险策略" />
-              <Gauge pct={0.15} color="#10B981" label="整体风险" />
+              <Gauge pct={0.28} color="#10B981" label={D('riskPanel.fundUsage')} />
+              <Gauge pct={0.62} color="#F59E0B" label={D('riskPanel.maxRiskStrategy')} />
+              <Gauge pct={0.15} color="#10B981" label={D('riskPanel.overallRisk')} />
             </div>
             <div className="risk-settings">
               <div className="rs-row">
-                <div className="rs-label">日亏损限额</div>
+                <div className="rs-label">{D('riskPanel.dailyLossLimit')}</div>
                 <div className="rs-val">$500</div>
               </div>
               <div className="rs-row">
-                <div className="rs-label">最高保证金使用</div>
+                <div className="rs-label">{D('riskPanel.maxMarginUse')}</div>
                 <div className="rs-val">30%</div>
               </div>
               <div className="rs-row">
-                <div className="rs-label">单笔最大滑点</div>
+                <div className="rs-label">{D('riskPanel.maxSlippage')}</div>
                 <div className="rs-val">0.15%</div>
               </div>
-              <ToggleRow label="自动紧急停止" checked={autoStop} onChange={setAutoStop} />
               <ToggleRow
-                label="负 Funding 暂停"
+                label={D('riskPanel.autoEmergencyStop')}
+                checked={autoStop}
+                onChange={setAutoStop}
+              />
+              <ToggleRow
+                label={D('riskPanel.negFundingPause')}
                 checked={negFundingPause}
                 onChange={setNegFundingPause}
               />
               <ToggleRow
-                label="超时告警通知"
+                label={D('riskPanel.timeoutAlert')}
                 checked={timeoutAlert}
                 onChange={setTimeoutAlert}
               />
@@ -322,10 +367,12 @@ export default function Dashboard({
 
           <div className="radar-panel">
             <div className="rp-title" style={{ marginBottom: 10 }}>
-              信号雷达
+              {D('radar.title')}
             </div>
             {radarItems.length === 0 ? (
-              <div style={{ fontSize: 11, color: 'var(--t3)' }}>暂无运行中的策略</div>
+              <div style={{ fontSize: 11, color: 'var(--t3)' }}>
+                {D('radar.noRunning')}
+              </div>
             ) : (
               radarItems.map((l) => {
                 const paused = l.status === 'paused';
@@ -350,7 +397,7 @@ export default function Dashboard({
                               marginLeft: 6,
                             }}
                           >
-                            已暂停
+                            {D('radar.paused')}
                           </span>
                         ) : null}
                       </div>
@@ -368,8 +415,8 @@ export default function Dashboard({
                         {paused
                           ? ''
                           : l.armed
-                            ? '✓ 达标'
-                            : `· 阈值 ${l.threshold}%`}
+                            ? `✓ ${D('radar.qualified')}`
+                            : `· ${D('radar.threshold', { pct: l.threshold })}`}
                       </div>
                     </div>
                     <div className="radar-bar-track">
@@ -383,10 +430,12 @@ export default function Dashboard({
                     </div>
                     <div className="radar-note">
                       {paused
-                        ? '策略已暂停，即使信号达标也不会开新仓'
+                        ? D('radar.pausedNote')
                         : l.armed
-                          ? '当前信号已满足开仓条件，等待执行引擎下一次轮询'
-                          : `距离触发阈值还差 ${Math.max(0, l.threshold - l.curRate).toFixed(2)}%`}
+                          ? D('radar.armedNote')
+                          : D('radar.belowThreshold', {
+                              pct: Math.max(0, l.threshold - l.curRate).toFixed(2),
+                            })}
                     </div>
                   </div>
                 );
@@ -396,15 +445,19 @@ export default function Dashboard({
 
           <div className="capital-panel">
             <div className="rp-title" style={{ marginBottom: 12 }}>
-              资金分配
+              {D('capital.title')}
             </div>
             <div className="donut-wrap">
-              <Donut segments={DONUT_SEGMENTS} />
+              <Donut
+                segments={DONUT_SEGMENTS}
+                centerLabel={D('capital.totalPosition')}
+                centerValue="$35K"
+              />
               <div className="donut-legend">
                 {DONUT_SEGMENTS.map((l) => (
-                  <div className="dl-item" key={l.n}>
+                  <div className="dl-item" key={l.key}>
                     <div className="dl-dot" style={{ background: l.c }} />
-                    <div className="dl-name">{l.n}</div>
+                    <div className="dl-name">{D(`donut.${l.key}`)}</div>
                     <div className="dl-val">{l.label}</div>
                   </div>
                 ))}
@@ -415,7 +468,7 @@ export default function Dashboard({
           <div className="activity-panel">
             <div className="ap-title">
               <div className="ap-live" />
-              实时操作日志
+              {D('activity.title')}
             </div>
             <div className="activity-feed">
               {activityLog.map((a) => (
@@ -450,8 +503,10 @@ export default function Dashboard({
             <div>
               <div className="modal-title">{detailStrat?.name}</div>
               <div className="modal-sub">
-                {detailStrat?.type} · {detailStrat?.exchange} · 运行{' '}
-                {detailStrat ? daysSince(detailStrat.startDate) : 0} 天
+                {strategyTypeLabel(detailStrat?.typeKey)} · {detailStrat?.exchange} ·{' '}
+                {D('detail.runningDays', {
+                  days: detailStrat ? daysSince(detailStrat.startDate) : 0,
+                })}
               </div>
             </div>
           </>
@@ -467,7 +522,7 @@ export default function Dashboard({
                 setDetailId(null);
               }}
             >
-              ⚙ 调整参数
+              ⚙ {D('detail.adjustParams')}
             </button>
             <button
               type="button"
@@ -475,7 +530,7 @@ export default function Dashboard({
               style={{ flex: 1 }}
               onClick={() => setDetailId(null)}
             >
-              关闭
+              {D('detail.close')}
             </button>
           </>
         }
@@ -484,10 +539,30 @@ export default function Dashboard({
           <>
             <div className="detail-metrics">
               {[
-                ['累计收益', `${detailStrat.pnl >= 0 ? '+' : ''}$${detailStrat.pnl.toFixed(2)}`, detailStrat.pnl >= 0 ? 'var(--pos)' : 'var(--danger)'],
-                ['收益率', `${detailStrat.pnlPct >= 0 ? '+' : ''}${detailStrat.pnlPct.toFixed(2)}%`, detailStrat.pnl >= 0 ? 'var(--pos)' : 'var(--danger)'],
-                ['保证金率', `${detailStrat.marginRatio}%`, detailStrat.marginRatio >= 50 ? 'var(--pos)' : 'var(--warn)'],
-                ['杠杆', `${detailStrat.leverage}x ${detailStrat.marginMode === 'isolated' ? '逐仓' : '全仓'}`, 'var(--t1)'],
+                [
+                  D('detail.cumulativePnl'),
+                  `${detailStrat.pnl >= 0 ? '+' : ''}$${detailStrat.pnl.toFixed(2)}`,
+                  detailStrat.pnl >= 0 ? 'var(--pos)' : 'var(--danger)',
+                ],
+                [
+                  D('detail.returnPct'),
+                  `${detailStrat.pnlPct >= 0 ? '+' : ''}${detailStrat.pnlPct.toFixed(2)}%`,
+                  detailStrat.pnl >= 0 ? 'var(--pos)' : 'var(--danger)',
+                ],
+                [
+                  D('detail.marginRatio'),
+                  `${detailStrat.marginRatio}%`,
+                  detailStrat.marginRatio >= 50 ? 'var(--pos)' : 'var(--warn)',
+                ],
+                [
+                  D('detail.leverage'),
+                  `${detailStrat.leverage}x ${
+                    detailStrat.marginMode === 'isolated'
+                      ? D('detail.isolated')
+                      : D('detail.cross')
+                  }`,
+                  'var(--t1)',
+                ],
               ].map(([lbl, val, color]) => (
                 <div className="dm-item" key={lbl}>
                   <div className="dm-lbl">{lbl}</div>
@@ -497,17 +572,17 @@ export default function Dashboard({
                 </div>
               ))}
             </div>
-            <div className="detail-section-title">收益走势（近14日）</div>
+            <div className="detail-section-title">{D('detail.pnlTrend')}</div>
             <Sparkline data={detailStrat.pnlHistory} w={640} h={72} color="#059669" />
-            <div className="detail-section-title">持仓明细（双腿对冲）</div>
+            <div className="detail-section-title">{D('detail.positions')}</div>
             <table className="leg-table">
               <thead>
                 <tr>
-                  <th>角色</th>
-                  <th>标的</th>
-                  <th>开仓价</th>
-                  <th>现价</th>
-                  <th>数量</th>
+                  <th>{D('detail.table.role')}</th>
+                  <th>{D('detail.table.symbol')}</th>
+                  <th>{D('detail.table.entry')}</th>
+                  <th>{D('detail.table.current')}</th>
+                  <th>{D('detail.table.qty')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -530,7 +605,7 @@ export default function Dashboard({
                 ))}
               </tbody>
             </table>
-            <div className="detail-section-title">执行历史</div>
+            <div className="detail-section-title">{D('detail.execHistory')}</div>
             <div className="exec-timeline">
               {(detailStrat.execHistory || []).map((row) => (
                 <div className="exec-tl-item" key={row.time + row.text}>
@@ -539,7 +614,7 @@ export default function Dashboard({
                 </div>
               ))}
             </div>
-            <div className="detail-section-title">极端情况会怎样（压力场景说明）</div>
+            <div className="detail-section-title">{D('detail.stressTitle')}</div>
             <div className="stress-grid">
               {stresses.map((st) => (
                 <div className="stress-item" key={st.title}>
@@ -563,9 +638,9 @@ export default function Dashboard({
               ⚙
             </div>
             <div>
-              <div className="modal-title">调整策略参数</div>
+              <div className="modal-title">{D('edit.title')}</div>
               <div className="modal-sub">
-                {editStrat?.name} · 仅部分字段允许在运行中修改
+                {D('edit.sub', { name: editStrat?.name })}
               </div>
             </div>
           </>
@@ -578,7 +653,7 @@ export default function Dashboard({
               style={{ flex: 1 }}
               onClick={() => setEditId(null)}
             >
-              取消
+              {D('edit.cancel')}
             </button>
             <button
               type="button"
@@ -586,7 +661,7 @@ export default function Dashboard({
               style={{ flex: 1 }}
               onClick={saveEdit}
             >
-              保存修改
+              {D('edit.save')}
             </button>
           </>
         }
@@ -596,23 +671,27 @@ export default function Dashboard({
             <div className="field-locked" style={{ marginBottom: 14 }}>
               <div className="rs-row">
                 <div className="rs-label">
-                  杠杆倍数 <span className="locked-badge">运行中锁定</span>
+                  {D('edit.leverage')}{' '}
+                  <span className="locked-badge">{D('edit.lockedWhileRunning')}</span>
                 </div>
                 <div className="rs-val">{editStrat.leverage}x</div>
               </div>
               <div className="rs-row">
                 <div className="rs-label">
-                  保证金模式 <span className="locked-badge">运行中锁定</span>
+                  {D('edit.marginMode')}{' '}
+                  <span className="locked-badge">{D('edit.lockedWhileRunning')}</span>
                 </div>
                 <div className="rs-val">
-                  {editStrat.marginMode === 'isolated' ? '逐仓' : '全仓'}
+                  {editStrat.marginMode === 'isolated'
+                    ? D('detail.isolated')
+                    : D('detail.cross')}
                 </div>
               </div>
             </div>
             <div className="range-row">
               <div className="range-header">
                 <div className="range-lbl">
-                  最低净利润阈值 <Tip tipKey="slippage" />
+                  {D('edit.minProfitThreshold')} <Tip tipKey="slippage" />
                 </div>
                 <div className="range-val">{editMinProfit}%</div>
               </div>
@@ -630,7 +709,7 @@ export default function Dashboard({
             </div>
             <div className="range-row">
               <div className="range-header">
-                <div className="range-lbl">日最大亏损限额</div>
+                <div className="range-lbl">{D('edit.dailyLossLimit')}</div>
                 <div className="range-val">{editLoss}%</div>
               </div>
               <input
@@ -645,7 +724,7 @@ export default function Dashboard({
                 }
               />
             </div>
-            <div className="param-ok">✓ 修改将在下一执行周期生效，不会打断当前持仓</div>
+            <div className="param-ok">✓ {D('edit.effectiveNextCycle')}</div>
           </>
         ) : null}
       </Modal>
@@ -670,7 +749,18 @@ function ToggleRow({ label, checked, onChange }) {
   );
 }
 
-function StratCard({ s, onPause, onResume, onConfig, onDetail, onClone, onStop }) {
+function StratCard({
+  s,
+  typeLabel,
+  t,
+  onPause,
+  onResume,
+  onConfig,
+  onDetail,
+  onClone,
+  onStop,
+}) {
+  const D = (key) => t(`autoArb.dashboard.${key}`);
   const isUp = s.pnl >= 0;
   const profitColor = isUp ? 'var(--pos)' : 'var(--danger)';
   const riskColor =
@@ -679,6 +769,13 @@ function StratCard({ s, onPause, onResume, onConfig, onDetail, onClone, onStop }
       : s.riskScore < 70
         ? 'var(--warn)'
         : 'var(--danger)';
+
+  const statusLabel =
+    s.status === 'running'
+      ? `● ${D('status.running')}`
+      : s.status === 'paused'
+        ? `⏸ ${D('status.paused')}`
+        : `■ ${D('status.stopped')}`;
 
   return (
     <div className={`scard active ${s.status}`}>
@@ -695,7 +792,7 @@ function StratCard({ s, onPause, onResume, onConfig, onDetail, onClone, onStop }
         <div>
           <div className="sc-name">{s.name}</div>
           <div className="sc-type">
-            {s.type} · {s.exchange}
+            {typeLabel} · {s.exchange}
           </div>
         </div>
         <div
@@ -707,33 +804,29 @@ function StratCard({ s, onPause, onResume, onConfig, onDetail, onClone, onStop }
                 : 'sc-stopped'
           }`}
         >
-          {s.status === 'running'
-            ? '● 运行中'
-            : s.status === 'paused'
-              ? '⏸ 已暂停'
-              : '■ 已停止'}
+          {statusLabel}
         </div>
       </div>
       <div className="sc-metrics">
         <div className="scm">
-          <div className="scm-l">仓位资金</div>
+          <div className="scm-l">{D('metrics.positionCapital')}</div>
           <div className="scm-v">${s.capital.toLocaleString()}</div>
         </div>
         <div className="scm">
-          <div className="scm-l">累计收益</div>
+          <div className="scm-l">{D('metrics.cumulativePnl')}</div>
           <div className="scm-v" style={{ color: profitColor }}>
             {isUp ? '+' : ''}${s.pnl.toFixed(2)}
           </div>
         </div>
         <div className="scm">
-          <div className="scm-l">收益率</div>
+          <div className="scm-l">{D('metrics.returnPct')}</div>
           <div className="scm-v" style={{ color: profitColor }}>
             {isUp ? '+' : ''}
             {s.pnlPct.toFixed(2)}%
           </div>
         </div>
         <div className="scm">
-          <div className="scm-l">风险评分</div>
+          <div className="scm-l">{D('metrics.riskScore')}</div>
           <div className="scm-v" style={{ color: riskColor }}>
             {s.riskScore}/100
           </div>
@@ -751,24 +844,24 @@ function StratCard({ s, onPause, onResume, onConfig, onDetail, onClone, onStop }
       <div className="sc-actions">
         {s.status === 'running' ? (
           <button type="button" className="sc-btn" onClick={onPause}>
-            ⏸ 暂停
+            ⏸ {D('actions.pause')}
           </button>
         ) : (
           <button type="button" className="sc-btn primary" onClick={onResume}>
-            ▶ 恢复
+            ▶ {D('actions.resume')}
           </button>
         )}
         <button type="button" className="sc-btn" onClick={onConfig}>
-          ⚙ 配置
+          ⚙ {D('actions.config')}
         </button>
         <button type="button" className="sc-btn" onClick={onDetail}>
-          📊 详情
+          📊 {D('actions.detail')}
         </button>
         <button type="button" className="sc-btn" onClick={onClone}>
-          ⧉ 克隆
+          ⧉ {D('actions.clone')}
         </button>
         <button type="button" className="sc-btn danger" onClick={onStop}>
-          ■ 停止
+          ■ {D('actions.stop')}
         </button>
       </div>
     </div>

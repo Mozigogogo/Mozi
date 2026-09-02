@@ -2354,6 +2354,8 @@
   },
   "arbitrageRadar": {
     "title": "套利专区",
+    "autoArb": "自动套利",
+    "autoArbComingSoon": "自动套利即将开放",
     "tabs": {
       "funding": "Funding 套利",
       "spread": "现货价差",

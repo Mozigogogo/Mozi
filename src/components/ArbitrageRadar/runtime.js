@@ -236,7 +236,7 @@ export function mountArbitrageRadar(__root, options = {}) {
   <div class="hdr-center">
     <div class="hdr-switch" role="tablist" aria-label="arbitrage header switch">
       <button type="button" class="hdr-switch-tab is-active" id="hdr-title" aria-selected="true">${tabLabel(options.initialTab || 'funding')}</button>
-      ${showAutoArbTab ? '<button type="button" class="hdr-switch-tab" id="hdr-auto-arb" aria-selected="false">自动套利</button>' : ''}
+      ${showAutoArbTab ? `<button type="button" class="hdr-switch-tab" id="hdr-auto-arb" aria-selected="false">${arbT('autoArb')}</button>` : ''}
     </div>
   </div>
 </header>
@@ -350,6 +350,8 @@ function syncHeaderTitle() {
     return;
   }
   el.textContent = tabLabel(activeTab) || arbT('title');
+  const autoArbBtn = __root.querySelector('#hdr-auto-arb');
+  if (autoArbBtn) autoArbBtn.textContent = arbT('autoArb');
 }
 
 function goBack() {
@@ -2273,7 +2275,7 @@ function showToast(msg) {
       onSwitchToAutoArb();
       return;
     }
-    showToast('自动套利即将开放');
+    showToast(arbT('autoArbComingSoon'));
   });
 
   syncHeaderTitle();
@@ -2281,6 +2283,7 @@ function showToast(msg) {
   const onLanguageChanged = () => {
     const navBack = __root.querySelector('#nav-back');
     if (navBack) navBack.setAttribute('aria-label', arbT('detail.backAria'));
+    syncHeaderTitle();
     if (currentView === 'radar' || currentView === 'detail') render();
   };
   i18n.on('languageChanged', onLanguageChanged);

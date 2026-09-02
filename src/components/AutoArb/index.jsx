@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Landing from './Landing';
 import Dashboard from './Dashboard';
 import Vault from './Vault';
@@ -12,6 +13,7 @@ import './autoarb.css';
  * @param {{ onSwitchToRadar?: () => void; className?: string }} props
  */
 export default function AutoArb({ onSwitchToRadar, className }) {
+  const { t } = useTranslation();
   const [view, setView] = useState('landing');
   const [strategies, setStrategies] = useState(() =>
     INITIAL_STRATEGIES.map((s) => ({ ...s })),
@@ -44,7 +46,7 @@ export default function AutoArb({ onSwitchToRadar, className }) {
   const emergencyStop = () => {
     setStrategies((prev) => prev.map((s) => ({ ...s, status: 'stopped' })));
     setConfirmOpen(false);
-    showToast('🛑 所有策略已紧急停止，请检查仓位');
+    showToast(`🛑 ${t('autoArb.toast.emergencyStopped')}`);
   };
 
   const rootClass = ['mozi-autoarb', className].filter(Boolean).join(' ');
@@ -61,7 +63,7 @@ export default function AutoArb({ onSwitchToRadar, className }) {
               aria-selected="false"
               onClick={() => onSwitchToRadar?.()}
             >
-              套利专区
+              {t('arbitrageRadar.title')}
             </button>
             <button
               type="button"
@@ -69,7 +71,7 @@ export default function AutoArb({ onSwitchToRadar, className }) {
               role="tab"
               aria-selected="true"
             >
-              自动套利
+              {t('arbitrageRadar.autoArb')}
             </button>
           </div>
 
@@ -84,7 +86,7 @@ export default function AutoArb({ onSwitchToRadar, className }) {
                   else setView(item.id);
                 }}
               >
-                {item.label}
+                {t(item.labelKey)}
               </button>
             ))}
           </nav>
@@ -149,13 +151,11 @@ export default function AutoArb({ onSwitchToRadar, className }) {
         aria-hidden={!confirmOpen}
       >
         <div className="confirm-box">
-          <div className="cb-title">🛑 紧急停止所有策略</div>
+          <div className="cb-title">🛑 {t('autoArb.confirm.title')}</div>
           <div className="cb-desc">
-            这将立即暂停所有正在运行的套利策略，并发出平仓信号。
-            <strong style={{ color: 'var(--t1)' }}>
-              当前已建立的对冲仓位不会自动平仓
-            </strong>
-            ，需要手动处理。确定继续？
+            {t('autoArb.confirm.desc')}
+            <strong style={{ color: 'var(--t1)' }}>{t('autoArb.confirm.descStrong')}</strong>
+            {t('autoArb.confirm.descEnd')}
           </div>
           <div className="cb-actions">
             <button
@@ -163,7 +163,7 @@ export default function AutoArb({ onSwitchToRadar, className }) {
               className="btn-full btn-ghost"
               onClick={() => setConfirmOpen(false)}
             >
-              取消
+              {t('autoArb.confirm.cancel')}
             </button>
             <button
               type="button"
@@ -180,7 +180,7 @@ export default function AutoArb({ onSwitchToRadar, className }) {
               }}
               onClick={emergencyStop}
             >
-              确认停止全部
+              {t('autoArb.confirm.confirm')}
             </button>
           </div>
         </div>

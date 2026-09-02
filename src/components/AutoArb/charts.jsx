@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { TOOLTIPS } from './data';
 
 /**
@@ -7,7 +8,12 @@ import { TOOLTIPS } from './data';
  * @param {{ tipKey: string }} props
  */
 export function Tip({ tipKey }) {
-  const text = TOOLTIPS[tipKey] || '';
+  const { t } = useTranslation();
+  const text =
+    t(`autoArb.wizard.tooltips.${tipKey}`, { defaultValue: '' }) ||
+    t(`autoArb.dashboard.tooltips.${tipKey}`, { defaultValue: '' }) ||
+    TOOLTIPS[tipKey] ||
+    '';
   if (!text) return null;
   return (
     <span className="tip-wrap">
@@ -117,7 +123,7 @@ export function Gauge({ pct, color, label }) {
  */
 export function Donut({
   segments,
-  centerLabel = '总仓位',
+  centerLabel,
   centerValue = '$35K',
 }) {
   const total = segments.reduce((s, x) => s + x.v, 0) || 1;
@@ -217,6 +223,7 @@ export function ActivityText({ parts }) {
  * }} props
  */
 export function Modal({ open, onClose, wide, header, footer, children }) {
+  const { t } = useTranslation();
   if (!open) return null;
   return (
     <div
@@ -233,7 +240,7 @@ export function Modal({ open, onClose, wide, header, footer, children }) {
       >
         <div className="modal-hdr">
           {header}
-          <button type="button" className="modal-close" onClick={onClose} aria-label="关闭">
+          <button type="button" className="modal-close" onClick={onClose} aria-label={t('autoArb.dashboard.detail.close')}>
             ✕
           </button>
         </div>

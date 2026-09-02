@@ -1,23 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import {
-  FEE_ASSUMPTIONS,
-  OPPORTUNITIES,
-  RISK_PRESETS,
-} from './data';
+import { useTranslation } from 'react-i18next';
+import { FEE_ASSUMPTIONS, OPPORTUNITIES, RISK_PRESETS } from './data';
 import { Sparkline, Tip } from './charts';
 
-const WIZARD_STEPS = ['选择类型', '配置参数', '风控设置', '模拟确认'];
-
-const TYPE_LABEL = {
-  funding: 'Funding 套利',
-  spread: '跨所价差',
-  basis: '基差套利',
-};
+const STRAT_TYPES = ['funding', 'spread', 'basis'];
+const TOGGLE_KEYS = ['negFunding', 'basisReduce', 'dayStop', 'marginAlert'];
 
 function inferStratType(source) {
   if (!source) return 'funding';
+  if (source.typeKey) return source.typeKey;
   if (source.type?.includes('Funding') || source.type?.includes('funding')) return 'funding';
   if (source.type?.includes('价差') || source.type?.includes('spread')) return 'spread';
   if (source.type?.includes('基差') || source.type?.includes('basis')) return 'basis';
@@ -27,35 +20,11 @@ function inferStratType(source) {
 function computeEstimate(stratType, opp, leverage, capital) {
   const fee = FEE_ASSUMPTIONS[stratType];
   const oppAnn =
-    opp?.annualized ??
-    { funding: 15, spread: 10, basis: 15 }[stratType];
+    opp?.annualized ?? { funding: 15, spread: 10, basis: 15 }[stratType];
   const slip = +((leverage - 1) * 0.15).toFixed(2);
   const net = +(oppAnn - fee.fee - slip).toFixed(2);
   const dailyUsd = (capital * net) / 100 / 365;
   return { oppAnn, fee, slip, net, dailyUsd };
-}
-
-function capacityNote(opp, capital) {
-  if (!opp) return '';
-  const pctOfDepth = (capital / opp.depth) * 100;
-  if (pctOfDepth > 10) {
-    return `⚠️ 投入资金已达该机会可承载深度的 ${pctOfDepth.toFixed(0)}%，实际滑点可能高于预估`;
-  }
-  return `该机会当前可承载深度约 $${(opp.depth / 1000).toFixed(0)}K，你的投入仅占 ${pctOfDepth.toFixed(1)}%，滑点影响很小`;
-}
-
-function marginWarning(lossLimit, leverage) {
-  const impliedMaxSafeLoss = ((100 - 35) / leverage) * 0.4;
-  if (lossLimit > impliedMaxSafeLoss) {
-    return {
-      danger: true,
-      text: `当前杠杆 ${leverage}x 下，日亏损限额 ${lossLimit}% 可能高于保证金强平线能承受的波动空间（约 ${impliedMaxSafeLoss.toFixed(1)}%）——行情剧烈波动时可能先触发强平，日亏损限额来不及生效。建议调低杠杆或调低亏损限额。`,
-    };
-  }
-  return {
-    danger: false,
-    text: '当前参数组合下，日亏损限额会在触及强平线之前生效，风控顺序正常',
-  };
 }
 
 /**
@@ -66,6 +35,9 @@ function marginWarning(lossLimit, leverage) {
  * }} props
  */
 export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
+  const { t, i18n } = useTranslation();
+  const W = (key, opts) => t(`autoArb.wizard.${key}`, opts);
+
   const [step, setStep] = useState(1);
   const [stratType, setStratType] = useState(() => inferStratType(cloneSource));
   const [selectedOppId, setSelectedOppId] = useState(null);
@@ -82,6 +54,11 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
     dayStop: true,
     marginAlert: true,
   });
+
+  const wizardSteps = useMemo(
+    () => W('steps', { returnObjects: true }) || [],
+    [t, i18n.language],
+  );
 
   const oppList = OPPORTUNITIES[stratType] || [];
   const selectedOpp = useMemo(() => {
@@ -106,8 +83,35 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
   }, [stratType, oppList, selectedOppId]);
 
   const estimate = computeEstimate(stratType, selectedOpp, leverage, capital);
-  const warn = marginWarning(lossLimit, leverage);
-  const typeLabel = TYPE_LABEL[stratType];
+
+  const marginWarn = useMemo(() => {
+    const impliedMaxSafeLoss = ((100 - 35) / leverage) * 0.4;
+    if (lossLimit > impliedMaxSafeLoss) {
+      return {
+        danger: true,
+        text: W('step3.marginWarnDanger', {
+          leverage,
+          loss: lossLimit,
+          safe: impliedMaxSafeLoss.toFixed(1),
+        }),
+      };
+    }
+    return { danger: false, text: W('step3.marginWarnOk') };
+  }, [lossLimit, leverage, t, i18n.language]);
+
+  const capacityNoteText = useMemo(() => {
+    if (!selectedOpp) return '';
+    const pctOfDepth = (capital / selectedOpp.depth) * 100;
+    if (pctOfDepth > 10) {
+      return W('step2.capacityHigh', { pct: pctOfDepth.toFixed(0) });
+    }
+    return W('step2.capacityOk', {
+      depth: (selectedOpp.depth / 1000).toFixed(0),
+      pct: pctOfDepth.toFixed(1),
+    });
+  }, [selectedOpp, capital, t, i18n.language]);
+
+  const typeLabel = W(`step1.types.${stratType}.name`);
 
   const applyPreset = (key) => {
     setActivePreset(key);
@@ -125,11 +129,14 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
   const annual = (capital * netMid) / 100;
   const daily = annual / 365;
 
+  const marginModeLabel =
+    marginMode === 'isolated' ? W('step2.isolated') : W('step2.cross');
+
   return (
     <div className="view">
       <div className="wizard-layout">
         <div className="wz-title" style={{ textAlign: 'center', marginBottom: 6 }}>
-          新建套利策略
+          {W('title')}
         </div>
         <div
           style={{
@@ -139,14 +146,14 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
             marginBottom: 24,
           }}
         >
-          所有新策略先经过 72h 模拟验证，确认信号有效后才启动实盘
+          {W('subtitle')}
         </div>
 
         <div className="wizard-progress">
-          {WIZARD_STEPS.map((s, i) => {
+          {wizardSteps.map((label, i) => {
             const st = i + 1;
             return (
-              <div key={s} style={{ display: 'contents' }}>
+              <div key={label} style={{ display: 'contents' }}>
                 {i > 0 ? (
                   <div className={`wp-line${step > i ? ' done' : ''}`} />
                 ) : null}
@@ -158,7 +165,7 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                   >
                     {step > st ? '✓' : st}
                   </div>
-                  <div className={`wp-label${step === st ? ' current' : ''}`}>{s}</div>
+                  <div className={`wp-label${step === st ? ' current' : ''}`}>{label}</div>
                 </div>
               </div>
             );
@@ -168,54 +175,34 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
         {step === 1 && (
           <>
             <div className="wizard-card">
-              <div className="wz-title">选择套利策略类型</div>
-              <div className="wz-sub">
-                不同策略对应不同的市场环境和风险偏好，建议从 Funding 套利入门
-              </div>
+              <div className="wz-title">{W('step1.title')}</div>
+              <div className="wz-sub">{W('step1.sub')}</div>
               <div className="type-grid">
-                {[
-                  [
-                    'funding',
-                    '⚡',
-                    'Funding 套利',
-                    '8-30%/年',
-                    '买现货 + 空永续，收取资金费率。方向中性，风险最低，新手首选。',
-                  ],
-                  [
-                    'spread',
-                    '🔀',
-                    '跨所价差',
-                    '5-20%/年',
-                    '同资产在不同交易所买低卖高。执行快，但需要多所 API 同时接入。',
-                  ],
-                  [
-                    'basis',
-                    '📐',
-                    '基差套利',
-                    '10-25%/年',
-                    '利用 perp/现货价差收敛获利。需要熟悉基差风险，建议有经验后使用。',
-                  ],
-                ].map(([id, ico, name, ann, desc]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    className={`type-opt${stratType === id ? ' selected' : ''}`}
-                    onClick={() => {
-                      setStratType(id);
-                      setSelectedOppId(null);
-                    }}
-                  >
-                    <div className="type-opt-ico">{ico}</div>
-                    <div className="type-opt-name">{name}</div>
-                    <div className="type-opt-ann">{ann}</div>
-                    <div className="type-opt-desc">{desc}</div>
-                  </button>
-                ))}
+                {STRAT_TYPES.map((id) => {
+                  const type = W(`step1.types.${id}`, { returnObjects: true }) || {};
+                  const icons = { funding: '⚡', spread: '🔀', basis: '📐' };
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className={`type-opt${stratType === id ? ' selected' : ''}`}
+                      onClick={() => {
+                        setStratType(id);
+                        setSelectedOppId(null);
+                      }}
+                    >
+                      <div className="type-opt-ico">{icons[id]}</div>
+                      <div className="type-opt-name">{type.name}</div>
+                      <div className="type-opt-ann">{type.ann}</div>
+                      <div className="type-opt-desc">{type.desc}</div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button type="button" className="btn-primary" onClick={() => setStep(2)}>
-                下一步：配置参数 →
+                {W('nav.nextConfigure')}
               </button>
             </div>
           </>
@@ -224,13 +211,11 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
         {step === 2 && (
           <>
             <div className="wizard-card">
-              <div className="wz-title">配置 {typeLabel} 参数</div>
-              <div className="wz-sub">
-                从当前正在监控的实时机会中选择目标资产——而不是盲选一个资产再祈祷有机会
-              </div>
+              <div className="wz-title">{W('step2.title', { type: typeLabel })}</div>
+              <div className="wz-sub">{W('step2.sub')}</div>
 
               <div className="form-label" style={{ marginBottom: 8 }}>
-                选择目标机会（按年化收益排序，实时更新）
+                {W('step2.pickLabel')}
               </div>
               <div className="opp-picker">
                 {[...oppList]
@@ -261,7 +246,7 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                         {o.annualized.toFixed(1)}%
                       </div>
                       <div className="opp-depth">
-                        可承载 ${(o.depth / 1000).toFixed(0)}K
+                        {W('step2.depth', { amount: (o.depth / 1000).toFixed(0) })}
                       </div>
                     </button>
                   ))}
@@ -280,21 +265,21 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                   <div style={{ flex: 1 }}>
                     <div
                       style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.6 }}
-                    >
-                      <strong>{selectedOpp.pair}</strong>（{selectedOpp.exchange}）近7日年化在{' '}
-                      <strong className="mono">
-                        {Math.min(...selectedOpp.history).toFixed(1)}%–
-                        {Math.max(...selectedOpp.history).toFixed(1)}%
-                      </strong>{' '}
-                      之间波动，当前{' '}
-                      <strong className="mono" style={{ color: 'var(--accent)' }}>
-                        {selectedOpp.annualized.toFixed(1)}%
-                      </strong>
-                      。
-                      {selectedOpp.cls === 'crypto-stock'
-                        ? '该标的为美股代币，注意美股休市时段可能出现额外溢价。'
-                        : ''}
-                    </div>
+                      dangerouslySetInnerHTML={{
+                        __html: W('step2.oppDetail', {
+                          pair: selectedOpp.pair,
+                          exchange: selectedOpp.exchange,
+                          min: Math.min(...selectedOpp.history).toFixed(1),
+                          max: Math.max(...selectedOpp.history).toFixed(1),
+                          current: selectedOpp.annualized.toFixed(1),
+                        }),
+                      }}
+                    />
+                    {selectedOpp.cls === 'crypto-stock' ? (
+                      <div style={{ fontSize: 12, color: 'var(--t2)', marginTop: 4 }}>
+                        {W('step2.cryptoStockNote')}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -302,7 +287,7 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
               <div className="config-grid">
                 <div className="form-group">
                   <div className="form-label">
-                    杠杆倍数 <Tip tipKey="leverage" />
+                    {W('step2.leverage')} <Tip tipKey="leverage" />
                   </div>
                   <input
                     className="range-input"
@@ -322,7 +307,7 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                       marginTop: 4,
                     }}
                   >
-                    <span>1x（不加杠杆）</span>
+                    <span>{W('step2.leverageMin')}</span>
                     <span style={{ color: 'var(--gold)', fontWeight: 700 }}>
                       {leverage}x
                     </span>
@@ -330,7 +315,7 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                   </div>
                 </div>
                 <div className="form-group">
-                  <div className="form-label">保证金模式</div>
+                  <div className="form-label">{W('step2.marginMode')}</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <button
                       type="button"
@@ -339,9 +324,9 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                       onClick={() => setMarginMode('isolated')}
                     >
                       <div className="preset-name" style={{ fontSize: 12 }}>
-                        逐仓 Isolated
+                        {W('step2.isolated')}
                       </div>
-                      <div className="preset-desc">风险隔离，单策略爆仓不影响其他仓位</div>
+                      <div className="preset-desc">{W('step2.isolatedDesc')}</div>
                     </button>
                     <button
                       type="button"
@@ -350,9 +335,9 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                       onClick={() => setMarginMode('cross')}
                     >
                       <div className="preset-name" style={{ fontSize: 12 }}>
-                        全仓 Cross
+                        {W('step2.cross')}
                       </div>
-                      <div className="preset-desc">资金利用率更高，但风险互相牵连</div>
+                      <div className="preset-desc">{W('step2.crossDesc')}</div>
                     </button>
                   </div>
                 </div>
@@ -360,7 +345,7 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
 
               <div className="range-row">
                 <div className="range-header">
-                  <div className="range-lbl">投入资金（USD）</div>
+                  <div className="range-lbl">{W('step2.capital')}</div>
                   <div className="range-val">${capital.toLocaleString()}</div>
                 </div>
                 <input
@@ -372,12 +357,12 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                   value={capital}
                   onChange={(e) => setCapital(parseInt(e.target.value, 10))}
                 />
-                <div className="capacity-note">{capacityNote(selectedOpp, capital)}</div>
+                <div className="capacity-note">{capacityNoteText}</div>
               </div>
 
               <div className="range-row">
                 <div className="range-header">
-                  <div className="range-lbl">最低净利润阈值（不足则放弃）</div>
+                  <div className="range-lbl">{W('step2.minProfit')}</div>
                   <div className="range-val">{minProfit}%</div>
                 </div>
                 <input
@@ -396,7 +381,7 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
               <div className="live-estimate">
                 <div className="le-row">
                   <div>
-                    <div className="le-lbl">扣除手续费/滑点后的预估净年化</div>
+                    <div className="le-lbl">{W('step2.estimateLabel')}</div>
                   </div>
                   <div
                     className="le-val"
@@ -410,26 +395,26 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                 </div>
                 <div className="le-breakdown">
                   <span>
-                    机会年化 <b>{estimate.oppAnn.toFixed(2)}%</b>
+                    {W('step2.oppAnn')} <b>{estimate.oppAnn.toFixed(2)}%</b>
                   </span>
                   <span>
-                    − 手续费假设 <b>{estimate.fee.fee}%</b>
+                    − {W('step2.feeAssumption')} <b>{estimate.fee.fee}%</b>
                   </span>
                   <span>
-                    − 杠杆滑点假设 <b>{estimate.slip}%</b>
+                    − {W('step2.slipAssumption')} <b>{estimate.slip}%</b>
                   </span>
                   <span>
-                    ≈ 预估日均 <b>${estimate.dailyUsd.toFixed(2)}</b>
+                    ≈ {W('step2.dailyEst')} <b>${estimate.dailyUsd.toFixed(2)}</b>
                   </span>
                 </div>
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <button type="button" className="btn-secondary" onClick={() => setStep(1)}>
-                ← 上一步
+                {W('nav.prev')}
               </button>
               <button type="button" className="btn-primary" onClick={() => setStep(3)}>
-                下一步：风控设置 →
+                {W('nav.nextRisk')}
               </button>
             </div>
           </>
@@ -438,28 +423,29 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
         {step === 3 && (
           <>
             <div className="wizard-card">
-              <div className="wz-title">风控参数设置</div>
-              <div className="wz-sub">
-                这些参数决定策略在什么情况下自动保护你的资金——不确定怎么选就用预设
-              </div>
+              <div className="wz-title">{W('step3.title')}</div>
+              <div className="wz-sub">{W('step3.sub')}</div>
 
               <div className="preset-bar">
-                {Object.entries(RISK_PRESETS).map(([k, p]) => (
-                  <button
-                    key={k}
-                    type="button"
-                    className={`preset-btn${activePreset === k ? ' on' : ''}`}
-                    onClick={() => applyPreset(k)}
-                  >
-                    <div className="preset-name">{p.name}</div>
-                    <div className="preset-desc">{p.desc}</div>
-                  </button>
-                ))}
+                {Object.keys(RISK_PRESETS).map((k) => {
+                  const preset = W(`presets.${k}`, { returnObjects: true }) || {};
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      className={`preset-btn${activePreset === k ? ' on' : ''}`}
+                      onClick={() => applyPreset(k)}
+                    >
+                      <div className="preset-name">{preset.name}</div>
+                      <div className="preset-desc">{preset.desc}</div>
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="range-row">
                 <div className="range-header">
-                  <div className="range-lbl">日最大亏损限额</div>
+                  <div className="range-lbl">{W('step3.dailyLoss')}</div>
                   <div className="range-val">{lossLimit}%</div>
                 </div>
                 <input
@@ -476,69 +462,67 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                 />
               </div>
 
-              <div className={warn.danger ? 'param-warn danger' : 'param-ok'}>
-                {warn.danger ? '⚠️ ' : '✓ '}
-                {warn.text}
+              <div className={marginWarn.danger ? 'param-warn danger' : 'param-ok'}>
+                {marginWarn.danger ? '⚠️ ' : '✓ '}
+                {marginWarn.text}
               </div>
 
               <div className="rs-row">
                 <div className="rs-label">
-                  最低保证金率警戒线 <Tip tipKey="marginRatio" />
+                  {W('step3.marginWarn')} <Tip tipKey="marginRatio" />
                 </div>
-                <div className="rs-val">50%（低于此值减仓）</div>
+                <div className="rs-val">{W('step3.marginWarnVal')}</div>
               </div>
               <div className="rs-row">
-                <div className="rs-label">最低保证金率强平线</div>
-                <div className="rs-val">35%（低于此值强制平仓）</div>
+                <div className="rs-label">{W('step3.marginLiq')}</div>
+                <div className="rs-val">{W('step3.marginLiqVal')}</div>
               </div>
               <div className="rs-row">
                 <div className="rs-label">
-                  最大滑点容忍度 <Tip tipKey="slippage" />
+                  {W('step3.maxSlippage')} <Tip tipKey="slippage" />
                 </div>
-                <div className="rs-val">0.15%（超出则放弃本次套利）</div>
+                <div className="rs-val">{W('step3.maxSlippageVal')}</div>
               </div>
               <div className="rs-row">
                 <div className="rs-label">
-                  Funding 连续负次数阈值 <Tip tipKey="funding" />
+                  {W('step3.negFunding')} <Tip tipKey="funding" />
                 </div>
-                <div className="rs-val">3次（暂停入场）</div>
+                <div className="rs-val">{W('step3.negFundingVal')}</div>
               </div>
               <div className="rs-row">
-                <div className="rs-label">单日最大执行笔数</div>
-                <div className="rs-val">50笔</div>
+                <div className="rs-label">{W('step3.maxTrades')}</div>
+                <div className="rs-val">{W('step3.maxTradesVal')}</div>
               </div>
               <div style={{ height: 10 }} />
-              {[
-                ['negFunding', '负 Funding 自动暂停', 'Funding翻负时暂停入场'],
-                ['basisReduce', '基差扩大自动减仓', '基差>1.5%时减至50%仓位'],
-                ['dayStop', '日亏损触发全停', '达到日亏损限额停止新开仓'],
-                ['marginAlert', '保证金不足告警', '提前推送告警'],
-              ].map(([key, l, d]) => (
-                <div className="rs-row" key={key}>
-                  <div>
-                    <div style={{ fontSize: 12, color: 'var(--t1)' }}>{l}</div>
-                    <div style={{ fontSize: 10, color: 'var(--t3)' }}>{d}</div>
+              {TOGGLE_KEYS.map((key) => {
+                const toggle = W(`step3.toggles.${key}`, { returnObjects: true }) || {};
+                return (
+                  <div className="rs-row" key={key}>
+                    <div>
+                      <div style={{ fontSize: 12, color: 'var(--t1)' }}>{toggle.label}</div>
+                      <div style={{ fontSize: 10, color: 'var(--t3)' }}>{toggle.desc}</div>
+                    </div>
+                    <label className="tgl">
+                      <input
+                        type="checkbox"
+                        checked={toggles[key]}
+                        onChange={(e) =>
+                          setToggles((prev) => ({ ...prev, [key]: e.target.checked }))
+                        }
+                      />
+                      <div className="tgl-track" />
+                      <div className="tgl-thumb" />
+                    </label>
                   </div>
-                  <label className="tgl">
-                    <input
-                      type="checkbox"
-                      checked={toggles[key]}
-                      onChange={(e) =>
-                        setToggles((prev) => ({ ...prev, [key]: e.target.checked }))
-                      }
-                    />
-                    <div className="tgl-track" />
-                    <div className="tgl-thumb" />
-                  </label>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <button type="button" className="btn-secondary" onClick={() => setStep(2)}>
-                ← 上一步
+                {W('nav.prev')}
               </button>
               <button type="button" className="btn-primary" onClick={() => setStep(4)}>
-                下一步：模拟确认 →
+                {W('nav.nextConfirm')}
               </button>
             </div>
           </>
@@ -549,56 +533,66 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
             <div className="paper-note">
               ⚠️{' '}
               <div>
-                <strong style={{ color: 'var(--gold)' }}>模拟交易期（72小时）</strong>
-                ：新策略将先以模拟账户运行72小时，期间不产生真实交易。系统会验证策略逻辑、风控触发和收益预估的准确性。只有模拟期通过后，才能切换到实盘模式。
+                <strong style={{ color: 'var(--gold)' }}>{W('step4.paperTitle')}</strong>{' '}
+                {W('step4.paperDesc')}
               </div>
             </div>
             <div className="wizard-card">
-              <div className="wz-title">📋 策略配置确认</div>
-              <div className="wz-sub">请仔细确认以下配置，策略启动后部分参数不可修改</div>
+              <div className="wz-title">{W('step4.confirmTitle')}</div>
+              <div className="wz-sub">{W('step4.confirmSub')}</div>
               <div className="sim-card">
-                <div className="sim-title">策略配置摘要</div>
+                <div className="sim-title">{W('step4.summaryTitle')}</div>
                 {[
-                  ['策略类型', typeLabel],
-                  ['目标资产', selectedOpp?.pair ?? '--'],
-                  ['主要交易所', selectedOpp?.exchange ?? '--'],
+                  [W('step4.fields.type'), typeLabel],
+                  [W('step4.fields.asset'), selectedOpp?.pair ?? '--'],
+                  [W('step4.fields.exchange'), selectedOpp?.exchange ?? '--'],
                   [
-                    '杠杆 / 保证金模式',
-                    `${leverage}x / ${marginMode === 'isolated' ? '逐仓' : '全仓'}`,
+                    W('step4.fields.leverageMode'),
+                    `${leverage}x / ${marginModeLabel}`,
                   ],
-                  ['投入资金', `$${capital.toLocaleString()}`],
-                  ['最低利润阈值', `${minProfit}%`],
-                  ['日亏损限额', `${lossLimit}%`],
-                  ['运行模式', '先模拟72h，再实盘'],
-                ].map(([l, v]) => (
-                  <div className="sim-row" key={l}>
-                    <div className="sim-l">{l}</div>
+                  [W('step4.fields.capital'), `$${capital.toLocaleString()}`],
+                  [W('step4.fields.minProfit'), `${minProfit}%`],
+                  [W('step4.fields.dailyLoss'), `${lossLimit}%`],
+                  [W('step4.fields.mode'), W('step4.fields.modeValue')],
+                ].map(([lbl, v]) => (
+                  <div className="sim-row" key={lbl}>
+                    <div className="sim-l">{lbl}</div>
                     <div className="sim-v">{v}</div>
                   </div>
                 ))}
               </div>
               <div className="sim-card">
-                <div className="sim-title">
-                  预期收益区间（基于所选机会实时数据估算，非历史回测保证）
-                </div>
+                <div className="sim-title">{W('step4.returnsTitle')}</div>
                 {[
                   [
-                    '年化净收益（中性预估）',
+                    W('step4.returns.neutral'),
                     `${netMid.toFixed(1)}%`,
-                    '机会年化 − 手续费假设 − 杠杆滑点假设',
+                    W('step4.returns.neutralNote'),
                   ],
-                  ['年化净收益（乐观预估）', `${netOpt}%`, '机会费率维持高位环境'],
-                  ['年化净收益（悲观预估）', `${netPess}%`, '机会费率回落/滑点高于假设'],
                   [
-                    '预估年化绝对收益',
-                    `$${annual.toFixed(0)}`,
-                    `按中性预估 ${netMid.toFixed(1)}% 计算`,
+                    W('step4.returns.optimistic'),
+                    `${netOpt}%`,
+                    W('step4.returns.optimisticNote'),
                   ],
-                  ['预估日均收益', `$${daily.toFixed(2)}`, '不代表保证收益'],
-                ].map(([l, v, d]) => (
-                  <div className="sim-row" key={l}>
+                  [
+                    W('step4.returns.pessimistic'),
+                    `${netPess}%`,
+                    W('step4.returns.pessimisticNote'),
+                  ],
+                  [
+                    W('step4.returns.annualUsd'),
+                    `$${annual.toFixed(0)}`,
+                    W('step4.returns.annualUsdNote', { pct: netMid.toFixed(1) }),
+                  ],
+                  [
+                    W('step4.returns.dailyUsd'),
+                    `$${daily.toFixed(2)}`,
+                    W('step4.returns.dailyUsdNote'),
+                  ],
+                ].map(([lbl, v, d]) => (
+                  <div className="sim-row" key={lbl}>
                     <div>
-                      <div className="sim-l">{l}</div>
+                      <div className="sim-l">{lbl}</div>
                       <div style={{ fontSize: 10, color: 'var(--t3)' }}>{d}</div>
                     </div>
                     <div className="sim-v" style={{ color: 'var(--accent)' }}>
@@ -619,9 +613,8 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                   marginBottom: 16,
                 }}
               >
-                ⚠️{' '}
-                <strong style={{ color: 'var(--danger)' }}>风险提示：</strong>
-                套利策略并非无风险。极端行情可能导致亏损。请仅投入你可以承受亏损的资金。
+                ⚠️ <strong style={{ color: 'var(--danger)' }}>{W('step4.riskTitle')}</strong>
+                {W('step4.riskBody')}
               </div>
               <label className="risk-ack">
                 <input
@@ -629,25 +622,23 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                   checked={riskAck}
                   onChange={(e) => setRiskAck(e.target.checked)}
                 />
-                <div className="risk-ack-text">
-                  我已阅读并理解以上风险提示和策略配置，明白模拟期表现不代表实盘一定能达到同样收益，愿意承担相应风险。
-                </div>
+                <div className="risk-ack-text">{W('step4.riskAck')}</div>
               </label>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <button type="button" className="btn-secondary" onClick={() => setStep(3)}>
-                ← 上一步
+                {W('nav.prev')}
               </button>
               <button
                 type="button"
                 className="btn-primary"
                 disabled={!riskAck}
                 onClick={() => {
-                  onToast('🎉 策略已创建！72小时模拟期开始...');
+                  onToast(`🎉 ${W('toast.created')}`);
                   onNavigate('dashboard');
                 }}
               >
-                🚀 启动模拟交易
+                {W('nav.launch')}
               </button>
             </div>
           </>

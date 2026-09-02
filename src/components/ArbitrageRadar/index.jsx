@@ -36,8 +36,8 @@ export default function ArbitrageRadar({
   onBackToList,
   onSwitchToAutoArb,
 }) {
-  // 内部开关：默认隐藏「自动套利」；需要展示时 setShowAutoArbTab(true)
-  const [showAutoArbTab, setShowAutoArbTab] = useState(false);
+  // 展示「自动套利」入口（跳转 /arbitrage/auto）
+  const [showAutoArbTab] = useState(true);
 
   const rootRef = useRef(null);
   const navRef = useRef({ onNavigateDetail, onBackToList, onSwitchToAutoArb });

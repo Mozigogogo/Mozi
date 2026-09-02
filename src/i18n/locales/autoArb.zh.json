@@ -1,0 +1,728 @@
+{
+  "meta": {
+    "title": "自动套利",
+    "description": "Mozi AutoArb 自动套利：连接交易所 API，自动执行 Funding、跨所价差与基差套利策略。"
+  },
+  "nav": {
+    "landing": "产品介绍",
+    "dashboard": "策略中心",
+    "vault": "API 管理",
+    "wizard": "新建策略"
+  },
+  "confirm": {
+    "title": "紧急停止所有策略",
+    "desc": "这将立即暂停所有正在运行的套利策略，并发出平仓信号。",
+    "descStrong": "当前已建立的对冲仓位不会自动平仓",
+    "descEnd": "，需要手动处理。确定继续？",
+    "cancel": "取消",
+    "confirm": "确认停止全部"
+  },
+  "toast": {
+    "emergencyStopped": "所有策略已紧急停止，请检查仓位",
+    "freeSignup": "免费注册即可使用",
+    "contactPro": "联系我们升级专业版",
+    "contactBiz": "BD@mozi.fund"
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "全自动套利引擎",
+      "titleLine1": "把套利机会",
+      "titleLine2": "交给算法",
+      "titleLine3": "，你只管收益",
+      "sub": "连接你的交易所 API，Mozi AutoArb 7×24 小时监控加密货币与美股代币套利机会，自动执行 Cash & Carry、跨所价差和基差套利策略。",
+      "ctaPrimary": "创建第一个策略",
+      "ctaSecondary": "查看演示 Dashboard →"
+    },
+    "stats": {
+      "volume": "累计套利成交额",
+      "apr": "平均年化净收益",
+      "success": "订单执行成功率",
+      "lossEvents": "用户资金损失事件"
+    },
+    "howItWorks": {
+      "eyebrow": "工作原理",
+      "title": "四步开始自动套利",
+      "sub": "从连接 API 到第一笔套利收益，全程不超过 15 分钟",
+      "steps": [
+        {
+          "title": "连接 API 密钥",
+          "desc": "在交易所创建仅有交易权限（无提币）的 API key，通过加密通道提交。密钥经 AES-256 加密存储，服务器永远不接触明文。"
+        },
+        {
+          "title": "配置套利策略",
+          "desc": "选择套利类型、目标资产、投入资金和风控参数。系统会根据历史数据预估收益区间，帮助你设置合理预期。"
+        },
+        {
+          "title": "模拟交易验证",
+          "desc": "新策略强制经过 72 小时模拟交易期，验证信号逻辑和风控触发是否符合预期，0 风险上手。"
+        },
+        {
+          "title": "开启实盘运行",
+          "desc": "模拟期通过后，以小额资金（默认不超过配置上限的 20%）开启实盘，收益表现稳定后系统自动逐步提升仓位。"
+        }
+      ]
+    },
+    "strategies": {
+      "eyebrow": "套利策略",
+      "title": "三种经过验证的套利策略",
+      "sub": "每种策略都有独立的风险模型和历史回测数据",
+      "statLabels": {
+        "histApr": "历史年化",
+        "maxDd": "最大回撤",
+        "dirRisk": "方向风险",
+        "minCapital": "最低资金",
+        "singleReturn": "单次收益",
+        "frequency": "执行频率",
+        "capitalUse": "资金占用",
+        "basisRisk": "基差风险",
+        "holdPeriod": "持仓周期"
+      },
+      "funding": {
+        "name": "Funding 套利（Cash & Carry）",
+        "desc": "同时持有现货多单 + 永续合约空单，方向中性，持续收取资金费率。Hyperliquid 每1小时结算，年化效果显著。",
+        "dirRisk": "近中性",
+        "frequency": "1-10次/天"
+      },
+      "spread": {
+        "name": "跨所价差套利",
+        "desc": "监控同一资产在不同交易所的价差，低价所买入同时高价所卖出。执行窗口 1-30 分钟，净价差扣除手续费后即为利润。",
+        "capitalUse": "短暂"
+      },
+      "basis": {
+        "name": "基差套利",
+        "desc": "利用永续合约价格与现货价格的基差，做多现货 + 做空 perp，同时赚取基差收敛和 Funding 的双重收益。",
+        "basisRisk": "中等",
+        "holdPeriod": "1-30天"
+      }
+    },
+    "security": {
+      "eyebrow": "安全架构",
+      "title": "资金安全是第一优先级",
+      "sub": "我们无法提取你的资产，只能执行你授权的交易操作",
+      "items": [
+        {
+          "title": "API 密钥仅限交易权限，禁止提币",
+          "desc": "我们明确要求你在交易所关闭 API 的提币权限。即使密钥泄露，攻击者也无法转移资产，只能执行买卖操作。"
+        },
+        {
+          "title": "AES-256 + HSM 密钥加密",
+          "desc": "密钥在提交时用你的账户密码加密，存储前再经过 HSM（硬件安全模块）加密。服务器数据库中只有密文，无法还原明文。"
+        },
+        {
+          "title": "固定 IP 白名单，拒绝未知调用",
+          "desc": "我们的执行服务器只使用固定出口 IP。建议你在交易所设置 IP 白名单，其他 IP 的 API 调用将被直接拒绝。"
+        },
+        {
+          "title": "实时异常检测 + 自动熔断",
+          "desc": "每笔交易前都会进行滑点、仓位、保证金率的三重检查。任何异常立即触发熔断，停止该策略并通知你。"
+        }
+      ],
+      "threatTitle": "威胁模型与应对措施",
+      "threatStatus": {
+        "solved": "已覆盖",
+        "partial": "部分"
+      },
+      "threatModel": [
+        { "threat": "API 密钥泄露", "desc": "禁提币+IP白名单，攻击者无法获利", "status": "solved" },
+        { "threat": "服务器被入侵", "desc": "密钥密文无法还原，HSM物理隔离", "status": "solved" },
+        { "threat": "策略逻辑错误", "desc": "模拟期验证+小仓启动+熔断机制", "status": "solved" },
+        { "threat": "交易所维护中断", "desc": "仓位保持不变，恢复后重连，不强平", "status": "solved" },
+        { "threat": "Funding 翻负", "desc": "检测后自动暂停，通知手动决策", "status": "solved" },
+        { "threat": "基差急剧扩大", "desc": "保证金率阈值触发，减仓止损", "status": "solved" },
+        { "threat": "监管政策变化", "desc": "地域检测+自动合规下线", "status": "partial" },
+        { "threat": "FTX 式交易所暴雷", "desc": "单所仓位上限30%+快速撤仓预案", "status": "partial" }
+      ]
+    },
+    "pricing": {
+      "eyebrow": "定价方案",
+      "title": "按使用付费，收益对齐",
+      "sub": "所有方案包含 7 天全功能免费试用，无需绑卡",
+      "perMonth": "/月",
+      "plans": [
+        {
+          "name": "观察者",
+          "price": "免费",
+          "sub": "信号监控 + 手动执行提示，不自动下单",
+          "btn": "开始使用",
+          "features": [
+            { "text": "实时套利信号推送", "included": true },
+            { "text": "Telegram / 邮件提醒", "included": true },
+            { "text": "手动执行指引", "included": true },
+            { "text": "最多3个监控策略", "included": true },
+            { "text": "自动执行", "included": false },
+            { "text": "后台运行", "included": false }
+          ]
+        },
+        {
+          "name": "自动版",
+          "price": "$49",
+          "sub": "自动执行，最高 $50,000 总仓位",
+          "btn": "7天免费试用",
+          "features": [
+            { "text": "最多 5 个策略并发", "included": true },
+            { "text": "最高 $50,000 总仓位", "included": true },
+            { "text": "全套风控工具", "included": true },
+            { "text": "实时 P&L 仪表盘", "included": true },
+            { "text": "API 密钥管理", "included": true },
+            { "text": "邮件 + TG 推送", "included": true }
+          ]
+        },
+        {
+          "name": "专业版",
+          "price": "$149",
+          "sub": "无限策略，最高 $500,000 仓位",
+          "btn": "联系升级",
+          "features": [
+            { "text": "无限策略并发", "included": true },
+            { "text": "最高 $500,000 总仓位", "included": true },
+            { "text": "优先执行队列", "included": true },
+            { "text": "自定义策略参数", "included": true },
+            { "text": "API 访问权限", "included": true },
+            { "text": "专属客服支持", "included": true }
+          ]
+        },
+        {
+          "name": "机构版",
+          "price": "定制",
+          "sub": "无上限仓位，白标接入，SLA 保障",
+          "btn": "商务联系",
+          "features": [
+            { "text": "无仓位上限", "included": true },
+            { "text": "专属执行节点", "included": true },
+            { "text": "链路数据 API", "included": true },
+            { "text": "合规报告导出", "included": true },
+            { "text": "私有化部署选项", "included": true },
+            { "text": "7×24 专属支持", "included": true }
+          ]
+        }
+      ],
+      "bizNote": {
+        "title": "盈利模式说明（对用户透明）",
+        "items": [
+          "订阅费：主要收入来源，SaaS 模式，与用户收益无关，激励我们持续优化基础设施",
+          "无绩效分成：不从你的利润中抽成。你的收益 100% 归你，我们不会因为追求短期高收益而冒险",
+          "数据服务：聚合的匿名市场数据以 API 形式向机构出售，不含任何个人信息",
+          "未来：平台费（策略市场）、策略 NFT（允许用户分享/出售自定义策略模板）"
+        ]
+      }
+    },
+    "edgeCases": {
+      "eyebrow": "边界情况",
+      "title": "我们考虑了所有可能出错的情况",
+      "categories": {
+        "exec": "执行风险",
+        "risk": "风险控制",
+        "ops": "运营稳定性"
+      },
+      "items": {
+        "exec": [
+          ["价差在执行中消失", "滑点超阈值（默认0.15%）自动放弃，记录为\"机会错过\"，不强行执行"],
+          ["部分成交", "持有开口仓位，等待完成或超时后反向平仓，避免单边暴露"],
+          ["同一机会并发触发", "基于 Redis 分布式锁保证幂等，同一机会同一账户只执行一次"],
+          ["网络超时", "带订单 ID 的幂等重试，避免重复下单"],
+          ["交易所返回错误码", "分类处理：临时错误重试，永久错误暂停策略并告警"]
+        ],
+        "risk": [
+          ["保证金率低于警戒线", "50%时发预警，40%时自动减仓，30%时强制平仓"],
+          ["Funding 费率翻负", "检测到连续3次负费率，自动暂停入场，通知用户决策是否平仓"],
+          ["基差急剧扩大（>1.5%）", "减少仓位至50%，发出预警，等待基差收敛后恢复"],
+          ["日亏损超过限额", "触发日止损线后当日停止所有新开仓，已有仓位继续维持"],
+          ["交易所流动性枯竭", "订单簿深度检查，低于阈值不开仓，避免大额滑点"]
+        ],
+        "ops": [
+          ["交易所计划维护", "检测维护公告，提前暂停策略，维护结束后重连验证"],
+          ["API 密钥失效/被撤销", "立即停止相关策略，推送告警，等待用户重新授权"],
+          ["API 限速", "自适应限速队列，优先处理止损类操作，延迟套利入场"],
+          ["服务器宕机重启", "策略状态持久化到 Redis，重启后自动恢复，不影响已有仓位"],
+          ["系统时钟偏差", "NTP 同步 + 服务器端时间戳验证，防止 Funding 结算时机错误"]
+        ]
+      }
+    }
+  },
+  "dashboard": {
+    "emergencyBar": {
+      "runningCount": "{{count}} 个策略运行中",
+      "totalPosition": "总仓位",
+      "todayPnl": "今日净收益",
+      "stopAll": "紧急停止全部"
+    },
+    "stats": {
+      "totalCapital": "投入总资金",
+      "activeStrategies": "跨 {{count}} 个活跃策略",
+      "cumulativePnl": "累计净收益",
+      "totalReturn": "{{pct}}% 总回报",
+      "todayPnl": "今日收益",
+      "lastUpdated": "最后更新 刚刚",
+      "overallRisk": "综合风险",
+      "riskLow": "低",
+      "riskScore": "风险分 {{score}}/100",
+      "execSuccess": "执行成功率",
+      "execSuccessSub": "过去30天 {{ok}}/{{total}}笔"
+    },
+    "strategyList": {
+      "title": "策略列表",
+      "newStrategy": "+ 新建策略"
+    },
+    "strategyTypes": {
+      "funding": "Funding 套利",
+      "spread": "现货价差",
+      "basis": "基差套利"
+    },
+    "status": {
+      "running": "运行中",
+      "paused": "已暂停",
+      "stopped": "已停止"
+    },
+    "metrics": {
+      "positionCapital": "仓位资金",
+      "cumulativePnl": "累计收益",
+      "returnPct": "收益率",
+      "riskScore": "风险评分"
+    },
+    "actions": {
+      "pause": "暂停",
+      "resume": "恢复",
+      "config": "配置",
+      "detail": "详情",
+      "clone": "克隆",
+      "stop": "停止"
+    },
+    "riskPanel": {
+      "title": "风控仪表盘",
+      "healthy": "健康",
+      "fundUsage": "资金使用",
+      "maxRiskStrategy": "最高风险策略",
+      "overallRisk": "整体风险",
+      "dailyLossLimit": "日亏损限额",
+      "maxMarginUse": "最高保证金使用",
+      "maxSlippage": "单笔最大滑点",
+      "autoEmergencyStop": "自动紧急停止",
+      "negFundingPause": "负 Funding 暂停",
+      "timeoutAlert": "超时告警通知"
+    },
+    "radar": {
+      "title": "信号雷达",
+      "noRunning": "暂无运行中的策略",
+      "paused": "已暂停",
+      "qualified": "达标",
+      "threshold": "阈值 {{pct}}%",
+      "pausedNote": "策略已暂停，即使信号达标也不会开新仓",
+      "armedNote": "当前信号已满足开仓条件，等待执行引擎下一次轮询",
+      "belowThreshold": "距离触发阈值还差 {{pct}}%"
+    },
+    "capital": {
+      "title": "资金分配",
+      "totalPosition": "总仓位"
+    },
+    "donut": {
+      "nvda": "NVDA C&C",
+      "ethSpread": "ETH跨所",
+      "tslaBasis": "TSLA基差",
+      "idle": "闲置"
+    },
+    "activity": {
+      "title": "实时操作日志",
+      "justNow": "刚刚",
+      "text": {
+        "fundingCollected": " 收取 Funding 费率 ",
+        "spreadDetectedPrefix": "检测到 ",
+        "spreadDetected": " 跨所价差 ",
+        "spreadExecuted": "，已执行套利",
+        "marginHealthy": " 保证金率 ",
+        "marginHealthySuffix": "，健康",
+        "negFundingPause": " Funding 出现负费率，暂停入场",
+        "oiRise": " OI 上升 ",
+        "oiSignal": "，信号增强",
+        "dailySettlement": " 日净收益结算 ",
+        "riskCheckPass": "风控检查通过，所有仓位保证金率正常",
+        "fundingAnnRise": " Funding 年化升至 ",
+        "basisExpand": " 基差扩大至 0.31%，已暂停入场，等待收敛",
+        "apiVerified": "API 密钥定期验证完成，权限正常",
+        "spreadExecutedShort": "，已执行"
+      },
+      "initial": [
+        {
+          "ico": "⚡",
+          "time": "justNow",
+          "parts": [
+            { "t": "strong", "v": "NVDA Cash & Carry" },
+            { "t": "text", "v": " 收取 Funding " },
+            { "t": "pos", "v": "+$8.13" }
+          ]
+        },
+        {
+          "ico": "✅",
+          "time": "1m",
+          "parts": [
+            { "t": "text", "v": "检测到 " },
+            { "t": "strong", "v": "BTC/USDT" },
+            { "t": "text", "v": " 跨所价差 " },
+            { "t": "pos", "v": "0.82%" },
+            { "t": "text", "v": "，已执行" }
+          ]
+        },
+        {
+          "ico": "🛡️",
+          "time": "3m",
+          "parts": [{ "t": "text", "v": "风控检查通过，所有仓位保证金率正常" }]
+        },
+        {
+          "ico": "📊",
+          "time": "5m",
+          "parts": [
+            { "t": "strong", "v": "NVDA" },
+            { "t": "text", "v": " Funding 年化升至 " },
+            { "t": "pos", "v": "259%" }
+          ]
+        },
+        {
+          "ico": "⚠️",
+          "time": "8m",
+          "parts": [
+            { "t": "strong", "v": "TSLA" },
+            { "t": "text", "v": " 基差扩大至 0.31%，已暂停入场，等待收敛" }
+          ]
+        },
+        {
+          "ico": "🔑",
+          "time": "12m",
+          "parts": [{ "t": "text", "v": "API 密钥定期验证完成，权限正常" }]
+        }
+      ]
+    },
+    "toast": {
+      "paused": "策略已暂停，当前仓位维持不变",
+      "resumed": "策略已恢复运行",
+      "paramsUpdated": "策略参数已更新",
+      "cloneConfig": "已带入「{{name}}」的配置，可调整后创建新策略",
+      "closeSent": "已发送平仓信号..."
+    },
+    "detail": {
+      "runningDays": "运行 {{days}} 天",
+      "adjustParams": "调整参数",
+      "close": "关闭",
+      "cumulativePnl": "累计收益",
+      "returnPct": "收益率",
+      "marginRatio": "保证金率",
+      "leverage": "杠杆",
+      "isolated": "逐仓",
+      "cross": "全仓",
+      "pnlTrend": "收益走势（近14日）",
+      "positions": "持仓明细（双腿对冲）",
+      "execHistory": "执行历史",
+      "stressTitle": "极端情况会怎样（压力场景说明）",
+      "table": {
+        "role": "角色",
+        "symbol": "标的",
+        "entry": "开仓价",
+        "current": "现价",
+        "qty": "数量"
+      }
+    },
+    "edit": {
+      "title": "调整策略参数",
+      "sub": "{{name}} · 仅部分字段允许在运行中修改",
+      "cancel": "取消",
+      "save": "保存修改",
+      "leverage": "杠杆倍数",
+      "marginMode": "保证金模式",
+      "lockedWhileRunning": "运行中锁定",
+      "minProfitThreshold": "最低净利润阈值",
+      "dailyLossLimit": "日最大亏损限额",
+      "effectiveNextCycle": "修改将在下一执行周期生效，不会打断当前持仓"
+    },
+    "stress": {
+      "funding": [
+        {
+          "icon": "📉",
+          "title": "若 Funding 费率突然翻负",
+          "outcome": "系统检测到连续3次负费率后自动暂停新开仓，已有仓位保留并推送通知，不会强制平仓。"
+        },
+        {
+          "icon": "🏦",
+          "title": "若交易所突然宕机",
+          "outcome": "仓位状态已持久化，恢复连接后自动核对仓位再决定是否继续，不会盲目重复开仓。"
+        },
+        {
+          "icon": "⚡",
+          "title": "若现货腿成交、合约腿失败",
+          "outcome": "立即市价平掉已成交的现货腿，回滚产生的滑点会如实计入该策略的净收益里。"
+        },
+        {
+          "icon": "📊",
+          "title": "若保证金率跌破 35% 强平线",
+          "outcome": "触发强制减仓，优先保护本金，同时立即推送告警。"
+        }
+      ],
+      "spread": [
+        {
+          "icon": "⏱",
+          "title": "若价差在下单瞬间消失",
+          "outcome": "滑点超过容忍阈值会直接放弃这次机会，不会强行成交，记为\"机会错过\"。"
+        },
+        {
+          "icon": "🔀",
+          "title": "若两个交易所只有一边成交",
+          "outcome": "1.5秒内另一腿未确认，立即市价回滚已成交那一腿，避免裸头寸过夜。"
+        },
+        {
+          "icon": "🌐",
+          "title": "若某个交易所 API 限速",
+          "outcome": "自适应退避重试，超过重试次数则跳过本次机会，不影响其他策略。"
+        }
+      ],
+      "basis": [
+        {
+          "icon": "📐",
+          "title": "若基差急剧扩大超过1.5%",
+          "outcome": "自动减仓至50%，等待基差收敛后再恢复，不会硬扛敞口。"
+        },
+        {
+          "icon": "📉",
+          "title": "若持仓期内 Funding 转负",
+          "outcome": "计入当日实际亏损，若触发日亏损限额则当日停止新开仓。"
+        },
+        {
+          "icon": "🏦",
+          "title": "若交易所计划维护",
+          "outcome": "提前检测维护公告并暂停策略，维护结束后重新验证连接再恢复。"
+        }
+      ]
+    },
+    "tooltips": {
+      "slippage": "滑点：实际成交价格与预期价格之间的偏差，通常由市场深度不足或行情剧烈波动导致。"
+    }
+  },
+  "vault": {
+    "title": "API 密钥管理",
+    "subBefore": "你的 API 密钥经过 AES-256 加密存储，Mozi 服务器",
+    "subStrong": "只能执行交易操作",
+    "subAfter": "，无法转移资产。建议创建仅限交易权限（无提币）的专用密钥。",
+    "steps": [
+      "选择交易所",
+      "输入密钥",
+      "权限验证",
+      "IP 白名单"
+    ],
+    "step1": {
+      "title": "选择交易所",
+      "sub": "选择你要连接的交易所。你可以随时添加更多，每个交易所独立管理。",
+      "apiGuideBefore": "{{exchange}} 创建 API 步骤：",
+      "apiGuideSteps": "进入账户设置 → API 管理 → 创建新密钥 → 勾选「合约交易」和「现货交易」→ ",
+      "apiGuideWithdrawOff": "取消勾选提币权限",
+      "apiGuideAfter": " → 保存密钥",
+      "next": "下一步：输入密钥 →"
+    },
+    "step2": {
+      "title": "输入 {{exchange}} API 密钥",
+      "warningTitle": "安全提示",
+      "warningWithdrawBefore": "请确认 API 密钥",
+      "warningWithdrawStrong": "未开启提币权限",
+      "warningWithdrawAfter": "，这是最重要的安全措施",
+      "warningEncrypt": "密钥提交后经 AES-256 加密，不可逆，即使 Mozi 员工也无法查看",
+      "warningIp": "建议同时在 {{exchange}} 设置 IP 白名单（下一步会提供 Mozi 服务器 IP）",
+      "apiKey": "API Key",
+      "apiSecret": "API Secret",
+      "note": "备注名称",
+      "required": "必填",
+      "optional": "可选",
+      "apiKeyPlaceholder": "粘贴你的 API Key（约 40 个字符）",
+      "apiSecretPlaceholder": "粘贴你的 API Secret（约 64 个字符）",
+      "notePlaceholder": "例如：Mozi-AutoArb-专用",
+      "perms": {
+        "futuresTitle": "合约交易权限",
+        "futuresDesc": "执行 Funding 套利必需",
+        "spotTitle": "现货交易权限",
+        "spotDesc": "Cash & Carry 现货端必需",
+        "withdrawTitle": "提币权限（必须关闭）",
+        "withdrawDesc": "我们永远不需要此权限",
+        "subAccountTitle": "子账户管理权限",
+        "subAccountDesc": "超出所需，建议不开启"
+      },
+      "back": "← 返回",
+      "validate": "验证密钥 →"
+    },
+    "step3": {
+      "titleDone": "验证成功",
+      "titlePending": "正在验证密钥...",
+      "subDone": "API 密钥已安全保存，权限验证通过，可以开始配置策略了。",
+      "subPending": "正在与 {{exchange}} 建立连接并验证权限，请稍候...",
+      "checks": [
+        "连接交易所 API 端点",
+        "验证 API Key 格式正确",
+        "确认账户余额可读（只读验证）",
+        "检查交易权限是否已开启",
+        "确认提币权限已关闭",
+        "AES-256 加密并安全存储"
+      ],
+      "passSummary": "验证通过",
+      "passDetail": " · {{exchange}} 账户余额可读 · 合约+现货权限已开启 · 提币权限已关闭 · 密钥已加密存储",
+      "reenter": "← 重新输入",
+      "next": "设置 IP 白名单 →",
+      "back": "← 返回",
+      "simulate": "模拟完成验证"
+    },
+    "step4": {
+      "title": "设置 IP 白名单（强烈推荐）",
+      "sub": "在 {{exchange}} 中将以下 IP 添加到白名单，其他 IP 的 API 请求将被直接拒绝，即使密钥泄露也无法被利用。",
+      "serverIps": "Mozi 服务器 IP（点击复制）",
+      "clickCopy": "点击复制",
+      "howToTitle": "如何在 {{exchange}} 设置 IP 白名单",
+      "howToItems": [
+        "登录 {{exchange}} → API 管理 → 找到刚才创建的密钥",
+        "点击「编辑」→ 在 IP 白名单中填入上方所有 IP",
+        "保存后等待约 2 分钟生效",
+        "如跳过此步骤，API 可从任意 IP 访问，风险较高"
+      ],
+      "back": "← 返回",
+      "finish": "完成接入，创建策略 →"
+    },
+    "exchangeTypes": {
+      "perp": "Perp",
+      "spotPerp": "现货+Perp",
+      "xStock": "xStock"
+    },
+    "exchanges": {
+      "hyperliquid": "美股代币+加密永续，推荐",
+      "binance": "流动性最强",
+      "okx": "多策略覆盖",
+      "kraken": "美股现货代币"
+    },
+    "toast": {
+      "ipCopied": "IP 已复制：{{ip}}",
+      "ip": "IP：{{ip}}",
+      "connected": "{{exchange}} 已成功接入！现在去创建策略吧"
+    }
+  },
+  "wizard": {
+    "title": "新建套利策略",
+    "subtitle": "所有新策略先经过 72h 模拟验证，确认信号有效后才启动实盘",
+    "steps": ["选择类型", "配置参数", "风控设置", "模拟确认"],
+    "nav": {
+      "nextConfigure": "下一步：配置参数 →",
+      "nextRisk": "下一步：风控设置 →",
+      "nextConfirm": "下一步：模拟确认 →",
+      "prev": "← 上一步",
+      "launch": "🚀 启动模拟交易"
+    },
+    "step1": {
+      "title": "选择套利策略类型",
+      "sub": "不同策略对应不同的市场环境和风险偏好，建议从 Funding 套利入门",
+      "types": {
+        "funding": {
+          "name": "Funding 套利",
+          "ann": "8-30%/年",
+          "desc": "买现货 + 空永续，收取资金费率。方向中性，风险最低，新手首选。"
+        },
+        "spread": {
+          "name": "跨所价差",
+          "ann": "5-20%/年",
+          "desc": "同资产在不同交易所买低卖高。执行快，但需要多所 API 同时接入。"
+        },
+        "basis": {
+          "name": "基差套利",
+          "ann": "10-25%/年",
+          "desc": "利用 perp/现货价差收敛获利。需要熟悉基差风险，建议有经验后使用。"
+        }
+      }
+    },
+    "step2": {
+      "title": "配置 {{type}} 参数",
+      "sub": "从当前正在监控的实时机会中选择目标资产——而不是盲选一个资产再祈祷有机会",
+      "pickLabel": "选择目标机会（按年化收益排序，实时更新）",
+      "depth": "可承载 ${{amount}}K",
+      "oppDetail": "<strong>{{pair}}</strong>（{{exchange}}）近7日年化在 <strong class=\"mono\">{{min}}%–{{max}}%</strong> 之间波动，当前 <strong class=\"mono\" style=\"color:var(--accent)\">{{current}}%</strong>。",
+      "cryptoStockNote": "该标的为美股代币，注意美股休市时段可能出现额外溢价。",
+      "leverage": "杠杆倍数",
+      "leverageMin": "1x（不加杠杆）",
+      "marginMode": "保证金模式",
+      "isolated": "逐仓 Isolated",
+      "isolatedDesc": "风险隔离，单策略爆仓不影响其他仓位",
+      "cross": "全仓 Cross",
+      "crossDesc": "资金利用率更高，但风险互相牵连",
+      "capital": "投入资金（USD）",
+      "minProfit": "最低净利润阈值（不足则放弃）",
+      "capacityHigh": "⚠️ 投入资金已达该机会可承载深度的 {{pct}}%，实际滑点可能高于预估",
+      "capacityOk": "该机会当前可承载深度约 ${{depth}}K，你的投入仅占 {{pct}}%，滑点影响很小",
+      "estimateLabel": "扣除手续费/滑点后的预估净年化",
+      "oppAnn": "机会年化",
+      "feeAssumption": "手续费假设",
+      "slipAssumption": "杠杆滑点假设",
+      "dailyEst": "预估日均",
+      "perYear": "/年"
+    },
+    "step3": {
+      "title": "风控参数设置",
+      "sub": "这些参数决定策略在什么情况下自动保护你的资金——不确定怎么选就用预设",
+      "dailyLoss": "日最大亏损限额",
+      "marginWarn": "最低保证金率警戒线",
+      "marginWarnVal": "50%（低于此值减仓）",
+      "marginLiq": "最低保证金率强平线",
+      "marginLiqVal": "35%（低于此值强制平仓）",
+      "maxSlippage": "最大滑点容忍度",
+      "maxSlippageVal": "0.15%（超出则放弃本次套利）",
+      "negFunding": "Funding 连续负次数阈值",
+      "negFundingVal": "3次（暂停入场）",
+      "maxTrades": "单日最大执行笔数",
+      "maxTradesVal": "50笔",
+      "marginWarnDanger": "当前杠杆 {{leverage}}x 下，日亏损限额 {{loss}}% 可能高于保证金强平线能承受的波动空间（约 {{safe}}%）——行情剧烈波动时可能先触发强平，日亏损限额来不及生效。建议调低杠杆或调低亏损限额。",
+      "marginWarnOk": "当前参数组合下，日亏损限额会在触及强平线之前生效，风控顺序正常",
+      "toggles": {
+        "negFunding": { "label": "负 Funding 自动暂停", "desc": "Funding翻负时暂停入场" },
+        "basisReduce": { "label": "基差扩大自动减仓", "desc": "基差>1.5%时减至50%仓位" },
+        "dayStop": { "label": "日亏损触发全停", "desc": "达到日亏损限额停止新开仓" },
+        "marginAlert": { "label": "保证金不足告警", "desc": "提前推送告警" }
+      }
+    },
+    "presets": {
+      "conservative": { "name": "保守", "desc": "优先保本，收益较慢" },
+      "balanced": { "name": "稳健", "desc": "风险收益均衡（推荐）" },
+      "aggressive": { "name": "激进", "desc": "追求更高收益，波动更大" },
+      "custom": { "name": "自定义", "desc": "手动调整全部参数" }
+    },
+    "step4": {
+      "paperTitle": "模拟交易期（72小时）",
+      "paperDesc": "：新策略将先以模拟账户运行72小时，期间不产生真实交易。系统会验证策略逻辑、风控触发和收益预估的准确性。只有模拟期通过后，才能切换到实盘模式。",
+      "confirmTitle": "📋 策略配置确认",
+      "confirmSub": "请仔细确认以下配置，策略启动后部分参数不可修改",
+      "summaryTitle": "策略配置摘要",
+      "returnsTitle": "预期收益区间（基于所选机会实时数据估算，非历史回测保证）",
+      "riskTitle": "风险提示：",
+      "riskBody": "套利策略并非无风险。极端行情可能导致亏损。请仅投入你可以承受亏损的资金。",
+      "riskAck": "我已阅读并理解以上风险提示和策略配置，明白模拟期表现不代表实盘一定能达到同样收益，愿意承担相应风险。",
+      "fields": {
+        "type": "策略类型",
+        "asset": "目标资产",
+        "exchange": "主要交易所",
+        "leverageMode": "杠杆 / 保证金模式",
+        "capital": "投入资金",
+        "minProfit": "最低利润阈值",
+        "dailyLoss": "日亏损限额",
+        "mode": "运行模式",
+        "modeValue": "先模拟72h，再实盘"
+      },
+      "returns": {
+        "neutral": "年化净收益（中性预估）",
+        "neutralNote": "机会年化 − 手续费假设 − 杠杆滑点假设",
+        "optimistic": "年化净收益（乐观预估）",
+        "optimisticNote": "机会费率维持高位环境",
+        "pessimistic": "年化净收益（悲观预估）",
+        "pessimisticNote": "机会费率回落/滑点高于假设",
+        "annualUsd": "预估年化绝对收益",
+        "annualUsdNote": "按中性预估 {{pct}}% 计算",
+        "dailyUsd": "预估日均收益",
+        "dailyUsdNote": "不代表保证收益"
+      }
+    },
+    "tooltips": {
+      "funding": "资金费率：永续合约每隔固定时间（通常1-8小时）多空双方互相支付的费用，用于让合约价格锚定现货价格。费率为正时，多头付给空头。",
+      "basis": "基差：永续合约价格与现货价格之间的差值。基差套利通过做多现货、做空合约，在基差收敛时获利。",
+      "marginRatio": "保证金率：账户净值占持仓所需保证金的比例。比例越低，离强制平仓越近，是衡量仓位安全的核心指标。",
+      "slippage": "滑点：实际成交价格与预期价格之间的偏差，通常由市场深度不足或行情剧烈波动导致。",
+      "leverage": "杠杆倍数：用较少的保证金撬动更大的合约仓位。杠杆越高，同样的价格波动对保证金率的冲击也越大。"
+    },
+    "toast": {
+      "created": "策略已创建！72小时模拟期开始..."
+    }
+  }
+}
