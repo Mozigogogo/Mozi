@@ -303,6 +303,8 @@ export const Interface = {
   // AutoArb Vault（独立服务 /autoarb/api）
   VAULT_EXCHANGES: '/autoarb/api/v1/vault/exchanges',
   VAULT_CREDENTIALS: '/autoarb/api/v1/vault/credentials',
+  /** POST /v1/vault/credentials/{id}/verify */
+  VAULT_CREDENTIAL_VERIFY: (id) => `/autoarb/api/v1/vault/credentials/${id}/verify`,
   // 所有币种
   ALL_COIN: '/derivatives/allcoin',
   // 所有交易所

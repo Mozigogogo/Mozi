@@ -143,5 +143,46 @@ export async function saveVaultCredentials({
     throw new Error(String(msg));
   }
 
-  return res.data ?? null;
+  const raw = res.data ?? null;
+  if (raw && typeof raw === 'object') {
+    return mergeVaultCredential(raw);
+  }
+  return raw;
+}
+
+/** @param {unknown} data */
+export function parseVaultCredentialId(data) {
+  const id = data?.id ?? data?.credentialId;
+  const n = Number(id);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/**
+ * 立即验证已保存的凭证
+ * POST /v1/vault/credentials/{id}/verify
+ * @param {number|string} credentialId
+ * @returns {Promise<{ verified: boolean; verifyDetail: string }>}
+ */
+export async function verifyVaultCredential(credentialId) {
+  const id = Number(credentialId);
+  if (!Number.isFinite(id) || id <= 0) {
+    throw new Error('credential id is required');
+  }
+
+  const res = await vaultRequest({
+    url: Interface.VAULT_CREDENTIAL_VERIFY(id),
+    method: 'POST',
+  });
+
+  if (!res || (res.code !== 0 && res.code !== 200 && res.success !== true)) {
+    const msg =
+      res?.errorMsg || res?.message || res?.msg || 'Failed to verify vault credentials';
+    throw new Error(String(msg));
+  }
+
+  const data = res.data && typeof res.data === 'object' ? res.data : {};
+  return {
+    verified: data.verified === true,
+    verifyDetail: String(data.verifyDetail || '').trim(),
+  };
 }

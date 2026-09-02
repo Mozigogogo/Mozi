@@ -1,8 +1,13 @@
 /* ── 5. API Vault ─────────────────────────────────────────────────────────── */
 .mozi-autoarb .vault-wrap {
-  max-width: 680px;
   margin: 0 auto;
   padding: 40px 0;
+}
+.mozi-autoarb .vault-wrap--wizard {
+  max-width: 680px;
+}
+.mozi-autoarb .vault-wrap--list {
+  max-width: 100%;
 }
 .mozi-autoarb .vault-title {
   font-family: var(--display);

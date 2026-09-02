@@ -6,7 +6,9 @@ import {
   buildVaultCredentialJson,
   fetchVaultCredentials,
   fetchVaultExchanges,
+  parseVaultCredentialId,
   saveVaultCredentials,
+  verifyVaultCredential,
 } from '@/api/vault';
 import { getFallbackVaultExchanges } from '@/utils/vaultExchanges';
 import { VAULT_SERVER_IPS } from './data';
@@ -34,9 +36,13 @@ export default function Vault({ onNavigate, onToast }) {
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
   const [note, setNote] = useState('');
+  const [credentialId, setCredentialId] = useState(null);
+  const [creating, setCreating] = useState(false);
   const [validationDone, setValidationDone] = useState(false);
   const [validating, setValidating] = useState(false);
-  const submitRef = useRef(null);
+  const [verifyError, setVerifyError] = useState(null);
+  const [verifyDetail, setVerifyDetail] = useState('');
+  const verifyRequestId = useRef(0);
 
   const exchangeName = selectedExchange?.name || '';
 
@@ -100,47 +106,55 @@ export default function Vault({ onNavigate, onToast }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load when wizard opens
   }, [viewMode]);
 
-  useEffect(() => {
-    if (step !== 3 || !validating || validationDone || !submitRef.current) {
-      return undefined;
-    }
+  const runVerify = useCallback(
+    async (id) => {
+      const credId = Number(id);
+      if (!Number.isFinite(credId) || credId <= 0) return;
 
-    const payload = submitRef.current;
-    let cancelled = false;
+      const reqId = ++verifyRequestId.current;
+      setValidating(true);
+      setVerifyError(null);
+      setValidationDone(false);
+      setVerifyDetail('');
 
-    (async () => {
       const started = Date.now();
       try {
-        await saveVaultCredentials(payload);
+        const result = await verifyVaultCredential(credId);
         const elapsed = Date.now() - started;
-        const wait = Math.max(0, 2400 - elapsed);
+        const wait = Math.max(0, 1800 - elapsed);
         if (wait) {
           await new Promise((resolve) => setTimeout(resolve, wait));
         }
-        if (!cancelled) {
-          setApiSecret('');
+        if (reqId !== verifyRequestId.current) return;
+
+        if (result.verified) {
           setValidationDone(true);
-          setValidating(false);
-          submitRef.current = null;
+          setVerifyDetail(result.verifyDetail || '');
           loadCredentials();
+        } else {
+          setVerifyError(result.verifyDetail || t('autoArb.vault.step3.verifyFailed'));
         }
       } catch (err) {
-        if (!cancelled) {
-          onToast(err?.message || V('step2.saveFailed'));
-          setValidating(false);
-          setStep(2);
-          submitRef.current = null;
-        }
+        if (reqId !== verifyRequestId.current) return;
+        setVerifyError(err?.message || t('autoArb.vault.step3.verifyError'));
+      } finally {
+        if (reqId === verifyRequestId.current) setValidating(false);
       }
-    })();
+    },
+    [t, loadCredentials],
+  );
 
+  useEffect(() => {
+    if (step !== 3 || !credentialId || validationDone) return undefined;
+    if (verifyError) return undefined;
+    runVerify(credentialId);
     return () => {
-      cancelled = true;
+      verifyRequestId.current += 1;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per validation attempt
-  }, [step, validating, validationDone]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- verify once per credentialId on step 3
+  }, [step, credentialId]);
 
-  const startValidation = () => {
+  const handleCreateCredential = async () => {
     if (!selectedExchange?.available || !selectedExchange?.exchangeId) {
       onToast(V('step2.noExchange'));
       return;
@@ -153,18 +167,33 @@ export default function Vault({ onNavigate, onToast }) {
       return;
     }
 
-    submitRef.current = {
-      exchangeId: selectedExchange.exchangeId,
-      label: note.trim() || undefined,
-      credentialJson: buildVaultCredentialJson({
-        apiKey: trimmedKey,
-        apiSecret: trimmedSecret,
-      }),
-    };
-
+    setCreating(true);
+    setVerifyError(null);
     setValidationDone(false);
-    setValidating(true);
-    setStep(3);
+    setVerifyDetail('');
+    verifyRequestId.current += 1;
+
+    try {
+      const saved = await saveVaultCredentials({
+        exchangeId: selectedExchange.exchangeId,
+        label: note.trim() || undefined,
+        credentialJson: buildVaultCredentialJson({
+          apiKey: trimmedKey,
+          apiSecret: trimmedSecret,
+        }),
+      });
+      const id = parseVaultCredentialId(saved);
+      if (!id) {
+        throw new Error(V('step2.saveFailed'));
+      }
+      setCredentialId(id);
+      setApiSecret('');
+      setStep(3);
+    } catch (err) {
+      onToast(err?.message || V('step2.saveFailed'));
+    } finally {
+      setCreating(false);
+    }
   };
 
   const copyIp = async (ip) => {
@@ -194,9 +223,20 @@ export default function Vault({ onNavigate, onToast }) {
     setApiKey('');
     setApiSecret('');
     setNote('');
+    setCredentialId(null);
+    setCreating(false);
     setValidationDone(false);
     setValidating(false);
-    submitRef.current = null;
+    setVerifyError(null);
+    setVerifyDetail('');
+    verifyRequestId.current += 1;
+  };
+
+  const goToStep = (nextStep) => {
+    if (nextStep === 3 && !credentialId) return;
+    if (nextStep === 4 && !validationDone) return;
+    if (validating || creating) return;
+    setStep(nextStep);
   };
 
   const startAddFlow = () => {
@@ -205,9 +245,20 @@ export default function Vault({ onNavigate, onToast }) {
   };
 
   const backToList = () => {
-    if (validating) return;
+    if (validating || creating) return;
     resetWizardForm();
     setViewMode('list');
+  };
+
+  const reenterKeys = () => {
+    if (validating) return;
+    verifyRequestId.current += 1;
+    setCredentialId(null);
+    setValidationDone(false);
+    setValidating(false);
+    setVerifyError(null);
+    setVerifyDetail('');
+    setStep(2);
   };
 
   const formatCredentialDate = (iso) => {
@@ -225,7 +276,7 @@ export default function Vault({ onNavigate, onToast }) {
 
   return (
     <div className="view">
-      <div className="vault-wrap">
+      <div className={`vault-wrap vault-wrap--${viewMode}`}>
         <div className="vault-title">🔐 {V('title')}</div>
         <div className="vault-sub">
           {V('subBefore')}
@@ -314,9 +365,9 @@ export default function Vault({ onNavigate, onToast }) {
             <div
               key={label}
               className={`vs-item${step === i + 1 ? ' on' : ''}`}
-              onClick={() => setStep(i + 1)}
+              onClick={() => goToStep(i + 1)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') setStep(i + 1);
+                if (e.key === 'Enter' || e.key === ' ') goToStep(i + 1);
               }}
               role="button"
               tabIndex={0}
@@ -544,10 +595,10 @@ export default function Vault({ onNavigate, onToast }) {
                 <button
                   type="button"
                   className="btn-full btn-gold"
-                  disabled={validating}
-                  onClick={startValidation}
+                  disabled={creating || validating}
+                  onClick={handleCreateCredential}
                 >
-                  {V('step2.validate')}
+                  {creating ? V('step2.creating') : V('step2.create')}
                 </button>
               </div>
             </>
@@ -557,11 +608,12 @@ export default function Vault({ onNavigate, onToast }) {
             <VaultStep3
               done={validationDone}
               validating={validating}
+              verifyError={verifyError}
+              verifyDetail={verifyDetail}
               exchange={exchangeName}
-              onBack={() => {
-                if (validating) return;
-                setStep(2);
-              }}
+              credentialId={credentialId}
+              onBack={reenterKeys}
+              onRetry={runVerify}
               onNext={() => setStep(4)}
             />
           )}
@@ -662,7 +714,17 @@ export default function Vault({ onNavigate, onToast }) {
   );
 }
 
-function VaultStep3({ done, validating, exchange, onBack, onNext }) {
+function VaultStep3({
+  done,
+  validating,
+  verifyError,
+  verifyDetail,
+  exchange,
+  credentialId,
+  onBack,
+  onRetry,
+  onNext,
+}) {
   const { t, i18n } = useTranslation();
   const V = (key, opts) => t(`autoArb.vault.${key}`, opts);
 
@@ -672,10 +734,15 @@ function VaultStep3({ done, validating, exchange, onBack, onNext }) {
   );
 
   const [activeIdx, setActiveIdx] = useState(0);
+  const failed = !!verifyError && !validating && !done;
 
   useEffect(() => {
     if (done) {
       setActiveIdx(checks.length);
+      return undefined;
+    }
+    if (failed) {
+      setActiveIdx(0);
       return undefined;
     }
     if (!validating) {
@@ -693,33 +760,47 @@ function VaultStep3({ done, validating, exchange, onBack, onNext }) {
       });
     }, 480);
     return () => clearInterval(timer);
-  }, [validating, done, checks.length]);
+  }, [validating, done, failed, checks.length]);
 
   const items = checks.map((text, i) => {
     if (done || i < activeIdx) {
       return { ico: '✅', text, spinning: false };
     }
+    if (failed) {
+      return { ico: '⏳', text, spinning: false };
+    }
     if (i === activeIdx && validating) {
-      return { ico: i === 4 ? '🔍' : '⏳', text, spinning: true };
+      return { ico: '🔍', text, spinning: true };
     }
     return { ico: '⏳', text, spinning: false };
   });
 
+  const title = done
+    ? `✅ ${V('step3.titleDone')}`
+    : failed
+      ? `⚠️ ${V('step3.verifyFailed')}`
+      : `🔍 ${V('step3.titlePending')}`;
+
   return (
     <>
-      <div className="wz-title">
-        {done ? `✅ ${V('step3.titleDone')}` : `🔍 ${V('step3.titlePending')}`}
-      </div>
+      <div className="wz-title">{title}</div>
       <div className="wz-sub">
         {done
           ? V('step3.subDone')
-          : V('step3.subPending', { exchange })}
+          : failed
+            ? verifyError
+            : V('step3.subPending', { exchange })}
       </div>
       <div className="validation-anim">
         {items.map((it) => (
           <div className="va-item" key={it.text}>
             <div className={`va-ico${it.spinning ? ' is-spinning' : ''}`}>{it.ico}</div>
-            <div style={{ fontSize: 12, color: done || it.ico === '✅' ? 'var(--pos)' : 'var(--t2)' }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: done || it.ico === '✅' ? 'var(--pos)' : failed ? 'var(--t2)' : 'var(--t2)',
+              }}
+            >
               {it.text}
             </div>
           </div>
@@ -735,11 +816,12 @@ function VaultStep3({ done, validating, exchange, onBack, onNext }) {
             fontSize: 11,
             color: 'var(--t2)',
             marginBottom: 16,
+            lineHeight: 1.6,
           }}
         >
           ✅{' '}
           <strong style={{ color: 'var(--pos)' }}>{V('step3.passSummary')}</strong>
-          {V('step3.passDetail', { exchange })}
+          {verifyDetail || V('step3.passDetail', { exchange })}
         </div>
       ) : null}
       <div className="vault-footer">
@@ -750,6 +832,20 @@ function VaultStep3({ done, validating, exchange, onBack, onNext }) {
             </button>
             <button type="button" className="btn-full btn-gold" onClick={onNext}>
               {V('step3.next')}
+            </button>
+          </>
+        ) : failed ? (
+          <>
+            <button type="button" className="btn-full btn-ghost" onClick={onBack}>
+              {V('step3.reenter')}
+            </button>
+            <button
+              type="button"
+              className="btn-full btn-gold"
+              disabled={validating}
+              onClick={() => onRetry(credentialId)}
+            >
+              {V('step3.retryVerify')}
             </button>
           </>
         ) : (

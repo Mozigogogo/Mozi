@@ -566,7 +566,8 @@
         "subAccountDesc": "超出所需，建议不开启"
       },
       "back": "← 返回",
-      "validate": "验证密钥 →",
+      "create": "创建 API 密钥 →",
+      "creating": "正在保存...",
       "missingFields": "请填写 API Key 和 API Secret",
       "noExchange": "请先选择可用的交易所",
       "saveFailed": "密钥保存失败，请检查填写内容后重试"
@@ -578,14 +579,16 @@
       "subPending": "正在与 {{exchange}} 建立连接并验证权限，请稍候...",
       "checks": [
         "连接交易所 API 端点",
-        "验证 API Key 格式正确",
+        "验证 Agent Wallet 派生地址",
         "确认账户余额可读（只读验证）",
         "检查交易权限是否已开启",
-        "确认提币权限已关闭",
-        "AES-256 加密并安全存储"
+        "确认提币权限已关闭"
       ],
       "passSummary": "验证通过",
-      "passDetail": " · {{exchange}} 账户余额可读 · 合约+现货权限已开启 · 提币权限已关闭 · 密钥已加密存储",
+      "passDetail": " · {{exchange}} 账户可读 · 权限符合要求",
+      "verifyFailed": "验证未通过",
+      "verifyError": "验证失败，请检查密钥权限后重试",
+      "retryVerify": "重新验证",
       "reenter": "← 重新输入",
       "next": "设置 IP 白名单 →",
       "back": "← 返回",

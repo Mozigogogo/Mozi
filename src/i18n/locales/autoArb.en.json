@@ -566,7 +566,8 @@
         "subAccountDesc": "Beyond what we need — keep disabled"
       },
       "back": "← Back",
-      "validate": "Verify keys →",
+      "create": "Create API key →",
+      "creating": "Saving...",
       "missingFields": "Please enter API Key and API Secret",
       "noExchange": "Please select an available exchange",
       "saveFailed": "Failed to save credentials. Please check your keys and try again."
@@ -578,14 +579,16 @@
       "subPending": "Connecting to {{exchange}} and checking permissions, please wait...",
       "checks": [
         "Connect to exchange API endpoint",
-        "Validate API key format",
+        "Validate Agent Wallet derived address",
         "Confirm account balance is readable (read-only check)",
         "Verify trading permissions are enabled",
-        "Confirm withdrawals are disabled",
-        "AES-256 encrypt and store securely"
+        "Confirm withdrawals are disabled"
       ],
       "passSummary": "Verified",
-      "passDetail": " · {{exchange}} balance readable · Futures + spot enabled · Withdrawals off · Key encrypted",
+      "passDetail": " · {{exchange}} account readable · permissions OK",
+      "verifyFailed": "Verification failed",
+      "verifyError": "Verification failed. Check key permissions and try again.",
+      "retryVerify": "Retry verification",
       "reenter": "← Re-enter",
       "next": "Set IP whitelist →",
       "back": "← Back",
