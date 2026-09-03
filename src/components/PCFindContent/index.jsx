@@ -591,12 +591,13 @@ export default function PCFindContent() {
     return sortUsStockByVolume(usStockData, usStockVolumeSort);
   }, [usStockData, usStockVolumeSort]);
 
+  // 进入美股 Tab 时拉取列表（URL ?tab=usStock / 详情返回时不会走 handleTabChange）
   useEffect(() => {
-    if (activeTab !== 'usStock' || US_STOCK_USE_MOCK) return;
+    if (activeTab !== 'usStock') return;
     usStockPageRef.current = 1;
     setUsStockPage(1);
     fetchUsStockData(usStockVolumeSort, { pageNo: 1 });
-  }, [usStockVolumeSort]);
+  }, [activeTab, usStockVolumeSort]);
 
   // 加密行情列表：每 5 秒静默刷新（等上次完成再发，避免堆积）
   useEffect(() => {
@@ -1044,14 +1045,10 @@ export default function PCFindContent() {
     }
     if (key === 'market') {
       fetchMarketData();
-    } else if (key === 'usStock') {
-      usStockPageRef.current = 1;
-      setUsStockPage(1);
-      fetchUsStockData(undefined, { pageNo: 1 });
     } else if (key === 'self') {
       fetchSelfData();
     }
-    // 排行榜数据由 activeTab === 'rank' 的 effect 统一加载（含 URL 深链进入）
+    // 美股 / 排行榜由对应 activeTab effect 统一加载（含 URL 深链、详情返回）
   };
 
   const handleTabClick = (key) => {

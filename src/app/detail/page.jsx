@@ -28,7 +28,6 @@ import { Interface, LOOPTIME, WS_URL } from '@/utils/constants';
 import { formatNumber, formatPercent, jump2NoTab } from '@/utils/core';
 import { formatMoneyCompact } from '@/utils/formatMoney';
 import { navigateToOrReload } from '@/utils/clientNavigation';
-import { safeBack } from '@/utils/navigation';
 import { markTgAlertDeeplinkHandledBySymbol } from '@/utils/tgAlertDeeplink';
 import { hideDetailNavigationShell } from '@/utils/clientNavigation';
 import { notifyRouteBootReady } from '@/utils/routeBootLoading';
@@ -3645,14 +3644,32 @@ ${coinInfo.name || symbol} (${symbol})
       localStorage.setItem('tg_auto_login_skip_once_v1', String(Date.now() + 15 * 1000));
       sessionStorage.setItem('mozi_home_fast_return_once_v1', '1');
     } catch (_) {}
-    safeBack(router, { fallback: '/' });
+    const listPath = isUsStock
+      ? isPC
+        ? '/pc/find?tab=usStock'
+        : '/find?tab=usStock'
+      : isPC
+        ? '/pc/find?tab=market'
+        : '/find?tab=market';
+    if (router?.replace) {
+      router.replace(listPath);
+    } else if (router?.push) {
+      router.push(listPath);
+    }
   };
 
-  // 预取首页路由资源，减少从详情返回首页的等待时间
+  // 预取返回目标路由，减少详情返回等待
   useEffect(() => {
     if (!router?.prefetch) return;
-    router.prefetch('/');
-  }, [router]);
+    const listPath = isUsStock
+      ? isPC
+        ? '/pc/find?tab=usStock'
+        : '/find?tab=usStock'
+      : isPC
+        ? '/pc/find?tab=market'
+        : '/find?tab=market';
+    router.prefetch(listPath);
+  }, [router, isUsStock, isPC]);
 
   /** PC 行情页弹幕条：发帖到社区（与 PC 社区币种讨论一致） */
   const handleBarrageSend = useCallback(
