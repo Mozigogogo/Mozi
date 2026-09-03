@@ -1,5 +1,5 @@
 /**
- * 各交易所 Vault 凭证字段定义（与后端 credentialJson 结构对齐）
+ * 各交易所 Vault 凭证字段定义（解密后明文 JSON 结构）
  *
  * Hyperliquid: { privateKey } — 仅存 Agent Wallet 私钥，地址由服务端从私钥派生
  * CEX 标准:    { apiKey, secret }
@@ -176,11 +176,6 @@ export function buildCredentialPayload(code, values) {
     payload[field.jsonKey] = val;
   });
   return payload;
-}
-
-/** @param {string} code @param {Record<string, string>} values */
-export function buildCredentialJsonString(code, values) {
-  return JSON.stringify(buildCredentialPayload(code, values));
 }
 
 /** 创建成功后清除敏感字段 */

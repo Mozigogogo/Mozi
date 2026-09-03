@@ -1,8 +1,7 @@
 /* ── 2. Header & layout ─────────────────────────────────────────────────── */
 .mozi-autoarb .hdr {
-  position: sticky;
-  top: 0;
-  z-index: 200;
+  position: relative;
+  z-index: 1;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);

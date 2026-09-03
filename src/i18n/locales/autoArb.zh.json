@@ -575,7 +575,7 @@
       "warningWithdrawBefore": "请确认 API 密钥",
       "warningWithdrawStrong": "未开启提币权限",
       "warningWithdrawAfter": "，这是最重要的安全措施",
-      "warningEncrypt": "密钥提交后经 AES-256 加密，不可逆，即使 Mozi 员工也无法查看",
+      "warningEncrypt": "密钥在浏览器内用 RSA-OAEP + AES-256-GCM 加密后再提交，传输过程中服务端收到的是密文信封",
       "warningIp": "建议同时在 {{exchange}} 设置 IP 白名单（下一步会提供 Mozi 服务器 IP）",
       "agentPermTitle": "Agent Wallet 权限说明",
       "agentPermDesc": "Hyperliquid Agent 仅可签名交易订单，无法提币、转账或管理资金。请确认主账户已在 HL 授权该 Agent。",
@@ -600,7 +600,8 @@
       "missingField": "请填写：{{field}}",
       "invalidPrivateKey": "Agent 私钥格式不正确，应为 0x 开头的 64 位十六进制",
       "noExchange": "请先选择可用的交易所",
-      "saveFailed": "密钥保存失败，请检查填写内容后重试"
+      "saveFailed": "密钥保存失败，请检查填写内容后重试",
+      "encryptFailed": "密钥加密失败，请刷新后重试"
     },
     "step3": {
       "titleDone": "验证成功",

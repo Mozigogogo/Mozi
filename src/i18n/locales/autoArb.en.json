@@ -575,7 +575,7 @@
       "warningWithdrawBefore": "Confirm API keys have ",
       "warningWithdrawStrong": "withdrawals disabled",
       "warningWithdrawAfter": " — this is the most important safeguard",
-      "warningEncrypt": "Keys are AES-256 encrypted after submit — irreversible; even Mozi staff cannot view them",
+      "warningEncrypt": "Keys are encrypted in the browser with RSA-OAEP + AES-256-GCM before submit; the server receives a ciphertext envelope",
       "warningIp": "Also set an IP whitelist on {{exchange}} (Mozi server IPs provided in the next step)",
       "agentPermTitle": "Agent wallet permissions",
       "agentPermDesc": "Hyperliquid agents can only sign trades — no withdrawals, transfers, or fund management. Ensure your master account has approved this agent.",
@@ -600,7 +600,8 @@
       "missingField": "Please enter: {{field}}",
       "invalidPrivateKey": "Invalid agent private key — expected 0x followed by 64 hex characters",
       "noExchange": "Please select an available exchange",
-      "saveFailed": "Failed to save credentials. Please check your keys and try again."
+      "saveFailed": "Failed to save credentials. Please check your keys and try again.",
+      "encryptFailed": "Failed to encrypt credentials. Please refresh and try again."
     },
     "step3": {
       "titleDone": "Verification successful",

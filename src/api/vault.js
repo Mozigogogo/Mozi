@@ -4,7 +4,7 @@
 
 import { request } from '../utils/request';
 import { AUTOARB_API_URL, Interface } from '../utils/constants';
-import { buildCredentialJsonString } from '../utils/vaultCredentialSchema';
+import { encryptVaultPlaintext, importVaultRsaPublicKey } from '../utils/vaultCrypto';
 import { mergeVaultExchange, mergeVaultCredential } from '../utils/vaultExchanges';
 
 /**
@@ -87,36 +87,50 @@ export async function fetchVaultCredentials() {
 }
 
 /**
- * 按交易所 schema 构建 credentialJson
- * @param {string} exchangeCode
- * @param {Record<string, string>} values
+ * GET /v1/vault/crypto/public-key
+ * @returns {Promise<{ kid: string; key: CryptoKey }>}
  */
-export function buildVaultCredentialJson(exchangeCode, values) {
-  return buildCredentialJsonString(exchangeCode, values);
+export async function fetchVaultCryptoPublicKey() {
+  const res = await vaultRequest({
+    url: Interface.VAULT_CRYPTO_PUBLIC_KEY,
+    method: 'GET',
+  });
+
+  if (!res || (res.code !== 0 && res.code !== 200 && res.success !== true)) {
+    const msg =
+      res?.errorMsg || res?.message || res?.msg || 'Failed to load vault public key';
+    throw new Error(String(msg));
+  }
+
+  const data = res.data && typeof res.data === 'object' ? res.data : {};
+  return importVaultRsaPublicKey(data);
 }
 
 /**
- * 保存 / 覆盖交易所 API 密钥
+ * 保存 / 覆盖交易所 API 密钥（统一加密，不传明文、不传 credentialJson）
  * POST /v1/vault/credentials
  * @param {{
  *   exchangeId?: number;
  *   exchange?: string;
  *   label?: string;
- *   credentialJson: string;
+ *   payload: Record<string, string>;
  * }} params
  */
 export async function saveVaultCredentials({
   exchangeId,
   exchange,
   label,
-  credentialJson,
+  payload,
 }) {
-  const json = String(credentialJson || '').trim();
-  if (!json.startsWith('{')) {
-    throw new Error('credentialJson must be a JSON object string');
+  const plain = payload && typeof payload === 'object' ? payload : null;
+  if (!plain || Object.keys(plain).length === 0) {
+    throw new Error('credential payload is required');
   }
 
-  const body = { credentialJson: json };
+  const rsa = await fetchVaultCryptoPublicKey();
+  const envelope = await encryptVaultPlaintext(JSON.stringify(plain), rsa);
+
+  const body = { ...envelope };
   if (exchangeId != null && exchangeId !== '') {
     body.exchangeId = Number(exchangeId);
   } else if (exchange) {

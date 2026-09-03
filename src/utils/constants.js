@@ -303,6 +303,8 @@ export const Interface = {
   // AutoArb Vault（独立服务 /autoarb/api）
   VAULT_EXCHANGES: '/autoarb/api/v1/vault/exchanges',
   VAULT_CREDENTIALS: '/autoarb/api/v1/vault/credentials',
+  /** GET RSA-OAEP-256 公钥，用于加密凭证 */
+  VAULT_CRYPTO_PUBLIC_KEY: '/autoarb/api/v1/vault/crypto/public-key',
   /** POST /v1/vault/credentials/{id}/verify */
   VAULT_CREDENTIAL_VERIFY: (id) => `/autoarb/api/v1/vault/credentials/${id}/verify`,
   // 所有币种

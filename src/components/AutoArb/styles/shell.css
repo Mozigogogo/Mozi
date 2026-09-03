@@ -1,11 +1,12 @@
 /* ── 10. Product shell integration (PC layout overrides) ───────────────────── */
 .mozi-autoarb .hdr {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
+  /* 跟套利专区一样走文档流，不要 sticky 到视口 top，否则会盖住 PC 顶栏 */
+  position: relative;
+  top: auto;
+  z-index: 1;
+  background: transparent;
+  backdrop-filter: none;
+  border-bottom: none;
   height: auto;
   display: block;
   padding: 0;

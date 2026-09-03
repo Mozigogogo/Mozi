@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  buildVaultCredentialJson,
   fetchVaultCredentials,
   fetchVaultExchanges,
   parseVaultCredentialId,
@@ -12,6 +11,7 @@ import {
 } from '@/api/vault';
 import { getFallbackVaultExchanges } from '@/utils/vaultExchanges';
 import {
+  buildCredentialPayload,
   clearSensitiveCredentialValues,
   emptyCredentialValues,
   getVaultCredentialSchema,
@@ -199,7 +199,7 @@ export default function Vault({ onNavigate, onToast }) {
       const saved = await saveVaultCredentials({
         exchangeId: selectedExchange.exchangeId,
         label: note.trim() || undefined,
-        credentialJson: buildVaultCredentialJson(exchangeCode, credentialValues),
+        payload: buildCredentialPayload(exchangeCode, credentialValues),
       });
       const id = parseVaultCredentialId(saved);
       if (!id) {
