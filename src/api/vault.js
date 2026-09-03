@@ -4,6 +4,7 @@
 
 import { request } from '../utils/request';
 import { AUTOARB_API_URL, Interface } from '../utils/constants';
+import { buildCredentialJsonString } from '../utils/vaultCredentialSchema';
 import { mergeVaultExchange, mergeVaultCredential } from '../utils/vaultExchanges';
 
 /**
@@ -86,14 +87,12 @@ export async function fetchVaultCredentials() {
 }
 
 /**
- * 构建 Hyperliquid Agent Wallet 凭证 JSON 字符串
- * @param {{ apiKey: string; apiSecret: string }} params
+ * 按交易所 schema 构建 credentialJson
+ * @param {string} exchangeCode
+ * @param {Record<string, string>} values
  */
-export function buildVaultCredentialJson({ apiKey, apiSecret }) {
-  return JSON.stringify({
-    apiKey: String(apiKey || '').trim(),
-    secret: String(apiSecret || '').trim(),
-  });
+export function buildVaultCredentialJson(exchangeCode, values) {
+  return buildCredentialJsonString(exchangeCode, values);
 }
 
 /**

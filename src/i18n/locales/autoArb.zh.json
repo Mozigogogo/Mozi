@@ -533,27 +533,55 @@
       "loadError": "加载交易所列表失败，已显示本地列表",
       "unavailable": "该交易所暂不支持新建托管",
       "maintenance": "暂不可用",
-      "apiGuideBefore": "{{exchange}} 创建 API 步骤：",
-      "apiGuideSteps": "进入账户设置 → API 管理 → 创建新密钥 → 勾选「合约交易」和「现货交易」→ ",
-      "apiGuideWithdrawOff": "取消勾选提币权限",
-      "apiGuideAfter": " → 保存密钥",
       "next": "下一步：输入密钥 →"
     },
+    "credentialGuides": {
+      "hyperliquid": "在 Hyperliquid 创建 API Wallet（Agent）：More → API → Create API Wallet → 仅复制 Agent 私钥粘贴到下方 → 用主账户授权该 Agent。Agent 地址由 Mozi 从私钥自动派生，无需填写。",
+      "binance": "登录 Binance → 个人中心 → API 管理 → 创建 API → 勾选「现货与杠杆交易」「合约」→ 关闭「允许提现」→ 保存 Key 与 Secret。",
+      "okx": "登录 OKX → 个人中心 → API → 创建 API Key → 设置 Passphrase → 权限勾选「交易」、关闭「提币」→ 保存 Key、Secret 与 Passphrase。",
+      "bitget": "登录 Bitget → API 管理 → 创建 API → 设置 Passphrase → 权限勾选合约/现货交易、关闭提币 → 保存三项凭证。",
+      "bybit": "登录 Bybit → API → 创建新密钥 → 权限勾选合约/现货、关闭提币与资金划转 → 保存 Key 与 Secret。",
+      "gate": "登录 Gate.io → API 管理 → 创建 API Key → 权限勾选现货/合约、关闭提币 → 保存 Key 与 Secret。",
+      "kucoin": "登录 KuCoin → API 管理 → 创建 API → 设置 Passphrase → 权限勾选交易、关闭提币 → 保存 Key、Secret 与 Passphrase。",
+      "mexc": "登录 MEXC → API 管理 → 创建 API → 权限勾选现货/合约、关闭提币 → 保存 Key 与 Secret。",
+      "kraken": "登录 Kraken → Settings → API → Create key → 权限勾选 Query + Trade、不要勾选 Withdraw → 保存 API Key 与 Private Key。"
+    },
+    "fields": {
+      "privateKey": {
+        "label": "Agent 私钥",
+        "placeholder": "粘贴 Hyperliquid Agent Wallet 私钥（0x + 64 位十六进制）"
+      },
+      "apiKey": {
+        "label": "API Key",
+        "placeholder": "粘贴交易所提供的 API Key"
+      },
+      "apiSecret": {
+        "label": "API Secret",
+        "placeholder": "粘贴交易所提供的 API Secret / Secret Key"
+      },
+      "passphrase": {
+        "label": "Passphrase",
+        "placeholder": "创建 API 时设置的 Passphrase（OKX / Bitget / KuCoin 必填）"
+      },
+      "krakenPrivateKey": {
+        "label": "Private Key",
+        "placeholder": "粘贴 Kraken API Private Key（非登录密码）"
+      }
+    },
     "step2": {
-      "title": "输入 {{exchange}} API 密钥",
+      "titleCex": "输入 {{exchange}} API 密钥",
+      "titleAgent": "配置 {{exchange}} Agent Wallet",
       "warningTitle": "安全提示",
       "warningWithdrawBefore": "请确认 API 密钥",
       "warningWithdrawStrong": "未开启提币权限",
       "warningWithdrawAfter": "，这是最重要的安全措施",
       "warningEncrypt": "密钥提交后经 AES-256 加密，不可逆，即使 Mozi 员工也无法查看",
       "warningIp": "建议同时在 {{exchange}} 设置 IP 白名单（下一步会提供 Mozi 服务器 IP）",
-      "apiKey": "API Key",
-      "apiSecret": "API Secret",
+      "agentPermTitle": "Agent Wallet 权限说明",
+      "agentPermDesc": "Hyperliquid Agent 仅可签名交易订单，无法提币、转账或管理资金。请确认主账户已在 HL 授权该 Agent。",
       "note": "备注名称",
       "required": "必填",
       "optional": "可选",
-      "apiKeyPlaceholder": "粘贴你的 API Key（约 40 个字符）",
-      "apiSecretPlaceholder": "粘贴你的 API Secret（约 64 个字符）",
       "notePlaceholder": "例如：Mozi-AutoArb-专用",
       "perms": {
         "futuresTitle": "合约交易权限",
@@ -568,7 +596,9 @@
       "back": "← 返回",
       "create": "创建 API 密钥 →",
       "creating": "正在保存...",
-      "missingFields": "请填写 API Key 和 API Secret",
+      "missingFields": "请填写所有必填项",
+      "missingField": "请填写：{{field}}",
+      "invalidPrivateKey": "Agent 私钥格式不正确，应为 0x 开头的 64 位十六进制",
       "noExchange": "请先选择可用的交易所",
       "saveFailed": "密钥保存失败，请检查填写内容后重试"
     },
@@ -577,9 +607,16 @@
       "titlePending": "正在验证密钥...",
       "subDone": "API 密钥已安全保存，权限验证通过，可以开始配置策略了。",
       "subPending": "正在与 {{exchange}} 建立连接并验证权限，请稍候...",
-      "checks": [
+      "checksHyperliquid": [
+        "从私钥派生 Agent 地址",
+        "连接 Hyperliquid 只读接口",
+        "确认主账户已授权该 Agent",
+        "确认账户余额可读",
+        "确认 Agent 无提币/转账权限"
+      ],
+      "checksCex": [
         "连接交易所 API 端点",
-        "验证 Agent Wallet 派生地址",
+        "验证 API Key 格式",
         "确认账户余额可读（只读验证）",
         "检查交易权限是否已开启",
         "确认提币权限已关闭"

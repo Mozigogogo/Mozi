@@ -533,27 +533,55 @@
       "loadError": "Failed to load exchanges. Showing cached list.",
       "unavailable": "This exchange is not available for new connections yet",
       "maintenance": "Unavailable",
-      "apiGuideBefore": "{{exchange}} — steps to create API:",
-      "apiGuideSteps": "Account settings → API management → Create new key → Enable \"Futures\" and \"Spot trading\" → ",
-      "apiGuideWithdrawOff": "Disable withdrawals",
-      "apiGuideAfter": " → Save key",
       "next": "Next: enter keys →"
     },
+    "credentialGuides": {
+      "hyperliquid": "On Hyperliquid: More → API → Create API Wallet → paste only the agent private key below → approve the agent with your master account. Mozi derives the agent address from the key; no address field needed.",
+      "binance": "Binance → Profile → API Management → Create API → enable Spot & Futures → disable Withdrawals → save Key and Secret.",
+      "okx": "OKX → Profile → API → Create API key → set Passphrase → enable Trading, disable Withdrawals → save Key, Secret, and Passphrase.",
+      "bitget": "Bitget → API Management → Create API → set Passphrase → enable spot/futures, disable withdrawals → save all three values.",
+      "bybit": "Bybit → API → Create new key → enable contract/spot, disable withdrawals & transfers → save Key and Secret.",
+      "gate": "Gate.io → API Management → Create API key → enable spot/perp, disable withdrawals → save Key and Secret.",
+      "kucoin": "KuCoin → API Management → Create API → set Passphrase → enable trading, disable withdrawals → save Key, Secret, Passphrase.",
+      "mexc": "MEXC → API Management → Create API → enable spot/futures, disable withdrawals → save Key and Secret.",
+      "kraken": "Kraken → Settings → API → Create key → enable Query + Trade, not Withdraw → save API Key and Private Key."
+    },
+    "fields": {
+      "privateKey": {
+        "label": "Agent private key",
+        "placeholder": "Paste Hyperliquid agent wallet private key (0x + 64 hex chars)"
+      },
+      "apiKey": {
+        "label": "API Key",
+        "placeholder": "Paste your exchange API Key"
+      },
+      "apiSecret": {
+        "label": "API Secret",
+        "placeholder": "Paste your API Secret / Secret Key"
+      },
+      "passphrase": {
+        "label": "Passphrase",
+        "placeholder": "API Passphrase set when creating the key (OKX / Bitget / KuCoin)"
+      },
+      "krakenPrivateKey": {
+        "label": "Private Key",
+        "placeholder": "Paste Kraken API Private Key (not your login password)"
+      }
+    },
     "step2": {
-      "title": "Enter {{exchange}} API keys",
+      "titleCex": "Enter {{exchange}} API keys",
+      "titleAgent": "Configure {{exchange}} Agent Wallet",
       "warningTitle": "Security notice",
       "warningWithdrawBefore": "Confirm API keys have ",
       "warningWithdrawStrong": "withdrawals disabled",
       "warningWithdrawAfter": " — this is the most important safeguard",
       "warningEncrypt": "Keys are AES-256 encrypted after submit — irreversible; even Mozi staff cannot view them",
       "warningIp": "Also set an IP whitelist on {{exchange}} (Mozi server IPs provided in the next step)",
-      "apiKey": "API Key",
-      "apiSecret": "API Secret",
+      "agentPermTitle": "Agent wallet permissions",
+      "agentPermDesc": "Hyperliquid agents can only sign trades — no withdrawals, transfers, or fund management. Ensure your master account has approved this agent.",
       "note": "Label",
       "required": "Required",
       "optional": "Optional",
-      "apiKeyPlaceholder": "Paste your API Key (~40 characters)",
-      "apiSecretPlaceholder": "Paste your API Secret (~64 characters)",
       "notePlaceholder": "e.g. Mozi-AutoArb-dedicated",
       "perms": {
         "futuresTitle": "Futures trading",
@@ -568,7 +596,9 @@
       "back": "← Back",
       "create": "Create API key →",
       "creating": "Saving...",
-      "missingFields": "Please enter API Key and API Secret",
+      "missingFields": "Please fill in all required fields",
+      "missingField": "Please enter: {{field}}",
+      "invalidPrivateKey": "Invalid agent private key — expected 0x followed by 64 hex characters",
       "noExchange": "Please select an available exchange",
       "saveFailed": "Failed to save credentials. Please check your keys and try again."
     },
@@ -577,9 +607,16 @@
       "titlePending": "Verifying keys...",
       "subDone": "API key saved securely. Permissions verified — you can configure strategies.",
       "subPending": "Connecting to {{exchange}} and checking permissions, please wait...",
-      "checks": [
+      "checksHyperliquid": [
+        "Derive agent address from private key",
+        "Connect to Hyperliquid read-only API",
+        "Confirm master account approved this agent",
+        "Confirm account balance is readable",
+        "Confirm agent cannot withdraw or transfer"
+      ],
+      "checksCex": [
         "Connect to exchange API endpoint",
-        "Validate Agent Wallet derived address",
+        "Validate API key format",
         "Confirm account balance is readable (read-only check)",
         "Verify trading permissions are enabled",
         "Confirm withdrawals are disabled"

@@ -4,6 +4,8 @@
  * 6=Gate.io, 7=KuCoin, 8=MEXC, 9=Kraken
  */
 
+import { getVaultCredentialSchema } from './vaultCredentialSchema';
+
 export const VAULT_EXCHANGE_ID = {
   hyperliquid: 1,
   binance: 2,
@@ -57,6 +59,7 @@ export function mergeVaultExchange(raw) {
     typeKey: meta.typeKey,
     ico: meta.ico,
     noteKey: meta.noteKey,
+    credentialSchema: getVaultCredentialSchema(code),
   };
 }
 

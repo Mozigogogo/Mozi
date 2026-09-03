@@ -11,6 +11,13 @@ import {
   verifyVaultCredential,
 } from '@/api/vault';
 import { getFallbackVaultExchanges } from '@/utils/vaultExchanges';
+import {
+  clearSensitiveCredentialValues,
+  emptyCredentialValues,
+  getVaultCredentialSchema,
+  getVerifyChecksKey,
+  validateCredentialValues,
+} from '@/utils/vaultCredentialSchema';
 import { VAULT_SERVER_IPS } from './data';
 import './styles/vault.css';
 
@@ -33,8 +40,7 @@ export default function Vault({ onNavigate, onToast }) {
   const [selectedExchange, setSelectedExchange] = useState(null);
   const [exchangesLoading, setExchangesLoading] = useState(true);
   const [exchangesError, setExchangesError] = useState(null);
-  const [apiKey, setApiKey] = useState('');
-  const [apiSecret, setApiSecret] = useState('');
+  const [credentialValues, setCredentialValues] = useState(() => emptyCredentialValues('hyperliquid'));
   const [note, setNote] = useState('');
   const [credentialId, setCredentialId] = useState(null);
   const [creating, setCreating] = useState(false);
@@ -45,6 +51,11 @@ export default function Vault({ onNavigate, onToast }) {
   const verifyRequestId = useRef(0);
 
   const exchangeName = selectedExchange?.name || '';
+  const exchangeCode = selectedExchange?.code || 'hyperliquid';
+  const credentialSchema = useMemo(
+    () => getVaultCredentialSchema(exchangeCode),
+    [exchangeCode],
+  );
 
   const steps = useMemo(
     () => V('steps', { returnObjects: true }) || [],
@@ -160,10 +171,21 @@ export default function Vault({ onNavigate, onToast }) {
       return;
     }
 
-    const trimmedKey = apiKey.trim();
-    const trimmedSecret = apiSecret.trim();
-    if (!trimmedKey || !trimmedSecret) {
-      onToast(V('step2.missingFields'));
+    const { valid, missingFieldId, invalidFieldId } = validateCredentialValues(
+      exchangeCode,
+      credentialValues,
+    );
+    if (!valid) {
+      if (invalidFieldId === 'privateKey' && exchangeCode === 'hyperliquid') {
+        onToast(V('step2.invalidPrivateKey'));
+        return;
+      }
+      const fieldLabel = missingFieldId
+        ? V(`fields.${missingFieldId}.label`, { defaultValue: missingFieldId })
+        : '';
+      onToast(
+        fieldLabel ? V('step2.missingField', { field: fieldLabel }) : V('step2.missingFields'),
+      );
       return;
     }
 
@@ -177,17 +199,14 @@ export default function Vault({ onNavigate, onToast }) {
       const saved = await saveVaultCredentials({
         exchangeId: selectedExchange.exchangeId,
         label: note.trim() || undefined,
-        credentialJson: buildVaultCredentialJson({
-          apiKey: trimmedKey,
-          apiSecret: trimmedSecret,
-        }),
+        credentialJson: buildVaultCredentialJson(exchangeCode, credentialValues),
       });
       const id = parseVaultCredentialId(saved);
       if (!id) {
         throw new Error(V('step2.saveFailed'));
       }
       setCredentialId(id);
-      setApiSecret('');
+      setCredentialValues(clearSensitiveCredentialValues(exchangeCode, credentialValues));
       setStep(3);
     } catch (err) {
       onToast(err?.message || V('step2.saveFailed'));
@@ -215,13 +234,15 @@ export default function Vault({ onNavigate, onToast }) {
       onToast(V('step1.unavailable'));
       return;
     }
+    if (item.code !== selectedExchange?.code) {
+      setCredentialValues(emptyCredentialValues(item.code));
+    }
     setSelectedExchange(item);
   };
 
   const resetWizardForm = () => {
     setStep(1);
-    setApiKey('');
-    setApiSecret('');
+    setCredentialValues(emptyCredentialValues('hyperliquid'));
     setNote('');
     setCredentialId(null);
     setCreating(false);
@@ -258,7 +279,21 @@ export default function Vault({ onNavigate, onToast }) {
     setValidating(false);
     setVerifyError(null);
     setVerifyDetail('');
+    setCredentialValues(emptyCredentialValues(exchangeCode));
     setStep(2);
+  };
+
+  const credentialGuide = V(`credentialGuides.${exchangeCode}`, {
+    defaultValue: V('credentialGuides.binance'),
+  });
+
+  const step2Title =
+    credentialSchema.authType === 'agent_wallet'
+      ? V('step2.titleAgent', { exchange: exchangeName })
+      : V('step2.titleCex', { exchange: exchangeName });
+
+  const setCredentialField = (fieldId, value) => {
+    setCredentialValues((prev) => ({ ...prev, [fieldId]: value }));
   };
 
   const formatCredentialDate = (iso) => {
@@ -457,12 +492,7 @@ export default function Vault({ onNavigate, onToast }) {
                   marginBottom: 16,
                 }}
               >
-                📋 {V('step1.apiGuideBefore', { exchange: exchangeName })}{' '}
-                {V('step1.apiGuideSteps')}
-                <strong style={{ color: 'var(--danger)' }}>
-                  {V('step1.apiGuideWithdrawOff')}
-                </strong>
-                {V('step1.apiGuideAfter')}
+                📋 {credentialGuide}
               </div>
               <div className="vault-footer">
                 <button
@@ -486,51 +516,61 @@ export default function Vault({ onNavigate, onToast }) {
 
           {step === 2 && (
             <>
-              <div className="wz-title">
-                {V('step2.title', { exchange: exchangeName })}
-              </div>
+              <div className="wz-title">{step2Title}</div>
               <div className="warning-box">
                 <div className="wb-t">⚠ {V('step2.warningTitle')}</div>
-                <div className="wb-li">
-                  {V('step2.warningWithdrawBefore')}
-                  <strong>{V('step2.warningWithdrawStrong')}</strong>
-                  {V('step2.warningWithdrawAfter')}
-                </div>
-                <div className="wb-li">{V('step2.warningEncrypt')}</div>
-                <div className="wb-li">
-                  {V('step2.warningIp', { exchange: exchangeName })}
-                </div>
+                {credentialSchema.permissionMode === 'cex' ? (
+                  <>
+                    <div className="wb-li">
+                      {V('step2.warningWithdrawBefore')}
+                      <strong>{V('step2.warningWithdrawStrong')}</strong>
+                      {V('step2.warningWithdrawAfter')}
+                    </div>
+                    <div className="wb-li">{V('step2.warningEncrypt')}</div>
+                    <div className="wb-li">
+                      {V('step2.warningIp', { exchange: exchangeName })}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="wb-li">{V('step2.agentPermDesc')}</div>
+                    <div className="wb-li">{V('step2.warningEncrypt')}</div>
+                  </>
+                )}
               </div>
-              <div className="form-group">
-                <div className="form-label">
-                  {V('step2.apiKey')}{' '}
-                  <span className="tag tag-pos" style={{ fontSize: 9 }}>
-                    {V('step2.required')}
-                  </span>
+              {credentialSchema.fields.map((field) => (
+                <div className="form-group" key={field.fieldId}>
+                  <div className="form-label">
+                    {V(`fields.${field.fieldId}.label`)}{' '}
+                    {field.required ? (
+                      <span className="tag tag-pos" style={{ fontSize: 9 }}>
+                        {V('step2.required')}
+                      </span>
+                    ) : (
+                      <span
+                        className="tag"
+                        style={{
+                          background: 'var(--surface)',
+                          border: '1px solid var(--border)',
+                          color: 'var(--t3)',
+                          fontSize: 9,
+                        }}
+                      >
+                        {V('step2.optional')}
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    className={`form-input${field.mono ? ' np' : ''}`}
+                    type={field.inputType}
+                    placeholder={V(`fields.${field.fieldId}.placeholder`)}
+                    value={credentialValues[field.fieldId] || ''}
+                    onChange={(e) => setCredentialField(field.fieldId, e.target.value)}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
                 </div>
-                <input
-                  className="form-input"
-                  type="text"
-                  placeholder={V('step2.apiKeyPlaceholder')}
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <div className="form-label">
-                  {V('step2.apiSecret')}{' '}
-                  <span className="tag tag-pos" style={{ fontSize: 9 }}>
-                    {V('step2.required')}
-                  </span>
-                </div>
-                <input
-                  className="form-input"
-                  type="password"
-                  placeholder={V('step2.apiSecretPlaceholder')}
-                  value={apiSecret}
-                  onChange={(e) => setApiSecret(e.target.value)}
-                />
-              </div>
+              ))}
               <div className="form-group">
                 <div className="form-label">
                   {V('step2.note')}{' '}
@@ -554,36 +594,48 @@ export default function Vault({ onNavigate, onToast }) {
                   onChange={(e) => setNote(e.target.value)}
                 />
               </div>
-              <div className="perm-grid">
-                <div className="perm-item perm-need">
-                  <div className="perm-ico">✅</div>
-                  <div>
-                    <div className="perm-t">{V('step2.perms.futuresTitle')}</div>
-                    <div className="perm-d">{V('step2.perms.futuresDesc')}</div>
+              {credentialSchema.permissionMode === 'agent' ? (
+                <div className="perm-grid" style={{ gridTemplateColumns: '1fr' }}>
+                  <div className="perm-item perm-need">
+                    <div className="perm-ico">✅</div>
+                    <div>
+                      <div className="perm-t">{V('step2.agentPermTitle')}</div>
+                      <div className="perm-d">{V('step2.agentPermDesc')}</div>
+                    </div>
                   </div>
                 </div>
-                <div className="perm-item perm-need">
-                  <div className="perm-ico">✅</div>
-                  <div>
-                    <div className="perm-t">{V('step2.perms.spotTitle')}</div>
-                    <div className="perm-d">{V('step2.perms.spotDesc')}</div>
+              ) : (
+                <div className="perm-grid">
+                  <div className="perm-item perm-need">
+                    <div className="perm-ico">✅</div>
+                    <div>
+                      <div className="perm-t">{V('step2.perms.futuresTitle')}</div>
+                      <div className="perm-d">{V('step2.perms.futuresDesc')}</div>
+                    </div>
+                  </div>
+                  <div className="perm-item perm-need">
+                    <div className="perm-ico">✅</div>
+                    <div>
+                      <div className="perm-t">{V('step2.perms.spotTitle')}</div>
+                      <div className="perm-d">{V('step2.perms.spotDesc')}</div>
+                    </div>
+                  </div>
+                  <div className="perm-item perm-forbid">
+                    <div className="perm-ico">🚫</div>
+                    <div>
+                      <div className="perm-t">{V('step2.perms.withdrawTitle')}</div>
+                      <div className="perm-d">{V('step2.perms.withdrawDesc')}</div>
+                    </div>
+                  </div>
+                  <div className="perm-item perm-forbid">
+                    <div className="perm-ico">🚫</div>
+                    <div>
+                      <div className="perm-t">{V('step2.perms.subAccountTitle')}</div>
+                      <div className="perm-d">{V('step2.perms.subAccountDesc')}</div>
+                    </div>
                   </div>
                 </div>
-                <div className="perm-item perm-forbid">
-                  <div className="perm-ico">🚫</div>
-                  <div>
-                    <div className="perm-t">{V('step2.perms.withdrawTitle')}</div>
-                    <div className="perm-d">{V('step2.perms.withdrawDesc')}</div>
-                  </div>
-                </div>
-                <div className="perm-item perm-forbid">
-                  <div className="perm-ico">🚫</div>
-                  <div>
-                    <div className="perm-t">{V('step2.perms.subAccountTitle')}</div>
-                    <div className="perm-d">{V('step2.perms.subAccountDesc')}</div>
-                  </div>
-                </div>
-              </div>
+              )}
               <div className="vault-footer">
                 <button
                   type="button"
@@ -611,6 +663,7 @@ export default function Vault({ onNavigate, onToast }) {
               verifyError={verifyError}
               verifyDetail={verifyDetail}
               exchange={exchangeName}
+              checksKey={getVerifyChecksKey(exchangeCode)}
               credentialId={credentialId}
               onBack={reenterKeys}
               onRetry={runVerify}
@@ -720,6 +773,7 @@ function VaultStep3({
   verifyError,
   verifyDetail,
   exchange,
+  checksKey,
   credentialId,
   onBack,
   onRetry,
@@ -728,10 +782,10 @@ function VaultStep3({
   const { t, i18n } = useTranslation();
   const V = (key, opts) => t(`autoArb.vault.${key}`, opts);
 
-  const checks = useMemo(
-    () => V('step3.checks', { returnObjects: true }) || [],
-    [t, i18n.language],
-  );
+  const checks = useMemo(() => {
+    const key = checksKey === 'hyperliquid' ? 'step3.checksHyperliquid' : 'step3.checksCex';
+    return t(`autoArb.vault.${key}`, { returnObjects: true }) || [];
+  }, [t, i18n.language, checksKey]);
 
   const [activeIdx, setActiveIdx] = useState(0);
   const failed = !!verifyError && !validating && !done;

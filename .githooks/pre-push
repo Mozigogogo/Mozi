@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# 向 GitHub（origin）push 时，把相同 refs 再推一份到 Gitee。
+# 不影响 GitHub 提交：Gitee 失败只警告，不阻断 origin。
+set -u
+
+remote="${1:-}"
+url="${2:-}"
+
+if [[ "${SYNCING_TO_GITEE:-}" == "1" ]]; then
+  exit 0
+fi
+
+is_github=0
+if [[ "$remote" == "origin" ]] || [[ "$url" == *github.com* ]]; then
+  is_github=1
+fi
+if [[ "$remote" == "gitee" ]] || [[ "$url" == *gitee.com* ]]; then
+  exit 0
+fi
+if [[ "$is_github" -ne 1 ]]; then
+  exit 0
+fi
+
+if ! git remote get-url gitee >/dev/null 2>&1; then
+  echo "⚠ 未配置 gitee remote，跳过同步。可执行: git remote add gitee git@gitee.com:moziinnovations/moziweb.git"
+  exit 0
+fi
+
+zero="0000000000000000000000000000000000000000"
+failed=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [[ -z "${local_ref:-}" ]] && continue
+  export SYNCING_TO_GITEE=1
+  if [[ "$local_sha" == "$zero" ]]; then
+    echo "→ Gitee 删除 ${remote_ref}"
+    if ! git push gitee --delete "$remote_ref" >/dev/null 2>&1; then
+      echo "⚠ Gitee 删除 ${remote_ref} 失败（GitHub 推送仍会继续）"
+      failed=1
+    fi
+  else
+    echo "→ 同步 ${local_ref} → Gitee ${remote_ref}"
+    if ! git push gitee "${local_sha}:${remote_ref}"; then
+      echo "⚠ 同步到 Gitee 失败（GitHub 推送仍会继续）。可稍后执行: ./scripts/sync-to-gitee.sh"
+      failed=1
+    fi
+  fi
+done
+
+if [[ "$failed" -eq 0 ]]; then
+  echo "✓ 已同步到 Gitee"
+fi
+
+exit 0

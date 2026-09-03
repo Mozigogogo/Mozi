@@ -1,0 +1,74 @@
+# 每次推送到 GitHub 后，把同一 ref 镜像到 Gitee
+#
+# 配置（只需一次）:
+# 1. 生成本地密钥: ssh-keygen -t ed25519 -C "github-gitee-sync" -f gitee-sync -N ""
+# 2. 把 gitee-sync.pub 加到 Gitee 仓库「部署公钥」（勾选允许推送）
+#    https://gitee.com/moziinnovations/moziweb/settings#git-content
+# 3. 把 gitee-sync 私钥全文贴到 GitHub:
+#    Settings → Secrets and variables → Actions → New repository secret
+#    Name: GITEE_SSH_PRIVATE_KEY
+name: Sync to Gitee
+
+on:
+  push:
+  delete:
+  workflow_dispatch:
+
+concurrency:
+  group: sync-gitee-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        if: github.event_name != 'delete'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup SSH
+        env:
+          GITEE_SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
+        run: |
+          if [ -z "$GITEE_SSH_PRIVATE_KEY" ]; then
+            echo "缺少 GitHub Secret: GITEE_SSH_PRIVATE_KEY"
+            echo "请把能 push Gitee 的 SSH 私钥配到仓库 Secrets 后再运行。"
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$GITEE_SSH_PRIVATE_KEY" > ~/.ssh/gitee_key
+          chmod 600 ~/.ssh/gitee_key
+          ssh-keyscan -t rsa,ed25519 gitee.com >> ~/.ssh/known_hosts 2>/dev/null
+          cat >> ~/.ssh/config <<'EOF'
+          Host gitee.com
+            HostName gitee.com
+            User git
+            IdentityFile ~/.ssh/gitee_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Push ref to Gitee
+        if: github.event_name != 'delete'
+        env:
+          GITEE_REPO: git@gitee.com:moziinnovations/moziweb.git
+        run: |
+          git remote remove gitee 2>/dev/null || true
+          git remote add gitee "$GITEE_REPO"
+          FLAGS=()
+          if [ "${{ github.event.forced }}" = "true" ]; then
+            FLAGS=(--force)
+          fi
+          git push "${FLAGS[@]}" gitee "HEAD:${GITHUB_REF}"
+
+      - name: Delete ref on Gitee
+        if: github.event_name == 'delete'
+        env:
+          GITEE_REPO: git@gitee.com:moziinnovations/moziweb.git
+        run: |
+          git init -q
+          git remote add gitee "$GITEE_REPO"
+          git push gitee --delete "${GITHUB_REF}" || true
