@@ -52,6 +52,36 @@ export async function fetchVaultExchanges() {
 }
 
 /**
+ * 获取 Mozi 执行服务器出口 IP 白名单
+ * GET /v1/vault/egress-ips
+ * @returns {Promise<string[]>}
+ */
+export async function fetchVaultEgressIps() {
+  const res = await vaultRequest({
+    url: Interface.VAULT_EGRESS_IPS,
+    method: 'GET',
+  });
+
+  if (!res || (res.code !== 0 && res.code !== 200 && res.success !== true)) {
+    const msg = res?.errorMsg || res?.message || res?.msg || 'Failed to load egress IPs';
+    throw new Error(String(msg));
+  }
+
+  const data = res.data && typeof res.data === 'object' ? res.data : {};
+  const list = Array.isArray(data.ips)
+    ? data.ips
+    : Array.isArray(data)
+      ? data
+      : Array.isArray(data?.list)
+        ? data.list
+        : [];
+
+  return list
+    .map((ip) => String(ip || '').trim())
+    .filter(Boolean);
+}
+
+/**
  * 获取当前用户已保存的 API 密钥列表
  * GET /v1/vault/credentials
  */
@@ -168,6 +198,31 @@ export function parseVaultCredentialId(data) {
   const id = data?.id ?? data?.credentialId;
   const n = Number(id);
   return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/**
+ * 删除已保存的凭证
+ * DELETE /v1/vault/credentials/{id}
+ * @param {number|string} credentialId
+ */
+export async function deleteVaultCredential(credentialId) {
+  const id = Number(credentialId);
+  if (!Number.isFinite(id) || id <= 0) {
+    throw new Error('credential id is required');
+  }
+
+  const res = await vaultRequest({
+    url: Interface.VAULT_CREDENTIAL(id),
+    method: 'DELETE',
+  });
+
+  if (!res || (res.code !== 0 && res.code !== 200 && res.success !== true)) {
+    const msg =
+      res?.errorMsg || res?.message || res?.msg || 'Failed to delete vault credentials';
+    throw new Error(String(msg));
+  }
+
+  return true;
 }
 
 /**

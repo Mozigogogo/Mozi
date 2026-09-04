@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  deleteVaultCredential,
   fetchVaultCredentials,
   fetchVaultCryptoPublicKey,
+  fetchVaultEgressIps,
   fetchVaultExchanges,
   parseVaultCredentialId,
   saveVaultCredentials,
@@ -36,6 +38,8 @@ export default function Vault({ onNavigate, onToast }) {
   const [credentials, setCredentials] = useState([]);
   const [credentialsLoading, setCredentialsLoading] = useState(true);
   const [credentialsError, setCredentialsError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
   const [step, setStep] = useState(1);
   const [exchanges, setExchanges] = useState([]);
   const [selectedExchange, setSelectedExchange] = useState(null);
@@ -52,6 +56,9 @@ export default function Vault({ onNavigate, onToast }) {
   const [validating, setValidating] = useState(false);
   const [verifyError, setVerifyError] = useState(null);
   const [verifyDetail, setVerifyDetail] = useState('');
+  const [serverIps, setServerIps] = useState(VAULT_SERVER_IPS);
+  const [serverIpsLoading, setServerIpsLoading] = useState(false);
+  const [serverIpsError, setServerIpsError] = useState(null);
   const verifyRequestId = useRef(0);
 
   const exchangeName = selectedExchange?.name || '';
@@ -79,6 +86,47 @@ export default function Vault({ onNavigate, onToast }) {
       setCredentialsLoading(false);
     }
   }, []);
+
+  const openDeleteConfirm = useCallback(
+    (cred) => {
+      const id = Number(cred?.id);
+      if (!Number.isFinite(id) || id <= 0) {
+        onToast(V('list.deleteFailed'));
+        return;
+      }
+      if (deletingId != null) return;
+      setPendingDelete(cred);
+    },
+    [deletingId, onToast, t, i18n.language],
+  );
+
+  const closeDeleteConfirm = useCallback(() => {
+    if (deletingId != null) return;
+    setPendingDelete(null);
+  }, [deletingId]);
+
+  const confirmDeleteCredential = useCallback(async () => {
+    const cred = pendingDelete;
+    const id = Number(cred?.id);
+    if (!cred || !Number.isFinite(id) || id <= 0) {
+      setPendingDelete(null);
+      return;
+    }
+    if (deletingId != null) return;
+
+    const exchange = cred.exchangeName || cred.exchangeCode || '';
+    setDeletingId(id);
+    try {
+      await deleteVaultCredential(id);
+      setCredentials((prev) => prev.filter((item) => Number(item.id) !== id));
+      setPendingDelete(null);
+      onToast(`✅ ${V('list.deleted', { exchange })}`);
+    } catch (err) {
+      onToast(err?.message || V('list.deleteFailed'));
+    } finally {
+      setDeletingId(null);
+    }
+  }, [pendingDelete, deletingId, onToast, t, i18n.language]);
 
   useEffect(() => {
     if (viewMode !== 'list') return undefined;
@@ -196,6 +244,39 @@ export default function Vault({ onNavigate, onToast }) {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- prefetch when entering step 2
+  }, [step]);
+
+  // 进入 IP 白名单步骤时拉取真实出口 IP
+  useEffect(() => {
+    if (step !== 4) return undefined;
+
+    let cancelled = false;
+
+    (async () => {
+      setServerIpsLoading(true);
+      setServerIpsError(null);
+      try {
+        const ips = await fetchVaultEgressIps();
+        if (cancelled) return;
+        if (ips.length > 0) {
+          setServerIps(ips);
+        } else {
+          setServerIps(VAULT_SERVER_IPS);
+          setServerIpsError(V('step4.loadIpsError'));
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setServerIps(VAULT_SERVER_IPS);
+        setServerIpsError(err?.message || V('step4.loadIpsError'));
+      } finally {
+        if (!cancelled) setServerIpsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load when entering step 4
   }, [step]);
 
   const handleCreateCredential = async () => {
@@ -424,15 +505,27 @@ export default function Vault({ onNavigate, onToast }) {
                             </span>
                           </div>
                         </div>
-                        <span
-                          className={`cred-status ${
-                            cred.status === 'active' ? 'active' : 'pending'
-                          }`}
-                        >
-                          {cred.status === 'active'
-                            ? V('list.statusActive')
-                            : V('list.statusPending')}
-                        </span>
+                        <div className="cred-actions">
+                          <span
+                            className={`cred-status ${
+                              cred.status === 'active' ? 'active' : 'pending'
+                            }`}
+                          >
+                            {cred.status === 'active'
+                              ? V('list.statusActive')
+                              : V('list.statusPending')}
+                          </span>
+                          <button
+                            type="button"
+                            className="cred-delete-btn"
+                            disabled={deletingId != null}
+                            onClick={() => openDeleteConfirm(cred)}
+                          >
+                            {deletingId === Number(cred.id)
+                              ? V('list.deleting')
+                              : V('list.delete')}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -774,35 +867,54 @@ export default function Vault({ onNavigate, onToast }) {
                 >
                   {V('step4.serverIps')}
                 </div>
-                {VAULT_SERVER_IPS.map((ip) => (
-                  <div
-                    key={ip}
-                    onClick={() => copyIp(ip)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') copyIp(ip);
-                    }}
-                    role="button"
-                    tabIndex={0}
-                    style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: 13,
-                      padding: '6px 10px',
-                      background: 'var(--card)',
-                      borderRadius: 'var(--rs)',
-                      marginBottom: 6,
-                      cursor: 'pointer',
-                      border: '1px solid var(--border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <span>{ip}</span>
-                    <span style={{ fontSize: 10, color: 'var(--t3)' }}>
-                      {V('step4.clickCopy')}
-                    </span>
+                {serverIpsLoading ? (
+                  <div style={{ fontSize: 12, color: 'var(--t3)', padding: '4px 0 8px' }}>
+                    {V('step4.loadingIps')}
                   </div>
-                ))}
+                ) : (
+                  <>
+                    {serverIpsError ? (
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: 'var(--t3)',
+                          marginBottom: 8,
+                        }}
+                      >
+                        {V('step4.loadIpsError')}
+                      </div>
+                    ) : null}
+                    {serverIps.map((ip) => (
+                      <div
+                        key={ip}
+                        onClick={() => copyIp(ip)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') copyIp(ip);
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        style={{
+                          fontFamily: 'var(--mono)',
+                          fontSize: 13,
+                          padding: '6px 10px',
+                          background: 'var(--card)',
+                          borderRadius: 'var(--rs)',
+                          marginBottom: 6,
+                          cursor: 'pointer',
+                          border: '1px solid var(--border)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <span>{ip}</span>
+                        <span style={{ fontSize: 10, color: 'var(--t3)' }}>
+                          {V('step4.clickCopy')}
+                        </span>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
               <div className="info-box">
                 <div className="info-t">
@@ -840,6 +952,55 @@ export default function Vault({ onNavigate, onToast }) {
         </div>
           </>
         )}
+      </div>
+
+      <div
+        className={`confirm-overlay${pendingDelete ? ' is-open' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-hidden={!pendingDelete}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) closeDeleteConfirm();
+        }}
+      >
+        <div className="confirm-box">
+          <div className="cb-title">🗑 {V('list.deleteTitle')}</div>
+          <div className="cb-desc">
+            {V('list.deleteConfirm', {
+              exchange:
+                pendingDelete?.exchangeName || pendingDelete?.exchangeCode || '',
+            })}
+          </div>
+          <div className="cb-actions">
+            <button
+              type="button"
+              className="btn-full btn-ghost"
+              disabled={deletingId != null}
+              onClick={closeDeleteConfirm}
+            >
+              {V('list.deleteCancel')}
+            </button>
+            <button
+              type="button"
+              className="btn-full"
+              disabled={deletingId != null}
+              style={{
+                background: 'var(--danger)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 'var(--rs)',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: deletingId != null ? 'not-allowed' : 'pointer',
+                padding: 11,
+                opacity: deletingId != null ? 0.7 : 1,
+              }}
+              onClick={confirmDeleteCredential}
+            >
+              {deletingId != null ? V('list.deleting') : V('list.deleteOk')}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

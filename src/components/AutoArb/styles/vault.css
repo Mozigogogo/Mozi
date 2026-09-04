@@ -327,6 +327,12 @@
   font-size: 11px;
   color: var(--t2);
 }
+.mozi-autoarb .cred-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 .mozi-autoarb .cred-status {
   font-size: 10px;
   font-weight: 700;
@@ -341,6 +347,27 @@
 .mozi-autoarb .cred-status.pending {
   background: var(--gold-dim);
   color: var(--gold);
+}
+.mozi-autoarb .cred-delete-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--t2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color var(--ease), color var(--ease), background var(--ease);
+}
+.mozi-autoarb .cred-delete-btn:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-dim);
+}
+.mozi-autoarb .cred-delete-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 .mozi-autoarb .vault-empty {
   text-align: center;

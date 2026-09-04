@@ -515,7 +515,15 @@
       "colStatus": "Status",
       "noLabel": "Unnamed",
       "statusActive": "Verified",
-      "statusPending": "Pending"
+      "statusPending": "Pending",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "deleteTitle": "Delete API key",
+      "deleteConfirm": "Delete the API key for {{exchange}}? Related strategies will stop working.",
+      "deleteCancel": "Cancel",
+      "deleteOk": "Delete",
+      "deleted": "Deleted API key for {{exchange}}",
+      "deleteFailed": "Delete failed. Please try again."
     },
     "wizard": {
       "cancel": "← Back to list"
@@ -639,6 +647,8 @@
       "sub": "Add the IPs below to your {{exchange}} whitelist. Requests from other IPs are rejected — even if keys leak.",
       "serverIps": "Mozi server IPs (click to copy)",
       "clickCopy": "Click to copy",
+      "loadingIps": "Loading server IPs...",
+      "loadIpsError": "Failed to load IPs; showing fallback list",
       "howToTitle": "How to set IP whitelist on {{exchange}}",
       "howToItems": [
         "Log in to {{exchange}} → API management → find the key you just created",

@@ -305,6 +305,10 @@ export const Interface = {
   VAULT_CREDENTIALS: '/autoarb/api/v1/vault/credentials',
   /** GET RSA-OAEP-256 公钥，用于加密凭证 */
   VAULT_CRYPTO_PUBLIC_KEY: '/autoarb/api/v1/vault/crypto/public-key',
+  /** GET 出口 IP 白名单 */
+  VAULT_EGRESS_IPS: '/autoarb/api/v1/vault/egress-ips',
+  /** DELETE /v1/vault/credentials/{id} */
+  VAULT_CREDENTIAL: (id) => `/autoarb/api/v1/vault/credentials/${id}`,
   /** POST /v1/vault/credentials/{id}/verify */
   VAULT_CREDENTIAL_VERIFY: (id) => `/autoarb/api/v1/vault/credentials/${id}/verify`,
   // 所有币种

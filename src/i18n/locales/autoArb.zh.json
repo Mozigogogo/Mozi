@@ -515,7 +515,15 @@
       "colStatus": "状态",
       "noLabel": "未命名",
       "statusActive": "已验证",
-      "statusPending": "待验证"
+      "statusPending": "待验证",
+      "delete": "删除",
+      "deleting": "删除中...",
+      "deleteTitle": "删除 API 密钥",
+      "deleteConfirm": "确定删除「{{exchange}}」的 API 密钥吗？删除后相关策略将无法执行。",
+      "deleteCancel": "取消",
+      "deleteOk": "确认删除",
+      "deleted": "已删除 {{exchange}} 的 API 密钥",
+      "deleteFailed": "删除失败，请重试"
     },
     "wizard": {
       "cancel": "← 返回列表"
@@ -639,6 +647,8 @@
       "sub": "在 {{exchange}} 中将以下 IP 添加到白名单，其他 IP 的 API 请求将被直接拒绝，即使密钥泄露也无法被利用。",
       "serverIps": "Mozi 服务器 IP（点击复制）",
       "clickCopy": "点击复制",
+      "loadingIps": "正在获取服务器 IP...",
+      "loadIpsError": "获取 IP 失败，已展示备用列表",
       "howToTitle": "如何在 {{exchange}} 设置 IP 白名单",
       "howToItems": [
         "登录 {{exchange}} → API 管理 → 找到刚才创建的密钥",
