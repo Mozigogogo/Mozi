@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createChart, LineStyle } from 'lightweight-charts';
+import { createChart, CrosshairMode, LineStyle } from 'lightweight-charts';
 import { TabBar } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '../Skeleton';
@@ -28,6 +28,8 @@ const SKDJ_STYLE = {
 
 const PRICE_UP_COLOR = '#11B787';
 const PRICE_DOWN_COLOR = '#FA5F5F';
+
+const getTrendColor = (trend) => (trend === 'down' ? PRICE_DOWN_COLOR : PRICE_UP_COLOR);
 
 const getMacdHistColor = (value, prevValue) => {
   const prev = Number.isFinite(prevValue) ? prevValue : 0;
@@ -464,6 +466,11 @@ const KlineChart = ({
   const skdjChartInstance = useRef(null);
   const seriesInstance = useRef(null);
   const lastPriceLineRef = useRef(null);
+  /** 折线最新价点缓存，供 hover 离开后恢复常驻标签/圆点 */
+  const lastLinePointRef = useRef(null);
+  const crosshairHoveringRef = useRef(false);
+  const priceTrendRef = useRef(priceTrend);
+  const settingCrosshairRef = useRef(false);
   const navigatorMacdSeries = useRef({
     histogram: null,
     dif: null,
@@ -528,6 +535,10 @@ const KlineChart = ({
     onLoadMoreHistoricalRef.current = onLoadMoreHistorical;
     loadingMoreHistoricalRef.current = loadingMoreHistorical;
   }, [onLoadMoreHistorical, loadingMoreHistorical]);
+
+  useEffect(() => {
+    priceTrendRef.current = priceTrend;
+  }, [priceTrend]);
   const [macdLegend, setMacdLegend] = useState({ hist: null, dif: null, dea: null });
   const [skdjLegend, setSkdjLegend] = useState({ k: null, d: null, j: null });
   const debugTag = '[KlineChartDebug]';
@@ -743,28 +754,29 @@ const KlineChart = ({
     }
   };
 
-  const syncLastPriceLine = (lineData) => {
+  const setLastPriceDecorationsVisible = (visible) => {
     const series = seriesInstance.current;
-    if (!series || !Array.isArray(lineData) || lineData.length === 0) {
-      clearLastPriceLine();
+    const point = lastLinePointRef.current;
+    if (!series || !point) return;
+
+    if (!visible) {
+      if (lastPriceLineRef.current) {
+        lastPriceLineRef.current.applyOptions({
+          axisLabelVisible: false,
+          lineVisible: false,
+        });
+      }
+      series.setMarkers([]);
       return;
     }
 
-    const last = lineData[lineData.length - 1];
-    const lastPrice = Number(last?.value);
-    if (!Number.isFinite(lastPrice) || last?.time == null) {
-      clearLastPriceLine();
-      return;
-    }
-
-    // 价签颜色与页头涨跌百分比一致
-    const isUp = priceTrend !== 'down';
-    const labelColor = isUp ? PRICE_UP_COLOR : PRICE_DOWN_COLOR;
+    const labelColor = getTrendColor(priceTrendRef.current);
     const options = {
-      price: lastPrice,
+      price: point.price,
       color: labelColor,
       lineWidth: 1,
       lineStyle: LineStyle.SparseDotted,
+      lineVisible: true,
       axisLabelVisible: true,
       title: '',
     };
@@ -774,11 +786,9 @@ const KlineChart = ({
     } else {
       lastPriceLineRef.current = series.createPriceLine(options);
     }
-
-    // 最新价小绿点：用 markers，避免额外 LineSeries 在缩放时污染 Area 填充
     series.setMarkers([
       {
-        time: last.time,
+        time: point.time,
         position: 'inBar',
         shape: 'circle',
         color: PRICE_UP_COLOR,
@@ -788,7 +798,42 @@ const KlineChart = ({
     ]);
   };
 
+  const syncLastPriceLine = (lineData) => {
+    const series = seriesInstance.current;
+    if (!series || !Array.isArray(lineData) || lineData.length === 0) {
+      lastLinePointRef.current = null;
+      clearLastPriceLine();
+      return;
+    }
+
+    const last = lineData[lineData.length - 1];
+    const lastPrice = Number(last?.value);
+    if (!Number.isFinite(lastPrice) || last?.time == null) {
+      lastLinePointRef.current = null;
+      clearLastPriceLine();
+      return;
+    }
+
+    lastLinePointRef.current = { time: last.time, price: lastPrice };
+
+    // hover 中只更新缓存，不展示常驻标签/圆点（避免与 crosshair 重叠）
+    if (crosshairHoveringRef.current) {
+      if (lastPriceLineRef.current) {
+        lastPriceLineRef.current.applyOptions({
+          price: lastPrice,
+          axisLabelVisible: false,
+        });
+      }
+      series.setMarkers([]);
+      return;
+    }
+
+    setLastPriceDecorationsVisible(true);
+  };
+
   const clearMainSeries = (chart) => {
+    lastLinePointRef.current = null;
+    crosshairHoveringRef.current = false;
     clearLastPriceLine();
     if (seriesInstance.current) {
       chart.removeSeries(seriesInstance.current);
@@ -930,16 +975,18 @@ const KlineChart = ({
         minBarSpacing: isPC ? 4 : 2.8,
       },
       crosshair: {
-        mode: 1,
+        mode: CrosshairMode.Magnet,
         vertLine: {
           color: 'rgba(142, 142, 142, 0.4)',
           width: 1,
           style: 3,
+          labelBackgroundColor: getTrendColor(priceTrend),
         },
         horzLine: {
           color: 'rgba(142, 142, 142, 0.4)',
           width: 1,
           style: 3,
+          labelBackgroundColor: getTrendColor(priceTrend),
         },
       },
       localization: {
@@ -951,6 +998,37 @@ const KlineChart = ({
 
     chartInstance.current = chart;
     removeAttribution(chartRef.current);
+    chart.subscribeCrosshairMove((param) => {
+      // setCrosshairPosition 会再次触发 move，避免递归
+      if (settingCrosshairRef.current) return;
+
+      const hovering = Boolean(param?.point && param?.time != null);
+      if (hovering !== crosshairHoveringRef.current) {
+        crosshairHoveringRef.current = hovering;
+        if (mainSeriesTypeRef.current === 'line') {
+          setLastPriceDecorationsVisible(!hovering);
+        }
+      }
+
+      // K 线：十字线水平线与右侧价签强制对齐当前 K 的 close（避免被均线 Magnet）
+      if (
+        hovering &&
+        mainSeriesTypeRef.current === 'kline' &&
+        seriesInstance.current &&
+        param.time != null
+      ) {
+        const bar = param.seriesData?.get(seriesInstance.current);
+        const close = Number(bar?.close);
+        if (Number.isFinite(close)) {
+          settingCrosshairRef.current = true;
+          try {
+            chart.setCrosshairPosition(close, param.time, seriesInstance.current);
+          } finally {
+            settingCrosshairRef.current = false;
+          }
+        }
+      }
+    });
     chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
       if (!range) return;
       if (!programmaticRangeUpdateRef.current) {
@@ -1071,6 +1149,8 @@ const KlineChart = ({
       }
       seriesInstance.current = null;
       lastPriceLineRef.current = null;
+      lastLinePointRef.current = null;
+      crosshairHoveringRef.current = false;
       navigatorMacdSeries.current = { histogram: null, dif: null, dea: null };
       skdjSeriesRef.current = { k: null, d: null, j: null };
       maSeriesInstances.current = [];
@@ -1141,6 +1221,16 @@ const KlineChart = ({
         priceFormatter: (price) => formatAxisPrice(price, !isPC),
         timeFormatter: (time) =>
           formatCrosshairTimeLabel(time, tickLabelMap, activeKey, i18n.language),
+      },
+      crosshair: {
+        // K 线用 Normal + 手动钉 close；折线用 Magnet 吸附曲线
+        mode: chartType === 'kline' ? CrosshairMode.Normal : CrosshairMode.Magnet,
+        vertLine: {
+          labelBackgroundColor: getTrendColor(priceTrend),
+        },
+        horzLine: {
+          labelBackgroundColor: getTrendColor(priceTrend),
+        },
       },
       grid: {
         vertLines: {
