@@ -85,7 +85,8 @@
 }
 .mozi-autoarb .toast {
   position: fixed;
-  bottom: 28px;
+  top: 28px;
+  bottom: auto;
   left: 50%;
   transform: translateX(-50%);
   background: var(--t1);
