@@ -44,6 +44,7 @@ import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
 import { request } from '@/utils/request';
 import { EMAIL, Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
+import { useNavigateToPcAlarm } from '@/hooks/useNavigateToPcAlarm';
 import { getShareCount } from '@/api/home';
 import { savePcAiFromSearch } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
@@ -230,6 +231,7 @@ const { Text } = Typography;
  */
 export default function PCLayout({ children }) {
   const router = useRouter();
+  const { navigateToPcAlarm } = useNavigateToPcAlarm();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   usePcAmplitude(pathname, searchParams);
@@ -900,6 +902,13 @@ export default function PCLayout({ children }) {
       return;
     }
 
+    // 我的报警：按通知渠道配置状态进入 Step1/Step2
+    if (key === '/pc/alarm') {
+      setActiveContent(null);
+      void navigateToPcAlarm('BTC');
+      return;
+    }
+
     // 兼容旧逻辑：如果还有地方用 /find、/community，统一跳转到 PC 路由
     if (key === '/find') {
       setActiveContent(null);
@@ -1391,7 +1400,7 @@ export default function PCLayout({ children }) {
                           onClick={() => {
                             trackPcEvent(PCEvents.ALARM_SYMBOL_CLICKED, { symbol: item.symbol });
                             setActiveContent(null);
-                            router.push(`/pc/alarm?symbol=${encodeURIComponent(item.symbol)}`);
+                            void navigateToPcAlarm(item.symbol);
                           }}
                         >
                           <span className={styles.pcAlertEntryLeft}>

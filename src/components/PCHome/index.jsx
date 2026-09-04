@@ -21,6 +21,7 @@ import { getSectionList } from '@/api/market';
 import { buildSectorDetailHref } from '@/utils/sectorNavigation';
 import { buildPcFindRankHref } from '@/utils/pcFindNavigation';
 import { completeTask } from '@/api/user';
+import { useNavigateToPcAlarm } from '@/hooks/useNavigateToPcAlarm';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 import styles from './index.module.less';
 import { SectorTreeMapChunkSkeleton, HotTopicsChunkSkeleton, MarketDistributionChunkSkeleton } from './ChunkSkeletons';
@@ -68,6 +69,7 @@ const arbitrageIcons = {
  */
 export default function PCHome() {
   const router = useRouter();
+  const { navigateToPcAlarm } = useNavigateToPcAlarm();
   const { t, i18n } = useTranslation();
   const isEN = (i18n?.language || '').startsWith('en');
 
@@ -284,7 +286,7 @@ export default function PCHome() {
     e.stopPropagation();
     const symbol = record?.symbol || record?.key;
     if (!symbol) return;
-    router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
+    void navigateToPcAlarm(symbol);
   };
 
   // 表格列配置

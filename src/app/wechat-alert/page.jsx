@@ -7,6 +7,7 @@ import { LeftOutlined } from '@ant-design/icons';
 import NavBar from '@/components/NavBar';
 import WechatAlertDetailContent from '@/components/WechatAlertDetailContent';
 import { safeBack } from '@/utils/navigation';
+import { getPcAlarmHref } from '@/hooks/useNavigateToPcAlarm';
 import styles from './page.module.less';
 
 export default function WechatAlertPage() {
@@ -24,6 +25,11 @@ export default function WechatAlertPage() {
     return () => window.removeEventListener('resize', check);
   }, []);
 
+  const handlePcBack = async () => {
+    const href = await getPcAlarmHref('BTC');
+    safeBack(router, { fallback: href });
+  };
+
   return (
     <div className={`${styles.page} ${isPC ? styles.pagePc : ''}`}>
       {isPC ? (
@@ -31,7 +37,9 @@ export default function WechatAlertPage() {
           <button
             type="button"
             className={styles.pcBackBtn}
-            onClick={() => safeBack(router, { fallback: '/pc/alarm' })}
+            onClick={() => {
+              void handlePcBack();
+            }}
             aria-label={t('common.back', { defaultValue: '返回' })}
           >
             <LeftOutlined />

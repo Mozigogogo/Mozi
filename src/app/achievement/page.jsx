@@ -20,10 +20,12 @@ import InviteShareModal from '@/components/InviteShareModal';
 import { safeBack } from '@/utils/navigation';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
 import { buildInviteDatainfoPatch } from '@/utils/datainfoCommission';
+import { useNavigateToPcAlarm } from '@/hooks/useNavigateToPcAlarm';
 import styles from './page.module.less';
 
 function AchievementContent() {
   const router = useRouter();
+  const { navigateToPcAlarm } = useNavigateToPcAlarm();
   const { t } = useTranslation();
   const inPcShell = usePcShell();
   const [isPC, setIsPC] = useState(inPcShell);
@@ -426,7 +428,11 @@ function AchievementContent() {
     switch (code) {
       case 'SET_ALARM':
       case 'ALARM':
-        router.push(isPC ? '/pc/alarm?symbol=BTC' : '/addwarn?symbol=BTC');
+        if (isPC) {
+          void navigateToPcAlarm('BTC');
+        } else {
+          router.push('/addwarn?symbol=BTC');
+        }
         return;
       case 'FOLLOW_TWITTER':
       case 'TWITTER':

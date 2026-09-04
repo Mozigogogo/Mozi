@@ -9,6 +9,7 @@ import { jump2Detail } from '../../utils/core';
 import { navigateToOrReload } from '@/utils/clientNavigation';
 import { getAggregationDetail } from '../../api/market';
 import { formatMoneyCompact, localizeMoneyFmt } from '@/utils/formatMoney';
+import { getPcAlarmHref } from '@/hooks/useNavigateToPcAlarm';
 import styles from './index.module.less';
 
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
@@ -18,9 +19,6 @@ const CoinIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_pub
 const TurnoverIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/vol.svg';
 const MarketMonitoringIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/watch.svg';
 const CalendarIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/find_calendar.svg';
-
-/** PC 端「去配置报警」统一进入 PC 告警页，默认 BTC */
-const PC_ALARM_CONFIGURE_HREF = '/pc/alarm?symbol=BTC';
 
 const dbgOverview = (...args) => {
   if (typeof console !== 'undefined') {
@@ -43,10 +41,14 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
     });
   }, [calendarExpanded]);
 
+  const goConfigureAlarm = async () => {
+    if (typeof window === 'undefined') return;
+    const href = await getPcAlarmHref('BTC');
+    navigateToOrReload(href);
+  };
+
   const [smartOnClick, setSmartOnClick] = useState(() => () => {
-    if (typeof window !== 'undefined') {
-      navigateToOrReload(PC_ALARM_CONFIGURE_HREF);
-    }
+    void goConfigureAlarm();
   });
 
   // 智能盯盘：拆分币种与百分比，并根据涨跌着色
@@ -77,9 +79,7 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
           setSmartPercentText('');
           setSmartIsUp(null);
           setSmartOnClick(() => () => {
-            if (typeof window !== 'undefined') {
-              navigateToOrReload(PC_ALARM_CONFIGURE_HREF);
-            }
+            void goConfigureAlarm();
           });
         };
 

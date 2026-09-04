@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { notification } from 'antd';
-import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { clearAlertConfigCache, fetchAlertConfig } from '@/hooks/useAlertConfig';
+import { useNavigateToPcAlarm } from '@/hooks/useNavigateToPcAlarm';
 import { MOZI_SESSION_CHANGED, MOZI_TOKEN_UPDATED } from '@/utils/sessionEvents';
 import { shouldEnableWebAlarmPush, useWebAlarmPush } from '@/hooks/useWebAlarmPush';
 
@@ -21,7 +21,7 @@ function readPushEnabled() {
 
 export default function WebAlarmNotifier() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const { navigateToPcAlarm } = useNavigateToPcAlarm();
   const [pushEnabled, setPushEnabled] = useState(() => readPushEnabled());
   const [authToken, setAuthToken] = useState(
     () => (typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '')
@@ -106,12 +106,12 @@ export default function WebAlarmNotifier() {
         description: event.text,
         onClick: () => {
           if (event.symbol) {
-            router.push(`/pc/alarm?symbol=${encodeURIComponent(event.symbol)}`);
+            void navigateToPcAlarm(event.symbol);
           }
         },
       });
     },
-    [router, t]
+    [navigateToPcAlarm, t]
   );
 
   useWebAlarmPush({ enabled: pushEnabled, authToken, onAlert: handleAlert });

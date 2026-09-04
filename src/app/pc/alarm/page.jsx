@@ -8,6 +8,11 @@ import { addAlarm, completeAlarmTask, getAlarmInfoByUserId, getCoinInfo } from '
 import { createAlertConfig, modifyAlertConfig } from '@/api/user';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
 import {
+  buildPcAlarmHref,
+  hasPcAlarmNotifyConfig,
+  readLocalPcAlarmNotifyConfig,
+} from '@/hooks/useNavigateToPcAlarm';
+import {
   alertFrequencyFromApi,
   alertFrequencyToApi,
   isAlertFlagOn,
@@ -51,7 +56,14 @@ function PCAlarmContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const symbol = (searchParams.get('symbol') || 'BTC').toUpperCase();
+  const urlStep = Number(searchParams.get('step'));
   const [activeTab, setActiveTab] = useState('config'); // config | history
+  /** 配置流：1=通知渠道（原右侧），2=币价条件（原左侧） */
+  const [configStep, setConfigStep] = useState(() => (urlStep === 2 ? 2 : 1));
+  /** 接口/本地已有通知渠道配置时，才允许进入价格条件 */
+  const [canEnterStep2, setCanEnterStep2] = useState(false);
+  /** 通知渠道配置是否已解析完成（避免未就绪时误写 step=1） */
+  const [notifyConfigReady, setNotifyConfigReady] = useState(false);
   const [btnDisabled, setBtnDisabled] = useState(false);
   const [coinData, setCoinData] = useState({
     symbol,
@@ -732,24 +744,81 @@ function PCAlarmContent() {
     }
   };
 
+  const goConfigStep = useCallback(
+    (step) => {
+      const next = step === 2 ? 2 : 1;
+      setConfigStep(next);
+      router.replace(buildPcAlarmHref({ symbol, step: next }), { scroll: false });
+    },
+    [router, symbol]
+  );
+
   useEffect(() => {
+    setNotifyConfigReady(false);
+
     // 先用 localStorage 快速回填，再从接口拉取最新配置（与移动端一致）
     const restored = restoreFromLocalStorage();
-    if (restored) applyAlertConfigToSidePanel(restored);
+    if (restored) {
+      applyAlertConfigToSidePanel(restored);
+      setCanEnterStep2(true);
+    } else {
+      setCanEnterStep2(false);
+    }
 
     const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
-    if (!userId) return undefined;
-
     let cancelled = false;
+
+    if (!userId) {
+      setCanEnterStep2(hasPcAlarmNotifyConfig(restored || readLocalPcAlarmNotifyConfig()));
+      setNotifyConfigReady(true);
+      return undefined;
+    }
+
     (async () => {
-      const cfg = await fetchAlertConfig();
-      if (!cancelled && cfg) applyAlertConfigToSidePanel(cfg);
+      try {
+        const cfg = await fetchAlertConfig();
+        if (cancelled) return;
+        if (cfg) {
+          applyAlertConfigToSidePanel(cfg);
+          setCanEnterStep2(true);
+        } else {
+          const still = readLocalPcAlarmNotifyConfig();
+          const hasData = hasPcAlarmNotifyConfig(still);
+          if (hasData) applyAlertConfigToSidePanel(still);
+          setCanEnterStep2(hasData);
+        }
+      } finally {
+        if (!cancelled) setNotifyConfigReady(true);
+      }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [applyAlertConfigToSidePanel, fetchAlertConfig, restoreFromLocalStorage]);
+  }, [applyAlertConfigToSidePanel, fetchAlertConfig, restoreFromLocalStorage, symbol]);
+
+  // 入口 URL / 配置就绪后，决定展示第几步
+  useEffect(() => {
+    if (!notifyConfigReady) return;
+
+    if (urlStep === 1) {
+      setConfigStep(1);
+      return;
+    }
+    if (urlStep === 2) {
+      if (canEnterStep2) {
+        setConfigStep(2);
+      } else {
+        setConfigStep(1);
+        router.replace(buildPcAlarmHref({ symbol, step: 1 }), { scroll: false });
+      }
+      return;
+    }
+    // 无 step：有通知渠道配置进 2，否则进 1，并写回 URL
+    const next = canEnterStep2 ? 2 : 1;
+    setConfigStep(next);
+    router.replace(buildPcAlarmHref({ symbol, step: next }), { scroll: false });
+  }, [canEnterStep2, notifyConfigReady, router, symbol, urlStep]);
 
   const updateWebhookUrl = (index, value) => {
     setWebhookUrls((prev) => prev.map((u, i) => (i === index ? value : u)));
@@ -847,6 +916,8 @@ function PCAlarmContent() {
           window.dispatchEvent(new CustomEvent('mozi:webAlarmConfigChanged'));
         }
         Toast.show({ content: t('oneClickAlarm.enableSuccess') });
+        setCanEnterStep2(true);
+        goConfigStep(2);
       } else {
         Toast.show({ content: result?.error || t('oneClickAlarm.enableFailed') });
       }
@@ -857,24 +928,80 @@ function PCAlarmContent() {
     }
   };
 
+  const goConfigTab = () => {
+    setActiveTab('config');
+    goConfigStep(canEnterStep2 ? 2 : 1);
+  };
+
   return (
-    <div className={`${styles.page} ${activeTab === 'history' ? styles.pageHistory : ''}`}>
+    <div
+      className={`${styles.page} ${activeTab === 'history' ? styles.pageHistory : styles.pageConfig}`}
+    >
       <div className={styles.mainPanel}>
-        <div className={styles.topTabs}>
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === 'config' ? styles.tabActive : styles.tabGhost}`}
-            onClick={() => setActiveTab('config')}
-          >
-            {t('addAlarm.title')}
-          </button>
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === 'history' ? styles.tabActive : styles.tabGhost}`}
-            onClick={() => setActiveTab('history')}
-          >
-            {t('addAlarm.history', { defaultValue: '历史记录' })}
-          </button>
+        <div className={styles.topBar}>
+          <div className={styles.topTabs}>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'config' ? styles.tabActive : styles.tabGhost}`}
+              onClick={goConfigTab}
+            >
+              {t('addAlarm.title')}
+            </button>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'history' ? styles.tabActive : styles.tabGhost}`}
+              onClick={() => setActiveTab('history')}
+            >
+              {t('addAlarm.history', { defaultValue: '历史记录' })}
+            </button>
+          </div>
+          {activeTab === 'config' ? (
+            <div className={styles.breadcrumb} aria-label={t('addAlarm.stepProgress')}>
+              <div
+                className={`${styles.breadcrumbItem} ${configStep === 1 ? styles.breadcrumbItemActive : ''}`}
+                role="link"
+                tabIndex={0}
+                onClick={() => goConfigStep(1)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    goConfigStep(1);
+                  }
+                }}
+              >
+                1. {t('addAlarm.stepNotify')}
+              </div>
+              <div className={styles.breadcrumbSep} aria-hidden>
+                →
+              </div>
+              <div
+                className={`${styles.breadcrumbItem} ${configStep === 2 ? styles.breadcrumbItemActive : ''} ${
+                  canEnterStep2 ? '' : styles.breadcrumbItemDisabled
+                }`}
+                role="link"
+                tabIndex={canEnterStep2 ? 0 : -1}
+                aria-disabled={!canEnterStep2}
+                onClick={() => {
+                  if (!canEnterStep2) {
+                    Toast.show({ content: t('addAlarm.finishNotifyFirst') });
+                    return;
+                  }
+                  goConfigStep(2);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter' && e.key !== ' ') return;
+                  e.preventDefault();
+                  if (!canEnterStep2) {
+                    Toast.show({ content: t('addAlarm.finishNotifyFirst') });
+                    return;
+                  }
+                  goConfigStep(2);
+                }}
+              >
+                2. {t('addAlarm.stepPrice')}
+              </div>
+            </div>
+          ) : null}
         </div>
         {activeTab === 'history' ? (
           <div className={styles.historyCard}>
@@ -974,47 +1101,357 @@ function PCAlarmContent() {
               </div>
             </div>
           </div>
-        ) : (
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <div className={styles.cardHeaderLeft}>
-              <div className={styles.headerTitleRow}>
-                <div className={styles.headerTitle}>{t('addAlarm.configTitle', { defaultValue: '配置告警' })}</div>
-                <div className={styles.headerMeta}>{t('addAlarm.executing', { defaultValue: '实时行情接入中' })}</div>
+        ) : configStep === 1 ? (
+          <div className={`${styles.sidePanel} ${styles.sidePanelStep}`}>
+            <div className={styles.sidePanelMask}>
+              <div className={styles.sidePanelHeader}>
+                <div className={styles.sideHeaderTextRow}>
+                  <div className={styles.sideTitle}>{t('addAlarm.enableNow', { defaultValue: '立即开启' })}</div>
+                  <div className={styles.sideSubTitle}>
+                    <span>{t('oneClickAlarm.realtime', { defaultValue: '实时监控' })}</span>
+                    <span>{t('oneClickAlarm.instant', { defaultValue: '即时提醒' })}</span>
+                  </div>
+                </div>
               </div>
-              <div className={styles.priceRow}>
-                <span className={styles.symbol}>{coinData.symbol}</span>
-                <span className={styles.priceLabel}>{t('addAlarm.latestPrice', { defaultValue: '最新价' })}</span>
-                {coinData.loading ? (
-                  <span className={styles.priceMetaMuted}>{t('addAlarm.loading', { defaultValue: '加载中...' })}</span>
-                ) : (
-                  <>
-                    <span className={`${styles.price} ${isPriceDown ? styles.negative : styles.positive}`}>
-                      {coinData.price}
-                    </span>
-                    <span className={`${styles.change} ${isPriceDown ? styles.negative : styles.positive}`}>
-                      {displayChange}
-                    </span>
-                  </>
-                )}
+
+              <div className={styles.sideBody}>
+                <div className={styles.notifySection}>
+                  <div className={styles.sideItem}>
+                    <div className={styles.sideItemLabel}>
+                      <img
+                        src={`${CDN_PUBLIC_PREFIX}/images/pc/phone_alarm.svg`}
+                        alt=""
+                        aria-hidden
+                        className={`${styles.sideItemIcon} ${styles.sideItemIconPhone}`}
+                      />
+                      <span>{t('oneClickAlarm.phoneAlarm', { defaultValue: '电话告警' })}</span>
+                    </div>
+                    <Switch
+                      className={styles.compactSwitch}
+                      checked={phoneEnabled}
+                      onChange={setPhoneEnabled}
+                      style={{ '--checked-color': '#11B787' }}
+                    />
+                  </div>
+
+                  <div className={styles.sideItem}>
+                    <div className={styles.sideItemLabel}>
+                      <img src={`${ALERT_ICON_CDN}/sms_alert.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
+                      <span>{t('oneClickAlarm.smsAlarm', { defaultValue: '短信告警' })}</span>
+                    </div>
+                    <Switch
+                      className={styles.compactSwitch}
+                      checked={smsEnabled}
+                      onChange={setSmsEnabled}
+                      style={{ '--checked-color': '#11B787' }}
+                    />
+                  </div>
+
+                  <div className={styles.sideInputRow} ref={countryDropdownRef}>
+                    <button
+                      type="button"
+                      className={styles.sideInputPrefixBtn}
+                      onClick={() => setCountryDropdownOpen((v) => !v)}
+                    >
+                      <span className={styles.sideInputPrefix}>{countryCode}</span>
+                      <span className={styles.sideInputPrefixArrow}>▾</span>
+                    </button>
+                    <input
+                      className={styles.sideInput}
+                      placeholder={t('oneClickAlarm.phonePlaceholder', { defaultValue: '请输入手机号' })}
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      inputMode="tel"
+                    />
+                    {countryDropdownOpen && (
+                      <div className={styles.countryDropdownPanel}>
+                        {countryOptions.map((item) => (
+                          <button
+                            key={`${item.dialCode}-${item.name}`}
+                            type="button"
+                            className={styles.countryDropdownItem}
+                            onClick={() => {
+                              setCountryCode(item.dialCode);
+                              setCountryDropdownOpen(false);
+                            }}
+                          >
+                            <span className={styles.countryDropdownName}>{item.name}</span>
+                            <span className={styles.countryDropdownCode}>{item.dialCode}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={styles.sideItem}>
+                    <div className={styles.sideItemLabel}>
+                      <img src={`${CDN_PUBLIC_PREFIX}/icons/new_detail/email.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
+                      <span>{t('oneClickAlarm.emailAlarm', { defaultValue: '邮件告警' })}</span>
+                    </div>
+                    <Switch
+                      className={styles.compactSwitch}
+                      checked={emailEnabled}
+                      onChange={setEmailEnabled}
+                      style={{ '--checked-color': '#11B787' }}
+                    />
+                  </div>
+                  <div className={styles.sideInputRow}>
+                    <input
+                      className={styles.sideInput}
+                      placeholder={t('oneClickAlarm.emailPlaceholder', { defaultValue: '请输入邮箱' })}
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (emailError) setEmailError('');
+                      }}
+                      inputMode="email"
+                    />
+                  </div>
+                  {emailError && <div className={styles.sideFieldError}>{emailError}</div>}
+
+                  <div className={styles.sideItem}>
+                    <div className={styles.sideItemLabel}>
+                      <img src={`${ALERT_ICON_CDN}/hook_alert.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
+                      <span>{t('oneClickAlarm.webhookLabel', { defaultValue: 'Web hook' })}</span>
+                    </div>
+                    <Switch
+                      className={styles.compactSwitch}
+                      checked={webhookEnabled}
+                      onChange={(v) => {
+                        setWebhookEnabled(v);
+                        if (webhookError) setWebhookError('');
+                      }}
+                      style={{ '--checked-color': '#11B787' }}
+                    />
+                  </div>
+                  <div className={styles.webhookUrlList}>
+                    {webhookUrls.map((url, index) => (
+                      <div key={`webhook-${index}`} className={styles.webhookInputGroup}>
+                        <div className={styles.sideInputRow}>
+                          <input
+                            className={styles.sideInput}
+                            placeholder={t('oneClickAlarm.webhookPlaceholder')}
+                            value={url}
+                            onChange={(e) => updateWebhookUrl(index, e.target.value)}
+                            inputMode="url"
+                          />
+                        </div>
+                        <div className={styles.webhookRowActions}>
+                          {index > 0 && (
+                            <button
+                              type="button"
+                              className={styles.webhookRemoveBtn}
+                              onClick={() => removeWebhookUrlRow(index)}
+                              aria-label={t('oneClickAlarm.webhookRemoveUrl')}
+                            >
+                              <WebhookRemoveIcon />
+                            </button>
+                          )}
+                          {index === webhookUrls.length - 1 && (
+                            <button
+                              type="button"
+                              className={styles.webhookAddBtn}
+                              onClick={addWebhookUrlRow}
+                              disabled={webhookUrls.length >= MAX_WEBHOOK_URLS}
+                              aria-label={t('oneClickAlarm.webhookAddUrl')}
+                            >
+                              <WebhookAddIcon />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className={styles.sideFieldHint}>{t('oneClickAlarm.webhookHint')}</p>
+                  {webhookError && <div className={styles.sideFieldError}>{webhookError}</div>}
+
+                  <div className={styles.sideItem}>
+                    <div className={styles.sideItemLabel}>
+                      <img src={`${ALERT_ICON_CDN}/hook_alert.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
+                      <span>{t('oneClickAlarm.webAlarm', { defaultValue: 'Web告警' })}</span>
+                    </div>
+                    <Switch
+                      className={styles.compactSwitch}
+                      checked={webEnabled}
+                      onChange={setWebEnabled}
+                      style={{ '--checked-color': '#11B787' }}
+                    />
+                  </div>
+                  <p className={styles.sideFieldHint}>
+                    {t('oneClickAlarm.webAlarmHint', {
+                      defaultValue: '开启后，价格触发告警时将在页面右上角弹出提示',
+                    })}
+                  </p>
+
+                  <div className={styles.channelLinkRow}>
+                    <button
+                      type="button"
+                      className={styles.sideTgLink}
+                      aria-label={t('oneClickAlarm.telegramOpenMiniApp')}
+                      onClick={() => {
+                        window.open(getTgAlertMiniAppLink(symbol), '_blank', 'noopener,noreferrer');
+                      }}
+                    >
+                      <span className={styles.sideItemLabel}>
+                        <img
+                          src={`${ALERT_ICON_CDN}/tgbot_alert.svg`}
+                          alt=""
+                          aria-hidden
+                          className={styles.sideItemIcon}
+                          onError={(e) => {
+                            e.currentTarget.src = '/icons/telegram-group.svg';
+                          }}
+                        />
+                        <span>{t('oneClickAlarm.telegramBot')}</span>
+                      </span>
+                      <svg
+                        className={styles.sideTgLinkArrow}
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        aria-hidden
+                      >
+                        <path
+                          d="M4.5 2.5L8 6L4.5 9.5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={styles.sideTgLink}
+                      aria-label={t('oneClickAlarm.wechatAlarm')}
+                      onClick={() => router.push('/wechat-alert')}
+                    >
+                      <span className={styles.sideItemLabel}>
+                        <img
+                          src={`${ALERT_ICON_CDN}/wechat_alert.svg`}
+                          alt=""
+                          aria-hidden
+                          className={styles.sideItemIcon}
+                          onError={(e) => {
+                            e.currentTarget.src = '/icons/pc/wechat.svg';
+                          }}
+                        />
+                        <span>{t('oneClickAlarm.wechatAlarm')}</span>
+                      </span>
+                      <svg
+                        className={styles.sideTgLinkArrow}
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        aria-hidden
+                      >
+                        <path
+                          d="M4.5 2.5L8 6L4.5 9.5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div className={styles.freqSection}>
+                  <div className={styles.freqTitle}>{t('oneClickAlarm.freqTitle', { defaultValue: '预警频次' })}</div>
+                  <div className={styles.freqOptionsRow}>
+                    {[
+                      {
+                        id: 'continuous',
+                        titleKey: 'oneClickAlarm.freqContinuous',
+                        descKey: 'oneClickAlarm.freqContinuousDesc',
+                      },
+                      { id: 'daily', titleKey: 'oneClickAlarm.freqDaily', descKey: 'oneClickAlarm.freqDailyDesc' },
+                      { id: 'once', titleKey: 'oneClickAlarm.freqOnce', descKey: 'oneClickAlarm.freqOnceDesc' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        className={`${styles.freqOption} ${alertFrequency === opt.id ? styles.freqOptionSelected : ''}`}
+                        onClick={() => setAlertFrequency(opt.id)}
+                      >
+                        <span className={styles.freqOptionTitle}>{t(opt.titleKey)}</span>
+                        <span className={styles.freqOptionDesc}>{t(opt.descKey)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.sideFooter}>
+                <button
+                  type="button"
+                  className={styles.sideConfirmBtn}
+                  onClick={handleEnableAlarm}
+                  disabled={sideSubmitting}
+                >
+                  <img
+                    src={`${CDN_PUBLIC_PREFIX}/images/pc/confirm_open.svg`}
+                    alt={t('common.confirm', { defaultValue: '确认开启' })}
+                    className={styles.sideConfirmBtnImage}
+                  />
+                </button>
               </div>
             </div>
-            <button type="button" className={styles.manageBtn}>
-              <img src={`${CDN_PUBLIC_PREFIX}/icons/pc/manage.svg`} alt="" aria-hidden className={styles.manageIcon} />
-              {t('common.manage', { defaultValue: '管理' })} (1)
-            </button>
           </div>
-          {coinData.loading ? (
-            <div className={styles.loadingWrap}>
-              <Loading tip={t('addAlarm.loading')} size={28} />
+        ) : (
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardHeaderLeft}>
+                <div className={styles.headerTitleRow}>
+                  <div className={styles.headerTitle}>{t('addAlarm.configTitle', { defaultValue: '配置告警' })}</div>
+                  <div className={styles.headerMeta}>{t('addAlarm.executing', { defaultValue: '实时行情接入中' })}</div>
+                </div>
+                <div className={styles.priceRow}>
+                  <span className={styles.symbol}>{coinData.symbol}</span>
+                  <span className={styles.priceLabel}>{t('addAlarm.latestPrice', { defaultValue: '最新价' })}</span>
+                  {coinData.loading ? (
+                    <span className={styles.priceMetaMuted}>{t('addAlarm.loading', { defaultValue: '加载中...' })}</span>
+                  ) : (
+                    <>
+                      <span className={`${styles.price} ${isPriceDown ? styles.negative : styles.positive}`}>
+                        {coinData.price}
+                      </span>
+                      <span className={`${styles.change} ${isPriceDown ? styles.negative : styles.positive}`}>
+                        {displayChange}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <button type="button" className={styles.manageBtn}>
+                <img src={`${CDN_PUBLIC_PREFIX}/icons/pc/manage.svg`} alt="" aria-hidden className={styles.manageIcon} />
+                {t('common.manage', { defaultValue: '管理' })} (1)
+              </button>
             </div>
-          ) : (
-            <div className={styles.cardBody}>
-              <div className={styles.configList}>
-                {Object.entries(configs).map(([key, config]) => (
-                  <div key={key} className={styles.configItem}>
-                    <div className={styles.configItemHead}>
+            {coinData.loading ? (
+              <div className={styles.loadingWrap}>
+                <Loading tip={t('addAlarm.loading')} size={28} />
+              </div>
+            ) : (
+              <div className={styles.cardBody}>
+                <div className={styles.configList}>
+                  {Object.entries(configs).map(([key, config]) => (
+                    <div key={key} className={styles.configItem}>
                       <span className={styles.configLabel}>{t(config.labelKey)}</span>
+                      <div className={styles.configInputWrap}>
+                        <Input
+                          className={styles.configInput}
+                          type="number"
+                          value={config.value}
+                          placeholder={t('addAlarm.placeholder')}
+                          onChange={(val) => handleInputChange(key, val)}
+                        />
+                        <span className={styles.unit}>{config.unit}</span>
+                      </div>
                       <Switch
                         className={styles.compactSwitch}
                         checked={config.enabled}
@@ -1022,370 +1459,66 @@ function PCAlarmContent() {
                         style={{ '--checked-color': '#11B787' }}
                       />
                     </div>
-                    <div className={styles.configInputWrap}>
-                      <Input
-                        className={styles.configInput}
-                        type="number"
-                        value={config.value}
-                        placeholder={t('addAlarm.placeholder')}
-                        onChange={(val) => handleInputChange(key, val)}
-                      />
-                      <span className={styles.unit}>{config.unit}</span>
+                  ))}
+                </div>
+
+                <div className={styles.featureList}>
+                  <div className={styles.featureRow}>
+                    <div className={styles.featureTextWrap}>
+                      <span className={styles.featureTitle}>{t('addAlarm.bigOrderDetect')}</span>
+                      <span className={styles.featureDesc}>
+                        {t('addAlarm.bigOrderDesc', { defaultValue: '监控链上及交易所巨额转账' })}
+                      </span>
                     </div>
+                    <Switch
+                      className={styles.compactSwitch}
+                      checked={bigOrderDetection}
+                      onChange={setBigOrderDetection}
+                      style={{ '--checked-color': '#11B787' }}
+                    />
                   </div>
-                ))}
-              </div>
 
-              <div className={styles.featureList}>
-                <div className={styles.featureRow}>
-                  <div className={styles.featureTextWrap}>
-                    <span className={styles.featureTitle}>{t('addAlarm.bigOrderDetect')}</span>
-                    <span className={styles.featureDesc}>
-                      {t('addAlarm.bigOrderDesc', { defaultValue: '监控链上及交易所巨额转账' })}
-                    </span>
+                  <div className={styles.featureRow}>
+                    <div className={styles.featureTextWrap}>
+                      <span className={styles.featureTitle}>
+                        {t('addAlarm.exchangeSpreadMonitor', { defaultValue: '交易所差价监控' })}
+                      </span>
+                      <span className={styles.featureDesc}>
+                        {t('addAlarm.exchangeSpreadDesc', { defaultValue: '监控多平台异常价差套利机会' })}
+                      </span>
+                    </div>
+                    <Switch
+                      className={styles.compactSwitch}
+                      checked={spreadMonitor}
+                      onChange={setSpreadMonitor}
+                      style={{ '--checked-color': '#11B787' }}
+                    />
                   </div>
-                  <Switch
-                    className={styles.compactSwitch}
-                    checked={bigOrderDetection}
-                    onChange={setBigOrderDetection}
-                    style={{ '--checked-color': '#11B787' }}
-                  />
                 </div>
 
-                <div className={styles.featureRow}>
-                  <div className={styles.featureTextWrap}>
-                    <span className={styles.featureTitle}>
-                      {t('addAlarm.exchangeSpreadMonitor', { defaultValue: '交易所差价监控' })}
-                    </span>
-                    <span className={styles.featureDesc}>
-                      {t('addAlarm.exchangeSpreadDesc', { defaultValue: '监控多平台异常价差套利机会' })}
-                    </span>
-                  </div>
-                  <Switch
-                    className={styles.compactSwitch}
-                    checked={spreadMonitor}
-                    onChange={setSpreadMonitor}
-                    style={{ '--checked-color': '#11B787' }}
-                  />
+                <div className={styles.footerRow}>
+                  <span className={styles.riskTip}>
+                    <img src={`${CDN_PUBLIC_PREFIX}/icons/pc/warn.svg`} alt="" aria-hidden className={styles.riskTipIcon} />
+                    <span>{t('addAlarm.riskTip', { defaultValue: '了解告警风险提示' })}</span>
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.saveButton}
+                    disabled={btnDisabled}
+                    onClick={saveWarnings}
+                  >
+                    <img
+                      src={`${CDN_PUBLIC_PREFIX}/images/pc/save_alarm.svg`}
+                      alt={t('addAlarm.saveAlarm')}
+                      className={styles.saveButtonImage}
+                    />
+                  </button>
                 </div>
               </div>
-
-              <div className={styles.footerRow}>
-                <span className={styles.riskTip}>
-                  <img src={`${CDN_PUBLIC_PREFIX}/icons/pc/warn.svg`} alt="" aria-hidden className={styles.riskTipIcon} />
-                  <span>{t('addAlarm.riskTip', { defaultValue: '了解告警风险提示' })}</span>
-                </span>
-                <button
-                  type="button"
-                  className={styles.saveButton}
-                  disabled={btnDisabled}
-                  onClick={saveWarnings}
-                >
-                  <img
-                    src={`${CDN_PUBLIC_PREFIX}/images/pc/save_alarm.svg`}
-                    alt={t('addAlarm.saveAlarm')}
-                    className={styles.saveButtonImage}
-                  />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         )}
       </div>
-
-      {activeTab === 'config' && <div className={styles.sidePanel}>
-        <div className={styles.sidePanelMask}>
-          <div className={styles.sidePanelHeader}>
-            <div className={styles.sideHeaderTextRow}>
-              <div className={styles.sideTitle}>{t('addAlarm.enableNow', { defaultValue: '立即开启' })}</div>
-              <div className={styles.sideSubTitle}>
-                <span>{t('oneClickAlarm.realtime', { defaultValue: '实时监控' })}</span>
-                <span>{t('oneClickAlarm.instant', { defaultValue: '即时提醒' })}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.sideBody}>
-            <div className={styles.notifySection}>
-              <div className={styles.sideItem}>
-                <div className={styles.sideItemLabel}>
-                  <img
-                    src={`${CDN_PUBLIC_PREFIX}/images/pc/phone_alarm.svg`}
-                    alt=""
-                    aria-hidden
-                    className={`${styles.sideItemIcon} ${styles.sideItemIconPhone}`}
-                  />
-                  <span>{t('oneClickAlarm.phoneAlarm', { defaultValue: '电话告警' })}</span>
-                </div>
-                <Switch
-                  className={styles.compactSwitch}
-                  checked={phoneEnabled}
-                  onChange={setPhoneEnabled}
-                  style={{ '--checked-color': '#11B787' }}
-                />
-              </div>
-
-              <div className={styles.sideItem}>
-                <div className={styles.sideItemLabel}>
-                  <img src={`${ALERT_ICON_CDN}/sms_alert.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
-                  <span>{t('oneClickAlarm.smsAlarm', { defaultValue: '短信告警' })}</span>
-                </div>
-                <Switch
-                  className={styles.compactSwitch}
-                  checked={smsEnabled}
-                  onChange={setSmsEnabled}
-                  style={{ '--checked-color': '#11B787' }}
-                />
-              </div>
-
-              <div className={styles.sideInputRow} ref={countryDropdownRef}>
-                <button
-                  type="button"
-                  className={styles.sideInputPrefixBtn}
-                  onClick={() => setCountryDropdownOpen((v) => !v)}
-                >
-                  <span className={styles.sideInputPrefix}>{countryCode}</span>
-                  <span className={styles.sideInputPrefixArrow}>▾</span>
-                </button>
-                <input
-                  className={styles.sideInput}
-                  placeholder={t('oneClickAlarm.phonePlaceholder', { defaultValue: '请输入手机号' })}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  inputMode="tel"
-                />
-                {countryDropdownOpen && (
-                  <div className={styles.countryDropdownPanel}>
-                    {countryOptions.map((item) => (
-                      <button
-                        key={`${item.dialCode}-${item.name}`}
-                        type="button"
-                        className={styles.countryDropdownItem}
-                        onClick={() => {
-                          setCountryCode(item.dialCode);
-                          setCountryDropdownOpen(false);
-                        }}
-                      >
-                        <span className={styles.countryDropdownName}>{item.name}</span>
-                        <span className={styles.countryDropdownCode}>{item.dialCode}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className={styles.sideBelowInset}>
-              <div className={styles.sideItem}>
-                <div className={styles.sideItemLabel}>
-                  <img src={`${CDN_PUBLIC_PREFIX}/icons/new_detail/email.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
-                  <span>{t('oneClickAlarm.emailAlarm', { defaultValue: '邮件告警' })}</span>
-                </div>
-                <Switch
-                  className={styles.compactSwitch}
-                  checked={emailEnabled}
-                  onChange={setEmailEnabled}
-                  style={{ '--checked-color': '#11B787' }}
-                />
-              </div>
-              <div className={styles.sideInputRow}>
-                <input
-                  className={styles.sideInput}
-                  placeholder={t('oneClickAlarm.emailPlaceholder', { defaultValue: '请输入邮箱' })}
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (emailError) setEmailError('');
-                  }}
-                  inputMode="email"
-                />
-              </div>
-              {emailError && <div className={styles.sideFieldError}>{emailError}</div>}
-
-              <div className={styles.sideItem}>
-                <div className={styles.sideItemLabel}>
-                  <img src={`${ALERT_ICON_CDN}/hook_alert.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
-                  <span>{t('oneClickAlarm.webhookLabel', { defaultValue: 'Web hook' })}</span>
-                </div>
-                <Switch
-                  className={styles.compactSwitch}
-                  checked={webhookEnabled}
-                  onChange={(v) => {
-                    setWebhookEnabled(v);
-                    if (webhookError) setWebhookError('');
-                  }}
-                  style={{ '--checked-color': '#11B787' }}
-                />
-              </div>
-              <div className={styles.webhookUrlList}>
-                {webhookUrls.map((url, index) => (
-                  <div key={`webhook-${index}`} className={styles.webhookInputGroup}>
-                    <div className={styles.sideInputRow}>
-                      <input
-                        className={styles.sideInput}
-                        placeholder={t('oneClickAlarm.webhookPlaceholder')}
-                        value={url}
-                        onChange={(e) => updateWebhookUrl(index, e.target.value)}
-                        inputMode="url"
-                      />
-                    </div>
-                    <div className={styles.webhookRowActions}>
-                      {index > 0 && (
-                        <button
-                          type="button"
-                          className={styles.webhookRemoveBtn}
-                          onClick={() => removeWebhookUrlRow(index)}
-                          aria-label={t('oneClickAlarm.webhookRemoveUrl')}
-                        >
-                          <WebhookRemoveIcon />
-                        </button>
-                      )}
-                      {index === webhookUrls.length - 1 && (
-                        <button
-                          type="button"
-                          className={styles.webhookAddBtn}
-                          onClick={addWebhookUrlRow}
-                          disabled={webhookUrls.length >= MAX_WEBHOOK_URLS}
-                          aria-label={t('oneClickAlarm.webhookAddUrl')}
-                        >
-                          <WebhookAddIcon />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className={styles.sideFieldHint}>{t('oneClickAlarm.webhookHint')}</p>
-              {webhookError && <div className={styles.sideFieldError}>{webhookError}</div>}
-
-              <div className={styles.sideItem}>
-                <div className={styles.sideItemLabel}>
-                  <img src={`${ALERT_ICON_CDN}/hook_alert.svg`} alt="" aria-hidden className={styles.sideItemIcon} />
-                  <span>{t('oneClickAlarm.webAlarm', { defaultValue: 'Web告警' })}</span>
-                </div>
-                <Switch
-                  className={styles.compactSwitch}
-                  checked={webEnabled}
-                  onChange={setWebEnabled}
-                  style={{ '--checked-color': '#11B787' }}
-                />
-              </div>
-              <p className={styles.sideFieldHint}>{t('oneClickAlarm.webAlarmHint', { defaultValue: '开启后，价格触发告警时将在页面右上角弹出提示' })}</p>
-
-              <button
-                type="button"
-                className={styles.sideTgLink}
-                aria-label={t('oneClickAlarm.telegramOpenMiniApp')}
-                onClick={() => {
-                  window.open(getTgAlertMiniAppLink(symbol), '_blank', 'noopener,noreferrer');
-                }}
-              >
-                <span className={styles.sideItemLabel}>
-                  <img
-                    src={`${ALERT_ICON_CDN}/tgbot_alert.svg`}
-                    alt=""
-                    aria-hidden
-                    className={styles.sideItemIcon}
-                    onError={(e) => {
-                      e.currentTarget.src = '/icons/telegram-group.svg';
-                    }}
-                  />
-                  <span>{t('oneClickAlarm.telegramBot')}</span>
-                </span>
-                <svg
-                  className={styles.sideTgLinkArrow}
-                  width="12"
-                  height="12"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  aria-hidden
-                >
-                  <path
-                    d="M4.5 2.5L8 6L4.5 9.5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-              <p className={styles.sideFieldHint}>{t('oneClickAlarm.telegramOpenMiniAppHint')}</p>
-
-              <button
-                type="button"
-                className={styles.sideTgLink}
-                aria-label={t('oneClickAlarm.wechatAlarm')}
-                onClick={() => router.push('/wechat-alert')}
-              >
-                <span className={styles.sideItemLabel}>
-                  <img
-                    src={`${ALERT_ICON_CDN}/wechat_alert.svg`}
-                    alt=""
-                    aria-hidden
-                    className={styles.sideItemIcon}
-                    onError={(e) => {
-                      e.currentTarget.src = '/icons/pc/wechat.svg';
-                    }}
-                  />
-                  <span>{t('oneClickAlarm.wechatAlarm')}</span>
-                </span>
-                <svg
-                  className={styles.sideTgLinkArrow}
-                  width="12"
-                  height="12"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  aria-hidden
-                >
-                  <path
-                    d="M4.5 2.5L8 6L4.5 9.5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-              <p className={styles.sideFieldHint}>{t('oneClickAlarm.wechatQrEntryHint')}</p>
-
-              <div className={styles.freqSection}>
-                <div className={styles.freqTitle}>{t('oneClickAlarm.freqTitle', { defaultValue: '预警频次' })}</div>
-                {[
-                  { id: 'continuous', titleKey: 'oneClickAlarm.freqContinuous', descKey: 'oneClickAlarm.freqContinuousDesc' },
-                  { id: 'daily', titleKey: 'oneClickAlarm.freqDaily', descKey: 'oneClickAlarm.freqDailyDesc' },
-                  { id: 'once', titleKey: 'oneClickAlarm.freqOnce', descKey: 'oneClickAlarm.freqOnceDesc' },
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    className={`${styles.freqOption} ${alertFrequency === opt.id ? styles.freqOptionSelected : ''}`}
-                    onClick={() => setAlertFrequency(opt.id)}
-                  >
-                    <span className={styles.freqOptionTitle}>{t(opt.titleKey)}</span>
-                    <span className={styles.freqOptionDesc}>{t(opt.descKey)}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.sideFooter}>
-            <button
-              type="button"
-              className={styles.sideConfirmBtn}
-              onClick={handleEnableAlarm}
-              disabled={sideSubmitting}
-            >
-              <img
-                src={`${CDN_PUBLIC_PREFIX}/images/pc/confirm_open.svg`}
-                alt={t('common.confirm', { defaultValue: '确认开启' })}
-                className={styles.sideConfirmBtnImage}
-              />
-            </button>
-          </div>
-        </div>
-      </div>}
     </div>
   );
 }

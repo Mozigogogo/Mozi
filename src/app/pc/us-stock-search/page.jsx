@@ -11,6 +11,7 @@ import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
 import { completeTask } from '@/api/user';
 import { normalizeUsStockReturnResponse, normalizeUsStockHeaderResponse } from '@/utils/usStockMockData';
+import { useNavigateToPcAlarm } from '@/hooks/useNavigateToPcAlarm';
 import { Loading } from '@/components/Loading';
 import searchStyles from '@/components/PCSearchResults/index.module.less';
 import styles from './page.module.less';
@@ -138,6 +139,7 @@ function buildVenueRows(data) {
 function UsStockSearchContent() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const { navigateToPcAlarm } = useNavigateToPcAlarm();
   const searchParams = useSearchParams();
   const keyword = (searchParams.get('keyword') || '').trim().toUpperCase();
   const [gate, setGate] = useState(keyword ? 'loading' : 'invalid');
@@ -323,7 +325,7 @@ function UsStockSearchContent() {
     e.stopPropagation();
     const sym = record?.symbol || keyword;
     if (!sym) return;
-    router.push(`/pc/alarm?symbol=${encodeURIComponent(sym)}`);
+    void navigateToPcAlarm(sym);
   };
 
   const sectorName = String(searchDetail?.sector || '').trim();

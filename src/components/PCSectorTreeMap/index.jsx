@@ -7,6 +7,7 @@ import { getSectionSymbols } from '@/api/market';
 import { completeTask } from '@/api/user';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
+import { useNavigateToPcAlarm } from '@/hooks/useNavigateToPcAlarm';
 import styles from './index.module.less';
 
 const PCSectorTreeMap = ({ 
@@ -29,6 +30,7 @@ const PCSectorTreeMap = ({
   onItemClick 
 }) => {
   const router = useRouter();
+  const { navigateToPcAlarm } = useNavigateToPcAlarm();
   const { t } = useTranslation();
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -147,9 +149,9 @@ const PCSectorTreeMap = ({
       e.preventDefault();
       const symbol = coin?.symbol;
       if (!symbol || symbol === '--') return;
-      router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
+      void navigateToPcAlarm(symbol);
     },
-    [router]
+    [navigateToPcAlarm]
   );
 
   const normalizeMoneyDisplay = useCallback((raw) => {

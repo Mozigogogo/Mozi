@@ -35,6 +35,7 @@ import { usePcShell } from '@/components/PcShellContext';
 import { MoziWebSocket } from '@/utils/moziWebSocket';
 import { useTranslation } from 'react-i18next';
 import { useAlertConfig } from '@/hooks/useAlertConfig';
+import { useNavigateToPcAlarm } from '@/hooks/useNavigateToPcAlarm';
 import { useIsWithinCreateTimeWindow } from '@/hooks/useIsWithinCreateTimeWindow';
 import { completeTask } from '@/api/user';
 import { executeConsume } from '@/api/points';
@@ -196,6 +197,7 @@ async function checkIsInWatchlist(coinSymbol) {
 
 export default function DetailPage() {
   const router = useRouter();
+  const { navigateToPcAlarm } = useNavigateToPcAlarm();
   const searchParams = useSearchParams();
   const symbol = searchParams.get('symbol') || '';
   const fromFavorite = searchParams.get('fromFavorite') === '1'; // 是否从自选榜进入
@@ -2006,7 +2008,7 @@ export default function DetailPage() {
   // 跳转到告警页面
   const jump2Alert = () => {
     if (isPC) {
-      router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
+      void navigateToPcAlarm(symbol || 'BTC');
       return;
     }
     setOneClickAlarmMode('config');

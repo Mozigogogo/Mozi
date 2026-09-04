@@ -10,6 +10,7 @@ import { Interface } from '../../utils/constants';
 import { completeTask } from '@/api/user';
 import { jump2Detail } from '@/utils/core';
 import { getPcSearchRoute, validateSearchSymbol } from '@/utils/searchValidate';
+import { useNavigateToPcAlarm } from '@/hooks/useNavigateToPcAlarm';
 import { Loading } from '@/components/Loading';
 import isEmpty from 'lodash/isEmpty';
 import styles from './index.module.less';
@@ -19,6 +20,7 @@ import styles from './index.module.less';
  */
 export default function PCSearchResults({ keyword }) {
   const router = useRouter();
+  const { navigateToPcAlarm } = useNavigateToPcAlarm();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [isValidCoin, setIsValidCoin] = useState(false);
@@ -200,7 +202,7 @@ export default function PCSearchResults({ keyword }) {
     e.stopPropagation();
     const symbol = record?.symbol || record?.key || keyword;
     if (!symbol) return;
-    router.push(`/pc/alarm?symbol=${encodeURIComponent(symbol)}`);
+    void navigateToPcAlarm(symbol);
   };
 
   // 币种信息表格列
