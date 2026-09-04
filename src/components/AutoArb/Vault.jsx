@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   fetchVaultCredentials,
+  fetchVaultCryptoPublicKey,
   fetchVaultExchanges,
   parseVaultCredentialId,
   saveVaultCredentials,
@@ -44,6 +45,9 @@ export default function Vault({ onNavigate, onToast }) {
   const [note, setNote] = useState('');
   const [credentialId, setCredentialId] = useState(null);
   const [creating, setCreating] = useState(false);
+  const [publicKeyReady, setPublicKeyReady] = useState(false);
+  const [publicKeyLoading, setPublicKeyLoading] = useState(false);
+  const [publicKeyError, setPublicKeyError] = useState(null);
   const [validationDone, setValidationDone] = useState(false);
   const [validating, setValidating] = useState(false);
   const [verifyError, setVerifyError] = useState(null);
@@ -165,6 +169,35 @@ export default function Vault({ onNavigate, onToast }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- verify once per credentialId on step 3
   }, [step, credentialId]);
 
+  // 进入「输入密钥」步骤时预取 RSA 公钥，提交前用于本地信封加密
+  useEffect(() => {
+    if (step !== 2) return undefined;
+
+    let cancelled = false;
+    setPublicKeyLoading(true);
+    setPublicKeyError(null);
+    setPublicKeyReady(false);
+
+    (async () => {
+      try {
+        await fetchVaultCryptoPublicKey();
+        if (cancelled) return;
+        setPublicKeyReady(true);
+      } catch (err) {
+        if (cancelled) return;
+        setPublicKeyReady(false);
+        setPublicKeyError(err?.message || V('step2.encryptFailed'));
+      } finally {
+        if (!cancelled) setPublicKeyLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- prefetch when entering step 2
+  }, [step]);
+
   const handleCreateCredential = async () => {
     if (!selectedExchange?.available || !selectedExchange?.exchangeId) {
       onToast(V('step2.noExchange'));
@@ -196,6 +229,13 @@ export default function Vault({ onNavigate, onToast }) {
     verifyRequestId.current += 1;
 
     try {
+      // 确保公钥已就绪（步骤进入时已预取；失败则此处重试）
+      if (!publicKeyReady) {
+        await fetchVaultCryptoPublicKey();
+        setPublicKeyReady(true);
+        setPublicKeyError(null);
+      }
+
       const saved = await saveVaultCredentials({
         exchangeId: selectedExchange.exchangeId,
         label: note.trim() || undefined,
@@ -209,7 +249,11 @@ export default function Vault({ onNavigate, onToast }) {
       setCredentialValues(clearSensitiveCredentialValues(exchangeCode, credentialValues));
       setStep(3);
     } catch (err) {
-      onToast(err?.message || V('step2.saveFailed'));
+      const msg = err?.message || V('step2.saveFailed');
+      if (!publicKeyReady) {
+        setPublicKeyError(msg);
+      }
+      onToast(msg);
     } finally {
       setCreating(false);
     }
@@ -246,6 +290,9 @@ export default function Vault({ onNavigate, onToast }) {
     setNote('');
     setCredentialId(null);
     setCreating(false);
+    setPublicKeyReady(false);
+    setPublicKeyLoading(false);
+    setPublicKeyError(null);
     setValidationDone(false);
     setValidating(false);
     setVerifyError(null);
@@ -647,12 +694,43 @@ export default function Vault({ onNavigate, onToast }) {
                 <button
                   type="button"
                   className="btn-full btn-gold"
-                  disabled={creating || validating}
+                  disabled={creating || validating || publicKeyLoading || !!publicKeyError}
                   onClick={handleCreateCredential}
                 >
-                  {creating ? V('step2.creating') : V('step2.create')}
+                  {creating
+                    ? V('step2.creating')
+                    : publicKeyLoading
+                      ? V('step2.loadingPublicKey')
+                      : V('step2.create')}
                 </button>
               </div>
+              {publicKeyError ? (
+                <div className="wz-sub" style={{ color: 'var(--neg)', marginTop: 10 }}>
+                  {publicKeyError}{' '}
+                  <button
+                    type="button"
+                    className="btn-link"
+                    style={{ color: 'var(--accent)', textDecoration: 'underline', background: 'none', border: 0, cursor: 'pointer', padding: 0 }}
+                    onClick={() => {
+                      setPublicKeyError(null);
+                      setPublicKeyReady(false);
+                      setPublicKeyLoading(true);
+                      fetchVaultCryptoPublicKey()
+                        .then(() => {
+                          setPublicKeyReady(true);
+                          setPublicKeyError(null);
+                        })
+                        .catch((err) => {
+                          setPublicKeyReady(false);
+                          setPublicKeyError(err?.message || V('step2.encryptFailed'));
+                        })
+                        .finally(() => setPublicKeyLoading(false));
+                    }}
+                  >
+                    {V('step2.retryPublicKey')}
+                  </button>
+                </div>
+              ) : null}
             </>
           )}
 

@@ -596,6 +596,8 @@
       "back": "← 返回",
       "create": "创建 API 密钥 →",
       "creating": "正在保存...",
+      "loadingPublicKey": "正在获取加密公钥...",
+      "retryPublicKey": "重试",
       "missingFields": "请填写所有必填项",
       "missingField": "请填写：{{field}}",
       "invalidPrivateKey": "Agent 私钥格式不正确，应为 0x 开头的 64 位十六进制",

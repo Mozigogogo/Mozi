@@ -596,6 +596,8 @@
       "back": "← Back",
       "create": "Create API key →",
       "creating": "Saving...",
+      "loadingPublicKey": "Fetching encryption key...",
+      "retryPublicKey": "Retry",
       "missingFields": "Please fill in all required fields",
       "missingField": "Please enter: {{field}}",
       "invalidPrivateKey": "Invalid agent private key — expected 0x followed by 64 hex characters",
