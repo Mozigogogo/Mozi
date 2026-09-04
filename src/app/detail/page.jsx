@@ -3432,6 +3432,7 @@ ${coinInfo.name || symbol} (${symbol})
             isUsStock ? () => fetchUsStockKlineMore(activeKlineTab) : undefined
           }
           hasMoreHistorical={isUsStock ? Boolean(usStockKlineHasMore[activeKlineTab]) : false}
+          priceTrend={String(coinInfo?.priceChange_24h ?? '').includes('-') ? 'down' : 'up'}
           loadingMoreHistorical={
             isUsStock ? Boolean(usStockKlineLoadingMoreMap[activeKlineTab]) : false
           }

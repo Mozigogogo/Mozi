@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createChart } from 'lightweight-charts';
+import { createChart, LineStyle } from 'lightweight-charts';
 import { TabBar } from 'antd-mobile';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '../Skeleton';
@@ -25,6 +25,9 @@ const SKDJ_STYLE = {
   d: '#FF6D00',
   j: '#E91E63',
 };
+
+const PRICE_UP_COLOR = '#11B787';
+const PRICE_DOWN_COLOR = '#FA5F5F';
 
 const getMacdHistColor = (value, prevValue) => {
   const prev = Number.isFinite(prevValue) ? prevValue : 0;
@@ -449,6 +452,8 @@ const KlineChart = ({
   onLoadMoreHistorical,
   hasMoreHistorical = false,
   loadingMoreHistorical = false,
+  /** 与页头涨跌百分比一致：'up' | 'down' */
+  priceTrend = 'up',
 }) => {
   const { t, i18n } = useTranslation();
   const chartRef = useRef(null);
@@ -458,6 +463,7 @@ const KlineChart = ({
   const navigatorChartInstance = useRef(null);
   const skdjChartInstance = useRef(null);
   const seriesInstance = useRef(null);
+  const lastPriceLineRef = useRef(null);
   const navigatorMacdSeries = useRef({
     histogram: null,
     dif: null,
@@ -717,7 +723,73 @@ const KlineChart = ({
     return { kData, dData, jData };
   };
 
+  const clearLastPriceLine = () => {
+    const series = seriesInstance.current;
+    const priceLine = lastPriceLineRef.current;
+    if (series && priceLine) {
+      try {
+        series.removePriceLine(priceLine);
+      } catch {
+        // series may already be removed
+      }
+    }
+    lastPriceLineRef.current = null;
+    if (series && typeof series.setMarkers === 'function') {
+      try {
+        series.setMarkers([]);
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const syncLastPriceLine = (lineData) => {
+    const series = seriesInstance.current;
+    if (!series || !Array.isArray(lineData) || lineData.length === 0) {
+      clearLastPriceLine();
+      return;
+    }
+
+    const last = lineData[lineData.length - 1];
+    const lastPrice = Number(last?.value);
+    if (!Number.isFinite(lastPrice) || last?.time == null) {
+      clearLastPriceLine();
+      return;
+    }
+
+    // 价签颜色与页头涨跌百分比一致
+    const isUp = priceTrend !== 'down';
+    const labelColor = isUp ? PRICE_UP_COLOR : PRICE_DOWN_COLOR;
+    const options = {
+      price: lastPrice,
+      color: labelColor,
+      lineWidth: 1,
+      lineStyle: LineStyle.SparseDotted,
+      axisLabelVisible: true,
+      title: '',
+    };
+
+    if (lastPriceLineRef.current) {
+      lastPriceLineRef.current.applyOptions(options);
+    } else {
+      lastPriceLineRef.current = series.createPriceLine(options);
+    }
+
+    // 最新价小绿点：用 markers，避免额外 LineSeries 在缩放时污染 Area 填充
+    series.setMarkers([
+      {
+        time: last.time,
+        position: 'inBar',
+        shape: 'circle',
+        color: PRICE_UP_COLOR,
+        size: 0.6,
+        id: 'last-price-dot',
+      },
+    ]);
+  };
+
   const clearMainSeries = (chart) => {
+    clearLastPriceLine();
     if (seriesInstance.current) {
       chart.removeSeries(seriesInstance.current);
       seriesInstance.current = null;
@@ -998,6 +1070,7 @@ const KlineChart = ({
         skdjChartInstance.current = null;
       }
       seriesInstance.current = null;
+      lastPriceLineRef.current = null;
       navigatorMacdSeries.current = { histogram: null, dif: null, dea: null };
       skdjSeriesRef.current = { k: null, d: null, j: null };
       maSeriesInstances.current = [];
@@ -1027,6 +1100,7 @@ const KlineChart = ({
     }
 
     if (!data?.values?.length) {
+      clearLastPriceLine();
       return;
     }
 
@@ -1123,7 +1197,8 @@ const KlineChart = ({
           lineColor: '#11B787',
           lineWidth: 2,
           topColor: 'rgba(17, 183, 135, 0.35)',
-          bottomColor: 'rgba(17, 183, 135, 0)',
+          bottomColor: 'rgba(17, 183, 135, 0.001)',
+          invertFilledArea: false,
           priceLineVisible: false,
           lastValueVisible: false,
           priceScaleId,
@@ -1169,7 +1244,9 @@ const KlineChart = ({
 
     if (chartType === 'line') {
       seriesInstance.current?.setData(lineData);
+      syncLastPriceLine(lineData);
     } else {
+      clearLastPriceLine();
       seriesInstance.current?.setData(candleData);
       const maPeriods = [5, 10, 20, 30];
       maSeriesInstances.current.forEach((maSeries, idx) => {
@@ -1299,7 +1376,7 @@ const KlineChart = ({
     }
     prevDataLenRef.current = dataLen;
     prevActiveKeyRef.current = activeKey;
-  }, [data, dataPeriod, chartType, isPC, activeKey, loading, refreshing, i18n.language, onLoadMoreHistorical]);
+  }, [data, dataPeriod, chartType, isPC, activeKey, loading, refreshing, i18n.language, onLoadMoreHistorical, priceTrend]);
 
   // 确保图表可横向拖动；翻页模式放开左边缘
   useEffect(() => {
