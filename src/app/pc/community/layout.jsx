@@ -1,11 +1,23 @@
-import { buildPageMetadata } from '@/utils/seoConfig';
+import CommunitySeo from '@/components/CommunitySeo';
+import {
+  COMMUNITY_KEYWORDS,
+  COMMUNITY_PC_DESCRIPTION,
+  COMMUNITY_PC_TITLE,
+  buildPageMetadata,
+} from '@/utils/seoConfig';
 
 export const metadata = buildPageMetadata({
-  title: '社区',
-  description: 'PC 社区：浏览帖子、热榜话题与市场讨论。',
+  title: COMMUNITY_PC_TITLE,
+  description: COMMUNITY_PC_DESCRIPTION,
   path: '/pc/community',
+  keywords: COMMUNITY_KEYWORDS,
 });
 
 export default function PCCommunityLayout({ children }) {
-  return children;
+  return (
+    <>
+      <CommunitySeo variant="pc" />
+      {children}
+    </>
+  );
 }

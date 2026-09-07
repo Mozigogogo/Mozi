@@ -224,6 +224,346 @@ export function buildBrandJsonLd({
   return { organization, website };
 }
 
+/** 社区页专用 keywords */
+export const COMMUNITY_KEYWORDS = [
+  BRAND_LEGAL_NAME,
+  ...BRAND_ALIASES,
+  '加密货币社区',
+  '币圈社区',
+  '加密社区',
+  '币圈讨论',
+  '热门话题',
+  '加密货币讨论',
+  'BTC 社区',
+  'ETH 讨论',
+  'crypto community',
+  'crypto discussion',
+  'crypto forum',
+  'trading community',
+  'market discussion',
+];
+
+export const COMMUNITY_TITLE =
+  `加密货币社区 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`;
+export const COMMUNITY_DESCRIPTION =
+  `${BRAND_LEGAL_NAME}（Mozi / 墨子）加密货币社区：浏览热门话题与精选帖子，讨论 BTC/ETH 行情、板块轮动与交易观点，发现好币与市场机会。Crypto community for market discussion, hot topics and trading insights.`;
+
+export const COMMUNITY_PC_TITLE =
+  `Crypto Community | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`;
+export const COMMUNITY_PC_DESCRIPTION =
+  `${BRAND_LEGAL_NAME} desktop crypto community: hot topics, featured posts, BTC/ETH market discussion and trading insights. MoziInnovations（Mozi / 墨子）PC 社区：热门话题、精选帖子与币圈观点交流。`;
+
+/**
+ * CollectionPage + BreadcrumbList JSON-LD（社区列表页）
+ */
+export function buildCommunityJsonLd({
+  path = '/community',
+  name = COMMUNITY_TITLE,
+  description = COMMUNITY_DESCRIPTION,
+} = {}) {
+  const url = absoluteUrl(path);
+  const collectionPage = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${url}#community`,
+    name,
+    description,
+    url,
+    inLanguage: ['zh-CN', 'en'],
+    isPartOf: {
+      '@type': 'WebSite',
+      name: BRAND_LEGAL_NAME,
+      url: SITE_URL,
+    },
+    about: [
+      { '@type': 'Thing', name: 'Cryptocurrency' },
+      { '@type': 'Thing', name: 'Crypto trading community' },
+      { '@type': 'Thing', name: '加密货币社区' },
+    ],
+    publisher: {
+      '@type': 'Organization',
+      name: BRAND_LEGAL_NAME,
+      alternateName: BRAND_ALIASES,
+      url: SITE_URL,
+    },
+  };
+
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: BRAND_LEGAL_NAME,
+        item: SITE_URL,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Community',
+        item: url,
+      },
+    ],
+  };
+
+  return { collectionPage, breadcrumb };
+}
+
+/** 纯文本摘要，用于 meta description / JSON-LD */
+export function plainTextExcerpt(input, maxLen = 160) {
+  const text = String(input || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!text) return '';
+  if (text.length <= maxLen) return text;
+  return `${text.slice(0, Math.max(0, maxLen - 1)).trim()}…`;
+}
+
+/**
+ * 帖子详情 DiscussionForumPosting + BreadcrumbList
+ */
+export function buildPostJsonLd(post, postId) {
+  const id = String(postId || post?.id || '').trim();
+  const path = id ? `/commentinfo?id=${encodeURIComponent(id)}` : '/commentinfo';
+  const url = absoluteUrl(path);
+  const title =
+    plainTextExcerpt(post?.title, 110) ||
+    `社区帖子 | ${BRAND_LEGAL_NAME}`;
+  const body = plainTextExcerpt(post?.content, 5000);
+  const description =
+    plainTextExcerpt(post?.content || post?.title, 200) ||
+    `${BRAND_LEGAL_NAME} 加密货币社区帖子`;
+
+  const authorName =
+    String(post?.nickName || post?.user?.nickname || post?.user?.nickName || '').trim() ||
+    BRAND_LEGAL_NAME;
+
+  const datePublished = post?.createdAt
+    ? String(post.createdAt).includes('T')
+      ? String(post.createdAt)
+      : `${String(post.createdAt).replace(' ', 'T')}`
+    : undefined;
+  const dateModified = post?.updatedAt
+    ? String(post.updatedAt).includes('T')
+      ? String(post.updatedAt)
+      : String(post.updatedAt)
+    : datePublished;
+
+  const keywords = [
+    BRAND_LEGAL_NAME,
+    'Mozi',
+    '墨子',
+    '加密货币社区',
+    post?.category,
+    ...(Array.isArray(post?.topics) ? post.topics.map((t) => t?.name).filter(Boolean) : []),
+    ...(Array.isArray(post?.tags) ? post.tags.map((t) => t?.name || t).filter(Boolean) : []),
+  ].filter(Boolean);
+
+  const article = {
+    '@context': 'https://schema.org',
+    '@type': 'DiscussionForumPosting',
+    '@id': `${url}#post`,
+    headline: title,
+    name: title,
+    description,
+    articleBody: body || description,
+    url,
+    mainEntityOfPage: url,
+    inLanguage: ['zh-CN', 'en'],
+    keywords: keywords.join(', '),
+    datePublished,
+    dateModified,
+    author: {
+      '@type': 'Person',
+      name: authorName,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: BRAND_LEGAL_NAME,
+      alternateName: BRAND_ALIASES,
+      url: SITE_URL,
+      logo: absoluteUrl('/favicon.png'),
+    },
+    interactionStatistic: [
+      post?.likeCnt != null
+        ? {
+            '@type': 'InteractionCounter',
+            interactionType: 'https://schema.org/LikeAction',
+            userInteractionCount: Number(post.likeCnt) || 0,
+          }
+        : null,
+      post?.commentCnt != null
+        ? {
+            '@type': 'InteractionCounter',
+            interactionType: 'https://schema.org/CommentAction',
+            userInteractionCount: Number(post.commentCnt) || 0,
+          }
+        : null,
+    ].filter(Boolean),
+  };
+
+  if (Array.isArray(post?.images) && post.images[0]) {
+    article.image = post.images[0];
+  }
+
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: BRAND_LEGAL_NAME,
+        item: SITE_URL,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Community',
+        item: absoluteUrl('/community'),
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: title,
+        item: url,
+      },
+    ],
+  };
+
+  return { article, breadcrumb, title, description, path, keywords };
+}
+
+/**
+ * 话题详情 CollectionPage + BreadcrumbList
+ * @param {object} topic
+ * @param {string|number} topicId
+ * @param {{ title?: string, description?: string }} [queryFallback]
+ */
+export function buildTopicJsonLd(topic, topicId, queryFallback = {}) {
+  const id = String(topicId || topic?.id || '').trim();
+  const path = id
+    ? `/topicinfo?id=${encodeURIComponent(id)}`
+    : '/topicinfo';
+  const url = absoluteUrl(path);
+
+  const rawName =
+    topic?.name ||
+    topic?.title ||
+    queryFallback?.title ||
+    '';
+  const name = plainTextExcerpt(rawName, 110) || `社区话题 | ${BRAND_LEGAL_NAME}`;
+  const headline = name.startsWith('#') ? name : `#${name}`;
+
+  const description =
+    plainTextExcerpt(
+      topic?.description || queryFallback?.description || '',
+      200
+    ) ||
+    `${BRAND_LEGAL_NAME}（Mozi / 墨子）加密货币社区话题「${plainTextExcerpt(name, 60)}」：相关讨论、行情观点与热门帖子。`;
+
+  const keywords = [
+    BRAND_LEGAL_NAME,
+    'Mozi',
+    '墨子',
+    '加密货币社区',
+    '热门话题',
+    plainTextExcerpt(name, 40),
+  ].filter(Boolean);
+
+  const datePublished = topic?.createdAt
+    ? String(topic.createdAt).includes('T')
+      ? String(topic.createdAt)
+      : String(topic.createdAt).replace(' ', 'T')
+    : undefined;
+
+  const collectionPage = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${url}#topic`,
+    name: headline,
+    headline,
+    description,
+    url,
+    mainEntityOfPage: url,
+    inLanguage: ['zh-CN', 'en'],
+    keywords: keywords.join(', '),
+    datePublished,
+    about: {
+      '@type': 'Thing',
+      name: plainTextExcerpt(name, 80),
+    },
+    isPartOf: {
+      '@type': 'WebSite',
+      name: BRAND_LEGAL_NAME,
+      url: SITE_URL,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: BRAND_LEGAL_NAME,
+      alternateName: BRAND_ALIASES,
+      url: SITE_URL,
+      logo: absoluteUrl('/favicon.png'),
+    },
+    interactionStatistic: [
+      topic?.likeCnt != null
+        ? {
+            '@type': 'InteractionCounter',
+            interactionType: 'https://schema.org/LikeAction',
+            userInteractionCount: Number(topic.likeCnt) || 0,
+          }
+        : null,
+      topic?.commentCnt != null
+        ? {
+            '@type': 'InteractionCounter',
+            interactionType: 'https://schema.org/CommentAction',
+            userInteractionCount: Number(topic.commentCnt) || 0,
+          }
+        : null,
+    ].filter(Boolean),
+  };
+
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: BRAND_LEGAL_NAME,
+        item: SITE_URL,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Community',
+        item: absoluteUrl('/community'),
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: headline,
+        item: url,
+      },
+    ],
+  };
+
+  return {
+    collectionPage,
+    breadcrumb,
+    title: headline,
+    description,
+    path,
+    keywords,
+  };
+}
+
 /** 需要被 sitemap 收录的公开静态路由 */
 export const PUBLIC_SITEMAP_ROUTES = [
   { path: '/', changeFrequency: 'daily', priority: 1 },

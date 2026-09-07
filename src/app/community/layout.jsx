@@ -1,11 +1,23 @@
-import { buildPageMetadata } from '@/utils/seoConfig';
+import CommunitySeo from '@/components/CommunitySeo';
+import {
+  COMMUNITY_DESCRIPTION,
+  COMMUNITY_KEYWORDS,
+  COMMUNITY_TITLE,
+  buildPageMetadata,
+} from '@/utils/seoConfig';
 
 export const metadata = buildPageMetadata({
-  title: '社区',
-  description: '墨子社区：币圈话题讨论、热榜与用户观点交流。',
+  title: COMMUNITY_TITLE,
+  description: COMMUNITY_DESCRIPTION,
   path: '/community',
+  keywords: COMMUNITY_KEYWORDS,
 });
 
 export default function CommunityLayout({ children }) {
-  return children;
+  return (
+    <>
+      <CommunitySeo variant="mobile" />
+      {children}
+    </>
+  );
 }

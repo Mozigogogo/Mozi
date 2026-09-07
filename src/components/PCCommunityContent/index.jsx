@@ -1607,9 +1607,9 @@ export default function PCCommunityContent() {
         brandLabel=""
         shareUrl={
           shareModalPost?.topicId
-            ? `${typeof window !== 'undefined' ? window.location.origin : ''}/topicinfo?id=${encodeURIComponent(String(shareModalPost.topicId))}`
+            ? `https://moziai.xyz/topicinfo?id=${encodeURIComponent(String(shareModalPost.topicId))}`
             : shareModalPost?.id
-            ? `https://askmozi.com/commentinfo?id=${encodeURIComponent(String(shareModalPost.id))}`
+            ? `https://moziai.xyz/commentinfo?id=${encodeURIComponent(String(shareModalPost.id))}`
             : ''
         }
       />
