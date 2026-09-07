@@ -2,7 +2,7 @@
 .mozi-autoarb .main {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 0 24px 80px;
+  padding: 16px 24px 80px;
 }
 .mozi-autoarb .view {
   animation: vin 0.3s cubic-bezier(0.4, 0, 0.2, 1);

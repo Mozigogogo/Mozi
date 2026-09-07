@@ -68,7 +68,7 @@
 .mozi-autoarb .main {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 0 24px 80px;
+  padding: 16px 24px 80px;
   background: var(--bg);
 }
 .mozi-autoarb .confirm-overlay {
