@@ -48,6 +48,13 @@ const nextConfig = withLess({
   async redirects() {
     return [
       // NOTE: keep /home as a real app page (see src/app/home/page.jsx)
+      // www → 裸域：与 middleware 双保险，避免 Google 把 www 当独立重复页
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.moziai.xyz' }],
+        destination: 'https://moziai.xyz/:path*',
+        permanent: true,
+      },
     ];
   },
   async headers() {

@@ -62,14 +62,20 @@ export function middleware(request) {
   const host = getRequestHost(request);
   const isProd = process.env.NODE_ENV === 'production';
 
-  // www → apex（主站统一 moziai.xyz，且不带内部端口）
-  if (isProd && host === 'www.moziai.xyz' && !pathname.startsWith('/api/')) {
+  // www → apex：不依赖 NODE_ENV，避免部署环境误判导致 Google 抓到 www 重复页
+  // （GSC「重复网页，用户未选定规范网页」常见于 www / 裸域并存）
+  if (host === 'www.moziai.xyz' && !pathname.startsWith('/api/')) {
     return redirectToCanonical(request);
   }
 
   // Railway / 预览域名 → 正式站
   if (isProd && isPreviewHost(host) && !pathname.startsWith('/api/')) {
     return redirectToCanonical(request);
+  }
+
+  // sitemap / robots：裸域直接放行，不加额外安全头
+  if (pathname === '/sitemap.xml' || pathname === '/robots.txt') {
+    return NextResponse.next();
   }
 
   if (pathname === '/' && isTelegramRequest(request)) {
@@ -105,7 +111,7 @@ export function middleware(request) {
 
 export const config = {
   matcher: [
-    // 不拦 sitemap / robots，避免额外响应头干扰 Google 抓取
-    '/((?!_next/static|_next/image|favicon.ico|sitemap\\.xml|robots\\.txt).*)',
+    // 含 sitemap/robots：先处理 www→裸域，再对裸域 sitemap/robots 直接放行
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
