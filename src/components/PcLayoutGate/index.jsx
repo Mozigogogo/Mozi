@@ -34,6 +34,9 @@ function getPcLayoutServerSnapshot() {
 /**
  * PC 壳仍 dynamic（避免移动端打包进整份 PCLayout）；
  * 详情 CSS 由 DetailCssWarmupPc 在识别为 PC 后立即静态挂载，不依赖 PCLayout chunk。
+ *
+ * 注意：本组件必须始终把 children 画进树里（不可在挂起时被外层 fallback={null} 吃掉），
+ * 否则 Google 会抓到空 body。
  */
 export default function PcLayoutGate({ children }) {
   const pathname = usePathname();
@@ -50,15 +53,13 @@ export default function PcLayoutGate({ children }) {
     return undefined;
   }, [isPC]);
 
+  const usePcShell = shouldUsePcLayout(pathname, isPC);
+
   return (
     <>
       {isPC ? <DetailCssWarmupPc /> : null}
       {isPC ? <WebAlarmNotifier /> : null}
-      {shouldUsePcLayout(pathname, isPC) ? (
-        <PCLayout>{children}</PCLayout>
-      ) : (
-        children
-      )}
+      {usePcShell ? <PCLayout>{children}</PCLayout> : children}
     </>
   );
 }

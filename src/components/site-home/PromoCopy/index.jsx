@@ -1,7 +1,10 @@
-import AppLink from '@/components/AppLink';
+import Link from 'next/link';
 import GetStartedArrow from '@/components/Icons/GetStartedArrow';
 import styles from './PromoCopy.module.css';
 
+/**
+ * 营销页文案块：服务端可渲染，CTA 使用真实 <a>（Next Link），避免空壳/不可抓链接。
+ */
 export default function PromoCopy({
   title,
   subtitle,
@@ -29,10 +32,10 @@ export default function PromoCopy({
         ))}
       </p>
       <div className={styles.ctaRow}>
-        <AppLink className={styles.primaryCta} href={href}>
+        <Link className={styles.primaryCta} href={href}>
           <span>{ctaText}</span>
           <GetStartedArrow />
-        </AppLink>
+        </Link>
       </div>
     </div>
   );

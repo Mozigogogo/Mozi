@@ -131,7 +131,12 @@ export default function RootLayout({ children }) {
               <TonConnectProvider>
                 <Web3Provider>
                   <GlobalClientEffects />
-                  <Suspense fallback={null}>
+                  {/*
+                    不能用 fallback={null}：PcLayoutGate 等 client 边界在 SSR 挂起时
+                    会把整页 children 替换成空壳，Google 抓不到正文。
+                    fallback 回退为 children，保证首屏 HTML 始终有内容。
+                  */}
+                  <Suspense fallback={children}>
                     <PcLayoutGate>{children}</PcLayoutGate>
                   </Suspense>
                 </Web3Provider>
