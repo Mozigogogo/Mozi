@@ -311,6 +311,14 @@ export const Interface = {
   VAULT_CREDENTIAL: (id) => `/autoarb/api/v1/vault/credentials/${id}`,
   /** POST /v1/vault/credentials/{id}/verify */
   VAULT_CREDENTIAL_VERIFY: (id) => `/autoarb/api/v1/vault/credentials/${id}/verify`,
+
+  // AutoArb Strategy（独立服务 /autoarb/api）
+  /** GET 可创建的策略类型（免登录） */
+  STRATEGY_TYPES: '/autoarb/api/v1/strategy/types',
+  /** GET 策略目标机会列表（免登录） */
+  STRATEGY_OPPORTUNITIES: '/autoarb/api/v1/strategy/opportunities',
+  /** POST 创建策略并启动模拟交易（需登录） */
+  STRATEGY_CREATE: '/autoarb/api/v1/strategy',
   // 所有币种
   ALL_COIN: '/derivatives/allcoin',
   // 所有交易所

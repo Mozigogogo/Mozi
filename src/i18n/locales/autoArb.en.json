@@ -688,11 +688,15 @@
       "nextRisk": "Next: risk controls →",
       "nextConfirm": "Next: paper confirm →",
       "prev": "← Back",
-      "launch": "Start paper trading"
+      "launch": "Start paper trading",
+      "launching": "Creating strategy..."
     },
     "step1": {
       "title": "Select arbitrage strategy type",
       "sub": "Each strategy suits different markets and risk profiles — start with funding arb.",
+      "loading": "Loading strategy types...",
+      "loadError": "Failed to load strategy types. Showing local list.",
+      "unavailable": "This strategy type is unavailable",
       "types": {
         "funding": {
           "name": "Funding arb",
@@ -715,6 +719,10 @@
       "title": "Configure {{type}} parameters",
       "sub": "Pick a live opportunity we're monitoring — not a random asset and hope.",
       "pickLabel": "Select target opportunity (sorted by APR, live)",
+      "loading": "Loading opportunities...",
+      "loadError": "Failed to load opportunities. Showing local fallback.",
+      "loadFallback": "Showing local opportunities (API unavailable or empty).",
+      "empty": "No opportunities yet. Try again later or switch strategy type.",
       "depth": "Capacity ${{amount}}K",
       "oppDetail": "<strong>{{pair}}</strong> ({{exchange}}) 7d APR ranged <strong class=\"mono\">{{min}}%–{{max}}%</strong>, currently <strong class=\"mono\" style=\"color:var(--accent)\">{{current}}%</strong>.",
       "cryptoStockNote": "Tokenized US stock — watch for extra premium during US market closures.",
@@ -807,7 +815,9 @@
       "leverage": "Leverage: control larger perp exposure with less margin. Higher leverage = larger margin swings."
     },
     "toast": {
-      "created": "Strategy created! 72-hour paper period started..."
+      "created": "Strategy created! 72-hour paper period started...",
+      "createFailed": "Failed to create strategy. Please try again.",
+      "missingOpportunity": "Please select a target opportunity first"
     }
   }
 }

@@ -30,6 +30,9 @@ export * from './ai';
 // AutoArb Vault
 export * from './vault';
 
+// AutoArb Strategy
+export * from './strategy';
+
 // 未来可以添加更多 API 模块
 // export * from './trading';
 

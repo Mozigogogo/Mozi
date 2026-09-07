@@ -688,11 +688,15 @@
       "nextRisk": "下一步：风控设置 →",
       "nextConfirm": "下一步：模拟确认 →",
       "prev": "← 上一步",
-      "launch": "🚀 启动模拟交易"
+      "launch": "🚀 启动模拟交易",
+      "launching": "正在创建策略..."
     },
     "step1": {
       "title": "选择套利策略类型",
       "sub": "不同策略对应不同的市场环境和风险偏好，建议从 Funding 套利入门",
+      "loading": "正在加载策略类型...",
+      "loadError": "加载策略类型失败，已显示本地列表",
+      "unavailable": "该策略类型暂不可用",
       "types": {
         "funding": {
           "name": "Funding 套利",
@@ -715,6 +719,10 @@
       "title": "配置 {{type}} 参数",
       "sub": "从当前正在监控的实时机会中选择目标资产——而不是盲选一个资产再祈祷有机会",
       "pickLabel": "选择目标机会（按年化收益排序，实时更新）",
+      "loading": "正在加载目标机会...",
+      "loadError": "加载目标机会失败，已回退本地列表",
+      "loadFallback": "当前展示本地机会列表（接口不可用或暂无数据）",
+      "empty": "暂无可用机会，请稍后重试或切换策略类型",
       "depth": "可承载 ${{amount}}K",
       "oppDetail": "<strong>{{pair}}</strong>（{{exchange}}）近7日年化在 <strong class=\"mono\">{{min}}%–{{max}}%</strong> 之间波动，当前 <strong class=\"mono\" style=\"color:var(--accent)\">{{current}}%</strong>。",
       "cryptoStockNote": "该标的为美股代币，注意美股休市时段可能出现额外溢价。",
@@ -807,7 +815,9 @@
       "leverage": "杠杆倍数：用较少的保证金撬动更大的合约仓位。杠杆越高，同样的价格波动对保证金率的冲击也越大。"
     },
     "toast": {
-      "created": "策略已创建！72小时模拟期开始..."
+      "created": "策略已创建！72小时模拟期开始...",
+      "createFailed": "创建策略失败，请稍后重试",
+      "missingOpportunity": "请先选择目标机会"
     }
   }
 }

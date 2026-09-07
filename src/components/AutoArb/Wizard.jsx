@@ -2,11 +2,17 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  createStrategy,
+  fetchStrategyOpportunities,
+  fetchStrategyTypes,
+} from '@/api/strategy';
 import { FEE_ASSUMPTIONS, OPPORTUNITIES, RISK_PRESETS } from './data';
 import { Sparkline, Tip } from './charts';
 import './styles/wizard.css';
 
-const STRAT_TYPES = ['funding', 'spread', 'basis'];
+const FALLBACK_TYPE_CODES = ['funding', 'spread', 'basis'];
+const TYPE_ICONS = { funding: '⚡', spread: '🔀', basis: '📐' };
 const TOGGLE_KEYS = ['negFunding', 'basisReduce', 'dayStop', 'marginAlert'];
 
 function inferStratType(source) {
@@ -26,6 +32,15 @@ function computeEstimate(stratType, opp, leverage, capital) {
   const net = +(oppAnn - fee.fee - slip).toFixed(2);
   const dailyUsd = (capital * net) / 100 / 365;
   return { oppAnn, fee, slip, net, dailyUsd };
+}
+
+function makeIdempotencyKey() {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+  } catch (_) {}
+  return `strat_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
 /**
@@ -56,12 +71,35 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
     marginAlert: true,
   });
 
+  const [typeList, setTypeList] = useState([]);
+  const [typesLoading, setTypesLoading] = useState(true);
+  const [typesFromApi, setTypesFromApi] = useState(false);
+
+  const [oppList, setOppList] = useState(() => OPPORTUNITIES.funding || []);
+  const [oppsLoading, setOppsLoading] = useState(false);
+  const [oppsFromApi, setOppsFromApi] = useState(false);
+
+  const [creating, setCreating] = useState(false);
+
   const wizardSteps = useMemo(
     () => W('steps', { returnObjects: true }) || [],
     [t, i18n.language],
   );
 
-  const oppList = OPPORTUNITIES[stratType] || [];
+  const displayTypes = useMemo(() => {
+    if (typesFromApi && typeList.length) return typeList;
+    return FALLBACK_TYPE_CODES.map((code) => {
+      const local = W(`step1.types.${code}`, { returnObjects: true }) || {};
+      return {
+        code,
+        name: local.name || code,
+        annLabel: local.ann || '',
+        desc: local.desc || '',
+        available: true,
+      };
+    });
+  }, [typesFromApi, typeList, t, i18n.language]);
+
   const selectedOpp = useMemo(() => {
     const id = selectedOppId || oppList[0]?.id;
     return oppList.find((o) => o.id === id) || oppList[0] || null;
@@ -76,6 +114,73 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
       setMinProfit(cloneSource.minProfitThreshold ?? 0.1);
     }
   }, [cloneSource]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setTypesLoading(true);
+      try {
+        const list = await fetchStrategyTypes();
+        if (cancelled) return;
+        if (list.length) {
+          setTypeList(list);
+          setTypesFromApi(true);
+          const current = list.find((item) => item.code === stratType);
+          if (!current || current.available === false) {
+            const firstAvailable = list.find((item) => item.available !== false);
+            if (firstAvailable) setStratType(firstAvailable.code);
+          }
+        } else {
+          setTypesFromApi(false);
+          setTypeList([]);
+        }
+      } catch (_) {
+        if (cancelled) return;
+        setTypesFromApi(false);
+        setTypeList([]);
+        onToast?.(W('step1.loadError'));
+      } finally {
+        if (!cancelled) setTypesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // language change refreshes Accept-Language-backed copy
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const type = String(stratType || '').trim().toLowerCase();
+    if (!type) return undefined;
+
+    (async () => {
+      setOppsLoading(true);
+      try {
+        const list = await fetchStrategyOpportunities({ type });
+        if (cancelled) return;
+        if (list.length) {
+          setOppList(list);
+          setOppsFromApi(true);
+        } else {
+          setOppList(OPPORTUNITIES[type] || []);
+          setOppsFromApi(false);
+        }
+      } catch (_) {
+        if (cancelled) return;
+        setOppList(OPPORTUNITIES[type] || []);
+        setOppsFromApi(false);
+      } finally {
+        if (!cancelled) setOppsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stratType, i18n.language]);
 
   useEffect(() => {
     if (oppList.length && !oppList.find((o) => o.id === selectedOppId)) {
@@ -112,7 +217,9 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
     });
   }, [selectedOpp, capital, t, i18n.language]);
 
-  const typeLabel = W(`step1.types.${stratType}.name`);
+  const selectedTypeMeta = displayTypes.find((item) => item.code === stratType);
+  const typeLabel =
+    selectedTypeMeta?.name || W(`step1.types.${stratType}.name`);
 
   const applyPreset = (key) => {
     setActivePreset(key);
@@ -132,6 +239,44 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
 
   const marginModeLabel =
     marginMode === 'isolated' ? W('step2.isolated') : W('step2.cross');
+
+  const handleLaunch = async () => {
+    if (!riskAck || creating) return;
+    if (!selectedOpp?.id) {
+      onToast?.(W('toast.missingOpportunity'));
+      return;
+    }
+
+    setCreating(true);
+    try {
+      await createStrategy({
+        type: stratType,
+        opportunityId: selectedOpp.id,
+        leverage,
+        marginMode,
+        capital,
+        minProfit,
+        riskPreset: activePreset,
+        dailyLossLimit: lossLimit,
+        toggles,
+        mode: 'paper',
+        riskAck: true,
+        idempotencyKey: makeIdempotencyKey(),
+      });
+      onToast(`🎉 ${W('toast.created')}`);
+      onNavigate('dashboard');
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        err?.errorMsg ||
+        err?.msg ||
+        W('toast.createFailed');
+      onToast(`❌ ${String(msg)}`);
+    } finally {
+      setCreating(false);
+    }
+  };
 
   return (
     <div className="view">
@@ -178,31 +323,72 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
             <div className="wizard-card">
               <div className="wz-title">{W('step1.title')}</div>
               <div className="wz-sub">{W('step1.sub')}</div>
+              {typesLoading ? (
+                <div className="wz-load-hint">{W('step1.loading')}</div>
+              ) : null}
+              {!typesFromApi && !typesLoading ? (
+                <div className="wz-load-hint muted">{W('step1.loadError')}</div>
+              ) : null}
               <div className="type-grid">
-                {STRAT_TYPES.map((id) => {
-                  const type = W(`step1.types.${id}`, { returnObjects: true }) || {};
-                  const icons = { funding: '⚡', spread: '🔀', basis: '📐' };
+                {displayTypes.map((type) => {
+                  const unavailable = type.available === false;
+                  const local = W(`step1.types.${type.code}`, {
+                    returnObjects: true,
+                  });
+                  const name =
+                    type.name ||
+                    (local && typeof local === 'object' ? local.name : '') ||
+                    type.code;
+                  const ann =
+                    type.annLabel ||
+                    (local && typeof local === 'object' ? local.ann : '') ||
+                    '';
+                  const desc =
+                    type.desc ||
+                    (local && typeof local === 'object' ? local.desc : '') ||
+                    '';
                   return (
                     <button
-                      key={id}
+                      key={type.code}
                       type="button"
-                      className={`type-opt${stratType === id ? ' selected' : ''}`}
+                      className={`type-opt${stratType === type.code ? ' selected' : ''}${
+                        unavailable ? ' unavailable' : ''
+                      }`}
+                      disabled={unavailable}
                       onClick={() => {
-                        setStratType(id);
+                        if (unavailable) {
+                          onToast?.(W('step1.unavailable'));
+                          return;
+                        }
+                        setStratType(type.code);
                         setSelectedOppId(null);
                       }}
                     >
-                      <div className="type-opt-ico">{icons[id]}</div>
-                      <div className="type-opt-name">{type.name}</div>
-                      <div className="type-opt-ann">{type.ann}</div>
-                      <div className="type-opt-desc">{type.desc}</div>
+                      <div className="type-opt-ico">
+                        {TYPE_ICONS[type.code] || '📈'}
+                      </div>
+                      <div className="type-opt-name">{name}</div>
+                      <div className="type-opt-ann">{ann}</div>
+                      <div className="type-opt-desc">{desc}</div>
+                      {unavailable ? (
+                        <div className="type-opt-unavail">{W('step1.unavailable')}</div>
+                      ) : null}
                     </button>
                   );
                 })}
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button type="button" className="btn-primary" onClick={() => setStep(2)}>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={
+                  typesLoading ||
+                  displayTypes.find((item) => item.code === stratType)?.available ===
+                    false
+                }
+                onClick={() => setStep(2)}
+              >
                 {W('nav.nextConfigure')}
               </button>
             </div>
@@ -218,6 +404,12 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
               <div className="form-label" style={{ marginBottom: 8 }}>
                 {W('step2.pickLabel')}
               </div>
+              {oppsLoading ? (
+                <div className="wz-load-hint">{W('step2.loading')}</div>
+              ) : null}
+              {!oppsFromApi && !oppsLoading ? (
+                <div className="wz-load-hint muted">{W('step2.loadFallback')}</div>
+              ) : null}
               <div className="opp-picker">
                 {[...oppList]
                   .sort((a, b) => b.annualized - a.annualized)
@@ -252,6 +444,9 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                     </button>
                   ))}
               </div>
+              {!oppsLoading && oppList.length === 0 ? (
+                <div className="wz-load-hint muted">{W('step2.empty')}</div>
+              ) : null}
 
               {selectedOpp ? (
                 <div className="opp-detail">
@@ -270,8 +465,8 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                         __html: W('step2.oppDetail', {
                           pair: selectedOpp.pair,
                           exchange: selectedOpp.exchange,
-                          min: Math.min(...selectedOpp.history).toFixed(1),
-                          max: Math.max(...selectedOpp.history).toFixed(1),
+                          min: Math.min(...(selectedOpp.history?.length ? selectedOpp.history : [0])).toFixed(1),
+                          max: Math.max(...(selectedOpp.history?.length ? selectedOpp.history : [0])).toFixed(1),
                           current: selectedOpp.annualized.toFixed(1),
                         }),
                       }}
@@ -414,7 +609,12 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
               <button type="button" className="btn-secondary" onClick={() => setStep(1)}>
                 {W('nav.prev')}
               </button>
-              <button type="button" className="btn-primary" onClick={() => setStep(3)}>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={!selectedOpp || oppsLoading}
+                onClick={() => setStep(3)}
+              >
                 {W('nav.nextRisk')}
               </button>
             </div>
@@ -627,19 +827,21 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
               </label>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <button type="button" className="btn-secondary" onClick={() => setStep(3)}>
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={creating}
+                onClick={() => setStep(3)}
+              >
                 {W('nav.prev')}
               </button>
               <button
                 type="button"
                 className="btn-primary"
-                disabled={!riskAck}
-                onClick={() => {
-                  onToast(`🎉 ${W('toast.created')}`);
-                  onNavigate('dashboard');
-                }}
+                disabled={!riskAck || creating || !selectedOpp}
+                onClick={handleLaunch}
               >
-                {W('nav.launch')}
+                {creating ? W('nav.launching') : W('nav.launch')}
               </button>
             </div>
           </>
