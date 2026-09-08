@@ -109,7 +109,7 @@ export default function PCDailyCard({
     const topEvents = (events || []).slice(0, 4);
     return (
       <DailyShareCard
-        title="MOZI Daily"
+        title="Daily"
         variant="pc"
         columns={{
           time: t('daily.table.time'),
@@ -156,7 +156,7 @@ export default function PCDailyCard({
 
       <div className={styles.contentArea}>
         <div className={styles.cardHeader}>
-          <div className={styles.cardTitle}>MOZI Daily</div>
+          <div className={styles.cardTitle}>Daily</div>
           <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/daily/right.svg" className={styles.cardArrow} alt=">" />
         </div>
 

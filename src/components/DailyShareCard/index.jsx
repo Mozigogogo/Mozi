@@ -20,7 +20,7 @@ export default function DailyShareCard({
     return (
       <div className={styles.cardPcRoot}>
         <div className={styles.pcTopBar}>
-          <span className={styles.pcTitle}>{title || 'MOZI Daily'}</span>
+          <span className={styles.pcTitle}>{title || 'Daily'}</span>
           {showArrow ? <span className={styles.arrow} aria-hidden>›</span> : null}
         </div>
 

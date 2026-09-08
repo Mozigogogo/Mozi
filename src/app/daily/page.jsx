@@ -215,7 +215,7 @@ export default function DailyPage() {
     const topEvents = (events || []).slice(0, 4);
     return (
       <DailyShareCard
-        title="MOZI Daily"
+        title="Daily"
         variant="pc"
         columns={{
           time: t('daily.table.time'),
