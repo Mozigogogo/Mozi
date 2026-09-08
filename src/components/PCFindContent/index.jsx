@@ -2,17 +2,25 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Tabs, Card, Table, Tag, Spin } from 'antd';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { HeartOutlined, BellOutlined } from '@ant-design/icons';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
+import NewListingToast from '../NewListingToast';
 import {
   getNewListing,
   getNewListingCalendar,
   getNewListingCalendarGridRange,
+  getNewListingHeartbeat,
   parseNewListingResponse,
   parseNewListingCalendarResponse,
+  parseNewListingHeartbeatResponse,
+  readNewListingHeartbeatSeen,
+  markNewListingHeartbeatSeen,
+  computeNewListingHeartbeatUnread,
+  toNewListingApiTab,
+  NEW_LISTING_HEARTBEAT_TABS,
 } from '@/api/newListing';
 import PCMarketOverview from '../PCMarketOverview';
 import MoziCard from '../MoziCard';
@@ -124,6 +132,7 @@ const dbgCalendar = (...args) => {
 export default function PCFindContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { t, i18n } = useTranslation();
 
   const formatRankLocalizedMoney = useCallback((val) => {
@@ -174,6 +183,7 @@ export default function PCFindContent() {
   const [calendarDayMap, setCalendarDayMap] = useState({});
   const [calendarLatestTs, setCalendarLatestTs] = useState(0);
   const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
   const [newListings, setNewListings] = useState([]);
   const [newListingsTotal, setNewListingsTotal] = useState(0);
   const [newListingsLoading, setNewListingsLoading] = useState(false);
@@ -182,6 +192,13 @@ export default function PCFindContent() {
   const [calendarListingTab, setCalendarListingTab] = useState('upcoming');
   /** null = Tab 默认列表；Date = 点击日历某天后的日期筛选 */
   const [calendarDateFilter, setCalendarDateFilter] = useState(null);
+  const [calendarSyncAt, setCalendarSyncAt] = useState(null);
+  const [calendarSyncTick, setCalendarSyncTick] = useState(0);
+  const [calendarBellHasDot, setCalendarBellHasDot] = useState(false);
+  const [calendarBellBadge, setCalendarBellBadge] = useState(0);
+  const [listingToast, setListingToast] = useState({ visible: false, message: '' });
+  const calendarHeartbeatRef = useRef(null);
+  const lastToastedMaxTsRef = useRef(0);
 
   // 请求序号：丢弃过期响应，避免轮询/切 Tab 竞态覆盖
   const marketReqSeqRef = useRef(0);
@@ -1124,7 +1141,7 @@ export default function PCFindContent() {
     return () => {
       alive = false;
     };
-  }, [activeTab, marketViewMode, calendarCurrentMonth, calendarListingTab]);
+  }, [activeTab, marketViewMode, calendarCurrentMonth, calendarListingTab, calendarRefreshKey]);
 
   // 列表：默认 7 天窗口；点选某天 → start_date=end_date=该天（不套 7 天）
   useEffect(() => {
@@ -1174,7 +1191,166 @@ export default function PCFindContent() {
     return () => {
       alive = false;
     };
-  }, [activeTab, marketViewMode, calendarDateFilter, calendarListingTab]);
+  }, [activeTab, marketViewMode, calendarDateFilter, calendarListingTab, calendarRefreshKey]);
+
+  // 铃铛心跳：/pc/find 下 30s 轮询；有新 max_ts 时 toast（仅该路由）
+  useEffect(() => {
+    const onFindRoute =
+      typeof pathname === 'string' &&
+      (pathname === '/pc/find' || pathname.startsWith('/pc/find/'));
+    if (!onFindRoute) return undefined;
+
+    let alive = true;
+
+    const exchangeLabel = (name) => {
+      const key = String(name || '').trim();
+      const map = {
+        Binance: t('calendar.exchange.binance', { defaultValue: '币安' }),
+        OKX: 'OKX',
+        Bitget: 'Bitget',
+        MEXC: 'MEXC',
+        KuCoin: 'KuCoin',
+        Gate: 'Gate',
+        Bybit: 'Bybit',
+      };
+      return map[key] || key || t('calendar.exchange.unknown', { defaultValue: '交易所' });
+    };
+
+    const actionLabel = (apiTab) => {
+      if (apiTab === 'listed') return t('calendar.tabs.listed', { defaultValue: '已上线' });
+      if (apiTab === 'delist') {
+        return t('calendar.toast.delistAction', { defaultValue: '下线' });
+      }
+      return t('calendar.tabs.upcoming', { defaultValue: '即将上线' });
+    };
+
+    const pickNewestUnreadTab = (heartbeat, unreadTabs) => {
+      let best = null;
+      let bestTs = 0;
+      unreadTabs.forEach((tab) => {
+        const ts = Number(heartbeat?.[tab]?.max_ts) || 0;
+        if (ts > bestTs) {
+          bestTs = ts;
+          best = tab;
+        }
+      });
+      return { tab: best, maxTs: bestTs };
+    };
+
+    const showToastForTab = async (apiTab, maxTs) => {
+      if (!alive || !apiTab || !maxTs) return;
+      if (maxTs <= lastToastedMaxTsRef.current) return;
+      lastToastedMaxTsRef.current = maxTs;
+
+      try {
+        const listRes = await getNewListing({
+          tab: apiTab,
+          page: 1,
+          limit: 1,
+          ...(apiTab === 'upcoming' ? { recent_window_days: 7 } : {}),
+        });
+        if (!alive) return;
+        const { list } = parseNewListingResponse(listRes);
+        const row = list?.[0];
+        const symbol = String(row?.symbol || row?.coin || '').trim().toUpperCase();
+        const exchange = exchangeLabel(row?.exchange || row?.exchanges);
+        const action = actionLabel(toNewListingApiTab(apiTab));
+        const message = symbol
+          ? t('calendar.toast.newListing', {
+              defaultValue: '新公告：{{exchange}} {{action}} {{symbol}}',
+              exchange,
+              action,
+              symbol,
+            })
+          : t('calendar.toast.newListingGeneric', {
+              defaultValue: '新公告：{{action}}有更新',
+              action,
+            });
+        setListingToast({ visible: true, message });
+      } catch (error) {
+        if (!alive) return;
+        console.error('新公告 toast 拉取详情失败:', error);
+        setListingToast({
+          visible: true,
+          message: t('calendar.toast.newListingGeneric', {
+            defaultValue: '新公告：{{action}}有更新',
+            action: actionLabel(toNewListingApiTab(apiTab)),
+          }),
+        });
+      }
+    };
+
+    const applyUnread = (heartbeat, { allowToast }) => {
+      let seen = readNewListingHeartbeatSeen();
+      const hasSeen = Object.keys(seen).length > 0;
+      if (!hasSeen) {
+        seen = markNewListingHeartbeatSeen(heartbeat);
+        const seedMax = NEW_LISTING_HEARTBEAT_TABS.reduce((max, tab) => {
+          const ts = Number(heartbeat?.[tab]?.max_ts) || 0;
+          return ts > max ? ts : max;
+        }, 0);
+        lastToastedMaxTsRef.current = Math.max(lastToastedMaxTsRef.current, seedMax);
+      }
+      const unread = computeNewListingHeartbeatUnread(heartbeat, seen);
+      setCalendarBellHasDot(unread.hasDot);
+      setCalendarBellBadge(unread.badgeCount);
+
+      if (allowToast && hasSeen && unread.hasDot) {
+        const { tab, maxTs } = pickNewestUnreadTab(heartbeat, unread.unreadTabs);
+        void showToastForTab(tab, maxTs);
+      }
+    };
+
+    const poll = async () => {
+      try {
+        const res = await getNewListingHeartbeat();
+        if (!alive) return;
+        const parsed = parseNewListingHeartbeatResponse(res);
+        if (!parsed.ok) return;
+        calendarHeartbeatRef.current = parsed;
+        setCalendarSyncAt(Date.now());
+        applyUnread(parsed, { allowToast: true });
+      } catch (error) {
+        if (!alive) return;
+        console.error('新币公告心跳轮询失败:', error);
+      }
+    };
+
+    poll();
+    const timer = setInterval(poll, 30000);
+    const tickTimer = setInterval(() => {
+      if (alive) setCalendarSyncTick((n) => n + 1);
+    }, 1000);
+
+    return () => {
+      alive = false;
+      clearInterval(timer);
+      clearInterval(tickTimer);
+    };
+  }, [pathname, t]);
+
+  const calendarSyncLabel = useMemo(() => {
+    if (!calendarSyncAt) return '';
+    const secs = Math.floor((Date.now() - calendarSyncAt) / 1000);
+    if (secs < 1) {
+      return t('calendar.syncedJustNow', { defaultValue: '刚刚同步' });
+    }
+    return t('calendar.syncedSecondsAgo', { defaultValue: '{{n}}秒之前同步', n: secs });
+  }, [calendarSyncAt, calendarSyncTick, t]);
+
+  const handleCalendarBellClick = useCallback(() => {
+    const heartbeat = calendarHeartbeatRef.current;
+    if (heartbeat) {
+      markNewListingHeartbeatSeen(heartbeat);
+      setCalendarBellHasDot(false);
+      setCalendarBellBadge(0);
+    }
+    setCalendarRefreshKey((n) => n + 1);
+  }, []);
+
+  const handleListingToastClose = useCallback(() => {
+    setListingToast({ visible: false, message: '' });
+  }, []);
 
   // 筛选项变化时重新加载数据
   useEffect(() => {
@@ -1384,6 +1560,10 @@ export default function PCFindContent() {
           <PCMarketOverview
             calendarExpanded={isCalendarViewOpen}
             onCalendarClick={handleCalendarCardClick}
+            syncLabel={calendarSyncLabel}
+            bellHasDot={calendarBellHasDot}
+            bellBadgeCount={calendarBellBadge}
+            onBellClick={handleCalendarBellClick}
           />
         </>
       )}
@@ -1917,6 +2097,12 @@ export default function PCFindContent() {
         hidePreview
         shareUrl={rankShareConfig.shareUrl}
         brandLabel=""
+      />
+
+      <NewListingToast
+        visible={listingToast.visible}
+        message={listingToast.message}
+        onClose={handleListingToastClose}
       />
     </div>
   );

@@ -2,6 +2,7 @@
  * 新币上线 / 下架公告列表
  * GET /new_listing
  * GET /new_listing/calendar
+ * GET /new_listing/heartbeat
  */
 import { request } from '../utils/request';
 import { Interface } from '../utils/constants';
@@ -12,6 +13,9 @@ export function toNewListingApiTab(tab) {
   if (tab === 'delisted' || tab === 'delist') return 'delist';
   return 'upcoming';
 }
+
+export const NEW_LISTING_HEARTBEAT_TABS = ['upcoming', 'listed', 'delist'];
+const HEARTBEAT_SEEN_STORAGE_KEY = 'mozi_new_listing_heartbeat_seen_v1';
 
 function formatYmd(date) {
   const year = date.getFullYear();
@@ -114,6 +118,16 @@ export const getNewListingCalendar = (params = {}) => {
 };
 
 /**
+ * 铃铛轻量轮询
+ * GET /new_listing/heartbeat
+ */
+export const getNewListingHeartbeat = () =>
+  request({
+    url: Interface.NEW_LISTING_HEARTBEAT,
+    method: 'GET',
+  });
+
+/**
  * 解析 /new_listing 出参
  * @returns {{ list: Array, total: number, listTs: number|null, dataDelaySec: number|null }}
  */
@@ -204,6 +218,106 @@ export function parseNewListingCalendarResponse(res) {
     latestTs: Number.isFinite(latestTsRaw) ? latestTsRaw : 0,
     listTs: payload.list_ts ?? payload.listTs ?? null,
     dataDelaySec: payload.data_delay_sec ?? payload.dataDelaySec ?? null,
+  };
+}
+
+function normalizeHeartbeatTab(raw) {
+  const maxTs = Number(raw?.max_ts ?? raw?.maxTs ?? 0);
+  const countLast7d = Number(raw?.count_last_7d ?? raw?.countLast7d ?? 0);
+  return {
+    max_ts: Number.isFinite(maxTs) ? maxTs : 0,
+    count_last_7d: Number.isFinite(countLast7d) ? Math.max(0, countLast7d) : 0,
+  };
+}
+
+/**
+ * 解析 /new_listing/heartbeat 出参
+ */
+export function parseNewListingHeartbeatResponse(res) {
+  const empty = {
+    upcoming: { max_ts: 0, count_last_7d: 0 },
+    listed: { max_ts: 0, count_last_7d: 0 },
+    delist: { max_ts: 0, count_last_7d: 0 },
+    serverTs: 0,
+    ok: false,
+  };
+  if (!res) return empty;
+  if (res.code != null && res.code !== 0 && !res.success) return empty;
+
+  const payload = res?.data?.data ?? res?.data ?? res;
+  if (!payload || typeof payload !== 'object') return empty;
+
+  const serverTsRaw = Number(payload.server_ts ?? payload.serverTs ?? 0);
+  return {
+    upcoming: normalizeHeartbeatTab(payload.upcoming),
+    listed: normalizeHeartbeatTab(payload.listed),
+    delist: normalizeHeartbeatTab(payload.delist),
+    serverTs: Number.isFinite(serverTsRaw) ? serverTsRaw : 0,
+    ok: true,
+  };
+}
+
+export function readNewListingHeartbeatSeen() {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(HEARTBEAT_SEEN_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return {};
+    return NEW_LISTING_HEARTBEAT_TABS.reduce((acc, tab) => {
+      const n = Number(parsed[tab]);
+      if (Number.isFinite(n) && n > 0) acc[tab] = n;
+      return acc;
+    }, {});
+  } catch {
+    return {};
+  }
+}
+
+export function writeNewListingHeartbeatSeen(seen) {
+  if (typeof window === 'undefined') return;
+  try {
+    const next = NEW_LISTING_HEARTBEAT_TABS.reduce((acc, tab) => {
+      const n = Number(seen?.[tab]);
+      acc[tab] = Number.isFinite(n) && n > 0 ? n : 0;
+      return acc;
+    }, {});
+    window.localStorage.setItem(HEARTBEAT_SEEN_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+/**
+ * 用当前 heartbeat 的 max_ts 作为已读水位（首次进入或点击铃铛）
+ */
+export function markNewListingHeartbeatSeen(heartbeat) {
+  const next = NEW_LISTING_HEARTBEAT_TABS.reduce((acc, tab) => {
+    acc[tab] = Number(heartbeat?.[tab]?.max_ts) || 0;
+    return acc;
+  }, {});
+  writeNewListingHeartbeatSeen(next);
+  return next;
+}
+
+/**
+ * @returns {{ hasDot: boolean, badgeCount: number, unreadTabs: string[] }}
+ */
+export function computeNewListingHeartbeatUnread(heartbeat, seen) {
+  const unreadTabs = [];
+  let badgeCount = 0;
+  NEW_LISTING_HEARTBEAT_TABS.forEach((tab) => {
+    const maxTs = Number(heartbeat?.[tab]?.max_ts) || 0;
+    const seenTs = Number(seen?.[tab]) || 0;
+    if (maxTs > 0 && maxTs > seenTs) {
+      unreadTabs.push(tab);
+      badgeCount += Number(heartbeat?.[tab]?.count_last_7d) || 0;
+    }
+  });
+  return {
+    hasDot: unreadTabs.length > 0,
+    badgeCount,
+    unreadTabs,
   };
 }
 

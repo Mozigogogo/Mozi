@@ -3,6 +3,7 @@
 import React, { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Row, Col } from 'antd';
+import { BellOutlined } from '@ant-design/icons';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { jump2Detail } from '../../utils/core';
@@ -29,7 +30,14 @@ const dbgOverview = (...args) => {
 /**
  * PC端市场概况组件 - 4个统计卡片
  */
-const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) => {
+const PCMarketOverview = memo(({
+  onCalendarClick,
+  calendarExpanded = false,
+  syncLabel = '',
+  bellHasDot = false,
+  bellBadgeCount = 0,
+  onBellClick,
+}) => {
   const { t, i18n } = useTranslation();
   const [selectedCardId, setSelectedCardId] = useState('');
 
@@ -350,6 +358,41 @@ const PCMarketOverview = memo(({ onCalendarClick, calendarExpanded = false }) =>
                     </div>
                     <span className={styles.cardTitle}>{card.title}</span>
                   </div>
+                  {card.id === 'today' ? (
+                    <div
+                      className={styles.syncBell}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                    >
+                      {syncLabel ? (
+                        <span className={styles.syncStatus}>
+                          <i className={styles.syncDot} />
+                          {syncLabel}
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        className={styles.bellBtn}
+                        aria-label={t('calendar.bellLabel', { defaultValue: '新公告提醒' })}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onBellClick) onBellClick();
+                        }}
+                      >
+                        <BellOutlined />
+                        {bellHasDot ? (
+                          bellBadgeCount > 0 ? (
+                            <span className={styles.bellBadge}>
+                              {bellBadgeCount > 99 ? '99+' : bellBadgeCount}
+                            </span>
+                          ) : (
+                            <span className={styles.bellDot} />
+                          )
+                        ) : null}
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div

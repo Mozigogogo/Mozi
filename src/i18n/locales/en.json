@@ -1077,6 +1077,19 @@
     "title": "Exchange Announcements",
     "subtitle": "Subscribe for free",
     "tabsLabel": "Announcement types",
+    "bellLabel": "New announcements",
+    "syncedJustNow": "Just synced",
+    "syncedSecondsAgo": "Synced {{n}}s ago",
+    "syncedMinutesAgo": "Synced {{n}}m ago",
+    "exchange": {
+      "binance": "Binance",
+      "unknown": "Exchange"
+    },
+    "toast": {
+      "newListing": "New: {{exchange}} {{action}} {{symbol}}",
+      "newListingGeneric": "New: {{action}} updated",
+      "delistAction": "delist"
+    },
     "tabs": {
       "upcoming": "Coming soon",
       "listed": "Listed",

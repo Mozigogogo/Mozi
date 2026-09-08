@@ -270,6 +270,8 @@ export const Interface = {
   NEW_LISTING: '/new_listing',
   // 新币/下架公告日历月视图聚合
   NEW_LISTING_CALENDAR: '/new_listing/calendar',
+  // 新币/下架公告铃铛轻量轮询
+  NEW_LISTING_HEARTBEAT: '/new_listing/heartbeat',
   // 订阅公告
   SUBSCRIBE_ANNOUNCEMENT: '/announcement/subscribe',
   // 看涨看跌投票

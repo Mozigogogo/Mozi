@@ -1077,6 +1077,19 @@
     "title": "交易所公告",
     "subtitle": "打开订阅推送，免费试用",
     "tabsLabel": "公告类型",
+    "bellLabel": "新公告提醒",
+    "syncedJustNow": "刚刚同步",
+    "syncedSecondsAgo": "{{n}}秒之前同步",
+    "syncedMinutesAgo": "{{n}}分钟前同步",
+    "exchange": {
+      "binance": "币安",
+      "unknown": "交易所"
+    },
+    "toast": {
+      "newListing": "新公告：{{exchange}} {{action}} {{symbol}}",
+      "newListingGeneric": "新公告：{{action}}有更新",
+      "delistAction": "下线"
+    },
     "tabs": {
       "upcoming": "即将上线",
       "listed": "已上线",

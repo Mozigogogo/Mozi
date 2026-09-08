@@ -209,11 +209,13 @@ export default function PCCalendarCard({
             <div className={styles.subtitle}>{t('calendar.subtitle')}</div>
           </div>
         </div>
-        <div
-          className={`${styles.switch} ${resolvedToggleOn ? styles.checked : ''}`}
-          onClick={handleToggleChange}
-        >
-          <span className={styles.dot} />
+        <div className={styles.topRight}>
+          <div
+            className={`${styles.switch} ${resolvedToggleOn ? styles.checked : ''}`}
+            onClick={handleToggleChange}
+          >
+            <span className={styles.dot} />
+          </div>
         </div>
       </div>
 

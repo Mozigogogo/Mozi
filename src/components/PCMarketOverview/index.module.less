@@ -27,12 +27,14 @@
     .cardHeader {
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: space-between;
+      gap: 8px;
 
       .cardTitleGroup {
         display: inline-flex;
         align-items: center;
         gap: 4px;
+        min-width: 0;
       }
 
       .cardTitle {
@@ -242,6 +244,84 @@
     .cardContentCalendarFixed {
       min-height: 58px;
     }
+
+    .syncBell {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    .syncStatus {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .syncDot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #11b787;
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .bellBtn {
+      position: relative;
+      appearance: none;
+      -webkit-appearance: none;
+      border: none;
+      background: transparent;
+      padding: 2px;
+      margin: 0;
+      cursor: pointer;
+      color: #6b7280;
+      font-size: 16px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bellBtn:hover {
+      color: #111827;
+    }
+
+    .bellDot {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: 1.5px solid #fff;
+      box-sizing: border-box;
+    }
+
+    .bellBadge {
+      position: absolute;
+      top: -4px;
+      right: -6px;
+      min-width: 14px;
+      height: 14px;
+      padding: 0 3px;
+      border-radius: 999px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 14px;
+      text-align: center;
+      box-sizing: border-box;
+      border: 1.5px solid #fff;
+    }
   }
 
   .statCardTodaySelected {
@@ -258,6 +338,27 @@
       .cardTitle {
         color: #fff;
       }
+    }
+
+    .syncStatus {
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .syncDot {
+      background: #d9ff93;
+    }
+
+    .bellBtn {
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .bellBtn:hover {
+      color: #fff;
+    }
+
+    .bellDot,
+    .bellBadge {
+      border-color: rgba(0, 184, 153, 0.9);
     }
 
     .valueText {
