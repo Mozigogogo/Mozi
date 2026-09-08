@@ -7,7 +7,13 @@ import { useTranslation } from 'react-i18next';
 import { HeartOutlined, BellOutlined } from '@ant-design/icons';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
-import { getMyInterface } from '@/api/user';
+import {
+  getNewListing,
+  getNewListingCalendar,
+  getNewListingCalendarGridRange,
+  parseNewListingResponse,
+  parseNewListingCalendarResponse,
+} from '@/api/newListing';
 import PCMarketOverview from '../PCMarketOverview';
 import MoziCard from '../MoziCard';
 import { RankGrid } from '../Find/RankGrid';
@@ -165,12 +171,17 @@ export default function PCFindContent() {
   const [usStockPageCount, setUsStockPageCount] = useState(0);
   const [usStockPage, setUsStockPage] = useState(1);
   const [selfData, setSelfData] = useState([]);
-  const [calendarEventDates, setCalendarEventDates] = useState([]);
+  const [calendarDayMap, setCalendarDayMap] = useState({});
+  const [calendarLatestTs, setCalendarLatestTs] = useState(0);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [newListings, setNewListings] = useState([]);
+  const [newListingsTotal, setNewListingsTotal] = useState(0);
   const [newListingsLoading, setNewListingsLoading] = useState(false);
   const [calendarCurrentMonth, setCalendarCurrentMonth] = useState(new Date());
   const [calendarSelectedDate, setCalendarSelectedDate] = useState(new Date());
+  const [calendarListingTab, setCalendarListingTab] = useState('upcoming');
+  /** null = Tab 默认列表；Date = 点击日历某天后的日期筛选 */
+  const [calendarDateFilter, setCalendarDateFilter] = useState(null);
 
   // 请求序号：丢弃过期响应，避免轮询/切 Tab 竞态覆盖
   const marketReqSeqRef = useRef(0);
@@ -1081,15 +1092,44 @@ export default function PCFindContent() {
     fetchMarketData();
   }, []);
 
+  // 翻月 / 切 tab：日历月聚合（只画点与图例）
   useEffect(() => {
     if (activeTab !== 'market' || marketViewMode !== 'calendar') return;
     let alive = true;
 
-    const formatMonth = (date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      return `${year}-${month}`;
+    const loadCalendarMonth = async () => {
+      setCalendarLoading(true);
+      try {
+        const range = getNewListingCalendarGridRange(calendarCurrentMonth);
+        const res = await getNewListingCalendar({
+          tab: calendarListingTab,
+          start_date: range.start_date,
+          end_date: range.end_date,
+        });
+        if (!alive) return;
+        const parsed = parseNewListingCalendarResponse(res);
+        setCalendarDayMap(parsed.dayMap);
+        setCalendarLatestTs(parsed.latestTs);
+      } catch (error) {
+        if (!alive) return;
+        console.error('加载PC日历月聚合失败:', error);
+        setCalendarDayMap({});
+        setCalendarLatestTs(0);
+      } finally {
+        if (alive) setCalendarLoading(false);
+      }
     };
+
+    loadCalendarMonth();
+    return () => {
+      alive = false;
+    };
+  }, [activeTab, marketViewMode, calendarCurrentMonth, calendarListingTab]);
+
+  // 列表：默认 7 天窗口；点选某天 → start_date=end_date=该天（不套 7 天）
+  useEffect(() => {
+    if (activeTab !== 'market' || marketViewMode !== 'calendar') return;
+    let alive = true;
 
     const formatDate = (date) => {
       const year = date.getFullYear();
@@ -1098,79 +1138,43 @@ export default function PCFindContent() {
       return `${year}-${month}-${day}`;
     };
 
-    const getListingArray = (res) => {
-      if (Array.isArray(res?.data)) return res.data;
-      if (Array.isArray(res?.data?.newCoinListings)) return res.data.newCoinListings;
-      if (Array.isArray(res?.data?.listings)) return res.data.listings;
-      return [];
-    };
-
-    const extractEventDays = (list, monthDate) => {
-      const targetMonth = monthDate.getMonth() + 1;
-      const days = list
-        .map((item) => {
-          const raw = item?.ctime || item?.listingTime || item?.time || '';
-          if (!raw) return null;
-          const matched = String(raw).match(/^\d{4}-(\d{2})-(\d{2})/);
-          if (!matched) return null;
-          const month = Number(matched[1]);
-          const day = Number(matched[2]);
-          if (month !== targetMonth || Number.isNaN(day)) return null;
-          return day;
-        })
-        .filter((day) => day !== null);
-      return Array.from(new Set(days));
-    };
-
-    const loadCalendarViewData = async () => {
-      setCalendarLoading(true);
+    const loadListingList = async () => {
       setNewListingsLoading(true);
-
       try {
-        const token =
-          typeof window !== 'undefined' ? window.localStorage.getItem('token') : null;
-        if (!token) {
-          if (!alive) return;
-          setCalendarEventDates([]);
-          setNewListings([]);
-          return;
+        const listParams = {
+          tab: calendarListingTab,
+          page: 1,
+          limit: 50,
+        };
+
+        if (calendarDateFilter) {
+          const day = formatDate(calendarDateFilter);
+          listParams.start_date = day;
+          listParams.end_date = day;
+        } else if (calendarListingTab === 'upcoming') {
+          listParams.recent_window_days = 7;
         }
 
-        const [monthRes, dayRes] = await Promise.all([
-          getMyInterface({
-            limit: 200,
-            time: formatMonth(calendarCurrentMonth),
-          }),
-          getMyInterface({
-            limit: 50,
-            time: formatDate(calendarSelectedDate),
-          }),
-        ]);
-
-        const monthList = monthRes?.success === true ? getListingArray(monthRes) : [];
-        const dayList = dayRes?.success === true ? getListingArray(dayRes) : [];
-        const eventDays = extractEventDays(monthList, calendarCurrentMonth);
-
+        const listRes = await getNewListing(listParams);
         if (!alive) return;
-        setCalendarEventDates(eventDays);
-        setNewListings(dayList.slice(0, 6));
+        const listParsed = parseNewListingResponse(listRes);
+        setNewListings(listParsed.list);
+        setNewListingsTotal(listParsed.total);
       } catch (error) {
         if (!alive) return;
-        console.error('加载PC日历视图数据失败:', error);
-        setCalendarEventDates([]);
+        console.error('加载PC日历公告列表失败:', error);
         setNewListings([]);
+        setNewListingsTotal(0);
       } finally {
-        if (!alive) return;
-        setCalendarLoading(false);
-        setNewListingsLoading(false);
+        if (alive) setNewListingsLoading(false);
       }
     };
 
-    loadCalendarViewData();
+    loadListingList();
     return () => {
       alive = false;
     };
-  }, [activeTab, marketViewMode, calendarCurrentMonth, calendarSelectedDate]);
+  }, [activeTab, marketViewMode, calendarDateFilter, calendarListingTab]);
 
   // 筛选项变化时重新加载数据
   useEffect(() => {
@@ -1865,19 +1869,34 @@ export default function PCFindContent() {
                   <div className={styles.leftColumn}>
                     <div className={styles.calendarBlock}>
                       <PCCalendarCard
-                        eventDates={calendarEventDates}
+                        dayMap={calendarDayMap}
+                        latestTs={calendarLatestTs}
                         toggleOn={isCalendarViewOpen}
+                        listingTab={calendarListingTab}
+                        onListingTabChange={(tab) => {
+                          setCalendarListingTab(tab);
+                          setCalendarDateFilter(null);
+                        }}
                         onToggleChange={(next) => {
                           dbgCalendar('calendar switch toggle', { next, isCalendarViewOpen });
                           if (!next) closeCalendarView();
                           return true;
                         }}
-                        onDateChange={setCalendarSelectedDate}
+                        onDateChange={(date) => {
+                          setCalendarSelectedDate(date);
+                          setCalendarDateFilter(date);
+                        }}
                         onMonthChange={setCalendarCurrentMonth}
                       />
                     </div>
                     <div className={styles.listingBlock}>
-                      <NewCoinListing isPC data={newListings} loading={newListingsLoading} />
+                      <NewCoinListing
+                        isPC
+                        listingTab={calendarListingTab}
+                        data={newListings}
+                        totalCount={newListingsTotal}
+                        loading={newListingsLoading}
+                      />
                     </div>
                   </div>
                   <div className={styles.dailyEmbedBlock}>

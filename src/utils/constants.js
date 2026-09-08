@@ -266,6 +266,10 @@ export const Interface = {
   MARK_NOTICES_READ: '/easy/markNoticeAsRead',
   // 获取我的交互数据
   GET_MY_INTERFACE: '/easy/getMyInterface',
+  // 新币/下架公告列表
+  NEW_LISTING: '/new_listing',
+  // 新币/下架公告日历月视图聚合
+  NEW_LISTING_CALENDAR: '/new_listing/calendar',
   // 订阅公告
   SUBSCRIBE_ANNOUNCEMENT: '/announcement/subscribe',
   // 看涨看跌投票

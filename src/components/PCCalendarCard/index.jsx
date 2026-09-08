@@ -11,13 +11,56 @@ const dbgCalendarCard = (...args) => {
   }
 };
 
+const EXCHANGE_DOT_COLORS = {
+  binance: '#F0B90B',
+  okx: '#475569',
+  bitget: '#0284C7',
+  bybit: '#F7A600',
+  mexc: '#7C3AED',
+  kucoin: '#059669',
+  gate: '#0284C7',
+  gateio: '#0284C7',
+  htx: '#DC2626',
+  bitmart: '#2563EB',
+  lbank: '#0F766E',
+};
+
+const FALLBACK_DOT_COLORS = ['#ff6b6b', '#ffc233', '#4f7cff', '#14a57d', '#a855f7'];
+
+function formatYmd(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getExchangeDotColor(name, index = 0) {
+  const key = String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s._-]/g, '');
+  if (EXCHANGE_DOT_COLORS[key]) return EXCHANGE_DOT_COLORS[key];
+  return FALLBACK_DOT_COLORS[index % FALLBACK_DOT_COLORS.length];
+}
+
+function tsToYmd(ts) {
+  const n = Number(ts);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const d = new Date(n < 1e12 ? n * 1000 : n);
+  if (Number.isNaN(d.getTime())) return null;
+  return formatYmd(d);
+}
+
 export default function PCCalendarCard({
-  eventDates = [],
+  dayMap = {},
+  latestTs = 0,
   defaultToggle = true,
   toggleOn,
   onToggleChange,
   onDateChange,
   onMonthChange,
+  listingTab: listingTabProp,
+  onListingTabChange,
 }) {
   const { t, i18n } = useTranslation();
   const [isToggleOn, setIsToggleOn] = useState(defaultToggle);
@@ -30,6 +73,24 @@ export default function PCCalendarCard({
   }, [toggleOn]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [listingTabInner, setListingTabInner] = useState('upcoming');
+  const listingTab = listingTabProp !== undefined ? listingTabProp : listingTabInner;
+
+  const listingTabs = useMemo(
+    () => [
+      { key: 'upcoming', label: t('calendar.tabs.upcoming', { defaultValue: '即将上线' }) },
+      { key: 'listed', label: t('calendar.tabs.listed', { defaultValue: '已上线' }) },
+      { key: 'delisted', label: t('calendar.tabs.delisted', { defaultValue: '下线公告' }) },
+    ],
+    [t]
+  );
+
+  const handleListingTabChange = (key) => {
+    if (listingTabProp === undefined) {
+      setListingTabInner(key);
+    }
+    if (onListingTabChange) onListingTabChange(key);
+  };
 
   const monthTitle = useMemo(() => {
     const year = currentMonth.getFullYear();
@@ -53,6 +114,8 @@ export default function PCCalendarCard({
     [t]
   );
 
+  const latestDateKey = useMemo(() => tsToYmd(latestTs), [latestTs]);
+
   const days = useMemo(() => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -70,13 +133,47 @@ export default function PCCalendarCard({
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + idx);
       date.setHours(0, 0, 0, 0);
+      const dateKey = formatYmd(date);
+      const dayInfo = dayMap?.[dateKey] || null;
+      const hasTbd = !!dayInfo?.has_tbd;
+      const maxDots = hasTbd ? 2 : 3;
+      const exchanges = Array.isArray(dayInfo?.exchanges) ? dayInfo.exchanges.slice(0, maxDots) : [];
       const isCurrentMonth = date.getMonth() === month;
       const isToday = date.getTime() === today.getTime();
       const isSelected = date.getTime() === new Date(selectedDate).setHours(0, 0, 0, 0);
-      const hasEvents = isCurrentMonth && eventDates.includes(date.getDate());
-      return { date, isCurrentMonth, isToday, isSelected, hasEvents, day: date.getDate() };
+      const hasEvents = !!dayInfo && (exchanges.length > 0 || dayInfo.count > 0 || hasTbd);
+      return {
+        date,
+        dateKey,
+        isCurrentMonth,
+        isToday,
+        isSelected,
+        hasEvents,
+        exchanges,
+        hasTbd,
+        isLatest: !!latestDateKey && dateKey === latestDateKey,
+        day: date.getDate(),
+      };
     });
-  }, [currentMonth, selectedDate, eventDates]);
+  }, [currentMonth, selectedDate, dayMap, latestDateKey]);
+
+  const legendExchanges = useMemo(() => {
+    const seen = new Set();
+    const list = [];
+    Object.keys(dayMap || {})
+      .sort()
+      .forEach((dateKey) => {
+        const exchanges = dayMap[dateKey]?.exchanges;
+        if (!Array.isArray(exchanges)) return;
+        exchanges.forEach((name) => {
+          const label = String(name || '').trim();
+          if (!label || seen.has(label)) return;
+          seen.add(label);
+          list.push(label);
+        });
+      });
+    return list;
+  }, [dayMap]);
 
   const changeMonth = (step) => {
     const next = new Date(currentMonth);
@@ -120,6 +217,21 @@ export default function PCCalendarCard({
         </div>
       </div>
 
+      <div className={styles.listingTabs} role="tablist" aria-label={t('calendar.tabsLabel', { defaultValue: '公告类型' })}>
+        {listingTabs.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            role="tab"
+            aria-selected={listingTab === tab.key}
+            className={`${styles.listingTab} ${listingTab === tab.key ? styles.listingTabActive : ''}`}
+            onClick={() => handleListingTabChange(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className={styles.monthRow}>
         <button className={styles.navBtn} onClick={() => changeMonth(-1)} aria-label="prev month">
           <LeftOutlined />
@@ -141,7 +253,7 @@ export default function PCCalendarCard({
       <div className={styles.grid}>
         {days.map((d, idx) => (
           <div
-            key={`${d.day}-${idx}`}
+            key={`${d.dateKey}-${idx}`}
             className={`${styles.dayCell} ${!d.isCurrentMonth ? styles.other : ''}`}
             onClick={() => {
               if (!d.isCurrentMonth) return;
@@ -156,19 +268,34 @@ export default function PCCalendarCard({
             >
               {d.day}
             </div>
-            <div className={styles.dots}>
+            <div className={`${styles.dots} ${d.isLatest ? styles.breathe : ''}`}>
               {d.hasEvents ? (
                 <>
-                  <i className={styles.red} />
-                  <i className={styles.yellow} />
-                  <i className={styles.blue} />
+                  {d.exchanges.map((name, i) => (
+                    <i
+                      key={`${d.dateKey}-${name}-${i}`}
+                      style={{ background: getExchangeDotColor(name, i) }}
+                      title={name}
+                    />
+                  ))}
+                  {d.hasTbd ? <i className={styles.tbd} title="TBD" /> : null}
                 </>
               ) : null}
             </div>
           </div>
         ))}
       </div>
+
+      {legendExchanges.length > 0 ? (
+        <div className={styles.legend} aria-label={t('calendar.legend', { defaultValue: '交易所图例' })}>
+          {legendExchanges.map((name, i) => (
+            <span key={name} className={styles.legendItem}>
+              <i style={{ background: getExchangeDotColor(name, i) }} />
+              {name}
+            </span>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
-

@@ -9,6 +9,9 @@ export * from './market';
 // 财经日历相关
 export * from './financeCalendar';
 
+// 新币/下架公告
+export * from './newListing';
+
 // 用户相关
 export * from './user';
 

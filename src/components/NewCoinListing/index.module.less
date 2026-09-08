@@ -179,102 +179,246 @@
 
   .header {
     padding: 0 2PX 14PX;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12PX;
   }
 
   .headerTitle {
-    font-size: 24PX;
+    font-size: 18PX;
     font-weight: 700;
     line-height: 1.2;
     color: #202020;
   }
 
-  .viewMore {
-    color: #666;
-    &:hover {
-      color: #333;
+  .headerCount {
+    font-size: 13PX;
+    color: #9ca3af;
+    font-weight: 400;
+    flex-shrink: 0;
+  }
+
+  .eventList {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 12PX;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4PX;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+
+    &::-webkit-scrollbar {
+      height: 6PX;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.55);
+      border-radius: 999PX;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(241, 245, 249, 0.9);
+      border-radius: 999PX;
     }
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12PX;
+  .eventCard {
+    flex: 0 0 320PX;
+    width: 320PX;
+    max-width: 78%;
+    min-height: 210PX;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border: 1PX solid #e5e7eb;
+    border-radius: 12PX;
+    padding: 14PX 16PX;
+    box-sizing: border-box;
+    cursor: default;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &[role='link'] {
+      cursor: pointer;
+    }
+
+    &[role='link']:hover {
+      border-color: rgba(17, 183, 135, 0.35);
+      box-shadow: 0 4PX 14PX rgba(15, 23, 42, 0.06);
+    }
   }
 
-  .coinItem {
-    min-height: 112PX;
-    background: rgba(255, 255, 255, 1);
-    border: 1px solid rgba(229, 231, 235, 1);
-    border-radius: 14PX;
-    padding: 12PX 14PX;
-    margin-right: 0;
-    max-width: none;
-    width: auto;
-    box-shadow: none;
-    justify-content: center;
-  }
-
-  .loadingCoinItem {
+  .loadingEventCard {
+    min-height: 210PX;
+    display: flex;
     align-items: center;
+    justify-content: center;
+    cursor: default;
   }
 
-  .itemTop {
+  .eventHead {
     display: flex;
     align-items: flex-start;
     gap: 10PX;
   }
 
-  .itemIcon {
-    width: 34PX;
-    height: 34PX;
-    border-radius: 8PX;
+  .eventIcon {
+    width: 40PX;
+    height: 40PX;
+    border-radius: 10PX;
+    object-fit: cover;
     flex-shrink: 0;
+    background: #f3f4f6;
   }
 
-  .itemMain {
+  .eventHeadMain {
     min-width: 0;
     flex: 1;
   }
 
-  .coinTitle {
-    margin: 0;
-    font-size: 14PX;
-    line-height: 1.35;
-    color: #1f1f1f;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .eventSymbolRow {
+    display: flex;
+    align-items: baseline;
+    gap: 8PX;
+    min-width: 0;
   }
 
-  .listingTime {
-    margin: 2PX 0 0;
-    font-size: 14PX;
-    line-height: 1.35;
-    color: #9a9aa0;
+  .eventSymbol {
+    font-size: 16PX;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.2;
   }
 
-  .coinName {
-    margin: 2PX 0 0;
-    font-size: 14PX;
-    line-height: 1.35;
-    color: #2a2a2a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .coinDesc {
-    margin-top: 8PX;
-    margin-left: 44PX;
-    width: calc(100% - 44PX);
+  .eventFullName {
     font-size: 13PX;
-    line-height: 1.35;
-    color: #8e8e93;
+    color: #9ca3af;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .eventMeta {
+    margin-top: 4PX;
+    font-size: 12PX;
+    color: #9ca3af;
+    line-height: 1.3;
+  }
+
+  .countdownPill {
+    flex-shrink: 0;
+    height: 22PX;
+    padding: 0 8PX;
+    border-radius: 999PX;
+    background: #93c5fd;
+    color: #ffffff;
+    font-size: 11PX;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+  }
+
+  .preheatBar {
+    margin-top: 10PX;
+    display: flex;
+    align-items: center;
+    gap: 8PX;
+    min-height: 34PX;
+    padding: 6PX 10PX;
+    border-radius: 8PX;
+    background: #fff1f2;
+    box-sizing: border-box;
+  }
+
+  .preheatTag {
+    flex-shrink: 0;
+    height: 20PX;
+    padding: 0 8PX;
+    border-radius: 999PX;
+    background: #fb7185;
+    color: #ffffff;
+    font-size: 11PX;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .preheatExchange {
+    font-size: 13PX;
+    color: #9ca3af;
+  }
+
+  .preheatPrice {
+    font-size: 13PX;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .preheatChange {
+    margin-left: auto;
+    font-size: 13PX;
+    font-weight: 700;
+  }
+
+  .changeUp {
+    color: #ef4444;
+  }
+
+  .changeDown {
+    color: #11b787;
+  }
+
+  .syncTag {
+    margin-top: 10PX;
+    display: inline-flex;
+    align-items: center;
+    height: 24PX;
+    padding: 0 10PX;
+    border-radius: 6PX;
+    border: 1PX solid #93c5fd;
+    color: #3b82f6;
+    font-size: 12PX;
+    background: #eff6ff;
+  }
+
+  .eventDescRow {
+    margin-top: 10PX;
+    display: flex;
+    align-items: flex-start;
+    gap: 8PX;
+  }
+
+  .eventDesc {
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+    font-size: 14PX;
+    line-height: 1.45;
+    color: #111827;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .eventLinkIcon {
+    flex-shrink: 0;
+    margin-top: 2PX;
+    color: #c0c4cc;
+  }
+
+  .eventFooter {
+    margin-top: auto;
+    padding-top: 10PX;
+    border-top: 1PX solid #f1f5f9;
+    font-size: 12PX;
+    color: #9ca3af;
+    line-height: 1.4;
   }
 
   .emptyState {
@@ -311,15 +455,11 @@
 @media (max-width: 1366px) {
   .pcWrapper {
     .headerTitle {
-      font-size: 22PX;
+      font-size: 16PX;
     }
 
-    .coinTitle {
-      font-size: 14PX;
-    }
-
-    .coinName {
-      font-size: 14PX;
+    .eventSymbol {
+      font-size: 15PX;
     }
   }
 }

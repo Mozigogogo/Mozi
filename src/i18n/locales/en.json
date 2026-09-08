@@ -1076,6 +1076,29 @@
   "calendar": {
     "title": "Exchange Announcements",
     "subtitle": "Subscribe for free",
+    "tabsLabel": "Announcement types",
+    "tabs": {
+      "upcoming": "Coming soon",
+      "listed": "Listed",
+      "delisted": "Delisting"
+    },
+    "event": {
+      "totalCount": "{{n}} items",
+      "spot": "Spot",
+      "futures": "Futures",
+      "preheat": "Preheat",
+      "announceTime": "Announced",
+      "emptyUpcoming": "No upcoming listings",
+      "emptyListed": "No listed announcements",
+      "emptyDelisted": "No delisting announcements",
+      "justNow": "Just now",
+      "minutesAgo": "{{n}}m ago",
+      "hoursAgo": "{{n}}h ago",
+      "daysAgo": "{{n}}d ago",
+      "inMinutes": "in {{n}}m",
+      "inHours": "in {{n}}h",
+      "inDays": "in {{n}}d"
+    },
     "yearMonth": "{{month}} {{year}}",
     "weekdays": {
       "sun": "Sun",

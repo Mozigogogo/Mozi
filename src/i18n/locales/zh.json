@@ -1076,6 +1076,29 @@
   "calendar": {
     "title": "交易所公告",
     "subtitle": "打开订阅推送，免费试用",
+    "tabsLabel": "公告类型",
+    "tabs": {
+      "upcoming": "即将上线",
+      "listed": "已上线",
+      "delisted": "下线公告"
+    },
+    "event": {
+      "totalCount": "共 {{n}} 条",
+      "spot": "现货",
+      "futures": "合约",
+      "preheat": "预热",
+      "announceTime": "公告时间",
+      "emptyUpcoming": "暂无即将上线公告",
+      "emptyListed": "暂无已上线公告",
+      "emptyDelisted": "暂无下线公告",
+      "justNow": "刚刚",
+      "minutesAgo": "{{n}}分钟前",
+      "hoursAgo": "{{n}}小时前",
+      "daysAgo": "{{n}}天前",
+      "inMinutes": "{{n}}分钟后",
+      "inHours": "{{n}}小时后",
+      "inDays": "{{n}}天后"
+    },
     "yearMonth": "{{year}}年{{month}}月",
     "weekdays": {
       "sun": "日",
