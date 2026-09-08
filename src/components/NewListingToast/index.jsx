@@ -8,7 +8,7 @@ import styles from './index.module.less';
  */
 export default function NewListingToast({ visible, message, onClose, duration = 4500 }) {
   useEffect(() => {
-    if (!visible || !message) return undefined;
+    if (!visible || !message || !duration) return undefined;
     const timer = setTimeout(() => {
       if (onClose) onClose();
     }, duration);

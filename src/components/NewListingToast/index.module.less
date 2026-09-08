@@ -1,24 +1,26 @@
 .toast {
   position: fixed;
-  top: 88px;
+  top: 88PX;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1100;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  max-width: min(560px, calc(100vw - 48px));
-  padding: 12px 20px;
-  border-radius: 999px;
-  background: #1f2937;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.28);
+  gap: 8PX;
+  /* 大写 PX 规避 postcss px→vw，PC 宽屏不会被放大 */
+  max-width: min(420PX, calc(100vw - 48PX));
+  padding: 10PX 16PX;
+  border-radius: 999PX;
+  background: #ffffff;
+  border: 1PX solid rgba(15, 23, 42, 0.1);
+  box-shadow: 0 8PX 24PX rgba(15, 23, 42, 0.12);
   pointer-events: none;
   animation: newListingToastIn 0.28s ease-out;
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 8PX;
+  height: 8PX;
   border-radius: 50%;
   background: #ef4444;
   flex-shrink: 0;
@@ -26,13 +28,13 @@
 
 .bell {
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: 16PX;
   line-height: 1;
 }
 
 .text {
-  color: #fff;
-  font-size: 14px;
+  color: #1f2937;
+  font-size: 14PX;
   font-weight: 500;
   line-height: 1.3;
   white-space: nowrap;
@@ -40,10 +42,20 @@
   text-overflow: ellipsis;
 }
 
+:global(:root[data-theme='dark']) .toast {
+  background: #1f2937;
+  border-color: transparent;
+  box-shadow: 0 8PX 24PX rgba(15, 23, 42, 0.28);
+}
+
+:global(:root[data-theme='dark']) .text {
+  color: #fff;
+}
+
 @keyframes newListingToastIn {
   from {
     opacity: 0;
-    transform: translate(-50%, -8px);
+    transform: translate(-50%, -8PX);
   }
   to {
     opacity: 1;
