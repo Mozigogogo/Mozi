@@ -28,6 +28,15 @@ export const WS_EVENTS = {
   STOCK_BIG_DEAL: 'stock_big_deal',  // 美股大单侦测
   STOCK_KLINE: 'stock_kline',        // 美股 K 线
   ALERT: 'alert',                    // 网页告警推送
+
+  // AutoArb 策略中心
+  STRATEGY_OVERVIEW: 'strategy_overview',
+  STRATEGY_LIST: 'strategy_list',
+  STRATEGY_DETAIL: 'strategy_detail',
+  STRATEGY_RISK: 'strategy_risk',
+  STRATEGY_RADAR: 'strategy_radar',
+  STRATEGY_CAPITAL: 'strategy_capital',
+  STRATEGY_ACTIVITIES: 'strategy_activities',
   
   // AI 对话
   AI_CHAT: 'ai_chat',
@@ -54,6 +63,15 @@ export const CHANNEL_TYPES = {
   STOCK_BIG_DEAL: 'stock_big_deal',  // 美股大单侦测
   STOCK_KLINE: 'stock_kline',        // 美股 K 线
   ALERT: 'alert',                   // 网页告警
+
+  // AutoArb 策略中心
+  STRATEGY_OVERVIEW: 'strategy_overview',
+  STRATEGY_LIST: 'strategy_list',
+  STRATEGY_DETAIL: 'strategy_detail',
+  STRATEGY_RISK: 'strategy_risk',
+  STRATEGY_RADAR: 'strategy_radar',
+  STRATEGY_CAPITAL: 'strategy_capital',
+  STRATEGY_ACTIVITIES: 'strategy_activities',
 };
 
 /** 美股详情 K 线 interval（与 REST 一致；月线用 1mon，1M 兼容） */
@@ -269,6 +287,50 @@ export function createTickerChannel(symbols, interval = 5000) {
 export function createAlertChannel() {
   return {
     type: CHANNEL_TYPES.ALERT,
+  };
+}
+
+/** 策略中心：汇总 */
+export function createStrategyOverviewChannel() {
+  return { type: CHANNEL_TYPES.STRATEGY_OVERVIEW, params: {} };
+}
+
+/** 策略中心：列表 @param {{ status?: string }} [params] */
+export function createStrategyListChannel(params = {}) {
+  return {
+    type: CHANNEL_TYPES.STRATEGY_LIST,
+    params: { status: params.status || 'all' },
+  };
+}
+
+/** 策略中心：详情（弹窗打开时） */
+export function createStrategyDetailChannel(strategyId) {
+  return {
+    type: CHANNEL_TYPES.STRATEGY_DETAIL,
+    params: { strategyId: String(strategyId || '') },
+  };
+}
+
+/** 策略中心：风控仪表盘 */
+export function createStrategyRiskChannel() {
+  return { type: CHANNEL_TYPES.STRATEGY_RISK, params: {} };
+}
+
+/** 策略中心：机会雷达 */
+export function createStrategyRadarChannel() {
+  return { type: CHANNEL_TYPES.STRATEGY_RADAR, params: {} };
+}
+
+/** 策略中心：资金分布 */
+export function createStrategyCapitalChannel() {
+  return { type: CHANNEL_TYPES.STRATEGY_CAPITAL, params: {} };
+}
+
+/** 策略中心：活动流 */
+export function createStrategyActivitiesChannel(limit = 20) {
+  return {
+    type: CHANNEL_TYPES.STRATEGY_ACTIVITIES,
+    params: { limit },
   };
 }
 

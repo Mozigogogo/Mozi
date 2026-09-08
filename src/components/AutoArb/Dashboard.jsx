@@ -1,61 +1,62 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ACTIVITY_TEMPLATES, DONUT_SEGMENTS } from './data';
 import { ActivityText, Donut, Gauge, Modal, Sparkline, Tip } from './charts';
 import './styles/dashboard.css';
 
-function daysSince(dateStr) {
-  return Math.max(
-    1,
-    Math.round((new Date('2026-08-16') - new Date(dateStr)) / 86400000),
-  );
+const LEG_ROLE_KEYS = {
+  spot_long: 'spotLong',
+  perp_short: 'perpShort',
+  long: 'long',
+  short: 'short',
+};
+
+function formatMsTime(ms, language) {
+  if (ms == null || !Number.isFinite(Number(ms))) return '--';
+  const d = new Date(Number(ms));
+  if (Number.isNaN(d.getTime())) return '--';
+  const isZh = String(language || '').toLowerCase().startsWith('zh');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mi = String(d.getMinutes()).padStart(2, '0');
+  return isZh ? `${mm}-${dd} ${hh}:${mi}` : `${mm}/${dd} ${hh}:${mi}`;
 }
 
-function buildRadarItems(strategies) {
-  return strategies
-    .filter((s) => s.status !== 'stopped')
-    .map((s) => {
-      const curRate = s.funding
-        ? s.funding * 24 * 365 * 100
-        : s.spread
-          ? s.spread * 4
-          : s.basis
-            ? s.basis * 3
-            : 1;
-      const threshold = s.minProfitThreshold || 0.1;
-      const pctToThreshold = Math.min(100, (curRate / (threshold * 3)) * 100);
-      const armed = curRate >= threshold;
-      return {
-        id: s.id,
-        name: s.name.split(' ')[0],
-        curRate,
-        threshold,
-        pctToThreshold,
-        armed,
-        status: s.status,
-      };
-    });
+function formatRelativeMs(ms, t) {
+  if (ms == null || !Number.isFinite(Number(ms))) return '';
+  const diff = Date.now() - Number(ms);
+  if (diff < 60_000) return t('autoArb.dashboard.activity.justNow', { defaultValue: '刚刚' });
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
 }
 
-function buildInitialActivity(t) {
-  const initial = t('autoArb.dashboard.activity.initial', { returnObjects: true }) || [];
-  return initial.map((item, i) => ({
-    id: `a${i + 1}`,
-    ico: item.ico,
-    parts: item.parts,
-    time:
-      item.time === 'justNow'
-        ? t('autoArb.dashboard.activity.justNow')
-        : item.time,
-  }));
+function daysSinceMs(ms) {
+  if (ms == null || !Number.isFinite(Number(ms))) return 1;
+  return Math.max(1, Math.round((Date.now() - Number(ms)) / 86400000));
+}
+
+function riskLevelLabel(level, D) {
+  const key = String(level || 'low').toLowerCase();
+  if (key === 'high') return D('stats.riskHigh', { defaultValue: '高' });
+  if (key === 'medium') return D('stats.riskMedium', { defaultValue: '中' });
+  return D('stats.riskLow');
+}
+
+function riskStatusTag(status, D) {
+  const key = String(status || 'healthy').toLowerCase();
+  if (key === 'danger') return D('riskPanel.danger', { defaultValue: '危险' });
+  if (key === 'warning') return D('riskPanel.warning', { defaultValue: '警告' });
+  return D('riskPanel.healthy');
 }
 
 /**
  * @param {{
- *   strategies: Array<object>;
- *   onStrategiesChange: Function;
+ *   center: object;
  *   onNavigate: (view: string) => void;
  *   onToast: (msg: string) => void;
  *   onEmergencyConfirm: () => void;
@@ -63,8 +64,7 @@ function buildInitialActivity(t) {
  * }} props
  */
 export default function Dashboard({
-  strategies,
-  onStrategiesChange,
+  center,
   onNavigate,
   onToast,
   onEmergencyConfirm,
@@ -73,109 +73,144 @@ export default function Dashboard({
   const { t, i18n } = useTranslation();
   const D = (key, opts) => t(`autoArb.dashboard.${key}`, opts);
 
-  const initialActivity = useMemo(
-    () => buildInitialActivity(t),
-    [t, i18n.language],
-  );
+  const {
+    loading,
+    bootError,
+    overview,
+    strategies,
+    riskSettings,
+    radar,
+    capital,
+    activities,
+    detail,
+    openDetail,
+    closeDetail,
+    pause,
+    resume,
+    stop,
+    patchParams,
+    saveRisk,
+  } = center || {};
 
-  const [activityLog, setActivityLog] = useState(initialActivity);
-  const [autoStop, setAutoStop] = useState(true);
-  const [negFundingPause, setNegFundingPause] = useState(true);
-  const [timeoutAlert, setTimeoutAlert] = useState(true);
-  const [detailId, setDetailId] = useState(null);
   const [editId, setEditId] = useState(null);
   const [editMinProfit, setEditMinProfit] = useState(0.1);
   const [editLoss, setEditLoss] = useState(5);
-  const actIdRef = useRef(100);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [savingRisk, setSavingRisk] = useState(false);
 
   useEffect(() => {
-    setActivityLog(initialActivity);
-  }, [initialActivity]);
+    if (bootError) onToast?.(bootError);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bootError]);
 
-  const detailStrat = strategies.find((s) => s.id === detailId);
-  const editStrat = strategies.find((s) => s.id === editId);
+  const editStrat = strategies?.find((s) => s.id === editId);
+  const detailStrat = detail;
 
-  const totalCapital = strategies.reduce((s, x) => s + x.capital, 0);
-  const totalPnl = strategies.reduce((s, x) => s + x.pnl, 0);
-  const totalDailyPnl = strategies.reduce((s, x) => s + x.dailyPnl, 0);
-  const running = strategies.filter((s) => s.status === 'running').length;
-  const radarItems = buildRadarItems(strategies);
+  const running = overview?.runningCount ?? strategies?.filter((s) => s.status === 'running').length ?? 0;
+  const totalCapital = overview?.totalCapital ?? 0;
+  const totalPnl = overview?.totalPnl ?? 0;
+  const totalDailyPnl = overview?.todayPnl ?? 0;
+  const totalReturnPct = overview?.totalReturnPct ?? 0;
+  const riskScore = overview?.riskScore ?? 0;
+  const execSuccessRate = overview?.execSuccessRate ?? 0;
 
-  const activityText = useMemo(
-    () => t('autoArb.dashboard.activity.text', { returnObjects: true }) || {},
-    [t, i18n.language],
-  );
+  const radarItems = useMemo(() => {
+    if (Array.isArray(radar) && radar.length) return radar;
+    // 无雷达接口数据时用列表阈值兜底
+    return (strategies || [])
+      .filter((s) => s.status !== 'stopped')
+      .map((s) => ({
+        id: s.id,
+        strategyId: s.id,
+        name: String(s.name || '').split(' ')[0] || s.id,
+        curRate: 0,
+        threshold: s.minProfitThreshold || 0.1,
+        pctToThreshold: 0,
+        armed: false,
+        status: s.status,
+      }));
+  }, [radar, strategies]);
 
-  useEffect(() => {
-    const pnlInterval = setInterval(() => {
-      onStrategiesChange((prev) =>
-        prev.map((s) => {
-          if (s.status !== 'running') return s;
-          const delta = (Math.random() - 0.3) * 2;
-          const pnl = parseFloat((s.pnl + delta).toFixed(2));
-          const pnlPct = parseFloat(((pnl / s.capital) * 100).toFixed(2));
-          return { ...s, pnl, pnlPct };
-        }),
-      );
-    }, 2200);
+  const donutSegments = useMemo(() => {
+    const segs = capital?.segments || [];
+    if (!segs.length) {
+      return [{ v: 1, c: '#CBD5E1', key: 'idle', label: '$0' }];
+    }
+    return segs.map((s) => ({
+      v: s.v || s.value || 0,
+      c: s.c,
+      key: s.key,
+      label: s.displayLabel || s.label,
+    }));
+  }, [capital]);
 
-    const scheduleNext = () => {
-      const delay = 4000 + Math.random() * 5000;
-      return setTimeout(() => {
-        const tmpl =
-          ACTIVITY_TEMPLATES[Math.floor(Math.random() * ACTIVITY_TEMPLATES.length)];
-        actIdRef.current += 1;
-        setActivityLog((prev) =>
-          [
-            {
-              id: `live-${actIdRef.current}`,
-              ico: tmpl.ico,
-              parts: tmpl.build(tmpl.strat, activityText),
-              time: t('autoArb.dashboard.activity.justNow'),
-            },
-            ...prev,
-          ].slice(0, 12),
-        );
-        actTimer = scheduleNext();
-      }, delay);
-    };
-    let actTimer = scheduleNext();
+  const centerValue = useMemo(() => {
+    const total = capital?.totalPosition || 0;
+    if (total >= 1000) return `$${(total / 1000).toFixed(total % 1000 === 0 ? 0 : 1)}K`;
+    return `$${Number(total).toLocaleString()}`;
+  }, [capital]);
 
-    return () => {
-      clearInterval(pnlInterval);
-      clearTimeout(actTimer);
-    };
-  }, [onStrategiesChange, activityText, t]);
+  const stresses = useMemo(() => {
+    const key = detailStrat?.typeKey || 'funding';
+    return t(`autoArb.dashboard.stress.${key}`, { returnObjects: true }) || [];
+  }, [detailStrat?.typeKey, t, i18n.language]);
 
-  const pauseStrat = (id) => {
-    onStrategiesChange((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: 'paused' } : s)),
-    );
-    onToast(`⏸ ${D('toast.paused')}`);
+  const strategyTypeLabel = (typeKey) => D(`strategyTypes.${typeKey || 'funding'}`);
+
+  const legRoleLabel = (role) => {
+    const k = LEG_ROLE_KEYS[role];
+    if (k) return D(`detail.legRoles.${k}`, { defaultValue: role });
+    return role || '--';
   };
 
-  const resumeStrat = (id) => {
-    onStrategiesChange((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: 'running' } : s)),
-    );
-    onToast(`▶ ${D('toast.resumed')}`);
+  const pauseStrat = async (id) => {
+    try {
+      await pause(id);
+      onToast(`⏸ ${D('toast.paused')}`);
+    } catch (err) {
+      onToast(err?.message || D('toast.paused'));
+    }
+  };
+
+  const resumeStrat = async (id) => {
+    try {
+      await resume(id);
+      onToast(`▶ ${D('toast.resumed')}`);
+    } catch (err) {
+      onToast(err?.message || D('toast.resumed'));
+    }
+  };
+
+  const stopStrat = async (id) => {
+    try {
+      await stop(id);
+      onToast(D('toast.closeSent'));
+    } catch (err) {
+      onToast(err?.message || D('toast.closeSent'));
+    }
   };
 
   const openEdit = (s) => {
     setEditId(s.id);
     setEditMinProfit(s.minProfitThreshold ?? 0.1);
-    setEditLoss(5);
+    setEditLoss(s.dailyLossLimit ?? 5);
   };
 
-  const saveEdit = () => {
-    if (!editId) return;
-    onStrategiesChange((prev) =>
-      prev.map((s) =>
-        s.id === editId ? { ...s, minProfitThreshold: editMinProfit } : s,
-      ),
-    );
-    setEditId(null);
-    onToast(`✅ ${D('toast.paramsUpdated')}`);
+  const saveEdit = async () => {
+    if (!editId || savingEdit) return;
+    setSavingEdit(true);
+    try {
+      await patchParams(editId, {
+        minProfit: editMinProfit,
+        dailyLossLimit: editLoss,
+      });
+      setEditId(null);
+      onToast(`✅ ${D('toast.paramsUpdated')}`);
+    } catch (err) {
+      onToast(err?.message || D('toast.paramsUpdated'));
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   const cloneStrat = (s) => {
@@ -183,13 +218,36 @@ export default function Dashboard({
     onToast(D('toast.cloneConfig', { name: s.name }));
   };
 
-  const stresses = useMemo(() => {
-    const key = detailStrat?.typeKey || 'funding';
-    return t(`autoArb.dashboard.stress.${key}`, { returnObjects: true }) || [];
-  }, [detailStrat?.typeKey, t, i18n.language]);
+  const handleOpenDetail = async (id) => {
+    try {
+      await openDetail(id);
+    } catch (err) {
+      onToast(err?.message || 'Failed to load detail');
+    }
+  };
 
-  const strategyTypeLabel = (typeKey) =>
-    D(`strategyTypes.${typeKey || 'funding'}`);
+  const handleCloseDetail = () => {
+    closeDetail?.();
+  };
+
+  const patchRiskToggle = async (key, value) => {
+    if (savingRisk) return;
+    setSavingRisk(true);
+    const prev = riskSettings?.[key];
+    try {
+      await saveRisk({ [key]: value });
+    } catch (err) {
+      onToast(err?.message || 'Failed to save risk settings');
+      // saveRisk 失败时 hook 未改成功则无需回滚；若乐观更新可在此处理
+      void prev;
+    } finally {
+      setSavingRisk(false);
+    }
+  };
+
+  const fundUsage = (riskSettings?.fundUsagePct || 0) / 100;
+  const maxRiskPct = (riskSettings?.maxRiskStrategyPct || 0) / 100;
+  const overallRiskPct = (riskSettings?.overallRiskPct || 0) / 100;
 
   return (
     <div className="view">
@@ -197,15 +255,18 @@ export default function Dashboard({
         <div className="eb-text">
           ⚡{' '}
           <strong>{D('emergencyBar.runningCount', { count: running })}</strong> ·{' '}
-          {D('emergencyBar.totalPosition')} ${totalCapital.toLocaleString()} ·{' '}
+          {D('emergencyBar.totalPosition')} ${Number(totalCapital).toLocaleString()} ·{' '}
           {D('emergencyBar.todayPnl')}{' '}
           <strong
             style={{
               color: totalDailyPnl >= 0 ? 'var(--pos)' : 'var(--danger)',
             }}
           >
-            {totalDailyPnl >= 0 ? '+' : ''}${totalDailyPnl.toFixed(2)}
+            {totalDailyPnl >= 0 ? '+' : ''}${Number(totalDailyPnl).toFixed(2)}
           </strong>
+          {loading ? (
+            <span style={{ marginLeft: 8, color: 'var(--t3)', fontSize: 11 }}>…</span>
+          ) : null}
         </div>
         <button type="button" className="stop-btn" onClick={onEmergencyConfirm}>
           🛑 {D('emergencyBar.stopAll')}
@@ -216,7 +277,7 @@ export default function Dashboard({
         <div className="ds-card">
           <div className="ds-lbl">💼 {D('stats.totalCapital')}</div>
           <div className="ds-val" style={{ color: 'var(--t1)' }}>
-            ${totalCapital.toLocaleString()}
+            ${Number(totalCapital).toLocaleString()}
           </div>
           <div className="ds-sub">
             {D('stats.activeStrategies', { count: running })}
@@ -228,11 +289,11 @@ export default function Dashboard({
             className="ds-val"
             style={{ color: totalPnl >= 0 ? 'var(--pos)' : 'var(--danger)' }}
           >
-            {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}
+            {totalPnl >= 0 ? '+' : ''}${Number(totalPnl).toFixed(2)}
           </div>
           <div className="ds-sub">
             {D('stats.totalReturn', {
-              pct: (totalCapital ? (totalPnl / totalCapital) * 100 : 0).toFixed(2),
+              pct: Number(totalReturnPct).toFixed(2),
             })}
           </div>
         </div>
@@ -244,24 +305,27 @@ export default function Dashboard({
               color: totalDailyPnl >= 0 ? 'var(--pos)' : 'var(--danger)',
             }}
           >
-            {totalDailyPnl >= 0 ? '+' : ''}${totalDailyPnl.toFixed(2)}
+            {totalDailyPnl >= 0 ? '+' : ''}${Number(totalDailyPnl).toFixed(2)}
           </div>
           <div className="ds-sub">{D('stats.lastUpdated')}</div>
         </div>
         <div className="ds-card">
           <div className="ds-lbl">🛡️ {D('stats.overallRisk')}</div>
           <div className="ds-val" style={{ color: 'var(--pos)' }}>
-            {D('stats.riskLow')}
+            {riskLevelLabel(overview?.riskLevel, D)}
           </div>
-          <div className="ds-sub">{D('stats.riskScore', { score: 28 })}</div>
+          <div className="ds-sub">{D('stats.riskScore', { score: riskScore })}</div>
         </div>
         <div className="ds-card">
           <div className="ds-lbl">⚡ {D('stats.execSuccess')}</div>
           <div className="ds-val" style={{ color: 'var(--pos)' }}>
-            99.4%
+            {Number(execSuccessRate).toFixed(1)}%
           </div>
           <div className="ds-sub">
-            {D('stats.execSuccessSub', { ok: 114, total: 115 })}
+            {D('stats.execSuccessSub', {
+              ok: overview?.execOk ?? 0,
+              total: overview?.execTotal ?? 0,
+            })}
           </div>
         </div>
       </div>
@@ -305,7 +369,12 @@ export default function Dashboard({
             </button>
           </div>
           <div className="strat-list">
-            {strategies.map((s) => (
+            {!loading && (!strategies || strategies.length === 0) ? (
+              <div style={{ fontSize: 13, color: 'var(--t3)', padding: '24px 8px' }}>
+                {D('strategyList.empty', { defaultValue: '暂无策略，点击新建开始' })}
+              </div>
+            ) : null}
+            {(strategies || []).map((s) => (
               <StratCard
                 key={s.id}
                 s={s}
@@ -314,9 +383,9 @@ export default function Dashboard({
                 onPause={() => pauseStrat(s.id)}
                 onResume={() => resumeStrat(s.id)}
                 onConfig={() => openEdit(s)}
-                onDetail={() => setDetailId(s.id)}
+                onDetail={() => handleOpenDetail(s.id)}
                 onClone={() => cloneStrat(s)}
-                onStop={() => onToast(D('toast.closeSent'))}
+                onStop={() => stopStrat(s.id)}
               />
             ))}
           </div>
@@ -327,41 +396,43 @@ export default function Dashboard({
             <div className="rp-title">
               {D('riskPanel.title')}
               <span className="tag tag-pos" style={{ fontSize: 9 }}>
-                {D('riskPanel.healthy')}
+                {riskStatusTag(riskSettings?.status, D)}
               </span>
             </div>
             <div className="gauges-row">
-              <Gauge pct={0.28} color="#10B981" label={D('riskPanel.fundUsage')} />
-              <Gauge pct={0.62} color="#F59E0B" label={D('riskPanel.maxRiskStrategy')} />
-              <Gauge pct={0.15} color="#10B981" label={D('riskPanel.overallRisk')} />
+              <Gauge pct={fundUsage} color="#10B981" label={D('riskPanel.fundUsage')} />
+              <Gauge pct={maxRiskPct} color="#F59E0B" label={D('riskPanel.maxRiskStrategy')} />
+              <Gauge pct={overallRiskPct} color="#10B981" label={D('riskPanel.overallRisk')} />
             </div>
             <div className="risk-settings">
               <div className="rs-row">
                 <div className="rs-label">{D('riskPanel.dailyLossLimit')}</div>
-                <div className="rs-val">$500</div>
+                <div className="rs-val">
+                  ${Number(riskSettings?.dailyLossLimitUsd ?? 0).toLocaleString()}
+                </div>
               </div>
               <div className="rs-row">
                 <div className="rs-label">{D('riskPanel.maxMarginUse')}</div>
-                <div className="rs-val">30%</div>
+                <div className="rs-val">{Number(riskSettings?.maxMarginUsePct ?? 0)}%</div>
               </div>
               <div className="rs-row">
                 <div className="rs-label">{D('riskPanel.maxSlippage')}</div>
-                <div className="rs-val">0.15%</div>
+                <div className="rs-val">{Number(riskSettings?.maxSlippagePct ?? 0)}%</div>
               </div>
               <ToggleRow
                 label={D('riskPanel.autoEmergencyStop')}
-                checked={autoStop}
-                onChange={setAutoStop}
+                checked={!!riskSettings?.autoEmergencyStop}
+                onChange={(v) => patchRiskToggle('autoEmergencyStop', v)}
               />
               <ToggleRow
                 label={D('riskPanel.negFundingPause')}
-                checked={negFundingPause}
-                onChange={setNegFundingPause}
+                checked={!!riskSettings?.negFundingPause}
+                onChange={(v) => patchRiskToggle('negFundingPause', v)}
               />
               <ToggleRow
                 label={D('riskPanel.timeoutAlert')}
-                checked={timeoutAlert}
-                onChange={setTimeoutAlert}
+                checked={!!riskSettings?.timeoutAlert}
+                onChange={(v) => patchRiskToggle('timeoutAlert', v)}
               />
             </div>
           </div>
@@ -383,7 +454,7 @@ export default function Dashboard({
                     ? 'var(--pos)'
                     : 'var(--gold)';
                 return (
-                  <div className="radar-item" key={l.id}>
+                  <div className="radar-item" key={l.id || l.strategyId}>
                     <div className="radar-top">
                       <div className="radar-sym">
                         {l.name}
@@ -412,7 +483,7 @@ export default function Dashboard({
                               : 'var(--t3)',
                         }}
                       >
-                        {l.curRate.toFixed(2)}%{' '}
+                        {Number(l.curRate).toFixed(2)}%{' '}
                         {paused
                           ? ''
                           : l.armed
@@ -424,7 +495,7 @@ export default function Dashboard({
                       <div
                         className="radar-bar-fill"
                         style={{
-                          width: `${l.pctToThreshold}%`,
+                          width: `${l.pctToThreshold || 0}%`,
                           background: barColor,
                         }}
                       />
@@ -450,15 +521,17 @@ export default function Dashboard({
             </div>
             <div className="donut-wrap">
               <Donut
-                segments={DONUT_SEGMENTS}
+                segments={donutSegments}
                 centerLabel={D('capital.totalPosition')}
-                centerValue="$35K"
+                centerValue={centerValue}
               />
               <div className="donut-legend">
-                {DONUT_SEGMENTS.map((l) => (
+                {donutSegments.map((l) => (
                   <div className="dl-item" key={l.key}>
                     <div className="dl-dot" style={{ background: l.c }} />
-                    <div className="dl-name">{D(`donut.${l.key}`)}</div>
+                    <div className="dl-name">
+                      {D(`donut.${l.key}`, { defaultValue: l.key })}
+                    </div>
                     <div className="dl-val">{l.label}</div>
                   </div>
                 ))}
@@ -472,11 +545,25 @@ export default function Dashboard({
               {D('activity.title')}
             </div>
             <div className="activity-feed">
-              {activityLog.map((a) => (
+              {(activities || []).length === 0 ? (
+                <div style={{ fontSize: 11, color: 'var(--t3)', padding: 8 }}>
+                  {D('activity.empty', { defaultValue: '暂无活动' })}
+                </div>
+              ) : null}
+              {(activities || []).map((a) => (
                 <div className="af-item" key={a.id}>
                   <div className="af-ico">{a.ico}</div>
-                  <ActivityText parts={a.parts} />
-                  <div className="af-time">{a.time}</div>
+                  <ActivityText
+                    parts={
+                      a.parts?.length
+                        ? a.parts
+                        : [{ t: 'text', v: a.text || '' }]
+                    }
+                  />
+                  <div className="af-time">
+                    {formatRelativeMs(a.createdAt, t) ||
+                      formatMsTime(a.createdAt, i18n.language)}
+                  </div>
                 </div>
               ))}
             </div>
@@ -487,7 +574,7 @@ export default function Dashboard({
       <Modal
         open={!!detailStrat}
         wide
-        onClose={() => setDetailId(null)}
+        onClose={handleCloseDetail}
         header={
           <>
             <div
@@ -506,7 +593,7 @@ export default function Dashboard({
               <div className="modal-sub">
                 {strategyTypeLabel(detailStrat?.typeKey)} · {detailStrat?.exchange} ·{' '}
                 {D('detail.runningDays', {
-                  days: detailStrat ? daysSince(detailStrat.startDate) : 0,
+                  days: detailStrat ? daysSinceMs(detailStrat.startDate) : 0,
                 })}
               </div>
             </div>
@@ -520,7 +607,7 @@ export default function Dashboard({
               style={{ flex: 1 }}
               onClick={() => {
                 if (detailStrat) openEdit(detailStrat);
-                setDetailId(null);
+                handleCloseDetail();
               }}
             >
               ⚙ {D('detail.adjustParams')}
@@ -529,7 +616,7 @@ export default function Dashboard({
               type="button"
               className="btn-primary"
               style={{ flex: 1 }}
-              onClick={() => setDetailId(null)}
+              onClick={handleCloseDetail}
             >
               {D('detail.close')}
             </button>
@@ -542,18 +629,18 @@ export default function Dashboard({
               {[
                 [
                   D('detail.cumulativePnl'),
-                  `${detailStrat.pnl >= 0 ? '+' : ''}$${detailStrat.pnl.toFixed(2)}`,
+                  `${detailStrat.pnl >= 0 ? '+' : ''}$${Number(detailStrat.pnl).toFixed(2)}`,
                   detailStrat.pnl >= 0 ? 'var(--pos)' : 'var(--danger)',
                 ],
                 [
                   D('detail.returnPct'),
-                  `${detailStrat.pnlPct >= 0 ? '+' : ''}${detailStrat.pnlPct.toFixed(2)}%`,
+                  `${detailStrat.pnlPct >= 0 ? '+' : ''}${Number(detailStrat.pnlPct).toFixed(2)}%`,
                   detailStrat.pnl >= 0 ? 'var(--pos)' : 'var(--danger)',
                 ],
                 [
                   D('detail.marginRatio'),
-                  `${detailStrat.marginRatio}%`,
-                  detailStrat.marginRatio >= 50 ? 'var(--pos)' : 'var(--warn)',
+                  `${Number(detailStrat.marginRatio ?? 0)}%`,
+                  (detailStrat.marginRatio ?? 0) >= 50 ? 'var(--pos)' : 'var(--warn)',
                 ],
                 [
                   D('detail.leverage'),
@@ -574,7 +661,12 @@ export default function Dashboard({
               ))}
             </div>
             <div className="detail-section-title">{D('detail.pnlTrend')}</div>
-            <Sparkline data={detailStrat.pnlHistory} w={640} h={72} color="#059669" />
+            <Sparkline
+              data={detailStrat.pnlHistory?.length ? detailStrat.pnlHistory : [0]}
+              w={640}
+              h={72}
+              color="#059669"
+            />
             <div className="detail-section-title">{D('detail.positions')}</div>
             <table className="leg-table">
               <thead>
@@ -595,12 +687,12 @@ export default function Dashboard({
                           className="leg-dot"
                           style={{ background: leg.dot }}
                         />
-                        {leg.role}
+                        {legRoleLabel(leg.role)}
                       </span>
                     </td>
                     <td>{leg.symbol}</td>
-                    <td className="mono">${leg.entry.toFixed(2)}</td>
-                    <td className="mono">${leg.current.toFixed(2)}</td>
+                    <td className="mono">${Number(leg.entry).toFixed(2)}</td>
+                    <td className="mono">${Number(leg.current).toFixed(2)}</td>
                     <td className="mono">{leg.qty}</td>
                   </tr>
                 ))}
@@ -608,16 +700,18 @@ export default function Dashboard({
             </table>
             <div className="detail-section-title">{D('detail.execHistory')}</div>
             <div className="exec-timeline">
-              {(detailStrat.execHistory || []).map((row) => (
-                <div className="exec-tl-item" key={row.time + row.text}>
-                  <div className="exec-tl-time">{row.time}</div>
+              {(detailStrat.execHistory || []).map((row, idx) => (
+                <div className="exec-tl-item" key={`${row.time}-${idx}`}>
+                  <div className="exec-tl-time">
+                    {formatMsTime(row.time, i18n.language)}
+                  </div>
                   <div>{row.text}</div>
                 </div>
               ))}
             </div>
             <div className="detail-section-title">{D('detail.stressTitle')}</div>
             <div className="stress-grid">
-              {stresses.map((st) => (
+              {(Array.isArray(stresses) ? stresses : []).map((st) => (
                 <div className="stress-item" key={st.title}>
                   <div className="stress-scenario">
                     {st.icon} {st.title}
@@ -659,8 +753,9 @@ export default function Dashboard({
             <button
               type="button"
               className="btn-primary"
-              style={{ flex: 1 }}
+              style={{ flex: 1, opacity: savingEdit ? 0.7 : 1 }}
               onClick={saveEdit}
+              disabled={savingEdit}
             >
               {D('edit.save')}
             </button>
@@ -778,6 +873,9 @@ function StratCard({
         ? `⏸ ${D('status.paused')}`
         : `■ ${D('status.stopped')}`;
 
+  const maxCap = s.maxCapital || s.capital || 1;
+  const barPct = Math.min(100, ((s.posSize || 0) / maxCap) * 100);
+
   return (
     <div className={`scard active ${s.status}`}>
       <div className="scard-hdr">
@@ -811,19 +909,19 @@ function StratCard({
       <div className="sc-metrics">
         <div className="scm">
           <div className="scm-l">{D('metrics.positionCapital')}</div>
-          <div className="scm-v">${s.capital.toLocaleString()}</div>
+          <div className="scm-v">${Number(s.capital || 0).toLocaleString()}</div>
         </div>
         <div className="scm">
           <div className="scm-l">{D('metrics.cumulativePnl')}</div>
           <div className="scm-v" style={{ color: profitColor }}>
-            {isUp ? '+' : ''}${s.pnl.toFixed(2)}
+            {isUp ? '+' : ''}${Number(s.pnl || 0).toFixed(2)}
           </div>
         </div>
         <div className="scm">
           <div className="scm-l">{D('metrics.returnPct')}</div>
           <div className="scm-v" style={{ color: profitColor }}>
             {isUp ? '+' : ''}
-            {s.pnlPct.toFixed(2)}%
+            {Number(s.pnlPct || 0).toFixed(2)}%
           </div>
         </div>
         <div className="scm">
@@ -837,7 +935,7 @@ function StratCard({
         <div
           className="sc-bar-fill"
           style={{
-            width: `${((s.posSize / s.maxCapital) * 100).toFixed(0)}%`,
+            width: `${barPct.toFixed(0)}%`,
             background: s.status === 'running' ? 'var(--pos)' : 'var(--warn)',
           }}
         />
@@ -846,6 +944,10 @@ function StratCard({
         {s.status === 'running' ? (
           <button type="button" className="sc-btn" onClick={onPause}>
             ⏸ {D('actions.pause')}
+          </button>
+        ) : s.status !== 'stopped' ? (
+          <button type="button" className="sc-btn primary" onClick={onResume}>
+            ▶ {D('actions.resume')}
           </button>
         ) : (
           <button type="button" className="sc-btn primary" onClick={onResume}>

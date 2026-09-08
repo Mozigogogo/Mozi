@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useStrategyCenter } from '@/hooks/useStrategyCenter';
 import Landing from './Landing';
 import Dashboard from './Dashboard';
 import Vault from './Vault';
 import Wizard from './Wizard';
-import { INITIAL_STRATEGIES, NAV_ITEMS } from './data';
+import { NAV_ITEMS } from './data';
 import './index.css';
 
 /**
@@ -15,14 +16,14 @@ import './index.css';
 export default function AutoArb({ onSwitchToRadar, className }) {
   const { t } = useTranslation();
   const [view, setView] = useState('landing');
-  const [strategies, setStrategies] = useState(() =>
-    INITIAL_STRATEGIES.map((s) => ({ ...s })),
-  );
   const [toast, setToast] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [wizardKey, setWizardKey] = useState(0);
   const [cloneSource, setCloneSource] = useState(null);
+  const [emergencyStopping, setEmergencyStopping] = useState(false);
   const toastTimer = useRef(null);
+
+  const center = useStrategyCenter({ enabled: view === 'dashboard' });
 
   const showToast = useCallback((msg) => {
     setToast(msg);
@@ -43,10 +44,18 @@ export default function AutoArb({ onSwitchToRadar, className }) {
     setView('wizard');
   };
 
-  const emergencyStop = () => {
-    setStrategies((prev) => prev.map((s) => ({ ...s, status: 'stopped' })));
-    setConfirmOpen(false);
-    showToast(`🛑 ${t('autoArb.toast.emergencyStopped')}`);
+  const emergencyStop = async () => {
+    if (emergencyStopping) return;
+    setEmergencyStopping(true);
+    try {
+      await center.emergencyStopAll();
+      setConfirmOpen(false);
+      showToast(`🛑 ${t('autoArb.toast.emergencyStopped')}`);
+    } catch (err) {
+      showToast(err?.message || t('autoArb.toast.emergencyStopped'));
+    } finally {
+      setEmergencyStopping(false);
+    }
   };
 
   const rootClass = ['mozi-autoarb', className].filter(Boolean).join(' ');
@@ -105,8 +114,7 @@ export default function AutoArb({ onSwitchToRadar, className }) {
         )}
         {view === 'dashboard' && (
           <Dashboard
-            strategies={strategies}
-            onStrategiesChange={setStrategies}
+            center={center}
             onNavigate={(v) => {
               if (v === 'wizard') startNewWizard(null);
               else setView(v);
@@ -162,6 +170,7 @@ export default function AutoArb({ onSwitchToRadar, className }) {
               type="button"
               className="btn-full btn-ghost"
               onClick={() => setConfirmOpen(false)}
+              disabled={emergencyStopping}
             >
               {t('autoArb.confirm.cancel')}
             </button>
@@ -175,10 +184,12 @@ export default function AutoArb({ onSwitchToRadar, className }) {
                 borderRadius: 'var(--rs)',
                 fontSize: 13,
                 fontWeight: 700,
-                cursor: 'pointer',
+                cursor: emergencyStopping ? 'wait' : 'pointer',
                 padding: 11,
+                opacity: emergencyStopping ? 0.7 : 1,
               }}
               onClick={emergencyStop}
+              disabled={emergencyStopping}
             >
               {t('autoArb.confirm.confirm')}
             </button>

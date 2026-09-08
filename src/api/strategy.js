@@ -282,3 +282,474 @@ export async function createStrategy(payload) {
     raw: data,
   };
 }
+
+const TYPE_ICONS = {
+  funding: '⚡',
+  spread: '🔀',
+  basis: '📊',
+};
+
+const LEG_DOT = {
+  spot_long: 'var(--pos)',
+  perp_short: 'var(--danger)',
+  long: 'var(--pos)',
+  short: 'var(--danger)',
+};
+
+const CAPITAL_COLORS = {
+  spot: '#00CCA0',
+  perp: '#3B82F6',
+  idle: '#CBD5E1',
+};
+
+function num(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function msOrNull(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'number' && Number.isFinite(v)) return v < 1e12 ? v * 1000 : v;
+  const parsed = Date.parse(String(v));
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+/**
+ * @param {unknown} raw
+ */
+export function normalizeStrategySummary(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const id = String(raw.id || '').trim();
+  if (!id) return null;
+  const typeKey = String(raw.type || raw.typeKey || 'funding')
+    .trim()
+    .toLowerCase();
+  const capital = num(raw.capital);
+  const pnl = num(raw.pnl);
+  const pnlPct =
+    raw.pnlPct != null && Number.isFinite(Number(raw.pnlPct))
+      ? Number(raw.pnlPct)
+      : capital
+        ? (pnl / capital) * 100
+        : 0;
+
+  return {
+    id,
+    name: String(raw.name || id),
+    typeKey,
+    type: typeKey,
+    icon: TYPE_ICONS[typeKey] || '⚡',
+    exchange: String(raw.exchange || '--'),
+    status: String(raw.status || 'stopped').toLowerCase(),
+    capital,
+    pnl,
+    pnlPct,
+    dailyPnl: num(raw.dailyPnl),
+    riskScore: num(raw.riskScore),
+    posSize: num(raw.posSize, capital),
+    maxCapital: num(raw.maxCapital, capital),
+    leverage: num(raw.leverage, 1),
+    marginMode: String(raw.marginMode || 'isolated').toLowerCase(),
+    minProfitThreshold: num(
+      raw.minProfitThreshold != null ? raw.minProfitThreshold : raw.minProfit,
+      0.1,
+    ),
+    dailyLossLimit:
+      raw.dailyLossLimit != null ? num(raw.dailyLossLimit) : undefined,
+    mode: String(raw.mode || 'paper').toLowerCase(),
+    startDate: msOrNull(raw.startDate),
+    paperEndsAt: msOrNull(raw.paperEndsAt),
+    marginRatio:
+      raw.marginRatio != null && Number.isFinite(Number(raw.marginRatio))
+        ? Number(raw.marginRatio)
+        : undefined,
+    raw,
+  };
+}
+
+/**
+ * @param {unknown} raw
+ */
+export function normalizeStrategyDetail(raw) {
+  const base = normalizeStrategySummary(raw);
+  if (!base) return null;
+  const legs = Array.isArray(raw.legs)
+    ? raw.legs.map((leg) => {
+        const role = String(leg?.role || '');
+        return {
+          role,
+          symbol: String(leg?.symbol || ''),
+          entry: num(leg?.entry),
+          current: num(leg?.current),
+          qty: num(leg?.qty),
+          dot: LEG_DOT[role] || (num(leg?.qty) >= 0 ? 'var(--pos)' : 'var(--danger)'),
+        };
+      })
+    : [];
+  const pnlHistory = Array.isArray(raw.pnlHistory)
+    ? raw.pnlHistory.map((n) => num(n)).filter((n) => Number.isFinite(n))
+    : [];
+  const execHistory = Array.isArray(raw.execHistory)
+    ? raw.execHistory.map((row) => ({
+        time: msOrNull(row?.time),
+        text: String(row?.text || ''),
+        pnl: row?.pnl != null && Number.isFinite(Number(row.pnl)) ? Number(row.pnl) : null,
+      }))
+    : [];
+
+  return {
+    ...base,
+    marginRatio: num(raw.marginRatio, base.marginRatio ?? 0),
+    legs,
+    pnlHistory,
+    execHistory,
+  };
+}
+
+/**
+ * @param {unknown} raw
+ */
+export function normalizeOverview(raw) {
+  if (!raw || typeof raw !== 'object') {
+    return {
+      runningCount: 0,
+      totalCapital: 0,
+      todayPnl: 0,
+      totalPnl: 0,
+      totalReturnPct: 0,
+      riskLevel: 'low',
+      riskScore: 0,
+      execSuccessRate: 0,
+      execOk: 0,
+      execTotal: 0,
+      execWindowDays: 30,
+      updatedAt: null,
+    };
+  }
+  return {
+    runningCount: num(raw.runningCount),
+    totalCapital: num(raw.totalCapital),
+    todayPnl: num(raw.todayPnl),
+    totalPnl: num(raw.totalPnl),
+    totalReturnPct: num(raw.totalReturnPct),
+    riskLevel: String(raw.riskLevel || 'low').toLowerCase(),
+    riskScore: num(raw.riskScore),
+    execSuccessRate: num(raw.execSuccessRate),
+    execOk: num(raw.execOk),
+    execTotal: num(raw.execTotal),
+    execWindowDays: num(raw.execWindowDays, 30),
+    updatedAt: msOrNull(raw.updatedAt),
+  };
+}
+
+/**
+ * @param {unknown} raw
+ */
+export function normalizeRiskSettings(raw) {
+  if (!raw || typeof raw !== 'object') {
+    return {
+      status: 'healthy',
+      fundUsagePct: 0,
+      maxRiskStrategyPct: 0,
+      overallRiskPct: 0,
+      dailyLossLimitUsd: 500,
+      maxMarginUsePct: 30,
+      maxSlippagePct: 0.15,
+      autoEmergencyStop: true,
+      negFundingPause: true,
+      timeoutAlert: true,
+    };
+  }
+  return {
+    status: String(raw.status || 'healthy').toLowerCase(),
+    fundUsagePct: num(raw.fundUsagePct),
+    maxRiskStrategyPct: num(raw.maxRiskStrategyPct),
+    overallRiskPct: num(raw.overallRiskPct),
+    dailyLossLimitUsd: num(raw.dailyLossLimitUsd, 500),
+    maxMarginUsePct: num(raw.maxMarginUsePct, 30),
+    maxSlippagePct: num(raw.maxSlippagePct, 0.15),
+    autoEmergencyStop: raw.autoEmergencyStop !== false,
+    negFundingPause: raw.negFundingPause !== false,
+    timeoutAlert: raw.timeoutAlert !== false,
+  };
+}
+
+/**
+ * @param {unknown} raw
+ */
+export function normalizeRadarItem(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const strategyId = String(raw.strategyId || raw.id || '').trim();
+  if (!strategyId) return null;
+  const curRate = num(raw.curRate);
+  const threshold = num(raw.threshold, 0.1);
+  const armed =
+    typeof raw.armed === 'boolean' ? raw.armed : curRate >= threshold;
+  return {
+    id: strategyId,
+    strategyId,
+    name: String(raw.symbol || raw.name || strategyId),
+    status: String(raw.status || 'running').toLowerCase(),
+    curRate,
+    threshold,
+    armed,
+    pctToThreshold: Math.min(
+      100,
+      threshold > 0 ? (curRate / Math.max(threshold * 3, threshold)) * 100 : 0,
+    ),
+  };
+}
+
+/**
+ * @param {unknown} raw
+ */
+export function normalizeCapitalAllocation(raw) {
+  const data = raw && typeof raw === 'object' ? raw : {};
+  const segments = asList(data.segments).map((seg, i) => {
+    const key = String(seg?.key || `seg_${i}`);
+    const value = num(seg?.value);
+    return {
+      key,
+      label: String(seg?.label || key),
+      value,
+      pct: num(seg?.pct),
+      v: value,
+      c: CAPITAL_COLORS[key] || ['#00CCA0', '#3B82F6', '#8B5CF6', '#CBD5E1'][i % 4],
+      displayLabel:
+        value >= 1000
+          ? `$${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}K`
+          : `$${value.toLocaleString()}`,
+    };
+  });
+  return {
+    totalPosition: num(data.totalPosition),
+    segments,
+  };
+}
+
+/**
+ * @param {unknown} raw
+ */
+export function normalizeActivity(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const id = String(raw.id || '').trim();
+  if (!id) return null;
+  return {
+    id,
+    ico: String(raw.icon || raw.ico || '•'),
+    text: String(raw.text || ''),
+    createdAt: msOrNull(raw.createdAt),
+    parts: [{ t: 'text', v: String(raw.text || '') }],
+  };
+}
+
+function unwrapListPayload(data) {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object') {
+    if (Array.isArray(data.list)) return data.list;
+    if (Array.isArray(data.items)) return data.items;
+  }
+  return [];
+}
+
+/** GET /strategy/overview */
+export async function fetchStrategyOverview() {
+  const res = await strategyRequest({
+    url: Interface.STRATEGY_OVERVIEW,
+    method: 'GET',
+  });
+  assertOk(res, 'Failed to load strategy overview');
+  return normalizeOverview(res.data);
+}
+
+/** POST /strategy/emergency-stop */
+export async function emergencyStopAllStrategies(payload = { confirm: true }) {
+  let res;
+  try {
+    res = await strategyRequest({
+      url: Interface.STRATEGY_EMERGENCY_STOP,
+      method: 'POST',
+      data: payload && typeof payload === 'object' ? payload : { confirm: true },
+    });
+  } catch (err) {
+    throw toApiError(err, 'Emergency stop failed');
+  }
+  assertOk(res, 'Emergency stop failed');
+  const data = res.data && typeof res.data === 'object' ? res.data : {};
+  return {
+    stoppedCount: num(data.stoppedCount),
+    strategyIds: Array.isArray(data.strategyIds)
+      ? data.strategyIds.map((id) => String(id))
+      : [],
+  };
+}
+
+/** GET /strategy */
+export async function fetchStrategyList(params = {}) {
+  const res = await strategyRequest({
+    url: Interface.STRATEGY_LIST,
+    method: 'GET',
+    params: params.status ? { status: params.status } : undefined,
+  });
+  assertOk(res, 'Failed to load strategies');
+  return unwrapListPayload(res.data)
+    .map((item) => normalizeStrategySummary(item))
+    .filter(Boolean);
+}
+
+/** GET /strategy/{id} */
+export async function fetchStrategyDetail(id) {
+  const strategyId = String(id || '').trim();
+  if (!strategyId) throw new Error('strategy id is required');
+  const res = await strategyRequest({
+    url: Interface.STRATEGY_DETAIL(strategyId),
+    method: 'GET',
+  });
+  assertOk(res, 'Failed to load strategy detail');
+  const detail = normalizeStrategyDetail(res.data);
+  if (!detail) throw new Error('Invalid strategy detail');
+  return detail;
+}
+
+/** POST pause/resume/stop */
+export async function pauseStrategy(id) {
+  return postStrategyAction(id, 'pause');
+}
+export async function resumeStrategy(id) {
+  return postStrategyAction(id, 'resume');
+}
+export async function stopStrategy(id) {
+  return postStrategyAction(id, 'stop');
+}
+
+async function postStrategyAction(id, action) {
+  const strategyId = String(id || '').trim();
+  if (!strategyId) throw new Error('strategy id is required');
+  const url =
+    action === 'pause'
+      ? Interface.STRATEGY_PAUSE(strategyId)
+      : action === 'resume'
+        ? Interface.STRATEGY_RESUME(strategyId)
+        : Interface.STRATEGY_STOP(strategyId);
+  let res;
+  try {
+    res = await strategyRequest({ url, method: 'POST' });
+  } catch (err) {
+    throw toApiError(err, `Failed to ${action} strategy`);
+  }
+  assertOk(res, `Failed to ${action} strategy`);
+  const data = res.data && typeof res.data === 'object' ? res.data : {};
+  return {
+    id: String(data.id || strategyId),
+    status: String(data.status || '').toLowerCase(),
+  };
+}
+
+/** PATCH /strategy/{id} */
+export async function updateStrategyParams(id, payload) {
+  const strategyId = String(id || '').trim();
+  if (!strategyId) throw new Error('strategy id is required');
+  const body = {};
+  if (payload?.minProfit != null) body.minProfit = Number(payload.minProfit);
+  if (payload?.dailyLossLimit != null) {
+    body.dailyLossLimit = Number(payload.dailyLossLimit);
+  }
+  let res;
+  try {
+    res = await strategyRequest({
+      url: Interface.STRATEGY_DETAIL(strategyId),
+      method: 'PATCH',
+      data: body,
+    });
+  } catch (err) {
+    throw toApiError(err, 'Failed to update strategy');
+  }
+  assertOk(res, 'Failed to update strategy');
+  return normalizeStrategySummary(res.data) || { id: strategyId, ...body };
+}
+
+/** GET /strategy/risk-settings */
+export async function fetchRiskSettings() {
+  const res = await strategyRequest({
+    url: Interface.STRATEGY_RISK_SETTINGS,
+    method: 'GET',
+  });
+  assertOk(res, 'Failed to load risk settings');
+  return normalizeRiskSettings(res.data);
+}
+
+/** PUT /strategy/risk-settings */
+export async function updateRiskSettings(payload) {
+  let res;
+  try {
+    res = await strategyRequest({
+      url: Interface.STRATEGY_RISK_SETTINGS,
+      method: 'PUT',
+      data: payload && typeof payload === 'object' ? payload : {},
+    });
+  } catch (err) {
+    throw toApiError(err, 'Failed to save risk settings');
+  }
+  assertOk(res, 'Failed to save risk settings');
+  return normalizeRiskSettings(res.data);
+}
+
+/** GET /strategy/radar */
+export async function fetchStrategyRadar() {
+  const res = await strategyRequest({
+    url: Interface.STRATEGY_RADAR,
+    method: 'GET',
+  });
+  assertOk(res, 'Failed to load radar');
+  return unwrapListPayload(res.data).map(normalizeRadarItem).filter(Boolean);
+}
+
+/** GET /strategy/capital-allocation */
+export async function fetchCapitalAllocation() {
+  const res = await strategyRequest({
+    url: Interface.STRATEGY_CAPITAL,
+    method: 'GET',
+  });
+  assertOk(res, 'Failed to load capital allocation');
+  return normalizeCapitalAllocation(res.data);
+}
+
+/** GET /strategy/activities */
+export async function fetchStrategyActivities({ limit = 20 } = {}) {
+  const res = await strategyRequest({
+    url: Interface.STRATEGY_ACTIVITIES,
+    method: 'GET',
+    params: { limit },
+  });
+  assertOk(res, 'Failed to load activities');
+  return unwrapListPayload(res.data).map(normalizeActivity).filter(Boolean);
+}
+
+/** 策略中心首屏并行拉取 */
+export async function fetchStrategyCenterBootstrap() {
+  const results = await Promise.allSettled([
+    fetchStrategyOverview(),
+    fetchStrategyList(),
+    fetchRiskSettings(),
+    fetchStrategyRadar(),
+    fetchCapitalAllocation(),
+    fetchStrategyActivities({ limit: 20 }),
+  ]);
+
+  const pick = (i, fallback) =>
+    results[i].status === 'fulfilled' ? results[i].value : fallback;
+
+  const errors = results
+    .filter((r) => r.status === 'rejected')
+    .map((r) => r.reason?.message || String(r.reason || 'error'));
+
+  return {
+    overview: pick(0, normalizeOverview(null)),
+    strategies: pick(1, []),
+    riskSettings: pick(2, normalizeRiskSettings(null)),
+    radar: pick(3, []),
+    capital: pick(4, normalizeCapitalAllocation(null)),
+    activities: pick(5, []),
+    errors,
+  };
+}

@@ -325,6 +325,28 @@ export const Interface = {
   STRATEGY_OPPORTUNITIES: '/autoarb/api/v1/strategy/opportunities',
   /** POST 创建策略并启动模拟交易（需登录） */
   STRATEGY_CREATE: '/autoarb/api/v1/strategy',
+  /** GET 策略中心汇总 */
+  STRATEGY_OVERVIEW: '/autoarb/api/v1/strategy/overview',
+  /** POST 紧急停止全部 */
+  STRATEGY_EMERGENCY_STOP: '/autoarb/api/v1/strategy/emergency-stop',
+  /** GET 我的策略列表 */
+  STRATEGY_LIST: '/autoarb/api/v1/strategy',
+  /** GET/PATCH 单策略详情 / 改参 */
+  STRATEGY_DETAIL: (id) => `/autoarb/api/v1/strategy/${id}`,
+  /** POST 暂停 */
+  STRATEGY_PAUSE: (id) => `/autoarb/api/v1/strategy/${id}/pause`,
+  /** POST 恢复 */
+  STRATEGY_RESUME: (id) => `/autoarb/api/v1/strategy/${id}/resume`,
+  /** POST 停止 */
+  STRATEGY_STOP: (id) => `/autoarb/api/v1/strategy/${id}/stop`,
+  /** GET/PUT 全局风控 */
+  STRATEGY_RISK_SETTINGS: '/autoarb/api/v1/strategy/risk-settings',
+  /** GET 机会雷达 */
+  STRATEGY_RADAR: '/autoarb/api/v1/strategy/radar',
+  /** GET 资金分布 */
+  STRATEGY_CAPITAL: '/autoarb/api/v1/strategy/capital-allocation',
+  /** GET 活动流 */
+  STRATEGY_ACTIVITIES: '/autoarb/api/v1/strategy/activities',
   // 所有币种
   ALL_COIN: '/derivatives/allcoin',
   // 所有交易所
