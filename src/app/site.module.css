@@ -33,13 +33,17 @@
   width: 100%;
   box-sizing: border-box;
   padding: 48px 24px 64px;
-  background: #0b1220;
+  /* 深炭黑底 + 顶部暖橙光晕，与上方区块衔接，避免整块酒红 */
+  background:
+    radial-gradient(820px 280px at 50% 0%, rgba(234, 88, 12, 0.26), transparent 58%),
+    radial-gradient(520px 220px at 18% 35%, rgba(245, 158, 11, 0.1), transparent 68%),
+    linear-gradient(180deg, #141014 0%, #0c0b0c 48%, #080808 100%);
   color: #e2e8f0;
 }
 
 .aboutSeoTitle {
   margin: 0 auto;
-  max-width: 920px;
+  max-width: 1120px;
   font-size: clamp(22px, 2.4vw, 32px);
   font-weight: 700;
   line-height: 1.25;
@@ -50,7 +54,7 @@
 .aboutSeoEn,
 .aboutSeoZh {
   margin: 16px auto 0;
-  max-width: 920px;
+  max-width: 1120px;
   font-size: clamp(14px, 1.2vw, 16px);
   line-height: 1.65;
   color: #94a3b8;
@@ -58,4 +62,75 @@
 
 .aboutSeoZh {
   margin-top: 12px;
+}
+
+/* 欧易风格多列页脚 */
+.siteFooterNav {
+  margin: 40px auto 0;
+  max-width: 1120px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 28px 24px;
+}
+
+.footerCol {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+
+.footerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.footerColTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #ffffff;
+}
+
+.footerLinkList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footerLink {
+  display: inline-block;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(226, 232, 240, 0.72);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footerLink:hover {
+  color: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .siteFooterNav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .siteFooterNav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .siteFooterNav {
+    grid-template-columns: 1fr;
+  }
 }

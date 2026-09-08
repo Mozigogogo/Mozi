@@ -36,6 +36,124 @@ export const DEFAULT_TITLE_ZH =
 export const DEFAULT_DESCRIPTION_ZH =
   '墨子 Mozi（MoziInnovations / moz）是加密货币数据分析平台，提供 AI 行情预测、量化策略助手、智能预警、套利雷达、板块分析与交易社区。官网 moziai.xyz。';
 
+/**
+ * 品牌搜索 sitelinks 优先入口（首页 / 发现 / 社区 / AI 分析）
+ * 用稳定 path + 中英文名称，供 JSON-LD、sitemap、页脚内链共用
+ */
+export const PRIMARY_SITE_HUBS = [
+  {
+    key: 'home',
+    path: '/home',
+    nameZh: '首页',
+    nameEn: 'Home',
+    title: `首页 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`,
+    description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）行情首页：热门币种、板块轮动、实时榜单与量化策略洞察。`,
+  },
+  {
+    key: 'find',
+    path: '/find',
+    nameZh: '发现',
+    nameEn: 'Discover',
+    title: `发现 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`,
+    description: `${BRAND_LEGAL_NAME} 发现页：加密货币涨跌榜、板块、交易所数据与上新/下线公告，快速定位交易机会。`,
+  },
+  {
+    key: 'community',
+    path: '/community',
+    nameZh: '社区',
+    nameEn: 'Community',
+    title: `社区 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`,
+    description: `${BRAND_LEGAL_NAME} 加密货币社区：热门话题、精选帖子、BTC/ETH 讨论与发现好币。`,
+  },
+  {
+    key: 'ai',
+    path: '/ai',
+    nameZh: 'AI分析',
+    nameEn: 'AI Analysis',
+    title: `AI分析 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`,
+    description: `${BRAND_LEGAL_NAME} AI 分析：用自然语言解读加密行情、板块轮动、套利机会与量化策略建议。`,
+  },
+];
+
+/**
+ * 官网底部多列导航（对齐欧易页脚结构，突出四大 sitelinks 入口）
+ */
+export const SITE_FOOTER_COLUMNS = [
+  {
+    title: '首页',
+    links: [
+      { label: '行情首页', href: '/home' },
+      { label: '涨幅榜', href: '/pricerank' },
+      { label: '热度榜', href: '/hotrank' },
+      { label: '热门板块', href: '/hotsector' },
+      { label: '交易所榜', href: '/exchangerank' },
+    ],
+  },
+  {
+    title: '发现',
+    links: [
+      { label: '发现页', href: '/find' },
+      { label: 'PC 发现', href: '/pc/find' },
+      { label: '资金费率', href: '/fundingrate' },
+      { label: '成交量', href: '/tradevol' },
+      { label: '套利雷达', href: '/arbitrage' },
+      { label: '美股行情', href: '/pc/us-stock-search' },
+    ],
+  },
+  {
+    sections: [
+      {
+        title: '社区',
+        links: [
+          { label: '社区首页', href: '/community' },
+          { label: 'PC 社区', href: '/pc/community' },
+          { label: '热门话题', href: '/community' },
+          { label: '发现好币', href: '/community?tab=discover' },
+        ],
+      },
+      {
+        title: '用户支持',
+        links: [
+          { label: '帮助中心', href: '/pc/help' },
+          { label: '关于我们', href: '/pc/about' },
+          { label: '加入社群', href: 'https://t.me/MoziInnovations', external: true },
+        ],
+      },
+    ],
+  },
+  {
+    sections: [
+      {
+        title: 'AI分析',
+        links: [
+          { label: 'AI 分析', href: '/ai' },
+          { label: 'AI Trade Radar', href: '/ai' },
+          { label: '量化策略助手', href: '/ai' },
+        ],
+      },
+      {
+        title: '产品',
+        links: [
+          { label: '订阅会员', href: '/subscribe' },
+          { label: '我的成就', href: '/achievement' },
+          { label: '价格预警', href: '/pc/alarm' },
+        ],
+      },
+    ],
+  },
+  {
+    title: `关于${BRAND_LEGAL_NAME}`,
+    links: [
+      { label: '关于我们', href: '/pc/about' },
+      { label: '帮助中心', href: '/pc/help' },
+      { label: '商务合作', href: 'mailto:notice@moziinnovations.com', external: true },
+      { label: 'Telegram', href: 'https://t.me/MoziInnovations', external: true },
+      { label: 'X / Twitter', href: 'https://x.com/moziinnovation', external: true },
+      { label: 'Discord', href: 'https://discord.gg/GJW6h9GNQ8', external: true },
+    ],
+  },
+];
+
 export const DEFAULT_KEYWORDS = [
   '墨子',
   'Mozi',
@@ -211,6 +329,12 @@ export function buildBrandJsonLd({
       name: BRAND_LEGAL_NAME,
       url: SITE_URL,
     },
+    hasPart: PRIMARY_SITE_HUBS.map((hub) => ({
+      '@type': 'WebPage',
+      name: hub.nameZh,
+      alternateName: hub.nameEn,
+      url: absoluteUrl(hub.path),
+    })),
     potentialAction: {
       '@type': 'SearchAction',
       target: {
@@ -222,6 +346,73 @@ export function buildBrandJsonLd({
   };
 
   return { organization, website };
+}
+
+/**
+ * 主导航结构化数据：帮助 Google 识别品牌站主要入口（sitelinks 候选信号）
+ */
+export function buildPrimaryNavJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: `${BRAND_LEGAL_NAME} 主要入口`,
+    itemListElement: PRIMARY_SITE_HUBS.map((hub, index) => ({
+      '@type': 'SiteNavigationElement',
+      position: index + 1,
+      name: hub.nameZh,
+      alternateName: hub.nameEn,
+      description: hub.description,
+      url: absoluteUrl(hub.path),
+    })),
+  };
+}
+
+/**
+ * 通用枢纽页 WebPage + Breadcrumb JSON-LD
+ */
+export function buildHubPageJsonLd(hubKey) {
+  const hub = PRIMARY_SITE_HUBS.find((item) => item.key === hubKey);
+  if (!hub) return null;
+  const url = absoluteUrl(hub.path);
+  return {
+    webPage: {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      '@id': `${url}#webpage`,
+      name: hub.title,
+      description: hub.description,
+      url,
+      inLanguage: ['zh-CN', 'en'],
+      isPartOf: {
+        '@type': 'WebSite',
+        name: BRAND_LEGAL_NAME,
+        url: SITE_URL,
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: BRAND_LEGAL_NAME,
+        url: SITE_URL,
+      },
+    },
+    breadcrumb: {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: BRAND_LEGAL_NAME,
+          item: SITE_URL,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: hub.nameZh,
+          item: url,
+        },
+      ],
+    },
+  };
 }
 
 /** 社区页专用 keywords */
@@ -567,12 +758,12 @@ export function buildTopicJsonLd(topic, topicId, queryFallback = {}) {
 /** 需要被 sitemap 收录的公开静态路由 */
 export const PUBLIC_SITEMAP_ROUTES = [
   { path: '/', changeFrequency: 'daily', priority: 1 },
-  { path: '/home', changeFrequency: 'hourly', priority: 0.95 },
-  { path: '/find', changeFrequency: 'hourly', priority: 0.9 },
+  { path: '/home', changeFrequency: 'hourly', priority: 0.98 },
+  { path: '/find', changeFrequency: 'hourly', priority: 0.96 },
+  { path: '/community', changeFrequency: 'hourly', priority: 0.95 },
+  { path: '/ai', changeFrequency: 'daily', priority: 0.94 },
   { path: '/pc/find', changeFrequency: 'hourly', priority: 0.85 },
-  { path: '/community', changeFrequency: 'hourly', priority: 0.85 },
-  { path: '/pc/community', changeFrequency: 'hourly', priority: 0.8 },
-  { path: '/ai', changeFrequency: 'weekly', priority: 0.75 },
+  { path: '/pc/community', changeFrequency: 'hourly', priority: 0.84 },
   { path: '/hotsector', changeFrequency: 'daily', priority: 0.7 },
   { path: '/pc/hotsector', changeFrequency: 'daily', priority: 0.65 },
   { path: '/arbitrage', changeFrequency: 'hourly', priority: 0.7 },

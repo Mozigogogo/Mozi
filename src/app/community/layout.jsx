@@ -1,4 +1,5 @@
 import CommunitySeo from '@/components/CommunitySeo';
+import SiteHubSeo from '@/components/SiteHubSeo';
 import {
   COMMUNITY_DESCRIPTION,
   COMMUNITY_KEYWORDS,
@@ -17,6 +18,7 @@ export default function CommunityLayout({ children }) {
   return (
     <>
       <CommunitySeo variant="mobile" />
+      <SiteHubSeo hubKey="community" />
       {children}
     </>
   );

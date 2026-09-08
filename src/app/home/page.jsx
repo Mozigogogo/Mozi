@@ -1,26 +1,28 @@
 import { headers } from 'next/headers';
 import HomeClient from '../HomeClient';
-import MarketsHomeSeo from '@/components/MarketsHomeSeo';
+import SiteHubSeo from '@/components/SiteHubSeo';
 import {
-  BRAND_LEGAL_NAME,
+  PRIMARY_SITE_HUBS,
   buildPageMetadata,
 } from '@/utils/seoConfig';
 
+const homeHub = PRIMARY_SITE_HUBS.find((h) => h.key === 'home');
+
 export const metadata = buildPageMetadata({
-  title: `Markets Home | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`,
-  description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）行情首页：AI 驱动的加密货币数据分析、热门币种、板块轮动与量化策略洞察。Crypto markets home with trending coins, sectors and quant strategy insights.`,
+  title: homeHub.title,
+  description: homeHub.description,
   path: '/home',
   keywords: [
-    BRAND_LEGAL_NAME,
     'Mozi',
     '墨子',
-    '加密货币行情',
+    '首页',
     '行情首页',
+    '加密货币行情',
     '热门币种',
     '板块轮动',
     'AI预测',
     'crypto markets',
-    'trending coins',
+    'home',
   ],
 });
 
@@ -34,7 +36,15 @@ export default function AppHomePage() {
   const initialIsPC = !isProbablyMobile(ua);
   return (
     <>
-      <MarketsHomeSeo />
+      <SiteHubSeo
+        hubKey="home"
+        extraListItems={[
+          '热门币种与实时涨跌榜',
+          '板块轮动与市场分布',
+          'AI 预测与量化策略助手入口',
+          '套利雷达与智能价格预警',
+        ]}
+      />
       <HomeClient initialIsPC={initialIsPC} />
     </>
   );

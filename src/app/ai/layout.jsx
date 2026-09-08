@@ -14,9 +14,14 @@ function getRouteConversationId(pathname) {
   return match?.[1] || null;
 }
 
-export default function AiLayout() {
+export default function AiLayout({ children }) {
   const pathname = usePathname();
   const routeConversationId = getRouteConversationId(pathname);
 
-  return <AiChatView routeConversationId={routeConversationId} />;
+  return (
+    <>
+      {children}
+      <AiChatView routeConversationId={routeConversationId} />
+    </>
+  );
 }

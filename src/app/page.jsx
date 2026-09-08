@@ -1,5 +1,12 @@
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import {
+  BRAND_LEGAL_NAME,
+  SITE_FOOTER_COLUMNS,
+  buildBrandJsonLd,
+  buildPageMetadata,
+  buildPrimaryNavJsonLd,
+  DEFAULT_DESCRIPTION,
+  DEFAULT_TITLE,
+} from '@/utils/seoConfig';
 import styles from './site.module.css';
 import HeroSection from '@/components/site-home/HeroSection/index';
 import AlertsSection from '@/components/site-home/AlertsSection/index';
@@ -7,13 +14,8 @@ import SectorSection from '@/components/site-home/SectorSection/index';
 import FlashSection from '@/components/site-home/FlashSection/index';
 import AlphaSection from '@/components/site-home/AlphaSection/index';
 import KnowledgeSection from '@/components/site-home/KnowledgeSection/index';
-import {
-  BRAND_LEGAL_NAME,
-  DEFAULT_DESCRIPTION,
-  DEFAULT_TITLE,
-  buildBrandJsonLd,
-  buildPageMetadata,
-} from '@/utils/seoConfig';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export const metadata = buildPageMetadata({
   title: DEFAULT_TITLE,
@@ -27,10 +29,68 @@ function isTelegramServerRequest(ua = '', referer = '') {
   return false;
 }
 
+function FooterLink({ link }) {
+  const isExternal = link.external || /^https?:|^mailto:/i.test(link.href);
+  if (isExternal) {
+    return (
+      <a
+        href={link.href}
+        className={styles.footerLink}
+        target={link.href.startsWith('mailto:') ? undefined : '_blank'}
+        rel={link.href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
+      >
+        {link.label}
+      </a>
+    );
+  }
+  return (
+    <a href={link.href} className={styles.footerLink}>
+      {link.label}
+    </a>
+  );
+}
+
+function FooterColumn({ column }) {
+  if (column.sections) {
+    return (
+      <div className={styles.footerCol}>
+        {column.sections.map((section) => (
+          <div key={section.title} className={styles.footerSection}>
+            <h3 className={styles.footerColTitle}>{section.title}</h3>
+            <ul className={styles.footerLinkList}>
+              {section.links.map((link) => (
+                <li key={`${section.title}-${link.label}`}>
+                  <FooterLink link={link} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.footerCol}>
+      <div className={styles.footerSection}>
+        <h3 className={styles.footerColTitle}>{column.title}</h3>
+        <ul className={styles.footerLinkList}>
+          {column.links.map((link) => (
+            <li key={`${column.title}-${link.label}`}>
+              <FooterLink link={link} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 const { organization: organizationJsonLd, website: websiteJsonLd } =
   buildBrandJsonLd({
     description: DEFAULT_DESCRIPTION,
   });
+const primaryNavJsonLd = buildPrimaryNavJsonLd();
 
 export default function SiteHomePage() {
   const headerList = headers();
@@ -51,7 +111,10 @@ export default function SiteHomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
       />
-      {/* 无 JS / 爬虫兜底：保证即使上层 Suspense 异常也有可读正文 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(primaryNavJsonLd) }}
+      />
       <noscript>
         <section className={styles.aboutSeo}>
           <h1 className={styles.aboutSeoTitle}>
@@ -80,6 +143,13 @@ export default function SiteHomePage() {
           <p className={styles.aboutSeoZh}>
             {BRAND_LEGAL_NAME}（Mozi / 墨子）是加密货币数据分析平台，提供 AI 行情预测、量化策略助手、智能价格预警、板块轮动、套利雷达与交易社区。官网：https://moziai.xyz
           </p>
+
+          {/* 欧易风格多列页脚：突出 首页 / 发现 / 社区 / AI分析 */}
+          <nav className={styles.siteFooterNav} aria-label={`${BRAND_LEGAL_NAME} 站点导航`}>
+            {SITE_FOOTER_COLUMNS.map((column, index) => (
+              <FooterColumn key={column.title || column.sections?.[0]?.title || index} column={column} />
+            ))}
+          </nav>
         </footer>
       </section>
     </main>

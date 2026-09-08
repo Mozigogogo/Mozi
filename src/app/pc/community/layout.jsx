@@ -1,4 +1,5 @@
 import CommunitySeo from '@/components/CommunitySeo';
+import SiteHubSeo from '@/components/SiteHubSeo';
 import {
   COMMUNITY_KEYWORDS,
   COMMUNITY_PC_DESCRIPTION,
@@ -17,6 +18,11 @@ export default function PCCommunityLayout({ children }) {
   return (
     <>
       <CommunitySeo variant="pc" />
+      <SiteHubSeo
+        hubKey="community"
+        pathOverride="/pc/community"
+        includeNavSchema={false}
+      />
       {children}
     </>
   );
