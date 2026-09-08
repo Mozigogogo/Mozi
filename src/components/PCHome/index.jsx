@@ -92,7 +92,7 @@ export default function PCHome() {
 
   // 状态
   const [rankData, setRankData] = useState([]);
-  const [rankLoading, setRankLoading] = useState(false);
+  const [rankLoading, setRankLoading] = useState(true);
   const [activeRankTab, setActiveRankTab] = useState('zhangfu');
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 100 });
   const [activeBanner, setActiveBanner] = useState(0);

@@ -35,6 +35,7 @@ import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
 import { savePcAiNav } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
 import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
+import { pcFlashDebug, pcFlashDebugMeasureAntdGrid } from '@/utils/pcFlashDebug';
 import { localizeMoneyFmt } from '@/utils/formatMoney';
 import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, sortUsStockByVolume, formatUsStockListItem, getUsStockDisplayName } from '@/utils/usStockMockData';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
@@ -135,6 +136,15 @@ export default function PCFindContent() {
   const pathname = usePathname();
   const { t, i18n } = useTranslation();
 
+  useEffect(() => {
+    pcFlashDebug('PCFindContent mount', {
+      pathname,
+      lang: i18n.language,
+      loadingInitial: true,
+    });
+    pcFlashDebugMeasureAntdGrid('PCFindContent after mount');
+  }, [pathname, i18n.language]);
+
   const formatRankLocalizedMoney = useCallback((val) => {
     if (val == null || val === '' || val === '--') return '--';
     return localizeMoneyFmt(val, i18n.language);
@@ -172,8 +182,8 @@ export default function PCFindContent() {
       isCalendarViewOpen,
     });
   }, [activeTab, marketViewMode, isCalendarViewOpen]);
-  const [loading, setLoading] = useState(false);
-  const [usStockLoading, setUsStockLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [usStockLoading, setUsStockLoading] = useState(true);
   const [usStockVolumeSort, setUsStockVolumeSort] = useState('desc');
   const [marketData, setMarketData] = useState([]);
   const [usStockData, setUsStockData] = useState([]);

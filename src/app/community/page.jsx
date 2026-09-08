@@ -54,11 +54,11 @@ export default function CommunityPage() {
   const [page, setPage] = useState(1);
   const [size] = useState(10);
   const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [pullRefresh, setPullRefresh] = useState(false);
   const [hotTopics, setHotTopics] = useState([]);
   const [hotTopicsPage, setHotTopicsPage] = useState(1);
-  const [hotTopicsLoading, setHotTopicsLoading] = useState(false);
+  const [hotTopicsLoading, setHotTopicsLoading] = useState(true);
   const [hotTopicsAllLoaded, setHotTopicsAllLoaded] = useState(false);
   const [showCreateTopic, setShowCreateTopic] = useState(false);
   const [topicTitle, setTopicTitle] = useState(''); // 话题名称
@@ -918,7 +918,7 @@ export default function CommunityPage() {
     setPosts([]);
     setPage(1);
     setHasMore(true);
-    setLoading(false); // 重置loading状态
+    setLoading(true); // 切 tab 先骨架，避免 Empty 闪一下
     
     // 使用 setTimeout 确保状态更新完成后再加载数据
     const timer = setTimeout(() => {
@@ -929,6 +929,7 @@ export default function CommunityPage() {
         setHotTopics([]);
         setHotTopicsPage(1);
         setHotTopicsAllLoaded(false);
+        setHotTopicsLoading(true);
         fetchHotTopics(true);
       } else if (mainTab === 'news') {
         // 快讯标签：加载所有帖子，渲染时会过滤 userType === 'virtual'

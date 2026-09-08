@@ -1,0 +1,63 @@
+/* PC 壳 Suspense / dynamic 加载占位：与 PCLayout 顶栏 64px、侧栏 200px 对齐，避免首屏错位 */
+
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f6f8;
+}
+
+.headerPlaceholder {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: 64PX;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 100vh;
+  padding-top: 64PX;
+}
+
+.siderPlaceholder {
+  flex: 0 0 200px;
+  width: 200px;
+  min-height: calc(100vh - 64PX);
+  background: #fff;
+  border-right: 1px solid #f0f0f0;
+  box-sizing: border-box;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  min-height: calc(100vh - 64PX);
+  background: #f5f6f8;
+}
+
+:global([data-theme='dark']) {
+  .shell {
+    background: #0a0a0a;
+  }
+
+  .headerPlaceholder {
+    background: #161a1e;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  }
+
+  .siderPlaceholder {
+    background: #161a1e;
+    border-right-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .content {
+    background: #0a0a0a;
+  }
+}

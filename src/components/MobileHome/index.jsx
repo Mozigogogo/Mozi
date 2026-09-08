@@ -244,7 +244,7 @@ export default function MobileHome() {
   const [rankLoadingStates, setRankLoadingStates] = useState(() => Array(7).fill(!hasWarmCache));
   const [rankLoadedStates, setRankLoadedStates] = useState(Array(7).fill(false));
   const [hotTopics, setHotTopics] = useState([]);
-  const [topicsLoading, setTopicsLoading] = useState(false);
+  const [topicsLoading, setTopicsLoading] = useState(true);
   const [lastTopicsLoadTime, setLastTopicsLoadTime] = useState(null);
   // 套利专区开关：改为 false 即可隐藏
   const [showArbitrageZone] = useState(true);

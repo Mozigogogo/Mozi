@@ -1,14 +1,19 @@
 'use client';
 
-import { useEffect, useSyncExternalStore } from 'react';
+import { Suspense, useEffect, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { shouldUsePcLayout } from '@/utils/pcLayoutRoutes';
 import DetailCssWarmupPc from '@/components/DetailCssWarmupPc';
+import { pcFlashDebug, pcFlashDebugWatchShell } from '@/utils/pcFlashDebug';
+import { PcLayoutShellFallback } from './PcLayoutShellFallback';
 
-const PCLayout = dynamic(() => import('@/components/PCLayout'), {
-  loading: () => null,
-});
+/**
+ * 不要用 dynamic 的 loading：它会整段替换掉 PCLayout（连 children 一起丢掉），
+ * 刷新瞬间只剩空壳（白顶栏 + 白侧栏 + 灰内容区）。
+ * 改由 Suspense fallback 带着 children 渲染占位壳。
+ */
+const PCLayout = dynamic(() => import('@/components/PCLayout'));
 
 const WebAlarmNotifier = dynamic(() => import('@/components/WebAlarmNotifier'), {
   ssr: false,
@@ -47,6 +52,16 @@ export default function PcLayoutGate({ children }) {
   );
 
   useEffect(() => {
+    pcFlashDebug('PcLayoutGate', {
+      pathname,
+      isPC,
+      usePcShell: shouldUsePcLayout(pathname, isPC),
+      viewport: typeof window !== 'undefined' ? window.innerWidth : null,
+    });
+    return pcFlashDebugWatchShell('PcLayoutGate');
+  }, [pathname, isPC]);
+
+  useEffect(() => {
     if (!isPC) return undefined;
     import('@/components/PCLayout').catch(() => {});
     import('@/components/WebAlarmNotifier').catch(() => {});
@@ -59,7 +74,13 @@ export default function PcLayoutGate({ children }) {
     <>
       {isPC ? <DetailCssWarmupPc /> : null}
       {isPC ? <WebAlarmNotifier /> : null}
-      {usePcShell ? <PCLayout>{children}</PCLayout> : children}
+      {usePcShell ? (
+        <Suspense fallback={<PcLayoutShellFallback>{children}</PcLayoutShellFallback>}>
+          <PCLayout>{children}</PCLayout>
+        </Suspense>
+      ) : (
+        children
+      )}
     </>
   );
 }

@@ -28,7 +28,7 @@ export default function TopicHotList({ isPC = false }) {
   
   const [activeTab, setActiveTab] = useState('opportunity'); // 默认显示投资机会（包含热门币种）
   const [hotTopics, setHotTopics] = useState([]);
-  const [topicsLoading, setTopicsLoading] = useState(false);
+  const [topicsLoading, setTopicsLoading] = useState(true);
   const [hotCoin, setHotCoin] = useState([]);
   const [hotContract, setHotContract] = useState([]);
   const [hotIndustry, setHotIndustry] = useState([]);

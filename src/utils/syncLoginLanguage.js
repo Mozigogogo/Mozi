@@ -1,3 +1,5 @@
+import { normalizeLng, persistLanguage } from '@/i18n/languageStorage';
+
 /**
  * 从登录接口返回中同步 i18nextLng 缓存。
  *
@@ -25,15 +27,10 @@ export const syncI18nextLngFromLoginResponse = (loginRes, i18nInstance) => {
   const raw = candidates.find((v) => v !== undefined && v !== null && String(v).trim() !== '');
   if (!raw) return;
 
-  const s = String(raw).toLowerCase();
-  const nextLng = s.startsWith('en') ? 'en' : (s.startsWith('zh') ? 'zh' : null);
+  const nextLng = normalizeLng(raw);
   if (!nextLng) return;
 
-  try {
-    localStorage.setItem('i18nextLng', nextLng);
-  } catch (e) {
-    // ignore
-  }
+  persistLanguage(nextLng);
 
   if (i18nInstance?.changeLanguage) {
     try {
@@ -43,4 +40,3 @@ export const syncI18nextLngFromLoginResponse = (loginRes, i18nInstance) => {
     }
   }
 };
-

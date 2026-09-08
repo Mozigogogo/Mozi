@@ -1,52 +1,38 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import i18n, { I18N_SSR_DEFAULT_LNG, readStoredLanguage } from '@/i18n/config';
+import i18n, {
+  I18N_SSR_DEFAULT_LNG,
+  normalizeLng,
+  persistLanguage,
+  readStoredLanguage,
+} from '@/i18n/config';
 
 /**
- * 始终渲染 children，保证 SSR HTML 有正文（否则 Google 抓到空壳）。
+ * 始终渲染 children。
  *
- * 语言策略：
- * - 首屏（SSR + 水合）固定 I18N_SSR_DEFAULT_LNG，避免 hydration 文案不一致
- * - mount 后再切到 localStorage 语言（可能有一次文案刷新，可接受）
+ * 不改默认语言（无偏好仍为 en）。
+ * 有 cookie / localStorage 时刷新应对齐该语言，避免先英后中闪一下。
  */
-export default function I18nProvider({ children }) {
-  useEffect(() => {
-    let cancelled = false;
+export default function I18nProvider({ children, initialLng }) {
+  const fromServer = normalizeLng(initialLng);
 
-    const boot = async () => {
-      try {
-        if (i18n.language !== I18N_SSR_DEFAULT_LNG) {
-          await i18n.changeLanguage(I18N_SSR_DEFAULT_LNG);
-        }
-      } catch {
-        /* ignore */
-      }
+  // SSR：按 cookie 渲染，刷新不丢语言；无 cookie 时保持默认 en
+  if (typeof window === 'undefined' && fromServer) {
+    if (normalizeLng(i18n.language) !== fromServer) {
+      i18n.changeLanguage(fromServer);
+    }
+  }
 
-      const stored = readStoredLanguage() || I18N_SSR_DEFAULT_LNG;
-      try {
-        localStorage.setItem('i18nextLng', stored);
-      } catch {
-        /* ignore */
-      }
-
-      if (cancelled) return;
-
-      try {
-        if (i18n.language !== stored) {
-          await i18n.changeLanguage(stored);
-        }
-      } catch {
-        /* ignore */
-      }
-    };
-
-    boot();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  useLayoutEffect(() => {
+    const preferred =
+      readStoredLanguage() || fromServer || I18N_SSR_DEFAULT_LNG;
+    persistLanguage(preferred);
+    if (normalizeLng(i18n.language) !== preferred) {
+      i18n.changeLanguage(preferred);
+    }
+  }, [fromServer]);
 
   return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
 }

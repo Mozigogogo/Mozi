@@ -23,6 +23,7 @@
     "@ton/ton": "^16.2.4",
     "@tonconnect/ui-react": "^2.3.1",
     "antd": "^6.0.0",
+    "@ant-design/cssinjs": "^2.1.2",
     "antd-mobile": "^5.39.0",
     "antd-mobile-icons": "^0.3.0",
     "axios": "^1.10.0",

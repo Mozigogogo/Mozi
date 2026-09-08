@@ -3,21 +3,19 @@
 import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 import { updateUserInfo } from '@/api/user';
+import { persistLanguage } from '@/i18n/languageStorage';
 
 export default function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
 
   const changeLanguage = async (lng) => {
-    const normalizedLng = lng === 'en' ? 'en' : 'zh';
+    const normalizedLng = persistLanguage(lng);
     i18n.changeLanguage(normalizedLng);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('i18nextLng', normalizedLng);
-      if (localStorage.getItem('token')) {
-        try {
-          await updateUserInfo({ language: normalizedLng });
-        } catch (e) {
-          console.error('[LanguageSwitcher] update language failed:', e);
-        }
+    if (typeof window !== 'undefined' && localStorage.getItem('token')) {
+      try {
+        await updateUserInfo({ language: normalizedLng });
+      } catch (e) {
+        console.error('[LanguageSwitcher] update language failed:', e);
       }
     }
   };
@@ -35,4 +33,3 @@ export default function LanguageSwitcher() {
     </div>
   );
 }
-

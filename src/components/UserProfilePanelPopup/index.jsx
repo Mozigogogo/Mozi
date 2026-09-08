@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import RightArrowIcon from '../Icons/RightArrowIcon';
 import { getUserDataInfo, updateUserInfo, completeTask } from '@/api/user';
 import { message } from 'antd';
+import { persistLanguage } from '@/i18n/languageStorage';
 import styles from './index.module.less';
 
 const CDN_PUBLIC_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
@@ -625,7 +626,7 @@ export default function UserProfilePanelPopup({
     i18n.changeLanguage(normalizedLng);
 
     if (typeof window !== 'undefined') {
-      localStorage.setItem('i18nextLng', normalizedLng);
+      persistLanguage(normalizedLng);
       if (localStorage.getItem('token')) {
         try {
           await updateUserInfo({ language: normalizedLng });

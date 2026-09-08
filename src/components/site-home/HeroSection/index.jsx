@@ -9,7 +9,7 @@ export default function HeroSection() {
           <PromoCopy
             className={styles.heroLeft}
             titleAs="h1"
-            title={['MoziInnovations', 'AI Trade Radar']}
+            title={['Mozi', 'AI Trade Radar']}
             subtitle={['News, OI & Long/Short depth.', 'AI-calculated Win Rate.']}
             href="/ai"
             ctaText="Get Started"
@@ -21,7 +21,7 @@ export default function HeroSection() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/ai.gif"
-              alt="MoziInnovations AI assistant preview"
+              alt="Mozi AI assistant preview"
               className={styles.screenImage}
               loading="eager"
               decoding="async"

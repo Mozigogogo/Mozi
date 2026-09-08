@@ -2,7 +2,6 @@
 
 import React, { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Row, Col } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
@@ -11,6 +10,7 @@ import { navigateToOrReload } from '@/utils/clientNavigation';
 import { getAggregationDetail } from '../../api/market';
 import { formatMoneyCompact, localizeMoneyFmt } from '@/utils/formatMoney';
 import { getPcAlarmHref } from '@/hooks/useNavigateToPcAlarm';
+import { pcFlashDebug, pcFlashDebugMeasureAntdGrid } from '@/utils/pcFlashDebug';
 import styles from './index.module.less';
 
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
@@ -75,6 +75,12 @@ const PCMarketOverview = memo(({
     isPositive: false,
     value: '--'
   });
+  const [overviewLoading, setOverviewLoading] = useState(true);
+
+  useEffect(() => {
+    pcFlashDebug('PCMarketOverview mount', { overviewLoading: true });
+    pcFlashDebugMeasureAntdGrid('PCMarketOverview after mount');
+  }, []);
 
   // 加载智能盯盘数据
   useEffect(() => {
@@ -206,6 +212,7 @@ const PCMarketOverview = memo(({
     let timer;
     const loadAggregation = async () => {
       try {
+        pcFlashDebug('aggregation fetch start');
         const res = await getAggregationDetail();
         const data = res?.data || {};
 
@@ -230,8 +237,16 @@ const PCMarketOverview = memo(({
           isPositive: isPositivePercent(volChangeRaw ?? volChangeStr),
           value: volChangeStr.replace('-', '')
         });
+        pcFlashDebug('aggregation fetch ok', {
+          cap: resolveMoney(capNum, capFmt),
+          vol: resolveMoney(volNum, volFmt),
+        });
       } catch (error) {
         console.error('加载市场聚合数据失败:', error);
+        pcFlashDebug('aggregation fetch error', String(error?.message || error));
+      } finally {
+        setOverviewLoading(false);
+        pcFlashDebugMeasureAntdGrid('PCMarketOverview after aggregation');
       }
     };
 
@@ -278,9 +293,24 @@ const PCMarketOverview = memo(({
   ];
 
   return (
-    <Row gutter={16} className={styles.pcMarketOverview}>
-      {cards.map((card) => (
-        <Col span={6} key={card.id}>
+    <div className={styles.pcMarketOverview} data-overview-loading={overviewLoading ? '1' : '0'}>
+      {(overviewLoading
+        ? [
+            { id: 'cap-sk' },
+            { id: 'vol-sk' },
+            { id: 'smart-sk' },
+            { id: 'today-sk' },
+          ]
+        : cards
+      ).map((card) => (
+        <div key={card.id} className={styles.overviewCol}>
+          {overviewLoading ? (
+            <div className={`${styles.statCard} ${styles.statCardSkeleton}`} aria-busy="true">
+              <div className={styles.skeletonLine} style={{ width: '42%' }} />
+              <div className={styles.skeletonLine} style={{ width: '58%', marginTop: 18 }} />
+              <div className={styles.skeletonLine} style={{ width: '28%', marginTop: 14 }} />
+            </div>
+          ) : (
           <div
             className={`${styles.statCard} ${
               card.id === 'today' && selectedCardId === 'today' ? styles.statCardTodaySelected : ''
@@ -440,9 +470,10 @@ const PCMarketOverview = memo(({
               </>
             )}
           </div>
-        </Col>
+          )}
+        </div>
       ))}
-    </Row>
+    </div>
   );
 });
 

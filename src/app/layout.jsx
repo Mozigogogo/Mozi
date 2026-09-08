@@ -20,10 +20,21 @@ import ChunkErrorRecovery from "@/components/ChunkErrorRecovery";
 import GoogleAuthProvider from "../context/GoogleAuthProvider";
 import GlobalClientEffects from "@/components/GlobalClientEffects";
 import PcLayoutGate from "@/components/PcLayoutGate";
+import { PcLayoutShellFallback } from "@/components/PcLayoutGate/PcLayoutShellFallback";
+import AntdRegistry from "@/components/AntdRegistry";
+import ThemeInitScript from "@/components/ThemeInitScript";
+import LanguageInitScript from "@/components/LanguageInitScript";
 import PerfDebug from "@/components/PerfDebug";
 import TgRootRedirectScript from "@/components/TgRootRedirectScript";
 import TelegramSdkLoader from "@/components/TelegramSdkLoader";
 import TgWcWebviewCheck from "@/components/TgWcWebviewCheck";
+import { cookies } from "next/headers";
+import {
+  I18N_COOKIE_KEY,
+  I18N_SSR_DEFAULT_LNG,
+  htmlLangFor,
+  normalizeLng,
+} from "@/i18n/languageStorage";
 import {
   BRAND_LEGAL_NAME,
   DEFAULT_DESCRIPTION,
@@ -93,8 +104,12 @@ export const viewport = {
 };
 
 export default function RootLayout({ children }) {
+  const cookieStore = cookies();
+  const initialLng =
+    normalizeLng(cookieStore.get(I18N_COOKIE_KEY)?.value) || I18N_SSR_DEFAULT_LNG;
+
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang={htmlLangFor(initialLng)} suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -106,6 +121,8 @@ export default function RootLayout({ children }) {
         {/* Keep only truly global/critical preload asset to avoid stealing bandwidth from home first paint */}
         <link rel="preload" href="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png" as="image" />
         <TgRootRedirectScript />
+        <ThemeInitScript />
+        <LanguageInitScript />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
         <TelegramSdkLoader />
@@ -126,7 +143,7 @@ export default function RootLayout({ children }) {
           <DetailDeepLinkHandler />
         </Suspense>
         <ThemeProvider>
-          <I18nProvider>
+          <I18nProvider initialLng={initialLng}>
             <GoogleAuthProvider>
               <TonConnectProvider>
                 <Web3Provider>
@@ -136,9 +153,15 @@ export default function RootLayout({ children }) {
                     会把整页 children 替换成空壳，Google 抓不到正文。
                     fallback 回退为 children，保证首屏 HTML 始终有内容。
                   */}
-                  <Suspense fallback={children}>
-                    <PcLayoutGate>{children}</PcLayoutGate>
-                  </Suspense>
+                  <AntdRegistry>
+                    {/*
+                      外层 Suspense：PcLayoutGate / useSearchParams 挂起时仍渲染 children。
+                      占位壳必须包住 children，禁止空壳闪白。
+                    */}
+                    <Suspense fallback={<PcLayoutShellFallback>{children}</PcLayoutShellFallback>}>
+                      <PcLayoutGate>{children}</PcLayoutGate>
+                    </Suspense>
+                  </AntdRegistry>
                 </Web3Provider>
               </TonConnectProvider>
             </GoogleAuthProvider>

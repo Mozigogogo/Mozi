@@ -1,38 +1,43 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-// 导入翻译资源
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 import autoArbZh from './locales/autoArb.zh.json';
 import autoArbEn from './locales/autoArb.en.json';
+import {
+  I18N_SSR_DEFAULT_LNG,
+  normalizeLng,
+  readStoredLanguage,
+} from './languageStorage';
+
+export {
+  I18N_SSR_DEFAULT_LNG,
+  readStoredLanguage,
+  persistLanguage,
+  normalizeLng,
+  htmlLangFor,
+  I18N_COOKIE_KEY,
+} from './languageStorage';
 
 /**
- * SSR / 首屏 hydration 必须使用同一语言，避免
- * Text content does not match server-rendered HTML。
- * 用户本地语言在 I18nProvider mount 后再同步。
+ * SSR 无 cookie 时仍用 en（不改默认语言）。
+ * 客户端模块加载时立刻读 localStorage / 阻塞脚本标记，刷新不丢语言状态。
  */
-export const I18N_SSR_DEFAULT_LNG = 'en';
-
-export function readStoredLanguage() {
-  if (typeof window === 'undefined') return null;
-  try {
-    const storedLng = localStorage.getItem('i18nextLng');
-    if (!storedLng) return null;
-    return storedLng.toLowerCase().startsWith('zh') ? 'zh' : 'en';
-  } catch {
-    return null;
-  }
+function resolveBootLng() {
+  if (typeof window === 'undefined') return I18N_SSR_DEFAULT_LNG;
+  return readStoredLanguage() || I18N_SSR_DEFAULT_LNG;
 }
 
-// 配置 i18n：初始化一律用 SSR 默认语言
+const bootLng = resolveBootLng();
+
 i18n.use(initReactI18next).init({
   resources: {
     zh: { translation: { ...zh, autoArb: autoArbZh } },
     en: { translation: { ...en, autoArb: autoArbEn } },
   },
-  lng: I18N_SSR_DEFAULT_LNG,
-  fallbackLng: 'en',
+  lng: bootLng,
+  fallbackLng: I18N_SSR_DEFAULT_LNG,
   debug: false,
   initImmediate: false,
   interpolation: {
@@ -43,9 +48,11 @@ i18n.use(initReactI18next).init({
   },
 });
 
-// 防止热更新 / 重复 init 后语言被污染：模块加载时强制回到 SSR 默认语言
-if (i18n.language !== I18N_SSR_DEFAULT_LNG) {
-  i18n.changeLanguage(I18N_SSR_DEFAULT_LNG);
+if (typeof window !== 'undefined') {
+  const preferred = resolveBootLng();
+  if (normalizeLng(i18n.language) !== preferred) {
+    i18n.changeLanguage(preferred);
+  }
 }
 
 export default i18n;

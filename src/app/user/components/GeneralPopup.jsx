@@ -5,6 +5,7 @@ import CopyIcon from '@/components/Icons/CopyIcon';
 import SocialMediaPopup from '@/components/SocialMediaPopup';
 import { EMAIL } from '@/utils/constants';
 import { updateUserInfo } from '@/api/user';
+import { persistLanguage } from '@/i18n/languageStorage';
 
 const GeneralPopup = ({ visible, popType, onClose, t, i18n, isPC = false }) => {
   const copyToClipboard = (value) => {
@@ -20,7 +21,7 @@ const GeneralPopup = ({ visible, popType, onClose, t, i18n, isPC = false }) => {
 
     i18n.changeLanguage(normalizedLng);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('i18nextLng', normalizedLng);
+      persistLanguage(normalizedLng);
       if (localStorage.getItem('token')) {
         try {
           await updateUserInfo({ language: normalizedLng });

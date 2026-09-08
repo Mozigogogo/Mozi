@@ -55,6 +55,7 @@ import AISearchBadge from './AISearchBadge';
 import { DETAIL_CSS_WARMUP } from '@/app/detail/detailCssWarmup';
 import usePcAmplitude from '@/hooks/usePcAmplitude';
 import { PCEvents, trackPcEvent } from '@/utils/pcAmplitude';
+import { pcFlashDebug, pcFlashDebugWatchShell } from '@/utils/pcFlashDebug';
 
 void DETAIL_CSS_WARMUP;
 
@@ -253,6 +254,12 @@ export default function PCLayout({ children }) {
   }, [router]);
 
   const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    pcFlashDebug('PCLayout mount', { pathname, isDark, collapsed });
+    return pcFlashDebugWatchShell('PCLayout');
+  }, [pathname, isDark, collapsed]);
+
   const [notificationCount, setNotificationCount] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showBenefitModal, setShowBenefitModal] = useState(false);
@@ -1047,10 +1054,29 @@ export default function PCLayout({ children }) {
     <PcShellContext.Provider value={true}>
     <Layout className={styles.layout}>
       {/* 顶部 Header */}
-      <Header className={styles.header}>
+      <Header
+        className={styles.header}
+        style={{
+          background: isDark ? '#161a1e' : '#fff',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          height: 64,
+          width: '100%',
+          // 左侧固定 0：折叠按钮槽 80px 恒定，避免展开/收起改 padding 带动 Logo
+          padding: '0 24px 0 0',
+        }}
+      >
         {/* 左侧：菜单 + Logo */}
         <div className={styles.headerLeft}>
-          <div className={styles.menuBtn} onClick={() => setCollapsed(!collapsed)}>
+          <div
+            className={`${styles.menuBtn} ${collapsed ? styles.menuBtnCollapsed : ''}`}
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? '展开侧栏' : '收起侧栏'}
+          >
             <MenuOutlined />
           </div>
           <div
@@ -1181,6 +1207,16 @@ export default function PCLayout({ children }) {
           onCollapse={setCollapsed}
           theme={isDark ? 'dark' : 'light'}
           trigger={null}
+          style={{
+            background: isDark ? '#161a1e' : '#fff',
+            position: 'fixed',
+            left: 0,
+            top: 64,
+            bottom: 0,
+            height: 'calc(100vh - 64px)',
+            zIndex: 99,
+            marginTop: 0,
+          }}
         >
           {/* 用户信息 */}
           <div 

@@ -49,14 +49,14 @@ export default function PCCommunityContent() {
   const [coinPostsTotal, setCoinPostsTotal] = useState(0);
   const [coinPostsHasMore, setCoinPostsHasMore] = useState(true);
   const [coinPostsLoadingMore, setCoinPostsLoadingMore] = useState(false);
+  const [coinLoading, setCoinLoading] = useState(true); // 首屏 true，避免 Empty 闪一下
   const [likedPosts, setLikedPosts] = useState({});
   const [dislikedPosts, setDislikedPosts] = useState({});
-  const [coinLoading, setCoinLoading] = useState(false); // 币种帖子加载状态
   const [selectedCoin, setSelectedCoin] = useState('BTC'); // 当前选中的币种
   const [voteChoice, setVoteChoice] = useState(null); // 投票选择状态
   const [voteData, setVoteData] = useState({ upCount: 0, downCount: 0, totalCount: 0, hasVoted: false, userVoteType: null }); // 投票数据
   const [hotTopics, setHotTopics] = useState([]); // 热门话题列表
-  const [hotTopicsLoading, setHotTopicsLoading] = useState(false); // 热门话题加载状态
+  const [hotTopicsLoading, setHotTopicsLoading] = useState(true); // 首屏 true，避免空态闪一下
   const [hotTopicsPage, setHotTopicsPage] = useState(1); // 热门话题当前页码
   const [hotTopicsTotal, setHotTopicsTotal] = useState(0);
   const HOT_TOPICS_PAGE_SIZE = 10;

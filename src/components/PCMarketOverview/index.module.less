@@ -1,5 +1,27 @@
 .pcMarketOverview {
   margin-bottom: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16PX;
+  width: 100%;
+  box-sizing: border-box;
+
+  .overviewCol {
+    min-width: 0;
+  }
+
+  .statCardSkeleton {
+    pointer-events: none;
+    cursor: default;
+  }
+
+  .skeletonLine {
+    height: 14PX;
+    border-radius: 8PX;
+    background: linear-gradient(90deg, #eef2f7 0%, #f8fafc 50%, #eef2f7 100%);
+    background-size: 200% 100%;
+    animation: overviewSkeletonShine 1.2s ease-in-out infinite;
+  }
 
   .statCard {
     border-radius: 24px;
@@ -371,6 +393,11 @@
 
 :global([data-theme='dark']) {
   .pcMarketOverview {
+    .skeletonLine {
+      background: linear-gradient(90deg, #2a2f36 0%, #3a414b 50%, #2a2f36 100%);
+      background-size: 200% 100%;
+    }
+
     .statCard {
       background: #1c1f24;
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -421,3 +448,13 @@
     }
   }
 }
+
+@keyframes overviewSkeletonShine {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
