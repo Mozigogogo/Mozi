@@ -322,6 +322,34 @@
     line-height: 1;
   }
 
+  .delistedPill {
+    flex-shrink: 0;
+    height: 22PX;
+    padding: 0 10PX;
+    border-radius: 999PX;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-size: 12PX;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+  }
+
+  .listedPill {
+    flex-shrink: 0;
+    height: 22PX;
+    padding: 0 10PX;
+    border-radius: 999PX;
+    background: #d1fae5;
+    color: #059669;
+    font-size: 12PX;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+  }
+
   .preheatBar {
     margin-top: 10PX;
     display: flex;
@@ -410,6 +438,34 @@
     flex-shrink: 0;
     margin-top: 2PX;
     color: #c0c4cc;
+  }
+
+  .delistReasonBox {
+    margin-top: 10PX;
+    padding: 10PX 12PX;
+    border-radius: 8PX;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-size: 13PX;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+  }
+
+  .eventCardDelisted {
+    .eventDescRow {
+      margin-top: 12PX;
+    }
+  }
+
+  .eventCardListed {
+    .eventDescRow {
+      margin-top: 12PX;
+    }
   }
 
   .eventFooter {
@@ -501,6 +557,46 @@
 
   .emptyText {
     color: rgba(255, 255, 255, 0.45);
+  }
+
+  .pcWrapper {
+    .eventCard {
+      background: #1c1f24;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .eventSymbol {
+      color: #f3f4f6;
+    }
+
+    .eventFullName,
+    .eventMeta,
+    .eventFooter {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    .eventDesc {
+      color: #e5e7eb;
+    }
+
+    .delistedPill {
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .listedPill {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+    }
+
+    .delistReasonBox {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .eventFooter {
+      border-top-color: rgba(255, 255, 255, 0.08);
+    }
   }
 }
 

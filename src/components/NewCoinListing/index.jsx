@@ -162,7 +162,21 @@ function pickPremarket(coin) {
   };
 }
 
-function normalizeEventCard(coin, index, t, language) {
+function pickDelistReason(coin) {
+  const raw =
+    coin.reason ||
+    coin.delist_reason ||
+    coin.delistReason ||
+    coin.offline_reason ||
+    coin.offlineReason ||
+    coin.delistReasonText ||
+    coin.reason_text ||
+    coin.reasonText ||
+    '';
+  return String(raw || '').trim();
+}
+
+function normalizeEventCard(coin, index, t, language, listingTab = 'upcoming') {
   const exchange = coin.exchange || coin.exchanges || coin.name || '--';
   const iconUrl = coin.logoUrl || coin.exchangeIcon || coin.icon || getExchangeLogo(exchange);
   const announceDate =
@@ -172,21 +186,39 @@ function normalizeEventCard(coin, index, t, language) {
   const symbol = String(coin.symbol || coin.coin || coin.currency || '').trim().toUpperCase() || '--';
   const fullName = String(coin.fullName || coin.projectName || coin.coinName || coin.pair || '').trim();
   const marketType = resolveInstrumentLabel(coin.instrument || coin.marketType || coin.productType, t);
-  const details = coin.title || coin.deteil || coin.details || coin.description || '';
+  const titleText = String(coin.title || '').trim();
+  const bodyText = String(coin.deteil || coin.details || coin.description || '').trim();
+  const details = titleText || bodyText;
   const link = coin.url || coin.link || coin.href || '';
   const premarket = pickPremarket(coin);
   const refExchange = premarket.exchange;
   const refPrice = formatPrice(premarket.price);
   const refChange = formatChangePercent(premarket.change);
+  const isDelisted = listingTab === 'delisted';
+  const isListed = listingTab === 'listed';
   const statusTag =
-    coin.statusTag ||
-    coin.preheatTag ||
-    (coin.premarket || refExchange || refPrice
-      ? t('calendar.event.preheat', { defaultValue: '预热' })
-      : '');
+    isDelisted || isListed
+      ? ''
+      : coin.statusTag ||
+        coin.preheatTag ||
+        (coin.premarket || refExchange || refPrice
+          ? t('calendar.event.preheat', { defaultValue: '预热' })
+          : '');
   const countdown =
-    formatCountdownFromSec(coin.countdown_sec) || coin.countdown || formatCountdown(listingAt);
-  const syncTag = coin.syncTag || coin.syncAnnounceTag || '';
+    isDelisted || isListed
+      ? ''
+      : formatCountdownFromSec(coin.countdown_sec) || coin.countdown || formatCountdown(listingAt);
+  const syncTag = isDelisted || isListed ? '' : coin.syncTag || coin.syncAnnounceTag || '';
+  // 下线原因：专用字段优先；否则 title + deteil 并存时用正文作原因
+  const delistReason = isDelisted
+    ? pickDelistReason(coin) || (titleText && bodyText && bodyText !== titleText ? bodyText : '')
+    : '';
+  const delistedStatus = isDelisted
+    ? t('calendar.event.delistedStatus', { defaultValue: '已下线' })
+    : '';
+  const listedStatus = isListed
+    ? t('calendar.event.listedStatus', { defaultValue: '已上线' })
+    : '';
 
   return {
     id: coin.id || `${exchange}-${symbol}-${coin.ts || index}`,
@@ -197,6 +229,11 @@ function normalizeEventCard(coin, index, t, language) {
     marketType,
     countdown,
     statusTag,
+    listedStatus,
+    delistedStatus,
+    delistReason,
+    isListed,
+    isDelisted,
     refExchange,
     refPrice,
     refChange,
@@ -242,8 +279,8 @@ const NewCoinListing = ({
         : t('calendar.event.emptyUpcoming', { defaultValue: '暂无即将上线公告' });
 
   const eventCards = useMemo(
-    () => displayList.map((coin, index) => normalizeEventCard(coin, index, t, i18n.language)),
-    [displayList, t, i18n.language]
+    () => displayList.map((coin, index) => normalizeEventCard(coin, index, t, i18n.language, listingTab)),
+    [displayList, t, i18n.language, listingTab]
   );
 
   const openLink = (link) => {
@@ -298,13 +335,24 @@ const NewCoinListing = ({
         ) : isPC ? (
           <div className={styles.eventList}>
             {eventCards.map((item) => {
-              const showPreheat = !!(item.statusTag && (item.refExchange || item.refPrice || item.refChange));
+              const showPreheat =
+                !item.isDelisted &&
+                !item.isListed &&
+                !!(item.statusTag && (item.refExchange || item.refPrice || item.refChange));
               const changeUp = String(item.refChange || '').includes('-') === false && !!item.refChange;
+              const reasonLabel = t('calendar.event.delistReason', { defaultValue: '下线原因' });
+              const reasonText = item.delistReason
+                ? item.delistReason.startsWith(reasonLabel)
+                  ? item.delistReason
+                  : `${reasonLabel}：${item.delistReason}`
+                : '';
 
               return (
                 <article
                   key={item.id}
-                  className={styles.eventCard}
+                  className={`${styles.eventCard} ${item.isDelisted ? styles.eventCardDelisted : ''} ${
+                    item.isListed ? styles.eventCardListed : ''
+                  }`}
                   onClick={() => openLink(item.link)}
                   role={item.link ? 'link' : undefined}
                   tabIndex={item.link ? 0 : undefined}
@@ -336,7 +384,13 @@ const NewCoinListing = ({
                         {item.exchange} · {item.marketType}
                       </div>
                     </div>
-                    {item.countdown ? <span className={styles.countdownPill}>{item.countdown}</span> : null}
+                    {item.listedStatus ? (
+                      <span className={styles.listedPill}>{item.listedStatus}</span>
+                    ) : item.delistedStatus ? (
+                      <span className={styles.delistedPill}>{item.delistedStatus}</span>
+                    ) : item.countdown ? (
+                      <span className={styles.countdownPill}>{item.countdown}</span>
+                    ) : null}
                   </div>
 
                   {showPreheat ? (
@@ -360,6 +414,12 @@ const NewCoinListing = ({
                     </p>
                     {item.link ? <ExternalLinkIcon className={styles.eventLinkIcon} /> : null}
                   </div>
+
+                  {reasonText ? (
+                    <div className={styles.delistReasonBox} title={reasonText}>
+                      {reasonText}
+                    </div>
+                  ) : null}
 
                   <div className={styles.eventFooter}>
                     {t('calendar.event.announceTime', { defaultValue: '公告时间' })} {item.announceText}
