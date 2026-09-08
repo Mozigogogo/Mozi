@@ -199,6 +199,15 @@
     flex-shrink: 0;
   }
 
+  .eventScrollShell {
+    display: flex;
+    flex-direction: column;
+    gap: 10PX;
+    min-width: 0;
+    /* 与空态同高，避免 loading → 暂无 时高度塌陷抖动 */
+    min-height: 242PX;
+  }
+
   .eventList {
     display: flex;
     flex-direction: row;
@@ -206,23 +215,93 @@
     gap: 12PX;
     overflow-x: auto;
     overflow-y: hidden;
-    padding-bottom: 4PX;
-    scroll-behavior: smooth;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    min-height: 210PX;
+    scroll-behavior: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
+    cursor: grab;
+    touch-action: pan-x;
+    /* 隐藏系统滚动条，改用常显自定义条（避开 macOS overlay 自动隐藏） */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 
     &::-webkit-scrollbar {
-      height: 6PX;
+      display: none;
+      width: 0;
+      height: 0;
     }
+  }
 
-    &::-webkit-scrollbar-thumb {
-      background: rgba(148, 163, 184, 0.55);
-      border-radius: 999PX;
+  .scrollTrack {
+    position: relative;
+    width: 100%;
+    height: 10PX;
+    flex-shrink: 0;
+    border-radius: 999PX;
+    background: rgba(226, 232, 240, 0.95);
+    cursor: pointer;
+    touch-action: none;
+    /* 扩大可点区域，方便拖拽细滑块 */
+    padding: 6PX 0;
+    background-clip: content-box;
+    box-sizing: content-box;
+  }
+
+  /* 空态占位：与 scrollTrack（含上下 padding）同高，避免塌陷 */
+  .scrollTrackSpacer {
+    width: 100%;
+    height: 22PX;
+    flex-shrink: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .scrollTrackIdle {
+    cursor: default;
+
+    .scrollThumb {
+      opacity: 0.45;
+      cursor: default;
     }
+  }
 
-    &::-webkit-scrollbar-track {
-      background: rgba(241, 245, 249, 0.9);
-      border-radius: 999PX;
+  .scrollTrackDragging {
+    cursor: grabbing;
+
+    .scrollThumb {
+      background: rgba(17, 183, 135, 0.85);
+      cursor: grabbing;
+    }
+  }
+
+  .scrollThumb {
+    position: absolute;
+    top: 6PX;
+    left: 0;
+    height: 10PX;
+    min-width: 40PX;
+    border-radius: 999PX;
+    background: rgba(17, 183, 135, 0.65);
+    cursor: grab;
+    will-change: transform;
+    touch-action: none;
+
+    &:hover {
+      background: rgba(17, 183, 135, 0.8);
+    }
+  }
+
+  .eventListDragging {
+    cursor: grabbing;
+    user-select: none;
+    scroll-behavior: auto;
+
+    * {
+      cursor: grabbing;
+      user-select: none;
+      pointer-events: none;
     }
   }
 
@@ -483,6 +562,17 @@
     border-radius: 14PX;
     padding: 32PX 20PX;
     box-shadow: none;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 嵌在 scrollShell 内：高度对齐卡片行，滚动条由 shell 底部占位 */
+  .emptyStateInShell {
+    min-height: 210PX;
+    width: 100%;
+    margin: 0;
   }
 
   .emptyText {
@@ -496,7 +586,7 @@
     background: #f4f4f6;
     border: 1px solid #e5e5e8;
     border-radius: 14PX;
-    min-height: 96PX;
+    min-height: 242PX;
     padding: 0;
     box-shadow: none;
   }
@@ -560,6 +650,22 @@
   }
 
   .pcWrapper {
+    .scrollTrack {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .scrollThumb {
+      background: rgba(52, 211, 153, 0.65);
+
+      &:hover {
+        background: rgba(52, 211, 153, 0.85);
+      }
+    }
+
+    .scrollTrackDragging .scrollThumb {
+      background: rgba(52, 211, 153, 0.9);
+    }
+
     .eventCard {
       background: #1c1f24;
       border-color: rgba(255, 255, 255, 0.08);

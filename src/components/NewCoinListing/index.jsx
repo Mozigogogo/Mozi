@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
@@ -259,10 +259,165 @@ const NewCoinListing = ({
   totalCount,
 }) => {
   const { t, i18n } = useTranslation();
+  const eventListRef = useRef(null);
+  const scrollTrackRef = useRef(null);
+  const dragMovedRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isThumbDragging, setIsThumbDragging] = useState(false);
+  const [scrollMetrics, setScrollMetrics] = useState({
+    canScroll: false,
+    thumbWidth: 40,
+    thumbLeft: 0,
+  });
 
   const coinListings = data || [];
   const displayList = showMore || isPC ? coinListings : coinListings.slice(0, 3);
   const displayTotal = Number.isFinite(Number(totalCount)) ? Number(totalCount) : coinListings.length;
+
+  const syncScrollMetrics = useCallback(() => {
+    const el = eventListRef.current;
+    const track = scrollTrackRef.current;
+    if (!el || !track) return;
+
+    const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
+    const trackWidth = track.clientWidth;
+    if (maxScroll <= 0 || trackWidth <= 0) {
+      setScrollMetrics({ canScroll: false, thumbWidth: Math.max(trackWidth, 40), thumbLeft: 0 });
+      return;
+    }
+
+    const ratio = el.clientWidth / el.scrollWidth;
+    const thumbWidth = Math.max(40, Math.round(trackWidth * ratio));
+    const maxThumbLeft = Math.max(0, trackWidth - thumbWidth);
+    const thumbLeft = Math.round((el.scrollLeft / maxScroll) * maxThumbLeft);
+    setScrollMetrics({ canScroll: true, thumbWidth, thumbLeft });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isPC) return undefined;
+    syncScrollMetrics();
+    const el = eventListRef.current;
+    if (!el) return undefined;
+
+    const onScroll = () => syncScrollMetrics();
+    el.addEventListener('scroll', onScroll, { passive: true });
+
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => syncScrollMetrics()) : null;
+    ro?.observe(el);
+    if (scrollTrackRef.current) ro?.observe(scrollTrackRef.current);
+    window.addEventListener('resize', syncScrollMetrics);
+
+    const timer = window.setTimeout(syncScrollMetrics, 100);
+
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      ro?.disconnect();
+      window.removeEventListener('resize', syncScrollMetrics);
+      window.clearTimeout(timer);
+    };
+  }, [isPC, loading, displayList.length, syncScrollMetrics]);
+
+  const onListPointerDown = useCallback(
+    (event) => {
+      if (!isPC) return;
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      const el = eventListRef.current;
+      if (!el) return;
+
+      const startX = event.clientX;
+      const startScrollLeft = el.scrollLeft;
+      let moved = false;
+      dragMovedRef.current = false;
+      setIsDragging(true);
+
+      const onMove = (ev) => {
+        const dx = ev.clientX - startX;
+        if (!moved && Math.abs(dx) < 4) return;
+        moved = true;
+        dragMovedRef.current = true;
+        el.scrollLeft = startScrollLeft - dx;
+        ev.preventDefault();
+      };
+
+      const onUp = () => {
+        setIsDragging(false);
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+        if (moved) {
+          window.setTimeout(() => {
+            dragMovedRef.current = false;
+          }, 0);
+        }
+      };
+
+      window.addEventListener('pointermove', onMove, { passive: false });
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
+    },
+    [isPC]
+  );
+
+  const onListClickCapture = useCallback((event) => {
+    if (!dragMovedRef.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragMovedRef.current = false;
+  }, []);
+
+  const onTrackPointerDown = useCallback(
+    (event) => {
+      if (!isPC) return;
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      const el = eventListRef.current;
+      const track = scrollTrackRef.current;
+      if (!el || !track) return;
+
+      const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
+      if (maxScroll <= 0) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const trackWidth = track.clientWidth;
+      const ratio = el.clientWidth / el.scrollWidth;
+      const thumbWidth = Math.max(40, Math.round(trackWidth * ratio));
+      const maxThumbLeft = Math.max(0, trackWidth - thumbWidth);
+      const trackRect = track.getBoundingClientRect();
+      const clickX = event.clientX - trackRect.left;
+      const isThumb = Boolean(
+        event.target instanceof Element && event.target.closest(`.${styles.scrollThumb}`)
+      );
+
+      if (!isThumb && maxThumbLeft > 0) {
+        const nextLeft = Math.min(maxThumbLeft, Math.max(0, clickX - thumbWidth / 2));
+        el.scrollLeft = (nextLeft / maxThumbLeft) * maxScroll;
+      }
+
+      const startX = event.clientX;
+      const startScrollLeft = el.scrollLeft;
+      setIsThumbDragging(true);
+
+      const onMove = (ev) => {
+        if (maxThumbLeft <= 0) return;
+        const dx = ev.clientX - startX;
+        el.scrollLeft = startScrollLeft + (dx / maxThumbLeft) * maxScroll;
+        ev.preventDefault();
+      };
+
+      const onUp = () => {
+        setIsThumbDragging(false);
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+      };
+
+      window.addEventListener('pointermove', onMove, { passive: false });
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
+    },
+    [isPC]
+  );
 
   const sectionTitle =
     title ||
@@ -287,6 +442,26 @@ const NewCoinListing = ({
     if (!link) return;
     window.open(link, '_blank', 'noopener,noreferrer');
   };
+
+  const renderPcScrollbar = () => (
+    <div
+      ref={scrollTrackRef}
+      className={`${styles.scrollTrack} ${scrollMetrics.canScroll ? '' : styles.scrollTrackIdle} ${
+        isThumbDragging ? styles.scrollTrackDragging : ''
+      }`}
+      role="scrollbar"
+      aria-orientation="horizontal"
+      onPointerDown={onTrackPointerDown}
+    >
+      <div
+        className={styles.scrollThumb}
+        style={{
+          width: `${scrollMetrics.thumbWidth}px`,
+          transform: `translate3d(${scrollMetrics.thumbLeft}px, 0, 0)`,
+        }}
+      />
+    </div>
+  );
 
   return (
     <div className={`${styles.wrapper} ${isPC ? styles.pcWrapper : ''}`}>
@@ -316,12 +491,20 @@ const NewCoinListing = ({
       <div className={styles.container}>
         {loading ? (
           isPC ? (
-            <div className={styles.eventList}>
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div className={`${styles.eventCard} ${styles.loadingEventCard}`} key={`loading-${index}`}>
-                  {index === 1 ? <div className={styles.loadingSpinner} /> : null}
-                </div>
-              ))}
+            <div className={styles.eventScrollShell}>
+              <div
+                ref={eventListRef}
+                className={`${styles.eventList} ${isDragging ? styles.eventListDragging : ''}`}
+                onPointerDown={onListPointerDown}
+                onClickCapture={onListClickCapture}
+              >
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div className={`${styles.eventCard} ${styles.loadingEventCard}`} key={`loading-${index}`}>
+                    {index === 1 ? <div className={styles.loadingSpinner} /> : null}
+                  </div>
+                ))}
+              </div>
+              {renderPcScrollbar()}
             </div>
           ) : (
             <div className={styles.loadingState}>
@@ -329,12 +512,27 @@ const NewCoinListing = ({
             </div>
           )
         ) : coinListings.length === 0 ? (
-          <div className={styles.emptyState}>
-            <p className={styles.emptyText}>{isPC ? emptyText : t('user.noNewListings') || '暂无新币上线'}</p>
-          </div>
+          isPC ? (
+            <div className={styles.eventScrollShell}>
+              <div className={`${styles.emptyState} ${styles.emptyStateInShell}`}>
+                <p className={styles.emptyText}>{emptyText}</p>
+              </div>
+              <div className={styles.scrollTrackSpacer} aria-hidden />
+            </div>
+          ) : (
+            <div className={styles.emptyState}>
+              <p className={styles.emptyText}>{t('user.noNewListings') || '暂无新币上线'}</p>
+            </div>
+          )
         ) : isPC ? (
-          <div className={styles.eventList}>
-            {eventCards.map((item) => {
+          <div className={styles.eventScrollShell}>
+            <div
+              ref={eventListRef}
+              className={`${styles.eventList} ${isDragging ? styles.eventListDragging : ''}`}
+              onPointerDown={onListPointerDown}
+              onClickCapture={onListClickCapture}
+            >
+              {eventCards.map((item) => {
               const showPreheat =
                 !item.isDelisted &&
                 !item.isListed &&
@@ -428,6 +626,8 @@ const NewCoinListing = ({
                 </article>
               );
             })}
+            </div>
+            {renderPcScrollbar()}
           </div>
         ) : (
           <div className={styles.scroll}>
