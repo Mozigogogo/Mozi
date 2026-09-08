@@ -137,11 +137,10 @@ export default function SiteHomePage() {
           <p className={styles.aboutSeoEn}>
             {BRAND_LEGAL_NAME} (Mozi / 墨子) is a crypto data intelligence platform
             offering AI market prediction, quant strategy assistant, smart price alerts, sector
-            rotation insights, arbitrage radar, and a trading community. Official website:
-            https://moziai.xyz
+            rotation insights, arbitrage radar, and a trading community.
           </p>
           <p className={styles.aboutSeoZh}>
-            {BRAND_LEGAL_NAME}（Mozi / 墨子）是加密货币数据分析平台，提供 AI 行情预测、量化策略助手、智能价格预警、板块轮动、套利雷达与交易社区。官网：https://moziai.xyz
+            {BRAND_LEGAL_NAME}（Mozi / 墨子）是加密货币数据分析平台，提供 AI 行情预测、量化策略助手、智能价格预警、板块轮动、套利雷达与交易社区。
           </p>
 
           {/* 欧易风格多列页脚：突出 首页 / 发现 / 社区 / AI分析 */}

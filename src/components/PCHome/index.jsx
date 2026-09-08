@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Row, Col, Card, Tabs, Table, Tag, Carousel, Skeleton, message } from 'antd';
+import { Row, Col, Card, Tabs, Table, Tag, Carousel, Skeleton, message, ConfigProvider } from 'antd';
 import { 
   RiseOutlined, 
   FallOutlined, 
@@ -504,6 +504,13 @@ export default function PCHome() {
   };
 
   return (
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#11B787',
+        },
+      }}
+    >
     <div className={styles.pcHome}>
       {/* Banner 3D轮播 */}
       <div className={styles.bannerWrapper}>
@@ -677,5 +684,6 @@ export default function PCHome() {
         </Card>
       </div>
     </div>
+    </ConfigProvider>
   );
 }
