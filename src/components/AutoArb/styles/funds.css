@@ -1,0 +1,387 @@
+/* ── Account Funds（模拟仓 / 真实账户）───────────────────────────────────── */
+.mozi-autoarb .funds-view {
+  max-width: 1100px;
+}
+
+.mozi-autoarb .funds-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.mozi-autoarb .funds-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.mozi-autoarb .funds-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--t1);
+  letter-spacing: -0.02em;
+}
+
+.mozi-autoarb .funds-sub {
+  margin: 8px 0 0;
+  max-width: 560px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--t2);
+}
+
+.mozi-autoarb .funds-hero-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mozi-autoarb .funds-btn {
+  min-width: 108px;
+  padding: 10px 14px;
+  border-radius: var(--rs);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mozi-autoarb .funds-btn.btn-ghost,
+.mozi-autoarb .funds-view .btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--t1);
+}
+
+.mozi-autoarb .funds-view .btn-ghost:hover {
+  background: var(--surface);
+}
+
+.mozi-autoarb .funds-view .btn-full {
+  border: none;
+  text-align: center;
+}
+
+.mozi-autoarb .funds-btn-primary {
+  background: var(--gold);
+  color: #fff;
+  border: none;
+}
+
+.mozi-autoarb .funds-btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+.mozi-autoarb .funds-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.mozi-autoarb .funds-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--rs);
+  margin-bottom: 14px;
+  font-size: 12px;
+}
+
+.mozi-autoarb .funds-banner-warn {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: var(--warn);
+}
+
+.mozi-autoarb .funds-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.mozi-autoarb .funds-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  min-height: 280px;
+}
+
+.mozi-autoarb .funds-card-paper {
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.mozi-autoarb .funds-card-live {
+  box-shadow: inset 3px 0 0 #3b82f6;
+}
+
+.mozi-autoarb .funds-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mozi-autoarb .funds-card-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--gold-dim);
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.mozi-autoarb .funds-card-badge.is-live {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+
+.mozi-autoarb .funds-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--t1);
+}
+
+.mozi-autoarb .funds-card-hint {
+  max-width: 180px;
+  text-align: right;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--t3);
+}
+
+.mozi-autoarb .funds-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mozi-autoarb .funds-metric {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  padding: 12px;
+}
+
+.mozi-autoarb .funds-metric-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--t3);
+  margin-bottom: 6px;
+}
+
+.mozi-autoarb .funds-metric-val {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--t1);
+  line-height: 1.1;
+}
+
+.mozi-autoarb .funds-metric-sub {
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--t3);
+}
+
+.mozi-autoarb .funds-pnl-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.mozi-autoarb .funds-pnl-lbl {
+  font-size: 12px;
+  color: var(--t2);
+  margin-right: 8px;
+}
+
+.mozi-autoarb .funds-pnl-val {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--t1);
+}
+
+.mozi-autoarb .funds-pnl-val.is-pos {
+  color: var(--pos);
+}
+
+.mozi-autoarb .funds-pnl-val.is-neg {
+  color: var(--danger);
+}
+
+.mozi-autoarb .funds-link-btn {
+  border: none;
+  background: transparent;
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.mozi-autoarb .funds-link-btn:hover {
+  text-decoration: underline;
+}
+
+.mozi-autoarb .funds-empty,
+.mozi-autoarb .funds-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 200px;
+  padding: 8px 12px 4px;
+  color: var(--t2);
+  font-size: 13px;
+}
+
+.mozi-autoarb .funds-empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+}
+
+.mozi-autoarb .funds-empty-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--t1);
+}
+
+.mozi-autoarb .funds-empty-sub {
+  margin: 0 0 18px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--t3);
+  max-width: 280px;
+}
+
+.mozi-autoarb .funds-connect-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 240px;
+  min-height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.22);
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mozi-autoarb .funds-connect-btn:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.28);
+}
+
+.mozi-autoarb .funds-connect-btn:active {
+  transform: translateY(1px);
+}
+
+.mozi-autoarb .funds-ex-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mozi-autoarb .funds-ex-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mozi-autoarb .funds-ex-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--rs);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.mozi-autoarb .funds-ex-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t1);
+}
+
+.mozi-autoarb .funds-ex-status {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--t3);
+}
+
+.mozi-autoarb .funds-ex-status.is-on {
+  color: var(--pos);
+}
+
+.mozi-autoarb .funds-ex-vals {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--t2);
+}
+
+.mozi-autoarb .funds-footnote {
+  margin: 16px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--t3);
+}
+
+@media (max-width: 900px) {
+  .mozi-autoarb .funds-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mozi-autoarb .funds-hero {
+    flex-direction: column;
+  }
+
+  .mozi-autoarb .funds-card-hint {
+    text-align: left;
+    max-width: none;
+  }
+}

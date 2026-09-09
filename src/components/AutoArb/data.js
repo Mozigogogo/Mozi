@@ -4,6 +4,8 @@ export const NAV_ITEMS = [
   { id: 'landing', labelKey: 'autoArb.nav.landing' },
   { id: 'dashboard', labelKey: 'autoArb.nav.dashboard' },
   { id: 'vault', labelKey: 'autoArb.nav.vault' },
+  // TODO: 临时隐藏「账户资金」，接口就绪后恢复
+  // { id: 'funds', labelKey: 'autoArb.nav.funds' },
   { id: 'wizard', labelKey: 'autoArb.nav.wizard' },
 ];
 

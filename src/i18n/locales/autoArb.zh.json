@@ -7,6 +7,7 @@
     "landing": "产品介绍",
     "dashboard": "策略中心",
     "vault": "API 管理",
+    "funds": "账户资金",
     "wizard": "新建策略"
   },
   "confirm": {
@@ -22,6 +23,44 @@
     "freeSignup": "免费注册即可使用",
     "contactPro": "联系我们升级专业版",
     "contactBiz": "BD@mozi.fund"
+  },
+  "funds": {
+    "eyebrow": "资金总览",
+    "title": "账户资金",
+    "sub": "区分模拟仓占用与真实交易所余额。策略中心里的仓位数字应对齐模拟仓占用，而不是「投入总资金」。",
+    "refresh": "刷新",
+    "refreshing": "刷新中…",
+    "retry": "重试",
+    "goVault": "去 API 管理",
+    "goDashboard": "查看策略中心 →",
+    "loading": "加载中…",
+    "loadFailed": "加载账户资金失败",
+    "mockBanner": "当前为本地模拟数据（接口未就绪或失败时自动回落），数值仅供 UI 预览。",
+    "footnote": "正式数据来自 GET /autoarb/api/v1/account/funds；接口可用后将自动切换为真实返回。",
+    "fields": {
+      "equity": "权益",
+      "available": "可用",
+      "occupied": "占用",
+      "occupiedHint": "已划给运行中策略的额度",
+      "usagePct": "使用率",
+      "unrealizedPnl": "未实现盈亏"
+    },
+    "paper": {
+      "badge": "Paper",
+      "title": "模拟仓",
+      "hint": "创建策略时的 capital 从这里占用"
+    },
+    "live": {
+      "badge": "Live",
+      "title": "真实账户",
+      "hint": "绑定交易所 API 后同步余额",
+      "disconnectedTitle": "尚未连接真实账户",
+      "disconnectedSub": "在 API 管理中添加仅交易权限的密钥后，这里会显示各交易所权益与可用资金。",
+      "connectCta": "连接交易所 API",
+      "exchanges": "分所明细",
+      "connected": "已连接",
+      "offline": "离线"
+    }
   },
   "landing": {
     "hero": {
@@ -242,12 +281,12 @@
   "dashboard": {
     "emergencyBar": {
       "runningCount": "{{count}} 个策略运行中",
-      "totalPosition": "总仓位",
+      "totalPosition": "模拟仓占用",
       "todayPnl": "今日净收益",
       "stopAll": "紧急停止全部"
     },
     "stats": {
-      "totalCapital": "投入总资金",
+      "totalCapital": "模拟仓占用",
       "activeStrategies": "跨 {{count}} 个活跃策略",
       "cumulativePnl": "累计净收益",
       "totalReturn": "{{pct}}% 总回报",
@@ -394,6 +433,7 @@
       "paused": "策略已暂停，当前仓位维持不变",
       "resumed": "策略已恢复运行",
       "paramsUpdated": "策略参数已更新",
+      "loadConfigFailed": "加载策略配置失败",
       "cloneConfig": "已带入「{{name}}」的配置，可调整后创建新策略",
       "closeSent": "已发送平仓信号..."
     },

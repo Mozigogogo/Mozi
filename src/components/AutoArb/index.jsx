@@ -6,6 +6,7 @@ import { useStrategyCenter } from '@/hooks/useStrategyCenter';
 import Landing from './Landing';
 import Dashboard from './Dashboard';
 import Vault from './Vault';
+import Funds from './Funds';
 import Wizard from './Wizard';
 import { NAV_ITEMS } from './data';
 import './index.css';
@@ -126,6 +127,15 @@ export default function AutoArb({ onSwitchToRadar, className }) {
         )}
         {view === 'vault' && (
           <Vault
+            onNavigate={(v) => {
+              if (v === 'wizard') startNewWizard(null);
+              else setView(v);
+            }}
+            onToast={showToast}
+          />
+        )}
+        {view === 'funds' && (
+          <Funds
             onNavigate={(v) => {
               if (v === 'wizard') startNewWizard(null);
               else setView(v);

@@ -7,6 +7,7 @@
     "landing": "Overview",
     "dashboard": "Strategies",
     "vault": "API Keys",
+    "funds": "Account Funds",
     "wizard": "New Strategy"
   },
   "confirm": {
@@ -22,6 +23,44 @@
     "freeSignup": "Sign up free to get started",
     "contactPro": "Contact us to upgrade to Pro",
     "contactBiz": "BD@mozi.fund"
+  },
+  "funds": {
+    "eyebrow": "Balances",
+    "title": "Account funds",
+    "sub": "Separate paper-account occupancy from live exchange balances. Strategy-center position totals should match paper occupancy — not “total capital invested”.",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…",
+    "retry": "Retry",
+    "goVault": "API management",
+    "goDashboard": "Open strategies →",
+    "loading": "Loading…",
+    "loadFailed": "Failed to load account funds",
+    "mockBanner": "Showing local mock data (API unavailable). Numbers are for UI preview only.",
+    "footnote": "Live data comes from GET /autoarb/api/v1/account/funds; the page switches automatically once the API is up.",
+    "fields": {
+      "equity": "Equity",
+      "available": "Available",
+      "occupied": "Occupied",
+      "occupiedHint": "Allocated to running strategies",
+      "usagePct": "Usage",
+      "unrealizedPnl": "Unrealized P&L"
+    },
+    "paper": {
+      "badge": "Paper",
+      "title": "Paper account",
+      "hint": "Strategy capital is reserved from here"
+    },
+    "live": {
+      "badge": "Live",
+      "title": "Live account",
+      "hint": "Synced after exchange API keys are linked",
+      "disconnectedTitle": "No live account connected",
+      "disconnectedSub": "Add trade-only API keys under API management to see equity and available balances per exchange.",
+      "connectCta": "Connect exchange API",
+      "exchanges": "By exchange",
+      "connected": "Connected",
+      "offline": "Offline"
+    }
   },
   "landing": {
     "hero": {
@@ -242,12 +281,12 @@
   "dashboard": {
     "emergencyBar": {
       "runningCount": "{{count}} strategies running",
-      "totalPosition": "Total position",
+      "totalPosition": "Paper occupied",
       "todayPnl": "Today's net P&L",
       "stopAll": "Emergency stop all"
     },
     "stats": {
-      "totalCapital": "Total capital deployed",
+      "totalCapital": "Paper occupied",
       "activeStrategies": "Across {{count}} active strategies",
       "cumulativePnl": "Cumulative net P&L",
       "totalReturn": "{{pct}}% total return",
@@ -394,6 +433,7 @@
       "paused": "Strategy paused — positions unchanged",
       "resumed": "Strategy resumed",
       "paramsUpdated": "Strategy parameters updated",
+      "loadConfigFailed": "Failed to load strategy config",
       "cloneConfig": "Loaded config from \"{{name}}\" — adjust and create",
       "closeSent": "Close signal sent..."
     },

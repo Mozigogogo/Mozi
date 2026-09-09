@@ -645,6 +645,74 @@ async function postStrategyAction(id, action) {
   };
 }
 
+/**
+ * @param {unknown} raw
+ */
+export function normalizeStrategyConfig(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const id = String(raw.id || '').trim();
+  if (!id) return null;
+  const editableRaw =
+    raw.editable && typeof raw.editable === 'object' ? raw.editable : {};
+  const status = String(raw.status || '').toLowerCase();
+  const runningLocked = status === 'running';
+  return {
+    id,
+    name: String(raw.name || id),
+    type: String(raw.type || raw.typeKey || 'funding')
+      .trim()
+      .toLowerCase(),
+    status,
+    mode: String(raw.mode || 'paper').toLowerCase(),
+    leverage: num(raw.leverage, 1),
+    marginMode: String(raw.marginMode || 'isolated').toLowerCase(),
+    capital: raw.capital != null ? num(raw.capital) : undefined,
+    minProfit: num(
+      raw.minProfit != null ? raw.minProfit : raw.minProfitThreshold,
+      0.1,
+    ),
+    dailyLossLimit: num(raw.dailyLossLimit, 5),
+    riskPreset:
+      raw.riskPreset != null ? String(raw.riskPreset).trim() : undefined,
+    toggles:
+      raw.toggles && typeof raw.toggles === 'object' ? raw.toggles : {},
+    editable: {
+      leverage:
+        typeof editableRaw.leverage === 'boolean'
+          ? editableRaw.leverage
+          : !runningLocked,
+      marginMode:
+        typeof editableRaw.marginMode === 'boolean'
+          ? editableRaw.marginMode
+          : !runningLocked,
+      minProfit:
+        typeof editableRaw.minProfit === 'boolean'
+          ? editableRaw.minProfit
+          : true,
+      dailyLossLimit:
+        typeof editableRaw.dailyLossLimit === 'boolean'
+          ? editableRaw.dailyLossLimit
+          : true,
+    },
+    updatedAt: msOrNull(raw.updatedAt),
+    raw,
+  };
+}
+
+/** GET /strategy/{id}/config — 改参弹窗打开时拉取 */
+export async function fetchStrategyConfig(id) {
+  const strategyId = String(id || '').trim();
+  if (!strategyId) throw new Error('strategy id is required');
+  const res = await strategyRequest({
+    url: Interface.STRATEGY_CONFIG(strategyId),
+    method: 'GET',
+  });
+  assertOk(res, 'Failed to load strategy config');
+  const config = normalizeStrategyConfig(res.data);
+  if (!config) throw new Error('Invalid strategy config');
+  return config;
+}
+
 /** PATCH /strategy/{id} */
 export async function updateStrategyParams(id, payload) {
   const strategyId = String(id || '').trim();
@@ -723,6 +791,107 @@ export async function fetchStrategyActivities({ limit = 20 } = {}) {
   });
   assertOk(res, 'Failed to load activities');
   return unwrapListPayload(res.data).map(normalizeActivity).filter(Boolean);
+}
+
+/**
+ * @param {unknown} raw
+ */
+function normalizeFundsBucket(raw, fallbackConnected = true) {
+  const data = raw && typeof raw === 'object' ? raw : {};
+  return {
+    currency: String(data.currency || 'USD'),
+    equity: num(data.equity),
+    available: num(data.available),
+    occupied: num(data.occupied),
+    usagePct: num(data.usagePct),
+    unrealizedPnl:
+      data.unrealizedPnl != null && Number.isFinite(Number(data.unrealizedPnl))
+        ? Number(data.unrealizedPnl)
+        : null,
+    realizedPnl:
+      data.realizedPnl != null && Number.isFinite(Number(data.realizedPnl))
+        ? Number(data.realizedPnl)
+        : null,
+    connected:
+      typeof data.connected === 'boolean' ? data.connected : fallbackConnected,
+    updatedAt: msOrNull(data.updatedAt),
+  };
+}
+
+/**
+ * @param {unknown} raw
+ */
+export function normalizeAccountFunds(raw) {
+  const data = raw && typeof raw === 'object' ? raw : {};
+  const paper = normalizeFundsBucket(data.paper, true);
+  const liveRaw = data.live && typeof data.live === 'object' ? data.live : {};
+  const exchanges = asList(liveRaw.exchanges).map((ex, i) => {
+    const row = normalizeFundsBucket(ex, false);
+    return {
+      ...row,
+      exchangeId: String(ex?.exchangeId || ex?.id || `ex_${i}`),
+      exchangeName: String(ex?.exchangeName || ex?.name || ex?.exchangeId || '--'),
+      connected: typeof ex?.connected === 'boolean' ? ex.connected : false,
+    };
+  });
+  const live = {
+    ...normalizeFundsBucket(liveRaw, false),
+    connected: typeof liveRaw.connected === 'boolean' ? liveRaw.connected : false,
+    exchanges,
+  };
+  return {
+    paper,
+    live,
+    updatedAt: msOrNull(data.updatedAt) || paper.updatedAt || live.updatedAt,
+    mock: Boolean(data.mock),
+  };
+}
+
+/** 后端未就绪时的本地演示数据（与策略中心截图量级对齐） */
+export function getMockAccountFunds() {
+  const now = Date.now();
+  return normalizeAccountFunds({
+    mock: true,
+    updatedAt: now,
+    paper: {
+      currency: 'USD',
+      equity: 9863.74,
+      available: 0,
+      occupied: 10000,
+      usagePct: 101.38,
+      unrealizedPnl: -136.26,
+      realizedPnl: 0,
+      updatedAt: now,
+    },
+    live: {
+      connected: false,
+      currency: 'USD',
+      equity: 0,
+      available: 0,
+      occupied: 0,
+      usagePct: 0,
+      exchanges: [],
+      updatedAt: now,
+    },
+  });
+}
+
+/**
+ * GET /account/funds — 模拟仓 + 真实账户资金
+ * 接口失败时回落本地 mock，便于前端联调 UI。
+ */
+export async function fetchAccountFunds(params = {}) {
+  try {
+    const res = await strategyRequest({
+      url: Interface.STRATEGY_ACCOUNT_FUNDS,
+      method: 'GET',
+      params: params?.exchangeId ? { exchangeId: params.exchangeId } : undefined,
+    });
+    assertOk(res, 'Failed to load account funds');
+    return normalizeAccountFunds(res.data);
+  } catch {
+    return getMockAccountFunds();
+  }
 }
 
 /** 策略中心首屏并行拉取 */

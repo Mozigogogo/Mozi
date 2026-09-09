@@ -333,6 +333,8 @@ export const Interface = {
   STRATEGY_LIST: '/autoarb/api/v1/strategy',
   /** GET/PATCH 单策略详情 / 改参 */
   STRATEGY_DETAIL: (id) => `/autoarb/api/v1/strategy/${id}`,
+  /** GET 策略可编辑配置（改参弹窗） */
+  STRATEGY_CONFIG: (id) => `/autoarb/api/v1/strategy/${id}/config`,
   /** POST 暂停 */
   STRATEGY_PAUSE: (id) => `/autoarb/api/v1/strategy/${id}/pause`,
   /** POST 恢复 */
@@ -347,6 +349,8 @@ export const Interface = {
   STRATEGY_CAPITAL: '/autoarb/api/v1/strategy/capital-allocation',
   /** GET 活动流 */
   STRATEGY_ACTIVITIES: '/autoarb/api/v1/strategy/activities',
+  /** GET 模拟仓 / 真实账户资金 */
+  STRATEGY_ACCOUNT_FUNDS: '/autoarb/api/v1/account/funds',
   // 所有币种
   ALL_COIN: '/derivatives/allcoin',
   // 所有交易所

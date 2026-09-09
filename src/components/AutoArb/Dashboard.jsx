@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { fetchStrategyConfig } from '@/api/strategy';
 import { ActivityText, Donut, Gauge, Modal, Sparkline, Tip } from './charts';
 import './styles/dashboard.css';
 
@@ -93,18 +94,41 @@ export default function Dashboard({
   } = center || {};
 
   const [editId, setEditId] = useState(null);
+  const [editConfig, setEditConfig] = useState(null);
   const [editMinProfit, setEditMinProfit] = useState(0.1);
   const [editLoss, setEditLoss] = useState(5);
+  const [loadingEdit, setLoadingEdit] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [savingRisk, setSavingRisk] = useState(false);
+  const editFetchRef = useRef(0);
 
   useEffect(() => {
     if (bootError) onToast?.(bootError);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bootError]);
 
-  const editStrat = strategies?.find((s) => s.id === editId);
+  const editStratFromList = strategies?.find((s) => s.id === editId);
+  const editStrat = editConfig
+    ? {
+        ...(editStratFromList || {}),
+        ...editConfig,
+        minProfitThreshold: editConfig.minProfit,
+      }
+    : editStratFromList;
+  const editEditable = editConfig?.editable || {
+    leverage: editStrat?.status !== 'running',
+    marginMode: editStrat?.status !== 'running',
+    minProfit: true,
+    dailyLossLimit: true,
+  };
   const detailStrat = detail;
+
+  const closeEdit = () => {
+    editFetchRef.current += 1;
+    setEditId(null);
+    setEditConfig(null);
+    setLoadingEdit(false);
+  };
 
   const running = overview?.runningCount ?? strategies?.filter((s) => s.status === 'running').length ?? 0;
   const totalCapital = overview?.totalCapital ?? 0;
@@ -190,21 +214,42 @@ export default function Dashboard({
     }
   };
 
-  const openEdit = (s) => {
-    setEditId(s.id);
+  const openEdit = async (s) => {
+    const id = String(s?.id || '').trim();
+    if (!id) return;
+    const reqId = ++editFetchRef.current;
+    setEditId(id);
+    setEditConfig(null);
     setEditMinProfit(s.minProfitThreshold ?? 0.1);
     setEditLoss(s.dailyLossLimit ?? 5);
+    setLoadingEdit(true);
+    try {
+      const config = await fetchStrategyConfig(id);
+      if (editFetchRef.current !== reqId) return;
+      setEditConfig(config);
+      setEditMinProfit(config.minProfit);
+      setEditLoss(config.dailyLossLimit);
+    } catch (err) {
+      if (editFetchRef.current !== reqId) return;
+      onToast(err?.message || D('toast.loadConfigFailed', { defaultValue: '加载策略配置失败' }));
+    } finally {
+      if (editFetchRef.current === reqId) setLoadingEdit(false);
+    }
   };
 
   const saveEdit = async () => {
-    if (!editId || savingEdit) return;
+    if (!editId || savingEdit || loadingEdit) return;
+    const payload = {};
+    if (editEditable.minProfit) payload.minProfit = editMinProfit;
+    if (editEditable.dailyLossLimit) payload.dailyLossLimit = editLoss;
+    if (!Object.keys(payload).length) {
+      closeEdit();
+      return;
+    }
     setSavingEdit(true);
     try {
-      await patchParams(editId, {
-        minProfit: editMinProfit,
-        dailyLossLimit: editLoss,
-      });
-      setEditId(null);
+      await patchParams(editId, payload);
+      closeEdit();
       onToast(`✅ ${D('toast.paramsUpdated')}`);
     } catch (err) {
       onToast(err?.message || D('toast.paramsUpdated'));
@@ -725,8 +770,8 @@ export default function Dashboard({
       </Modal>
 
       <Modal
-        open={!!editStrat}
-        onClose={() => setEditId(null)}
+        open={!!editId}
+        onClose={closeEdit}
         header={
           <>
             <div className="modal-hdr-ico" style={{ background: 'var(--gold-dim)' }}>
@@ -735,7 +780,9 @@ export default function Dashboard({
             <div>
               <div className="modal-title">{D('edit.title')}</div>
               <div className="modal-sub">
-                {D('edit.sub', { name: editStrat?.name })}
+                {D('edit.sub', {
+                  name: editStrat?.name || editStratFromList?.name || editId,
+                })}
               </div>
             </div>
           </>
@@ -746,41 +793,60 @@ export default function Dashboard({
               type="button"
               className="btn-secondary"
               style={{ flex: 1 }}
-              onClick={() => setEditId(null)}
+              onClick={closeEdit}
             >
               {D('edit.cancel')}
             </button>
             <button
               type="button"
               className="btn-primary"
-              style={{ flex: 1, opacity: savingEdit ? 0.7 : 1 }}
+              style={{
+                flex: 1,
+                opacity: savingEdit || loadingEdit ? 0.7 : 1,
+              }}
               onClick={saveEdit}
-              disabled={savingEdit}
+              disabled={
+                savingEdit ||
+                loadingEdit ||
+                (!editEditable.minProfit && !editEditable.dailyLossLimit)
+              }
             >
               {D('edit.save')}
             </button>
           </>
         }
       >
-        {editStrat ? (
+        {editId ? (
           <>
             <div className="field-locked" style={{ marginBottom: 14 }}>
               <div className="rs-row">
                 <div className="rs-label">
                   {D('edit.leverage')}{' '}
-                  <span className="locked-badge">{D('edit.lockedWhileRunning')}</span>
+                  {!editEditable.leverage ? (
+                    <span className="locked-badge">
+                      {D('edit.lockedWhileRunning')}
+                    </span>
+                  ) : null}
                 </div>
-                <div className="rs-val">{editStrat.leverage}x</div>
+                <div className="rs-val">
+                  {editStrat?.leverage != null ? `${editStrat.leverage}x` : '--'}
+                </div>
               </div>
               <div className="rs-row">
                 <div className="rs-label">
                   {D('edit.marginMode')}{' '}
-                  <span className="locked-badge">{D('edit.lockedWhileRunning')}</span>
+                  {!editEditable.marginMode ? (
+                    <span className="locked-badge">
+                      {D('edit.lockedWhileRunning')}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="rs-val">
-                  {editStrat.marginMode === 'isolated'
+                  {editStrat?.marginMode === 'isolated'
                     ? D('detail.isolated')
-                    : D('detail.cross')}
+                    : editStrat?.marginMode === 'cross'
+                      ? D('detail.cross')
+                      : '--'}
                 </div>
               </div>
             </div>
@@ -788,6 +854,11 @@ export default function Dashboard({
               <div className="range-header">
                 <div className="range-lbl">
                   {D('edit.minProfitThreshold')} <Tip tipKey="slippage" />
+                  {!editEditable.minProfit ? (
+                    <span className="locked-badge" style={{ marginLeft: 6 }}>
+                      {D('edit.lockedWhileRunning')}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="range-val">{editMinProfit}%</div>
               </div>
@@ -798,6 +869,7 @@ export default function Dashboard({
                 max="0.5"
                 step="0.05"
                 value={editMinProfit}
+                disabled={!editEditable.minProfit || loadingEdit}
                 onChange={(e) =>
                   setEditMinProfit(parseFloat(parseFloat(e.target.value).toFixed(2)))
                 }
@@ -805,7 +877,14 @@ export default function Dashboard({
             </div>
             <div className="range-row">
               <div className="range-header">
-                <div className="range-lbl">{D('edit.dailyLossLimit')}</div>
+                <div className="range-lbl">
+                  {D('edit.dailyLossLimit')}
+                  {!editEditable.dailyLossLimit ? (
+                    <span className="locked-badge" style={{ marginLeft: 6 }}>
+                      {D('edit.lockedWhileRunning')}
+                    </span>
+                  ) : null}
+                </div>
                 <div className="range-val">{editLoss}%</div>
               </div>
               <input
@@ -815,6 +894,7 @@ export default function Dashboard({
                 max="15"
                 step="0.5"
                 value={editLoss}
+                disabled={!editEditable.dailyLossLimit || loadingEdit}
                 onChange={(e) =>
                   setEditLoss(parseFloat(parseFloat(e.target.value).toFixed(1)))
                 }
