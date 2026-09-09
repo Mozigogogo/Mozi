@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import LoginModal from '../LoginModal';
 import PCAuthModal from '../PCAuthModal';
+import { usePcShell } from '../PcShellContext';
 import styles from './index.module.less';
 import { useTranslation } from 'react-i18next';
 
@@ -10,6 +11,7 @@ export default function PopLogin({ visible = false, onClose, onLoginSuccess }) {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPCAuthModal, setShowPCAuthModal] = useState(false);
   const { t } = useTranslation();
+  const inPcShell = usePcShell();
 
   if (!visible) return null;
 
@@ -23,7 +25,10 @@ export default function PopLogin({ visible = false, onClose, onLoginSuccess }) {
 
   return (
     <>
-      <div className={styles.popupWrap} onClick={handleMaskClick}>
+      <div
+        className={`${styles.popupWrap} ${inPcShell ? styles.popupWrapInShell : ''}`}
+        onClick={handleMaskClick}
+      >
         <div className={styles.loginContainer} onClick={(e) => e.stopPropagation()}>
           <img
             className={styles.loginWarnIcon}

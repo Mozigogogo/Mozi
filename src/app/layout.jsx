@@ -24,6 +24,7 @@ import { PcLayoutShellFallback } from "@/components/PcLayoutGate/PcLayoutShellFa
 import AntdRegistry from "@/components/AntdRegistry";
 import ThemeInitScript from "@/components/ThemeInitScript";
 import LanguageInitScript from "@/components/LanguageInitScript";
+import SessionInitScript from "@/components/SessionInitScript";
 import PerfDebug from "@/components/PerfDebug";
 import TgRootRedirectScript from "@/components/TgRootRedirectScript";
 import TelegramSdkLoader from "@/components/TelegramSdkLoader";
@@ -125,6 +126,7 @@ export default function RootLayout({ children }) {
         <TgRootRedirectScript />
         <ThemeInitScript />
         <LanguageInitScript />
+        <SessionInitScript />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`} suppressHydrationWarning>
         <TelegramSdkLoader />

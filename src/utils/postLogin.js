@@ -165,8 +165,33 @@ export async function fetchUserDataInfoOnce({ force = false, caller = 'unknown' 
 
     if (res?.data) {
       try {
-        localStorage.setItem('userDataInfo', JSON.stringify(res.data));
-        syncAlertConfigFromDatainfo(res.data);
+        let payload = res.data;
+        // 新 datainfo 若缺少嵌套 userInfo，保留本地旧资料
+        if (!payload?.userInfo) {
+          try {
+            const prevRaw = localStorage.getItem('userDataInfo');
+            const prev = prevRaw ? JSON.parse(prevRaw) : null;
+            if (prev?.userInfo) {
+              payload = { ...payload, userInfo: prev.userInfo };
+            }
+          } catch (_) {}
+        }
+        // 若仍无嵌套，尝试用独立 userInfo 键补上
+        if (!payload?.userInfo) {
+          try {
+            const uiRaw = localStorage.getItem('userInfo');
+            if (uiRaw) {
+              const ui = JSON.parse(uiRaw);
+              if (ui && typeof ui === 'object') {
+                payload = { ...payload, userInfo: ui };
+              }
+            }
+          } catch (_) {}
+        }
+        localStorage.setItem('userDataInfo', JSON.stringify(payload));
+        syncAlertConfigFromDatainfo(payload);
+        lastDatainfoSuccessAt = Date.now();
+        return payload;
       } catch {
         // ignore
       }

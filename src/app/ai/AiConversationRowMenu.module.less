@@ -25,17 +25,18 @@
   }
 }
 
+/* PC 默认用 PX，避免 px→vw 在宽屏把删除菜单放大 */
 .menuBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 28PX;
+  height: 28PX;
   margin: 0;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: 8PX;
   background: transparent;
   color: rgba(15, 23, 42, 0.45);
   cursor: pointer;
@@ -75,15 +76,22 @@
 .dropdown {
   :global {
     .ant-dropdown-menu {
-      min-width: 120px;
-      padding: 4px;
-      border-radius: 10px;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+      min-width: 96PX;
+      padding: 4PX;
+      border-radius: 10PX;
+      box-shadow: 0 8PX 24PX rgba(15, 23, 42, 0.12);
     }
 
     .ant-dropdown-menu-item {
-      border-radius: 8px;
-      padding: 8px 10px;
+      border-radius: 8PX;
+      padding: 6PX 10PX !important;
+      min-height: 0 !important;
+      height: auto !important;
+      line-height: 1.3 !important;
+    }
+
+    .ant-dropdown-menu-title-content {
+      line-height: 1.3 !important;
     }
   }
 }
@@ -91,15 +99,16 @@
 .deleteMenuItem {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6PX;
   color: #ef4444;
-  font-size: 14px;
-  line-height: 1.2;
+  font-size: 13PX !important;
+  line-height: 1.3;
+  white-space: nowrap;
 
   :global {
     .anticon {
       color: #ef4444;
-      font-size: 14px;
+      font-size: 13PX !important;
     }
   }
 }
@@ -117,18 +126,18 @@
 
     .ant-dropdown-menu-item {
       border-radius: 8px;
-      padding: 10px 12px;
+      padding: 10px 12px !important;
     }
   }
 }
 
 .deleteMenuItemMobile {
   gap: 8px;
-  font-size: 15px;
+  font-size: 15px !important;
 
   :global {
     .anticon {
-      font-size: 15px;
+      font-size: 15px !important;
     }
   }
 }

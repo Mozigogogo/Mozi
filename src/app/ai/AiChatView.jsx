@@ -22,9 +22,12 @@ import {
 import ExchangePickerModal from '@/components/ExchangePickerModal';
 import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
+import { MOZI_SESSION_CHANGED, notifySessionChanged } from '@/utils/sessionEvents';
+import { hasAuthToken } from '@/utils/readStoredUserInfo';
 import { consumePcAiFromSearch, consumePcAiNav } from '@/utils/pcAiFromSearch';
 import { notifyRouteBootReady } from '@/utils/routeBootLoading';
 import { notifyAiViewReady } from '@/utils/aiNavigation';
+import AiChatLoadingOverlay from './AiChatLoadingOverlay';
 import { notifyAiConversationsChanged } from '@/utils/aiConversationEvents';
 import {
   getAgentConversationMessages,
@@ -41,6 +44,7 @@ import ShareAiChatModal from '@/components/ShareAiChatModal';
 import SignalCardCarousel from '@/components/SignalCardCarousel';
 import MobileAiHistoryDrawer from './MobileAiHistoryDrawer';
 import { fetchLatestScanCache } from '@/api/signals';
+import { usePcShell } from '@/components/PcShellContext';
 import {
   getLocalizedMockAlphaSignalCards,
 } from '@/data/mockAlphaSignalCards';
@@ -57,18 +61,9 @@ function getPcMediaSnapshot() {
   return window.matchMedia(PC_MEDIA_QUERY).matches;
 }
 
-/** SSR / 首帧与 PcLayoutGate 一致，避免 PC 端闪出移动端布局 */
+/** SSR 默认 false；实际 PC 以 PcShell 为准，避免壳内闪出移动端布局 */
 function getPcMediaServerSnapshot() {
   return false;
-}
-
-function hasAuthToken() {
-  if (typeof window === 'undefined') return false;
-  try {
-    return !!localStorage.getItem('token');
-  } catch {
-    return false;
-  }
 }
 
 const AGENT_STREAM_API = '/api/ai/agent/stream';
@@ -529,30 +524,18 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   const DEBUG_SKIP_CHAT_HISTORY_LOAD = false;
 
   const [mounted, setMounted] = useState(false);
+  const inPcShell = usePcShell();
   const isPCMedia = useSyncExternalStore(
     subscribePcMedia,
     getPcMediaSnapshot,
     getPcMediaServerSnapshot,
   );
-  const isPC = propIsPC || isPCMedia;
+  // 已在 PCLayout 壳内时首帧即 PC（与 detail 一致），避免 false→true 闪出移动端 NavBar + rem 放大
+  const isPC = propIsPC || inPcShell || isPCMedia;
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // 首帧 / 切换会话后关掉 PC 内容区 AI 占位，避免只露壳层渐变底
-  useLayoutEffect(() => {
-    let raf2 = 0;
-    const raf1 = window.requestAnimationFrame(() => {
-      raf2 = window.requestAnimationFrame(() => {
-        notifyAiViewReady();
-      });
-    });
-    return () => {
-      window.cancelAnimationFrame(raf1);
-      if (raf2) window.cancelAnimationFrame(raf2);
-    };
-  }, [routeConversationId]);
 
   useEffect(() => {
     if (!mounted || scanCacheRequestRef.current) return;
@@ -626,14 +609,40 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   }, [listening, transcript]);
 
   const [showPopLogin, setShowPopLogin] = useState(false);
-  /** 已登录：进入页先等 /user/datainfo；未登录首帧即可展示空态（避免无 token 也白等一拍） */
+  /** 进页遮罩：先 loading，就绪后再出空态/对话，避免提示词闪两次 */
+  const [isEntryReady, setIsEntryReady] = useState(false);
+  /** 已登录：进入页先等 /user/datainfo */
   const [isBootstrappingUserData, setIsBootstrappingUserData] = useState(hasAuthToken);
   const [hasEnoughPoints, setHasEnoughPoints] = useState(true);   // 当前是否还有可用积分
   const [remainingPoints, setRemainingPoints] = useState(null);
-  const [totalPoints, setTotalPoints] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    try {
+      const cached = localStorage.getItem('userDataInfo');
+      if (!cached) return 0;
+      const parsed = JSON.parse(cached);
+      return typeof parsed?.totalPoints === 'number' ? parsed.totalPoints : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [isTelegramEnv, setIsTelegramEnv] = useState(false);
   const [showPointsLock, setShowPointsLock] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  // 进页就绪后再撤 PC 占位 / 露出空态（勿在首帧就 notify，否则会先出提示词再 loading）
+  useLayoutEffect(() => {
+    if (!isEntryReady || isLoadingHistory) return undefined;
+    let raf2 = 0;
+    const raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        notifyAiViewReady();
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      if (raf2) window.cancelAnimationFrame(raf2);
+    };
+  }, [isEntryReady, isLoadingHistory, routeConversationId]);
   const [isHistoryOverlayExiting, setIsHistoryOverlayExiting] = useState(false);
   /** 同页复用一次 datainfo Promise，避免 effect 重入时重复 await 新请求（全局 fetchUserDataInfoOnce 另有并发去重） */
   const robotDataInfoSyncRef = useRef(null);
@@ -645,6 +654,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
       const token = localStorage.getItem('token');
       if (!token) {
         setIsBootstrappingUserData(false);
+        setIsEntryReady(true);
         return;
       }
 
@@ -668,15 +678,28 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
         if (latest && typeof latest.totalPoints === 'number') {
           setTotalPoints(latest.totalPoints);
         }
+        notifySessionChanged();
       } catch (err) {
         console.warn('[Robot] fetch userDataInfo failed:', err);
       } finally {
         setIsBootstrappingUserData(false);
+        setIsEntryReady(true);
       }
     };
 
-    // 进入页优先保证动画/首屏渲染顺滑：用户数据同步放到空闲时段
-    runWhenIdle(bootstrapUserData);
+    // 进页需要尽快结束 loading 遮罩，直接拉 datainfo（仍有全局去重）
+    bootstrapUserData();
+  }, []);
+
+  // 未登录：短帧后即可出空态
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (localStorage.getItem('token')) return;
+    const timer = window.setTimeout(() => {
+      setIsBootstrappingUserData(false);
+      setIsEntryReady(true);
+    }, 80);
+    return () => window.clearTimeout(timer);
   }, []);
 
   // 壳层已绘制即可关掉路由 Logo loading；用户数据仍用页内 overlay，不阻塞首屏
@@ -1160,18 +1183,28 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
 
   const isBusy = isStreaming;
 
-  // 右上角 “AI Assistant Pro” 升级胶囊：只在空状态展示，开始对话后隐藏
-  // 放在这里是为了确保 `isBootstrappingUserData` / `isStreaming` 已初始化
-  const showUpgradePill = messages.length === 0 && !isBootstrappingUserData && !isBusy && !isLoadingHistory;
+  // 唯一全屏 loading：进页 / 历史；有正文且非历史加载时不挂
+  const showEntryLoading =
+    (isLoadingHistory && !isHistoryOverlayExiting) ||
+    (((!isEntryReady || isBootstrappingUserData) && messages.length === 0));
+  const showUpgradePill =
+    isEntryReady &&
+    !isBootstrappingUserData &&
+    messages.length === 0 &&
+    !isBusy &&
+    !isLoadingHistory;
   const isChatEmpty = showUpgradePill;
   const alphaAlertCount = scanCache?.signalCount ?? 3;
   
-  // 检查登录状态
+  // 检查登录状态：只认 localStorage.token
+  useLayoutEffect(() => {
+    setShowPopLogin(!hasAuthToken());
+  }, []);
+
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
-      setShowPopLogin(true);
-    }
+    const syncLoginGate = () => setShowPopLogin(!hasAuthToken());
+    window.addEventListener(MOZI_SESSION_CHANGED, syncLoginGate);
+    return () => window.removeEventListener(MOZI_SESSION_CHANGED, syncLoginGate);
   }, []);
 
   // Telegram 环境检测：TG 端隐藏语音按钮，避免权限弹窗体验问题
@@ -1883,10 +1916,12 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
           </div>
         ) : null}
         <div
-          className={`${styles.chatScroll} ${isChatEmpty ? styles.chatScrollEmpty : ''}`}
+          className={`${styles.chatScroll} ${isChatEmpty ? styles.chatScrollEmpty : ''} ${
+            showEntryLoading ? styles.chatScrollLoading : ''
+          }`}
           ref={scrollRef}
         >
-          {messages.length === 0 && !isBootstrappingUserData && !isBusy && !isLoadingHistory && (
+          {showUpgradePill && (
             <div className={styles.emptyState}>
               <div className={styles.emptyTextBlock}>
                 <div
@@ -2160,28 +2195,8 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
             </div>
           )}
           
-          {/* 历史记录加载遮罩层 - 只遮罩聊天区域 */}
-          {(isLoadingHistory || isHistoryOverlayExiting) && (
-            <div
-              className={`${styles.loadingOverlay} ${
-                isHistoryOverlayExiting ? styles.loadingOverlayExit : ''
-              }`}
-            >
-              <div className={styles.loadingContent}>
-                <ThinkingAnimation />
-                <div className={styles.loadingText}>{t('common.loading')}</div>
-              </div>
-            </div>
-          )}
-
-          {isBootstrappingUserData && (
-            <div className={styles.loadingOverlay}>
-              <div className={styles.loadingContent}>
-                <ThinkingAnimation />
-                <div className={styles.loadingText}>{t('common.loading')}</div>
-              </div>
-            </div>
-          )}
+          {/* 唯一全屏 loading 结构 */}
+          {showEntryLoading ? <AiChatLoadingOverlay /> : null}
         </div>
 
         <div className={styles.chatInputBar}>

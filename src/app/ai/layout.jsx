@@ -8,14 +8,32 @@ function getRouteConversationId(pathname) {
   return match?.[1] || null;
 }
 
-/** 静态挂载，减少 dynamic 空窗；进页闪屏由 PCLayout 点击占位淡出承接 */
+/**
+ * /ai 壳层：只挂一份 AiChatView（自带 AiChatLoadingOverlay）。
+ * 勿再加 loading.jsx / BootShell，否则会与页内 loading 叠出两份。
+ * children（SEO 等）不占视觉层。
+ */
 export default function AiLayout({ children }) {
   const pathname = usePathname();
   const routeConversationId = getRouteConversationId(pathname);
 
   return (
     <>
-      {children}
+      <div
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          padding: 0,
+          margin: -1,
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        {children}
+      </div>
       <AiChatView routeConversationId={routeConversationId} />
     </>
   );

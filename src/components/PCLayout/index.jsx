@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, memo } from 'react';
 import {
   Layout,
   Menu,
@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { MOZI_SESSION_CHANGED, notifySessionChanged } from '@/utils/sessionEvents';
 import { clearPostLoginSessionFlags } from '@/utils/postLogin';
+import { readBootstrapSession } from '@/utils/readStoredUserInfo';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -40,15 +41,6 @@ import GeneralPopup from '@/app/user/components/GeneralPopup';
 import { getAgentConversations } from '@/api/ai';
 import { MOZI_AI_CONVERSATIONS_CHANGED } from '@/utils/aiConversationEvents';
 import AiConversationRowMenu from '@/app/ai/AiConversationRowMenu';
-import AiChatBootShell from '@/app/ai/AiChatBootShell';
-import {
-  AI_NAVIGATION_HIDE_EVENT,
-  AI_NAVIGATION_READY_EVENT,
-  AI_NAVIGATION_SHOW_EVENT,
-  hideAiNavigationShell,
-  peekAiNavigationPending,
-  showAiNavigationShell,
-} from '@/utils/aiNavigation';
 import { request } from '@/utils/request';
 import { EMAIL, Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
@@ -98,7 +90,7 @@ function normalizeConversationsResponse(res) {
   return [];
 }
 
-const AI_CONVERSATIONS_PAGE_SIZE = 5;
+const AI_CONVERSATIONS_PAGE_SIZE = 3;
 
 const AI_CHAT_ICON = `${CDN_PUBLIC_PREFIX}/icons/new_home/ai_chat.svg`;
 
@@ -254,6 +246,9 @@ export default function PCLayout({ children }) {
     defaultValue: (i18n?.language || '').startsWith('en') ? 'No Favorites' : '暂无收藏自选',
   });
   const [userInfo, setUserInfo] = useState(null);
+  /** 登录态只认 localStorage.token；SSR 无 storage，未就绪前不展示「未登录」避免闪一下 */
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
 
   // 预取详情路由（JS/CSS），降低首次点进详情的 chunk 竞态
   useEffect(() => {
@@ -279,7 +274,7 @@ export default function PCLayout({ children }) {
   // 首次登录引导弹窗 - 与移动端保持一致
   useEffect(() => {
     // 只有已登录用户才显示
-    if (userInfo) {
+    if (isLoggedIn) {
       const hasShown = localStorage.getItem('hasShownBindGuide');
       if (!hasShown) {
         setShowBindBenefitCodeModal(true);
@@ -287,7 +282,7 @@ export default function PCLayout({ children }) {
         localStorage.setItem('hasShownBindGuide', 'true');
       }
     }
-  }, [userInfo]);
+  }, [isLoggedIn]);
   
   // 公告栏数据（全站与社区页一致：24H 快讯）
   const [notices, setNotices] = useState([]);
@@ -356,51 +351,46 @@ export default function PCLayout({ children }) {
         disconnect();
       } catch (_) {}
     }
+    setIsLoggedIn(false);
     setUserInfo(null);
+    setSessionReady(true);
+    try {
+      document.documentElement.removeAttribute('data-mozi-logged-in');
+      document.getElementById('mozi-session-style')?.remove();
+    } catch (_) {}
     setShowUserProfilePopup(false);
     message.success(t('user.logoutSuccess') || '退出成功');
     notifySessionChanged();
   }, [disconnect, web3Connected, t]);
 
-  useEffect(() => {
-    const syncUserInfo = () => {
-      // 优先从 userDataInfo 中读取用户信息
-      const storedUserDataInfo = localStorage.getItem('userDataInfo');
-      if (storedUserDataInfo) {
-        try {
-          const parsed = JSON.parse(storedUserDataInfo);
-          // userDataInfo 中包含 userInfo 对象
-          if (parsed.userInfo) {
-            setUserInfo(parsed.userInfo);
-            return;
-          }
-        } catch (e) {
-          console.error('Parse userDataInfo error:', e);
-        }
-      }
-      
-      // 回退：从 userInfo 中读取
-      const storedUser = localStorage.getItem('userInfo');
-      if (storedUser) {
-        try {
-          setUserInfo(JSON.parse(storedUser));
-        } catch (e) {
-          console.error('Parse user info error:', e);
-        }
+  const syncSessionFromLocalStorage = useCallback(() => {
+    const boot = readBootstrapSession();
+    const loggedIn = !!boot.loggedIn;
+    setIsLoggedIn(loggedIn);
+    setUserInfo(loggedIn ? boot.userInfo : null);
+    setSessionReady(true);
+    try {
+      if (loggedIn) {
+        document.documentElement.setAttribute('data-mozi-logged-in', '1');
       } else {
-        setUserInfo(null);
+        document.documentElement.removeAttribute('data-mozi-logged-in');
+        document.getElementById('mozi-session-style')?.remove();
       }
-    };
-    
-    // 首次加载时同步
-    syncUserInfo();
-    
-    window.addEventListener('storage', syncUserInfo);
-    window.addEventListener(MOZI_SESSION_CHANGED, syncUserInfo);
-    
-    // 定期检查 userInfo 变化（同一标签页内的更新）
-    // 低优先级启动：避免与首页首屏请求抢主线程/网络
-    const startPolling = () => setInterval(syncUserInfo, 5000);
+    } catch (_) {}
+  }, []);
+
+  // 水合后立刻从 localStorage / SessionInitScript 恢复（paint 前，避免闪「未登录」）
+  useLayoutEffect(() => {
+    syncSessionFromLocalStorage();
+  }, [syncSessionFromLocalStorage]);
+
+  useEffect(() => {
+    syncSessionFromLocalStorage();
+
+    window.addEventListener('storage', syncSessionFromLocalStorage);
+    window.addEventListener(MOZI_SESSION_CHANGED, syncSessionFromLocalStorage);
+
+    const startPolling = () => setInterval(syncSessionFromLocalStorage, 5000);
     let timer;
     try {
       if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
@@ -413,13 +403,13 @@ export default function PCLayout({ children }) {
     } catch (_) {
       timer = startPolling();
     }
-    
+
     return () => {
-      window.removeEventListener('storage', syncUserInfo);
-      window.removeEventListener(MOZI_SESSION_CHANGED, syncUserInfo);
+      window.removeEventListener('storage', syncSessionFromLocalStorage);
+      window.removeEventListener(MOZI_SESSION_CHANGED, syncSessionFromLocalStorage);
       if (timer) clearInterval(timer);
     };
-  }, []);
+  }, [syncSessionFromLocalStorage]);
 
   // 获取未读通知数
   useEffect(() => {
@@ -502,9 +492,6 @@ export default function PCLayout({ children }) {
     if (keyword) {
       savePcAiFromSearch(keyword);
     }
-    showAiNavigationShell();
-    setAiBootVisible(true);
-    setAiBootOpaque(true);
     router.push('/ai');
   };
 
@@ -514,9 +501,6 @@ export default function PCLayout({ children }) {
   const [isMineExpanded, setIsMineExpanded] = useState(false);
   const [isAlertsExpanded, setIsAlertsExpanded] = useState(false);
   const [isAiChatExpanded, setIsAiChatExpanded] = useState(false);
-  const [aiBootVisible, setAiBootVisible] = useState(() => peekAiNavigationPending());
-  const [aiBootOpaque, setAiBootOpaque] = useState(() => peekAiNavigationPending());
-  const aiBootHideTimerRef = useRef(null);
   const [watchlist, setWatchlist] = useState([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [alertsList, setAlertsList] = useState([]);
@@ -526,47 +510,9 @@ export default function PCLayout({ children }) {
   const [aiConversationsVisibleCount, setAiConversationsVisibleCount] = useState(
     AI_CONVERSATIONS_PAGE_SIZE,
   );
+  const [aiConversationsLoadingMore, setAiConversationsLoadingMore] = useState(false);
 
-  useEffect(() => {
-    const clearHideTimer = () => {
-      if (aiBootHideTimerRef.current) {
-        window.clearTimeout(aiBootHideTimerRef.current);
-        aiBootHideTimerRef.current = null;
-      }
-    };
 
-    const onShow = () => {
-      clearHideTimer();
-      setAiBootVisible(true);
-      setAiBootOpaque(true);
-    };
-    const onHide = () => {
-      // 淡出后再卸掉，避免占位↔真页硬切闪一下
-      setAiBootOpaque(false);
-      clearHideTimer();
-      aiBootHideTimerRef.current = window.setTimeout(() => {
-        setAiBootVisible(false);
-        aiBootHideTimerRef.current = null;
-      }, 160);
-    };
-    window.addEventListener(AI_NAVIGATION_SHOW_EVENT, onShow);
-    window.addEventListener(AI_NAVIGATION_HIDE_EVENT, onHide);
-    window.addEventListener(AI_NAVIGATION_READY_EVENT, onHide);
-    return () => {
-      clearHideTimer();
-      window.removeEventListener(AI_NAVIGATION_SHOW_EVENT, onShow);
-      window.removeEventListener(AI_NAVIGATION_HIDE_EVENT, onHide);
-      window.removeEventListener(AI_NAVIGATION_READY_EVENT, onHide);
-    };
-  }, []);
-
-  useEffect(() => {
-    // 离开 AI 才清占位；进 AI 时不要强制再盖一层（会与真页叠出闪屏）
-    if (pathname === '/ai' || pathname?.startsWith('/ai/')) return;
-    setAiBootVisible(false);
-    setAiBootOpaque(false);
-    hideAiNavigationShell();
-  }, [pathname]);
 
   useEffect(() => {
     setIsMineExpanded(false);
@@ -630,8 +576,13 @@ export default function PCLayout({ children }) {
   const hasMoreAiConversations = aiConversations.length > aiConversationsVisibleCount;
 
   const handleLoadMoreAiConversations = useCallback(() => {
-    setAiConversationsVisibleCount((prev) => prev + AI_CONVERSATIONS_PAGE_SIZE);
-  }, []);
+    if (aiConversationsLoadingMore) return;
+    setAiConversationsLoadingMore(true);
+    window.setTimeout(() => {
+      setAiConversationsVisibleCount((prev) => prev + AI_CONVERSATIONS_PAGE_SIZE);
+      setAiConversationsLoadingMore(false);
+    }, 220);
+  }, [aiConversationsLoadingMore]);
 
   const fetchWatchlist = useCallback(async () => {
     setWatchlistLoading(true);
@@ -987,9 +938,6 @@ export default function PCLayout({ children }) {
     if (key === '/ai') {
       setActiveContent(null);
       if (pathname !== '/ai') {
-        showAiNavigationShell();
-        setAiBootVisible(true);
-        setAiBootOpaque(true);
         router.push('/ai');
       }
       return;
@@ -1285,7 +1233,7 @@ export default function PCLayout({ children }) {
             marginTop: 0,
           }}
         >
-          {/* 用户信息 */}
+          {/* 用户信息：访客/已登录双槽，可见性由 html[data-mozi-logged-in] 控制（首帧脚本写入，刷新不跳变） */}
           <div 
             className={styles.user}
             onClick={() => {
@@ -1293,27 +1241,49 @@ export default function PCLayout({ children }) {
             }}
             style={{ cursor: 'pointer', position: 'relative' }}
             id="user-info-trigger"
+            suppressHydrationWarning
           >
-            {userInfo ? (
-              <Avatar size={40} src={userInfo.avatar} icon={<UserOutlined />} />
-            ) : (
+            <div className={`${styles.userSlot} ${styles.userSlotGuest}`} data-pc-user-guest>
               <img 
                 src={`${CDN_PUBLIC_PREFIX}/icons/new_home/not_login.svg`} 
-                alt="Not Logged In" 
+                alt="" 
                 style={{ width: 40, height: 40, borderRadius: '50%' }} 
               />
-            )}
-            {!collapsed && (
-              <Text strong className={styles.userName}>
-                {userInfo 
-                  ? (userInfo.nickName || userInfo.nickname || t('pcLayout.user.pcUser'))
-                  : t('pcLayout.user.notLoggedIn')
+              {!collapsed && (
+                <Text strong className={styles.userName}>
+                  {t('pcLayout.user.notLoggedIn')}
+                </Text>
+              )}
+              {!collapsed && (
+                <CaretRightOutlined style={{ marginLeft: 'auto', fontSize: 14, color: '#999' }} />
+              )}
+            </div>
+            <div className={`${styles.userSlot} ${styles.userSlotMember}`} data-pc-user-member>
+              <span
+                data-pc-user-boot-avatar
+                className={styles.bootAvatar}
+                style={
+                  userInfo?.avatar
+                    ? {
+                        backgroundImage: `url(${userInfo.avatar})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }
+                    : undefined
                 }
-              </Text>
-            )}
-            {!collapsed && !userInfo && (
-              <CaretRightOutlined style={{ marginLeft: 'auto', fontSize: 14, color: '#999' }} />
-            )}
+                aria-hidden
+              />
+              {!collapsed && (
+                <span
+                  data-pc-user-boot-name
+                  className={`${styles.bootName} ${
+                    userInfo?.nickName || userInfo?.nickname ? styles.bootNameFilled : ''
+                  }`}
+                >
+                  {userInfo?.nickName || userInfo?.nickname || ''}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* 导航菜单 */}
@@ -1553,9 +1523,6 @@ export default function PCLayout({ children }) {
                       setIsAiChatExpanded((v) => !v);
                       return;
                     }
-                    showAiNavigationShell();
-                    setAiBootVisible(true);
-                    setAiBootOpaque(true);
                     router.push('/ai');
                     setIsAiChatExpanded(true);
                   }}
@@ -1614,9 +1581,6 @@ export default function PCLayout({ children }) {
                                 className={styles.pcAiChatRowMain}
                                 onClick={() => {
                                   setActiveContent(null);
-                                  showAiNavigationShell();
-                                  setAiBootVisible(true);
-                                  setAiBootOpaque(true);
                                   router.push(`/ai/${conversationId}`);
                                 }}
                               >
@@ -1639,13 +1603,17 @@ export default function PCLayout({ children }) {
                         })
                       )}
                     </div>
-                    {hasMoreAiConversations ? (
+                    {hasMoreAiConversations || aiConversationsLoadingMore ? (
                       <button
                         type="button"
                         className={styles.pcAiChatLoadMore}
                         onClick={handleLoadMoreAiConversations}
+                        disabled={aiConversationsLoadingMore}
+                        aria-busy={aiConversationsLoadingMore || undefined}
                       >
-                        {t('common.loadMore')}
+                        {aiConversationsLoadingMore
+                          ? t('common.loading')
+                          : t('common.loadMore')}
                       </button>
                     ) : null}
                   </div>
@@ -1746,7 +1714,7 @@ export default function PCLayout({ children }) {
           >
             <div
               className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''} ${isDetailPage ? styles.contentMainDetail : ''} ${isAiRoute ? styles.contentMainAi : ''} ${isSearchPage ? styles.contentMainSearch : ''}`}
-              style={isAiRoute || aiBootVisible ? { position: 'relative' } : undefined}
+              style={isAiRoute ? { position: 'relative' } : undefined}
             >
               {(() => {
                 if (activeContent === '/find') {
@@ -1761,27 +1729,6 @@ export default function PCLayout({ children }) {
                   return children;
                 }
               })()}
-              {aiBootVisible ? (
-                <div
-                  aria-hidden
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 6,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    minHeight: 0,
-                    overflow: 'hidden',
-                    // 透明：露出与正式 AI 页相同的 homeContent 渐变，避免实色底造成闪白/丢底色
-                    background: 'transparent',
-                    opacity: aiBootOpaque ? 1 : 0,
-                    transition: 'opacity 140ms ease',
-                    pointerEvents: aiBootOpaque ? 'auto' : 'none',
-                  }}
-                >
-                  <AiChatBootShell />
-                </div>
-              ) : null}
             </div>
             {isDetailPage ? <div className={styles.detailFooterSpacer} aria-hidden /> : null}
             
@@ -1805,31 +1752,8 @@ export default function PCLayout({ children }) {
         open={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         onSuccess={() => {
-          // 登录成功后刷新用户信息，并通知详情页订单流等按新会话重算权益
-          const syncUserInfo = () => {
-            const storedUserDataInfo = localStorage.getItem('userDataInfo');
-            if (storedUserDataInfo) {
-              try {
-                const parsed = JSON.parse(storedUserDataInfo);
-                if (parsed.userInfo) {
-                  setUserInfo(parsed.userInfo);
-                  return;
-                }
-              } catch (e) {
-                console.error('Parse userDataInfo error:', e);
-              }
-            }
-            
-            const storedUser = localStorage.getItem('userInfo');
-            if (storedUser) {
-              try {
-                setUserInfo(JSON.parse(storedUser));
-              } catch (e) {
-                console.error('Parse user info error:', e);
-              }
-            }
-          };
-          syncUserInfo();
+          // 登录成功后从 localStorage 恢复侧栏态
+          syncSessionFromLocalStorage();
           notifySessionChanged();
         }}
       />

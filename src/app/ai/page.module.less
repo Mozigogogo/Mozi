@@ -63,6 +63,14 @@
     .chatInputBar {
       flex-shrink: 0;
     }
+
+    .loadingOverlay {
+      background: #f5f6f7;
+      background-image: url('https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/ai_bg.png');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+    }
   }
 
   &.pcMode {
@@ -2196,14 +2204,15 @@
 }
 
 
-// 历史记录加载遮罩层 - 只覆盖聊天内容区域
+// 历史记录 / 进页加载遮罩 - 挡住背后内容，不可透视
 .loadingOverlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: transparent;
+  /* 与 PC homeContent / 聊天区底色对齐，避免透出正文 */
+  background: linear-gradient(180deg, #f0f9ff 0%, #f5f7fa 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2211,6 +2220,14 @@
   opacity: 1;
   transition: opacity 0.2s ease;
   will-change: opacity;
+}
+
+.chatScrollLoading {
+  /* loading 时背后空态/消息不可见 */
+  > *:not(.loadingOverlay) {
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
 }
 
 .loadingOverlayExit {

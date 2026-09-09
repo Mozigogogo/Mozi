@@ -11,6 +11,18 @@
   z-index: 1000;
 }
 
+/* PC 壳内：相对内容区居中，而不是相对整窗（避开侧栏/顶栏偏移） */
+.popupWrapInShell {
+  position: absolute;
+  z-index: 30;
+  background: transparent;
+  pointer-events: none;
+}
+
+.popupWrapInShell .loginContainer {
+  pointer-events: auto;
+}
+
 .loginContainer {
   width: 320PX; /* 原 640rpx → 320px */
   background: #ffffff;
