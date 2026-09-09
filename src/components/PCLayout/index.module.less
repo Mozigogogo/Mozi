@@ -471,9 +471,29 @@
   min-width: 0;
 }
 
-/* 默认藏已登录槽；登录后由 SessionInitScript 全局 CSS 打开 */
+/* 默认藏已登录槽；登录后由下方全局+本地组合规则打开 */
 .userSlotMember {
   display: none;
+}
+
+/* 常驻显隐：选择器需含本地 class，才能通过 CSS Module pure 检查 */
+:global(html:not([data-mozi-logged-in])) {
+  .userSlotMember {
+    display: none !important;
+  }
+}
+
+:global(html[data-mozi-logged-in]) {
+  .userSlotGuest {
+    display: none !important;
+  }
+
+  .userSlotMember {
+    display: flex !important;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .bootAvatar {

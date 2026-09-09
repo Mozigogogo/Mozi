@@ -22,7 +22,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { MOZI_SESSION_CHANGED, notifySessionChanged } from '@/utils/sessionEvents';
 import { clearPostLoginSessionFlags } from '@/utils/postLogin';
-import { readBootstrapSession } from '@/utils/readStoredUserInfo';
+import { readBootstrapSession, writeBootstrapSession } from '@/utils/readStoredUserInfo';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -346,6 +346,7 @@ export default function PCLayout({ children }) {
       localStorage.removeItem('userId');
       clearPostLoginSessionFlags();
     } catch (_) {}
+    writeBootstrapSession({ loggedIn: false, userInfo: null });
     if (web3Connected) {
       try {
         disconnect();

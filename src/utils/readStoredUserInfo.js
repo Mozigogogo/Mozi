@@ -49,25 +49,56 @@ export function readStoredUserInfo() {
   return null;
 }
 
-/** 优先读 SessionInitScript 写入的 window.__MOZI_SESSION__，否则现场读 localStorage */
+/** 把内存中的首帧会话缓存与 localStorage 对齐（登出后必须清掉，否则侧栏会读到旧用户） */
+export function writeBootstrapSession({ loggedIn, userInfo } = {}) {
+  if (typeof window === 'undefined') return;
+  const nextLoggedIn = !!loggedIn;
+  try {
+    window.__MOZI_SESSION__ = {
+      ready: true,
+      loggedIn: nextLoggedIn,
+      userInfo: nextLoggedIn ? userInfo || null : null,
+    };
+  } catch (_) {}
+}
+
+/**
+ * 读会话：登录与否一律以 localStorage.token 为准。
+ * window.__MOZI_SESSION__ 只作首帧展示加速，不能覆盖已登出的 token 状态。
+ */
 export function readBootstrapSession() {
   if (typeof window === 'undefined') {
     return { ready: false, loggedIn: false, userInfo: null };
   }
+
+  const loggedIn = hasAuthToken();
+  let userInfo = null;
+
+  if (loggedIn) {
+    try {
+      const boot = window.__MOZI_SESSION__;
+      if (boot?.ready && boot.loggedIn && boot.userInfo) {
+        userInfo = boot.userInfo;
+      }
+    } catch (_) {}
+    if (!userInfo) {
+      userInfo = readStoredUserInfo();
+    }
+  }
+
+  // 纠正过期的首帧缓存（例如退出后 token 已清，但 __MOZI_SESSION__ 仍为已登录）
   try {
     const boot = window.__MOZI_SESSION__;
-    if (boot && boot.ready) {
-      return {
-        ready: true,
-        loggedIn: !!boot.loggedIn,
-        userInfo: boot.loggedIn ? boot.userInfo || readStoredUserInfo() : null,
-      };
+    if (!boot || boot.ready !== true || !!boot.loggedIn !== loggedIn) {
+      writeBootstrapSession({ loggedIn, userInfo });
+    } else if (loggedIn && !boot.userInfo && userInfo) {
+      writeBootstrapSession({ loggedIn, userInfo });
     }
   } catch (_) {}
-  const loggedIn = hasAuthToken();
+
   return {
     ready: true,
     loggedIn,
-    userInfo: loggedIn ? readStoredUserInfo() : null,
+    userInfo: loggedIn ? userInfo : null,
   };
 }
