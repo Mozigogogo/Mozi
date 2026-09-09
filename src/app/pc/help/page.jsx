@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHelpContent } from './useHelpContent';
+import { getHelpSeoCopy } from '@/utils/seoI18n';
 import styles from './page.module.less';
 
 function ToggleIcon() {
@@ -28,7 +29,7 @@ function escapeRegExp(str) {
 }
 
 export default function PCHelpPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const content = useHelpContent();
 
   const [openFaqId, setOpenFaqId] = useState(null);
@@ -37,6 +38,15 @@ export default function PCHelpPage() {
   const [hiddenItems, setHiddenItems] = useState(new Set());
   const [highlightedQuestions, setHighlightedQuestions] = useState({});
   const itemRefs = useRef({});
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const nextTitle = getHelpSeoCopy(i18n.language).title;
+    if (document.title !== nextTitle) {
+      document.title = nextTitle;
+    }
+    return undefined;
+  }, [i18n.language]);
 
   const toggleFaq = useCallback((id) => {
     setOpenFaqId((prev) => (prev === id ? null : id));

@@ -2837,8 +2837,29 @@
       }
     },
     "ai": {
-      "title": "AI Analysis | MoziInnovations (Mozi)",
-      "description": "MoziInnovations AI Analysis: natural-language insights on crypto markets, sector rotation, arbitrage and quant strategies."
+      "title": "Crypto AI Analysis & Quant Strategy Assistant | Market Insights | MoziInnovations",
+      "description": "MoziInnovations (Mozi) AI Analysis: natural-language insights on Bitcoin and crypto markets, sector rotation, arbitrage opportunities, and quant trading strategies."
+    },
+    "alarm": {
+      "title": "Smart Crypto Price Alerts | Market Notifications | MoziInnovations",
+      "titleWithSymbol": "{{symbol}} Smart Crypto Price Alert | Market Notifications | MoziInnovations",
+      "description": "MoziInnovations (Mozi) smart crypto price alerts: set rise/fall thresholds, daily change triggers, large-order detection and multi-channel notifications."
+    },
+    "achievement": {
+      "title": "Crypto Points Tasks & Achievement Center | Earn Points for Rewards | MoziInnovations",
+      "description": "MoziInnovations (Mozi) achievements and points center: complete daily and starter tasks to earn points, check the points pool and rankings, and invite friends for more rewards."
+    },
+    "subscribe": {
+      "title": "Crypto Membership & VIP Benefits | AI Analysis & Market Privileges | MoziInnovations",
+      "description": "MoziInnovations (Mozi) membership: subscribe to VIP for AI analysis, live markets, price alerts and more crypto data privileges."
+    },
+    "about": {
+      "title": "About MoziInnovations (Mozi) | AI Prediction & Crypto Data Analytics Platform",
+      "description": "About MoziInnovations (Mozi): AI market prediction, quant strategy assistant and crypto data analytics platform. Official site moziai.xyz."
+    },
+    "help": {
+      "title": "Crypto Help Center | FAQ & User Guides | MoziInnovations",
+      "description": "MoziInnovations (Mozi) Help Center: product guides, FAQs, membership, price alerts, AI analysis and more."
     }
   }
 }

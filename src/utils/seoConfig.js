@@ -74,8 +74,8 @@ export const PRIMARY_SITE_HUBS = [
     path: '/ai',
     nameZh: 'AI分析',
     nameEn: 'AI Analysis',
-    title: `AI分析 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`,
-    description: `${BRAND_LEGAL_NAME} AI 分析：用自然语言解读加密行情、板块轮动、套利机会与量化策略建议。`,
+    title: `加密货币 AI 分析与量化策略助手 | 行情预测解读 | MoziInnovations`,
+    description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）AI 分析：用自然语言解读比特币与加密行情、板块轮动、套利机会，并提供量化策略与交易建议。`,
   },
 ];
 

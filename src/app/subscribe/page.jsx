@@ -1,17 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { LeftOutlined } from '@ant-design/icons';
 import VipRechargePageBody from '@/app/vip-recharge/VipRechargePageBody';
 import { safeBack } from '@/utils/navigation';
+import { getSubscribeSeoCopy } from '@/utils/seoI18n';
 import styles from './page.module.less';
 
 function PCSubscribeContent() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const [tabsNode, setTabsNode] = useState(null);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const nextTitle = getSubscribeSeoCopy(i18n.language).title;
+    if (document.title !== nextTitle) {
+      document.title = nextTitle;
+    }
+    return undefined;
+  }, [i18n.language]);
 
   return (
     <div className={styles.pcWrap}>

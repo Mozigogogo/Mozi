@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getAboutSeoCopy } from '@/utils/seoI18n';
 import styles from './page.module.less';
 
 const LOGO_URL = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_login/logo.svg';
@@ -32,12 +33,21 @@ function GridIcon() {
 }
 
 export default function PCAboutPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const coreFunctionItems = useTranslationList('pcAbout.coreFunctionItems');
   const advantageItems = useTranslationList('pcAbout.advantageItems');
   const [joinExpanded, setJoinExpanded] = useState(false);
   const [joinOverflowing, setJoinOverflowing] = useState(false);
   const joinTextRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const nextTitle = getAboutSeoCopy(i18n.language).title;
+    if (document.title !== nextTitle) {
+      document.title = nextTitle;
+    }
+    return undefined;
+  }, [i18n.language]);
 
   const mission = parseIdentity(t('pcAbout.mission'));
   const vision = parseIdentity(t('pcAbout.vision'));

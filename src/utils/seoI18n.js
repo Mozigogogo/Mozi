@@ -56,3 +56,36 @@ export function getCommunityTabSeoCopy(tab, lng) {
   if (key === 'qa') return pickCopy(community.qa, community.all?.title);
   return pickCopy(community.all);
 }
+
+/** @param {string | null | undefined} symbol */
+export function getAlarmSeoCopy(symbol, lng) {
+  const alarm = seoRoot(lng).alarm || {};
+  const base = pickCopy(alarm);
+  const sym = String(symbol || '').trim().toUpperCase();
+  if (!sym) return base;
+  const templated =
+    alarm.titleWithSymbol ||
+    (resolveSeoLng(lng) === 'zh'
+      ? `${sym} 智能加密货币价格预警 | 行情提醒 | MoziInnovations`
+      : `${sym} Smart Crypto Price Alert | Market Notifications | MoziInnovations`);
+  return {
+    title: String(templated).replace(/\{\{\s*symbol\s*\}\}/gi, sym),
+    description: base.description,
+  };
+}
+
+export function getAchievementSeoCopy(lng) {
+  return pickCopy(seoRoot(lng).achievement);
+}
+
+export function getSubscribeSeoCopy(lng) {
+  return pickCopy(seoRoot(lng).subscribe);
+}
+
+export function getAboutSeoCopy(lng) {
+  return pickCopy(seoRoot(lng).about);
+}
+
+export function getHelpSeoCopy(lng) {
+  return pickCopy(seoRoot(lng).help);
+}

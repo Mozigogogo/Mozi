@@ -21,14 +21,24 @@ import { safeBack } from '@/utils/navigation';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
 import { buildInviteDatainfoPatch } from '@/utils/datainfoCommission';
 import { useNavigateToPcAlarm } from '@/hooks/useNavigateToPcAlarm';
+import { getAchievementSeoCopy } from '@/utils/seoI18n';
 import styles from './page.module.less';
 
 function AchievementContent() {
   const router = useRouter();
   const { navigateToPcAlarm } = useNavigateToPcAlarm();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const inPcShell = usePcShell();
   const [isPC, setIsPC] = useState(inPcShell);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const nextTitle = getAchievementSeoCopy(i18n.language).title;
+    if (document.title !== nextTitle) {
+      document.title = nextTitle;
+    }
+    return undefined;
+  }, [i18n.language]);
 
   useEffect(() => {
     const checkDevice = () => {

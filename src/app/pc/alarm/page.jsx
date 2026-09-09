@@ -27,6 +27,7 @@ import { request } from '@/utils/request';
 import { getTgAlertMiniAppLink, Interface } from '@/utils/constants';
 import { Loading } from '@/components/Loading';
 import { allCountries } from 'country-telephone-data';
+import { getAlarmSeoCopy } from '@/utils/seoI18n';
 import styles from './page.module.less';
 
 const CDN_PUBLIC_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public';
@@ -52,7 +53,7 @@ function WebhookRemoveIcon() {
 }
 
 function PCAlarmContent() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const symbol = (searchParams.get('symbol') || 'BTC').toUpperCase();
@@ -71,6 +72,15 @@ function PCAlarmContent() {
     change: '--',
     loading: true,
   });
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const nextTitle = getAlarmSeoCopy(symbol, i18n.language).title;
+    if (document.title !== nextTitle) {
+      document.title = nextTitle;
+    }
+    return undefined;
+  }, [symbol, i18n.language]);
   const [configs, setConfigs] = useState({
     priceRise: { value: '', enabled: true, unit: '$', labelKey: 'addAlarm.priceRise' },
     priceFall: { value: '', enabled: true, unit: '$', labelKey: 'addAlarm.priceFall' },

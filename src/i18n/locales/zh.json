@@ -2835,8 +2835,29 @@
       }
     },
     "ai": {
-      "title": "AI分析 | MoziInnovations（Mozi / 墨子）",
-      "description": "MoziInnovations AI 分析：用自然语言解读加密行情、板块轮动、套利机会与量化策略建议。"
+      "title": "加密货币 AI 分析与量化策略助手 | 行情预测解读 | MoziInnovations",
+      "description": "MoziInnovations（Mozi / 墨子）AI 分析：用自然语言解读比特币与加密行情、板块轮动、套利机会，并提供量化策略与交易建议。"
+    },
+    "alarm": {
+      "title": "智能加密货币价格预警 | 行情提醒 | MoziInnovations",
+      "titleWithSymbol": "{{symbol}} 智能加密货币价格预警 | 行情提醒 | MoziInnovations",
+      "description": "MoziInnovations（Mozi / 墨子）智能加密货币价格预警：配置涨跌阈值、涨跌幅、大单侦测与多渠道通知，及时捕捉行情机会。"
+    },
+    "achievement": {
+      "title": "加密货币积分任务与成就中心 | 赚积分兑权益 | MoziInnovations",
+      "description": "MoziInnovations（Mozi / 墨子）成就与积分中心：完成日常/新手任务赚取积分，查看积分池与排行榜，邀请好友获取更多奖励。"
+    },
+    "subscribe": {
+      "title": "加密货币会员订阅与 VIP 权益 | AI 分析与行情特权 | MoziInnovations",
+      "description": "MoziInnovations（Mozi / 墨子）会员订阅：开通 VIP 解锁 AI 分析、实时行情、价格预警与更多加密数据特权。"
+    },
+    "about": {
+      "title": "关于 MoziInnovations（墨子）| AI 预测与加密货币数据分析平台",
+      "description": "了解 MoziInnovations（Mozi / 墨子）：AI 行情预测、量化策略助手与加密货币数据分析平台，官网 moziai.xyz。"
+    },
+    "help": {
+      "title": "加密货币帮助中心 | 常见问题与使用指南 | MoziInnovations",
+      "description": "MoziInnovations（Mozi / 墨子）帮助中心：功能说明、常见问题、会员订阅、价格预警与 AI 分析等使用指南。"
     }
   }
 }
