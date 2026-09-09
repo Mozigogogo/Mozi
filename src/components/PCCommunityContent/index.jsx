@@ -85,6 +85,8 @@ export default function PCCommunityContent() {
   const coinPostsPageRef = useRef(1);
   const leftScrollAreaRef = useRef(null);
   const hotTopicsPanelRef = useRef(null);
+  // 用 ref 防重入：首屏 hotTopicsLoading 为 true（避免空态闪烁），不能再用 state 做守卫，否则首次请求会被直接 return
+  const hotTopicsLoadingRef = useRef(false);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -418,11 +420,12 @@ export default function PCCommunityContent() {
 
   // 获取热门话题（分页）
   const fetchHotTopics = async (nextPage = 1, keyword = '') => {
-    if (hotTopicsLoading) return;
+    if (hotTopicsLoadingRef.current) return;
 
     const prevPage = hotTopicsPage;
     // 分页激活态立刻切换，不等接口返回
     setHotTopicsPage(nextPage);
+    hotTopicsLoadingRef.current = true;
     setHotTopicsLoading(true);
 
     try {
@@ -458,6 +461,7 @@ export default function PCCommunityContent() {
       setHotTopicsTotal(0);
       setHotTopicsPage(prevPage);
     } finally {
+      hotTopicsLoadingRef.current = false;
       setHotTopicsLoading(false);
     }
   };
