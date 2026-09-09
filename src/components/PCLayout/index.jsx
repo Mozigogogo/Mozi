@@ -855,18 +855,6 @@ export default function PCLayout({ children }) {
   const pcFooterLinkRows = useMemo(
     () => [
       [
-        { key: 'home', label: t('pcLayout.menu.home', { defaultValue: '首页' }), href: '/home' },
-        { key: 'find', label: t('pcLayout.menu.discover', { defaultValue: '发现' }), href: '/pc/find' },
-      ],
-      [
-        {
-          key: 'community',
-          label: t('pcLayout.menu.community', { defaultValue: '社区' }),
-          href: '/pc/community',
-        },
-        { key: 'ai', label: t('pcLayout.menu.aiAnalysis', { defaultValue: 'AI分析' }), href: '/ai' },
-      ],
-      [
         { key: 'aboutUs', label: t('pcLayout.footer.aboutUs'), href: '/pc/about' },
         {
           key: 'businessCooperation',
