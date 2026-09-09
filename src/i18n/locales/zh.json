@@ -1944,7 +1944,7 @@
   },
   "pcAbout": {
     "brandName": "Mozi · MoziInnovations",
-    "title": "关于 MoziInnovations（墨子）",
+    "title": "关于墨子",
     "lead": "MoziInnovations（墨子 Mozi，简称 moz）是一家全球领先的专业加密数据智能分析平台。我们秉持墨子“兼爱非攻”的哲学理念，致力于通过技术创新打破信息差，降低交易门槛，让每一位用户都能在复杂的加密市场中做出明智决策。官网：moziai.xyz。",
     "coreFunctionsTitle": "核心功能：解决「买什么、去哪买、怎么买」",
     "coreFunctionsIntro": "Mozi 通过实时整合主流交易所全量数据，为用户提供一站式探索方案：",
@@ -2795,68 +2795,68 @@
   },
   "seo": {
     "home": {
-      "title": "专业的比特币、加密货币数据分析平台 | 比特币行情价格 | MoziInnovations",
+      "title": "专业的比特币、加密货币数据分析平台 | 比特币行情价格 | 墨子",
       "description": "MoziInnovations（Mozi / 墨子）加密货币行情首页：实时比特币价格、热门币种涨跌、板块轮动、AI 预测与量化策略洞察。"
     },
     "find": {
       "market": {
-        "title": "数字货币价格、市值与图表 | MoziInnovations",
+        "title": "数字货币价格、市值与图表 | 墨子",
         "description": "MoziInnovations（Mozi / 墨子）发现页：数字货币实时价格、市值、涨跌榜、板块与交易所数据，以及上新/下线公告，快速定位市场机会。"
       },
       "usStock": {
-        "title": "美股行情价格与市值 | MoziInnovations",
+        "title": "美股行情价格与市值 | 墨子",
         "description": "MoziInnovations（Mozi / 墨子）美股行情：实时价格、成交额与涨跌幅，快速查看美股标的数据。"
       },
       "rank": {
-        "title": "加密货币排行榜 | MoziInnovations",
+        "title": "加密货币排行榜 | 墨子",
         "description": "MoziInnovations（Mozi / 墨子）加密货币排行榜：涨幅、跌幅、波动、成交额等多维榜单。"
       },
       "self": {
-        "title": "我的自选行情 | MoziInnovations",
+        "title": "我的自选行情 | 墨子",
         "description": "MoziInnovations（Mozi / 墨子）我的自选：查看自选币种实时行情。"
       }
     },
     "community": {
       "all": {
-        "title": "加密货币社区、热门话题与行情讨论 | MoziInnovations",
+        "title": "加密货币社区、热门话题与行情讨论 | 墨子",
         "description": "MoziInnovations（Mozi / 墨子）加密货币社区：浏览热门话题与精选帖子，讨论 BTC/ETH 行情、板块轮动与交易观点，发现好币与市场机会。"
       },
       "coin": {
-        "title": "币种讨论与加密货币社区 | MoziInnovations",
+        "title": "币种讨论与加密货币社区 | 墨子",
         "description": "MoziInnovations（Mozi / 墨子）币种社区：按 BTC/ETH 等币种浏览行情讨论与交易观点。"
       },
       "discover": {
-        "title": "发现好币与加密货币机会 | MoziInnovations",
+        "title": "发现好币与加密货币机会 | 墨子",
         "description": "MoziInnovations（Mozi / 墨子）发现好币：社区精选机会、新币讨论与市场观点。"
       },
       "qa": {
-        "title": "加密货币问答社区 | MoziInnovations",
+        "title": "加密货币问答社区 | 墨子",
         "description": "MoziInnovations（Mozi / 墨子）加密货币问答：不懂就问，交流行情、策略与交易问题。"
       }
     },
     "ai": {
-      "title": "加密货币 AI 分析与量化策略助手 | 行情预测解读 | MoziInnovations",
+      "title": "加密货币 AI 分析与量化策略助手 | 行情预测解读 | 墨子",
       "description": "MoziInnovations（Mozi / 墨子）AI 分析：用自然语言解读比特币与加密行情、板块轮动、套利机会，并提供量化策略与交易建议。"
     },
     "alarm": {
-      "title": "智能加密货币价格预警 | 行情提醒 | MoziInnovations",
-      "titleWithSymbol": "{{symbol}} 智能加密货币价格预警 | 行情提醒 | MoziInnovations",
+      "title": "智能加密货币价格预警 | 行情提醒 | 墨子",
+      "titleWithSymbol": "{{symbol}} 智能加密货币价格预警 | 行情提醒 | 墨子",
       "description": "MoziInnovations（Mozi / 墨子）智能加密货币价格预警：配置涨跌阈值、涨跌幅、大单侦测与多渠道通知，及时捕捉行情机会。"
     },
     "achievement": {
-      "title": "加密货币积分任务与成就中心 | 赚积分兑权益 | MoziInnovations",
+      "title": "加密货币积分任务与成就中心 | 赚积分兑权益 | 墨子",
       "description": "MoziInnovations（Mozi / 墨子）成就与积分中心：完成日常/新手任务赚取积分，查看积分池与排行榜，邀请好友获取更多奖励。"
     },
     "subscribe": {
-      "title": "加密货币会员订阅与 VIP 权益 | AI 分析与行情特权 | MoziInnovations",
+      "title": "加密货币会员订阅与 VIP 权益 | AI 分析与行情特权 | 墨子",
       "description": "MoziInnovations（Mozi / 墨子）会员订阅：开通 VIP 解锁 AI 分析、实时行情、价格预警与更多加密数据特权。"
     },
     "about": {
-      "title": "关于 MoziInnovations（墨子）| AI 预测与加密货币数据分析平台",
+      "title": "关于墨子 | AI 预测与加密货币数据分析平台",
       "description": "了解 MoziInnovations（Mozi / 墨子）：AI 行情预测、量化策略助手与加密货币数据分析平台，官网 moziai.xyz。"
     },
     "help": {
-      "title": "加密货币帮助中心 | 常见问题与使用指南 | MoziInnovations",
+      "title": "加密货币帮助中心 | 常见问题与使用指南 | 墨子",
       "description": "MoziInnovations（Mozi / 墨子）帮助中心：功能说明、常见问题、会员订阅、价格预警与 AI 分析等使用指南。"
     }
   }

@@ -50,7 +50,7 @@ export const PRIMARY_SITE_HUBS = [
     path: '/home',
     nameZh: '首页',
     nameEn: 'Home',
-    title: `专业的比特币、加密货币数据分析平台 | 比特币行情价格 | MoziInnovations`,
+    title: `专业的比特币、加密货币数据分析平台 | 比特币行情价格 | 墨子`,
     description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）加密货币行情首页：实时比特币价格、热门币种涨跌、板块轮动、AI 预测与量化策略洞察。`,
   },
   {
@@ -58,7 +58,7 @@ export const PRIMARY_SITE_HUBS = [
     path: '/find',
     nameZh: '发现',
     nameEn: 'Discover',
-    title: `数字货币价格、市值与图表 | MoziInnovations`,
+    title: `数字货币价格、市值与图表 | 墨子`,
     description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）发现页：数字货币实时价格、市值、涨跌榜、板块与交易所数据，以及上新/下线公告，快速定位市场机会。`,
   },
   {
@@ -66,7 +66,7 @@ export const PRIMARY_SITE_HUBS = [
     path: '/community',
     nameZh: '社区',
     nameEn: 'Community',
-    title: `加密货币社区、热门话题与行情讨论 | MoziInnovations`,
+    title: `加密货币社区、热门话题与行情讨论 | 墨子`,
     description: `${BRAND_LEGAL_NAME} 加密货币社区：浏览热门话题与精选帖子，讨论 BTC/ETH 行情、板块轮动与交易观点，发现好币与市场机会。`,
   },
   {
@@ -74,7 +74,7 @@ export const PRIMARY_SITE_HUBS = [
     path: '/ai',
     nameZh: 'AI分析',
     nameEn: 'AI Analysis',
-    title: `加密货币 AI 分析与量化策略助手 | 行情预测解读 | MoziInnovations`,
+    title: `加密货币 AI 分析与量化策略助手 | 行情预测解读 | 墨子`,
     description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）AI 分析：用自然语言解读比特币与加密行情、板块轮动、套利机会，并提供量化策略与交易建议。`,
   },
 ];
@@ -440,13 +440,13 @@ export const COMMUNITY_KEYWORDS = [
 
 /** @deprecated 请用 getCommunityTabSeoTitle('all', lng) / getHubSeoCopy('community', lng) */
 export const COMMUNITY_TITLE =
-  `加密货币社区、热门话题与行情讨论 | MoziInnovations`;
+  `加密货币社区、热门话题与行情讨论 | 墨子`;
 export const COMMUNITY_DESCRIPTION =
   `${BRAND_LEGAL_NAME}（Mozi / 墨子）加密货币社区：浏览热门话题与精选帖子，讨论 BTC/ETH 行情、板块轮动与交易观点，发现好币与市场机会。Crypto community for market discussion, hot topics and trading insights.`;
 
 /** @deprecated 请用 getCommunityTabSeoTitle('all', lng) */
 export const COMMUNITY_PC_TITLE =
-  `加密货币社区、热门话题与行情讨论 | MoziInnovations`;
+  `加密货币社区、热门话题与行情讨论 | 墨子`;
 export const COMMUNITY_PC_DESCRIPTION =
   `${BRAND_LEGAL_NAME}（Mozi / 墨子）PC 加密货币社区：热门话题、精选帖子、BTC/ETH 讨论与发现好币。Desktop crypto community for market discussion, hot topics and trading insights.`;
 
