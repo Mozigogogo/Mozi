@@ -508,17 +508,44 @@ const loadingTimerRef = useRef(null);
 
 
 
+  // request 对业务 401 会 reject(new Error('Session expired'))，无 code 字段；
+  // 且产品策略下 401 不清 token，所以「有 token」也可能是未登录/登录失效。
+  const isOwnAuthFailure = (errorOrRes) => {
+    if (!errorOrRes) return false;
+    const code = errorOrRes?.code ?? errorOrRes?.status ?? errorOrRes?.response?.status;
+    const msg = String(errorOrRes?.message || errorOrRes?.msg || '');
+    return (
+      code === 401 ||
+      errorOrRes?.data?.isLogin === false ||
+      errorOrRes?.isLogin === false ||
+      /session expired|unauthorized|未登录|登录已失效/i.test(msg)
+    );
+  };
+
   // 获取自选列表
   const fetchOwnList = async () => {
     try {
+      let token = null;
+      try {
+        token = localStorage.getItem('token');
+      } catch (_) {}
+      if (!token) {
+        setLogin(true);
+        setOwn([]);
+        setOwnError(false);
+        setOwnLoading(false);
+        return;
+      }
+
       const coinSelectRes = await request({
         url: Interface.COIN_SELF
       });
 
       console.log('自选列表接口返回:', coinSelectRes);
 
-      if (coinSelectRes?.data?.isLogin === false) {
+      if (isOwnAuthFailure(coinSelectRes) || coinSelectRes?.data?.isLogin === false) {
         setLogin(true);
+        setOwn([]);
         setOwnLoading(false);
         setOwnError(false);
         return;
@@ -568,9 +595,15 @@ const loadingTimerRef = useRef(null);
       setOwnLoading(false);
     } catch (error) {
       console.error('获取自选列表失败:', error);
-      setOwnError(true);
+      // 本地残留失效 token 时也会走这里（Error: Session expired）
+      if (isOwnAuthFailure(error)) {
+        setLogin(true);
+        setOwn([]);
+        setOwnError(false);
+      } else {
+        setOwnError(true);
+      }
       setOwnLoading(false);
-      
     }
   };
 
@@ -985,6 +1018,32 @@ const loadingTimerRef = useRef(null);
       );
     }
 
+    // 未登录优先于错误态（401 等会被 request 抛错，不能当成「出错了」）
+    if (needLogin) {
+      return (
+        <div className={styles.ownBox}>
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ marginBottom: '16px' }}>
+              {t('pcLayout.user.notLoggedIn', { defaultValue: t('auth.notLoggedIn') })}
+            </div>
+            <button 
+              style={{ 
+                backgroundColor: '#11B787', 
+                color: '#fff', 
+                padding: '8px 24px', 
+                border: 'none', 
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }} 
+              onClick={() => router.push('/user?showLogin=true')}
+            >
+              {t('user.login')}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     if (isOwnError) {
       return (
         <div className={styles.ownBox}>
@@ -1013,29 +1072,6 @@ const loadingTimerRef = useRef(null);
               }}
             >
               {t('common.retry')}
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    if (needLogin) {
-      return (
-        <div className={styles.ownBox}>
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <div style={{ marginBottom: '16px' }}>{t('user.pleaseLogin')}</div>
-            <button 
-              style={{ 
-                backgroundColor: '#11B787', 
-                color: '#fff', 
-                padding: '8px 24px', 
-                border: 'none', 
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }} 
-              onClick={() => router.push('/user?showLogin=true')}
-            >
-              {t('user.login')}
             </button>
           </div>
         </div>
