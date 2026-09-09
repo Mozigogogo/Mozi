@@ -42,6 +42,7 @@ import { executeConsume } from '@/api/points';
 import { getMySubscription } from '@/api/vip';
 import { confirm } from '@/components/Modal/confirm';
 import { MOZI_SESSION_CHANGED } from '@/utils/sessionEvents';
+import { BRAND_LEGAL_NAME } from '@/utils/seoConfig';
 import { pickCreateTimeFromDatainfo, parseCreateTimeMs } from '@/utils/companionDays';
 import {
   displayRawNum,
@@ -75,6 +76,8 @@ import {
   normalizeUsStockMarketResponse,
   normalizeUsStockReturnResponse,
   buildUsStockHeaderInfoPanels,
+  getUsStockDisplayName,
+  formatUsStockSymbolWithName,
 } from '@/utils/usStockMockData';
 import styles from './page.module.less';
 
@@ -129,6 +132,29 @@ function formatTurnover24hDisplay(raw, lng) {
   if (raw == null || raw === '') return null;
   const out = formatMoneyCompact(raw, lng, true);
   return !out || out.includes('--') ? null : out;
+}
+
+/** 浏览器标签标题用价格：`79,183.84 | BTC` */
+function formatDetailTabPrice(raw) {
+  if (raw == null || raw === '') return '';
+  const cleaned = String(raw).trim().replace(/^\$/, '').replace(/,/g, '').trim();
+  if (!cleaned || cleaned === '--' || cleaned === 'NaN' || cleaned === 'undefined') return '';
+  const n = Number(cleaned);
+  if (!Number.isFinite(n)) {
+    return String(raw).replace(/^\$/, '').trim();
+  }
+  const abs = Math.abs(n);
+  if (abs === 0) return '0.00';
+  if (abs >= 1) {
+    return n.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+  return n.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 8,
+  });
 }
 
 function toBigDealNumber(v) {
@@ -563,15 +589,8 @@ export default function DetailPage() {
     applyStockBigDealOrderBook(stockBigDealTab);
   }, [isUsStock, stockBigDealTab, applyStockBigDealOrderBook]);
   const [mySubscription, setMySubscription] = useState(null);
-  /** 登录后订阅接口是否已 settle，避免 VIP/试用判定前先闪积分解锁遮罩 */
-  const [subscriptionSettled, setSubscriptionSettled] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    try {
-      return !localStorage.getItem('token');
-    } catch {
-      return true;
-    }
-  });
+  /** 登录后订阅接口是否已 settle，避免 VIP/试用判定前先闪积分解锁遮罩（首帧与 SSR 一致，避免水合不一致） */
+  const [subscriptionSettled, setSubscriptionSettled] = useState(true);
   /** checkStatus 已基于最新订阅/试用结果跑完一轮 */
   const [unlockCheckReady, setUnlockCheckReady] = useState(false);
 
@@ -597,16 +616,34 @@ export default function DetailPage() {
     };
   }, []);
 
-  // sessionTick 变化时重新读取 token（登录/登出）
-  const isLoggedIn = (() => {
-    void sessionTick;
-    if (typeof window === 'undefined') return false;
+  // 登录态：服务端 / 水合首帧固定 false，避免 OrderBook 文案 SSR 与客户端不一致
+  const subscribeAuthSession = useCallback((onStoreChange) => {
+    if (typeof window === 'undefined') return () => {};
+    const onStorage = (e) => {
+      if (!e.key || e.key === 'token' || e.key === 'userId' || e.key === 'userDataInfo') {
+        onStoreChange();
+      }
+    };
+    window.addEventListener(MOZI_SESSION_CHANGED, onStoreChange);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener(MOZI_SESSION_CHANGED, onStoreChange);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+  const getAuthClientSnapshot = useCallback(() => {
     try {
       return Boolean(localStorage.getItem('token'));
     } catch {
       return false;
     }
-  })();
+  }, []);
+  const getAuthServerSnapshot = useCallback(() => false, []);
+  const isLoggedIn = useSyncExternalStore(
+    subscribeAuthSession,
+    getAuthClientSnapshot,
+    getAuthServerSnapshot,
+  );
 
   const isVipBySubscription = (sub) => {
     if (!sub) return false;
@@ -2989,6 +3026,58 @@ ${coinInfo.name || symbol} (${symbol})
       }
     };
   }, [symbol, isUsStock]);
+
+  // 浏览器标签：实时 `价格 | 币种`；美股附带公司名；后缀品牌与详情标识（不改动站点 favicon）
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+
+    const sym = String(coinInfo?.symbol || symbol || '')
+      .trim()
+      .toUpperCase();
+    const priceText = formatDetailTabPrice(
+      coinInfo?.currentPrice ?? coinInfo?.price ?? coinInfo?.last,
+    );
+
+    let symbolPart = sym;
+    if (isUsStock && sym) {
+      const companyName =
+        getUsStockDisplayName(coinInfo, { language: i18n.language }) ||
+        String(coinInfo?.name || '').trim();
+      symbolPart = formatUsStockSymbolWithName(sym, companyName);
+    }
+
+    const isZh = String(i18n.language || '').toLowerCase().startsWith('zh');
+    const brandSuffix = isUsStock
+      ? isZh
+        ? `${BRAND_LEGAL_NAME} 美股详情`
+        : `${BRAND_LEGAL_NAME} Stock Detail`
+      : isZh
+        ? `${BRAND_LEGAL_NAME} 币种详情`
+        : `${BRAND_LEGAL_NAME} Coin Detail`;
+
+    const nextTitle = priceText && symbolPart
+      ? `${priceText} | ${symbolPart} | ${brandSuffix}`
+      : symbolPart
+        ? `${symbolPart} | ${brandSuffix}`
+        : brandSuffix;
+
+    if (document.title !== nextTitle) {
+      document.title = nextTitle;
+    }
+
+    return undefined;
+  }, [
+    coinInfo?.currentPrice,
+    coinInfo?.price,
+    coinInfo?.last,
+    coinInfo?.symbol,
+    coinInfo?.name,
+    coinInfo?.nameCn,
+    coinInfo?.name_cn,
+    symbol,
+    isUsStock,
+    i18n.language,
+  ]);
 
   useEffect(() => {
     // 美股大单走 stock_big_deal WS，不使用 mock

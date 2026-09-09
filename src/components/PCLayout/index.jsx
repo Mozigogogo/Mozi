@@ -22,7 +22,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { MOZI_SESSION_CHANGED, notifySessionChanged } from '@/utils/sessionEvents';
 import { clearPostLoginSessionFlags } from '@/utils/postLogin';
-import { readBootstrapSession, writeBootstrapSession } from '@/utils/readStoredUserInfo';
+import { readBootstrapSession, writeBootstrapSession, hasAuthToken } from '@/utils/readStoredUserInfo';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -417,10 +417,9 @@ export default function PCLayout({ children }) {
     let timer;
     const fetchUnread = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) { 
-          setNotificationCount(0); 
-          return; 
+        if (!hasAuthToken()) {
+          setNotificationCount(0);
+          return;
         }
         const res = await request({ url: Interface.GET_UNREAD_COUNT });
         const count = res?.data?.count ?? res?.data ?? 0;
@@ -431,12 +430,17 @@ export default function PCLayout({ children }) {
         console.error('Failed to fetch unread count:', error);
       }
     };
-    
+
+    if (!isLoggedIn) {
+      setNotificationCount(0);
+      return undefined;
+    }
+
     fetchUnread();
-    timer = setInterval(fetchUnread, 30000); // 每30秒刷新一次
-    
+    timer = setInterval(fetchUnread, 30000);
+
     return () => clearInterval(timer);
-  }, []);
+  }, [isLoggedIn]);
 
   // 搜索功能：先调 /search/validate，再按类型跳转
   const [searchSubmitting, setSearchSubmitting] = useState(false);
@@ -554,9 +558,14 @@ export default function PCLayout({ children }) {
 
   useEffect(() => {
     if (collapsed) return undefined;
+    if (!isLoggedIn) {
+      setAiConversations([]);
+      setAiConversationsLoading(false);
+      return undefined;
+    }
     fetchAiConversations();
     return undefined;
-  }, [collapsed, fetchAiConversations]);
+  }, [collapsed, isLoggedIn, fetchAiConversations]);
 
   useEffect(() => {
     const onConversationsChanged = () => {
@@ -596,6 +605,11 @@ export default function PCLayout({ children }) {
   const fetchWatchlist = useCallback(async () => {
     setWatchlistLoading(true);
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setWatchlist([]);
+        return;
+      }
       const res = await request({ url: Interface.COIN_SELF });
       if (res?.data?.isLogin === false) {
         setWatchlist([]);
@@ -614,6 +628,11 @@ export default function PCLayout({ children }) {
   const fetchAlertsList = useCallback(async () => {
     setAlertsLoading(true);
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setAlertsList([]);
+        return;
+      }
       const res = await request({ url: Interface.MY_WARN });
       const data = res?.data;
       if (!data || data?.isLogin === false || typeof data !== 'object') {
@@ -666,17 +685,58 @@ export default function PCLayout({ children }) {
 
   useEffect(() => {
     if (collapsed || !isMineExpanded) return undefined;
+    if (!isLoggedIn) {
+      setWatchlist([]);
+      setWatchlistLoading(false);
+      return undefined;
+    }
     fetchWatchlist();
     const timer = setInterval(fetchWatchlist, 30000);
     return () => clearInterval(timer);
-  }, [collapsed, isMineExpanded, fetchWatchlist]);
+  }, [collapsed, isMineExpanded, isLoggedIn, fetchWatchlist]);
 
   useEffect(() => {
     if (collapsed || !isAlertsExpanded) return undefined;
+    if (!isLoggedIn) {
+      setAlertsList([]);
+      setAlertsLoading(false);
+      return undefined;
+    }
     fetchAlertsList();
     const timer = setInterval(fetchAlertsList, 30000);
     return () => clearInterval(timer);
-  }, [collapsed, isAlertsExpanded, fetchAlertsList]);
+  }, [collapsed, isAlertsExpanded, isLoggedIn, fetchAlertsList]);
+
+  // 登录成功后立刻重拉侧栏「我的」数据（不依赖 isLoggedIn 是否从 false→true 的批次数）
+  useEffect(() => {
+    const refreshMineLists = () => {
+      if (!hasAuthToken()) {
+        setWatchlist([]);
+        setAlertsList([]);
+        setAiConversations([]);
+        setWatchlistLoading(false);
+        setAlertsLoading(false);
+        setAiConversationsLoading(false);
+        return;
+      }
+      fetchAiConversations({ silent: true });
+      if (!collapsed && isMineExpanded) {
+        fetchWatchlist();
+      }
+      if (!collapsed && isAlertsExpanded) {
+        fetchAlertsList();
+      }
+    };
+    window.addEventListener(MOZI_SESSION_CHANGED, refreshMineLists);
+    return () => window.removeEventListener(MOZI_SESSION_CHANGED, refreshMineLists);
+  }, [
+    collapsed,
+    isMineExpanded,
+    isAlertsExpanded,
+    fetchAiConversations,
+    fetchWatchlist,
+    fetchAlertsList,
+  ]);
 
   // 预加载所有图标 - 优化：使用link标签预加载，更快
   useEffect(() => {
