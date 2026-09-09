@@ -23,6 +23,23 @@
   line-height: 1;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+
+  &:link,
+  &:visited,
+  &:hover,
+  &:active {
+    color: #2f3b52;
+    text-decoration: none;
+  }
+
+  &:hover:not(.active) {
+    color: #2f3b52;
+  }
 }
 
 .active {
@@ -30,6 +47,14 @@
   background: #11b787;
   box-shadow: none;
   border-radius: 17px;
+
+  &:link,
+  &:visited,
+  &:hover,
+  &:active {
+    color: #fff;
+    text-decoration: none;
+  }
 }
 
 :global([data-theme='dark']) {
@@ -40,6 +65,12 @@
   .tabBtn {
     color: rgba(255, 255, 255, 0.55);
 
+    &:link,
+    &:visited,
+    &:active {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
     &:hover:not(.active) {
       color: rgba(255, 255, 255, 0.78);
     }
@@ -48,5 +79,12 @@
   .active {
     color: #fff;
     background: #11b787;
+
+    &:link,
+    &:visited,
+    &:hover,
+    &:active {
+      color: #fff;
+    }
   }
 }

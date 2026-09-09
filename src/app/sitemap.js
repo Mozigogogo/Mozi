@@ -2,21 +2,44 @@ import {
   PUBLIC_SITEMAP_ROUTES,
   absoluteUrl,
 } from '@/utils/seoConfig';
+import { listPcFindTabSitemapPaths } from '@/utils/pcFindNavigation';
+import { listPcCommunityTabSitemapPaths } from '@/utils/communityNavigation';
 import { fetchRecentPostsForSitemap } from '@/utils/fetchPostDetailServer';
 import { fetchHotTopicsForSitemap } from '@/utils/fetchTopicDetailServer';
 
 /** 静态路由 + 帖子/话题列表：小时级刷新 */
 export const revalidate = 3600;
 
+function toStaticEntry(path, { lastModified, changeFrequency, priority }) {
+  return {
+    url: absoluteUrl(path),
+    lastModified,
+    changeFrequency,
+    priority,
+  };
+}
+
 export default async function sitemap() {
   const lastModified = new Date();
 
-  const staticEntries = PUBLIC_SITEMAP_ROUTES.map(
-    ({ path, changeFrequency, priority }) => ({
-      url: absoluteUrl(path),
+  const staticEntries = PUBLIC_SITEMAP_ROUTES.map(({ path, changeFrequency, priority }) =>
+    toStaticEntry(path, { lastModified, changeFrequency, priority })
+  );
+
+  // 仅 PC Tab 变体；移动端不做 SEO 收录
+  const pcFindTabEntries = listPcFindTabSitemapPaths().map((path) =>
+    toStaticEntry(path, {
       lastModified,
-      changeFrequency,
-      priority,
+      changeFrequency: 'hourly',
+      priority: 0.82,
+    })
+  );
+
+  const pcCommunityTabEntries = listPcCommunityTabSitemapPaths().map((path) =>
+    toStaticEntry(path, {
+      lastModified,
+      changeFrequency: 'hourly',
+      priority: 0.8,
     })
   );
 
@@ -54,5 +77,11 @@ export default async function sitemap() {
     topicEntries = [];
   }
 
-  return [...staticEntries, ...postEntries, ...topicEntries];
+  return [
+    ...staticEntries,
+    ...pcFindTabEntries,
+    ...pcCommunityTabEntries,
+    ...postEntries,
+    ...topicEntries,
+  ];
 }

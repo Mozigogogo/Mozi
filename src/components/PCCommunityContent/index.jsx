@@ -45,7 +45,10 @@ export default function PCCommunityContent() {
     { key: 'coin', label: t('community.tabs.currency') },
     { key: 'discover', label: t('community.tabs.discovery') },
     { key: 'qa', label: t('community.tabs.question') },
-  ];
+  ].map((item) => ({
+    ...item,
+    href: buildCommunityTabHref('/pc/community', item.key),
+  }));
   const [marketTickerItems, setMarketTickerItems] = useState([]);
   const [marketTickerLoading, setMarketTickerLoading] = useState(true);
   

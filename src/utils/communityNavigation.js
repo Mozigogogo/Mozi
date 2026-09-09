@@ -49,3 +49,14 @@ export function getCommunityTabSeoTitle(tab, lng) {
 export function getCommunityTabSeoDescription(tab, lng) {
   return getCommunityTabSeoCopy(normalizeCommunityTab(tab), lng).description;
 }
+
+/** PC 可收录的社区主 Tab（不含默认 all） */
+export const PC_COMMUNITY_PUBLIC_SEO_TABS = ['coin', 'discover', 'qa'];
+
+/** 仅 PC 社区 Tab 的 sitemap 路径 */
+export function listPcCommunityTabSitemapPaths() {
+  const base = '/pc/community';
+  return PC_COMMUNITY_PUBLIC_SEO_TABS.map((tab) =>
+    buildCommunityTabHref(base, tab),
+  );
+}

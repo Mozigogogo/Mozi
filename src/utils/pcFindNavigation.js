@@ -88,3 +88,30 @@ export function getFindTabSeoTitle(tab, lng) {
 export function getFindTabSeoDescription(tab, lng) {
   return getFindTabSeoCopy(normalizePcFindTab(tab), lng).description;
 }
+
+/** PC 可收录的发现主 Tab（不含默认 market、不含需登录自选） */
+export const PC_FIND_PUBLIC_SEO_TABS = ['usStock', 'rank'];
+
+/** PC 排行榜子类型 */
+export const PC_FIND_PUBLIC_RANK_TYPES = [
+  'exchange',
+  'up',
+  'down',
+  'wave',
+  'volume',
+  'new',
+  'surge',
+];
+
+/** 仅 PC 发现 Tab 的 sitemap 路径 */
+export function listPcFindTabSitemapPaths() {
+  const base = '/pc/find';
+  const paths = [];
+  for (const tab of PC_FIND_PUBLIC_SEO_TABS) {
+    paths.push(buildFindTabHref(base, tab));
+  }
+  for (const rankType of PC_FIND_PUBLIC_RANK_TYPES) {
+    paths.push(buildFindTabHref(base, 'rank', { rankType }));
+  }
+  return paths;
+}

@@ -778,6 +778,8 @@ export const PUBLIC_SITEMAP_ROUTES = [
   { path: '/exchangerank', changeFrequency: 'daily', priority: 0.6 },
   { path: '/fundingrate', changeFrequency: 'hourly', priority: 0.6 },
   { path: '/tradevol', changeFrequency: 'hourly', priority: 0.55 },
+  { path: '/pc/alarm', changeFrequency: 'weekly', priority: 0.55 },
+  { path: '/achievement', changeFrequency: 'weekly', priority: 0.5 },
   { path: '/pc/about', changeFrequency: 'monthly', priority: 0.5 },
   { path: '/pc/help', changeFrequency: 'monthly', priority: 0.45 },
   { path: '/me', changeFrequency: 'monthly', priority: 0.4 },

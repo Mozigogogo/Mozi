@@ -13,6 +13,11 @@
 
 .seoTitle,
 .seoDesc,
-.seoList {
+.seoList,
+.seoNav {
   margin: 0;
+}
+
+.seoNav a {
+  color: inherit;
 }

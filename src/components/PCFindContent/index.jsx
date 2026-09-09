@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Tabs, Card, Table, Tag, Spin } from 'antd';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { HeartOutlined, BellOutlined } from '@ant-design/icons';
 import { request } from '@/utils/request';
@@ -31,7 +32,7 @@ import PCDailyCard from '../PCDailyCard';
 import ShareAiChatModal from '../ShareAiChatModal';
 import { SkeletonCircle, SkeletonElement } from '@/components/Skeleton';
 import { isEmpty } from 'lodash';
-import { normalizePcFindRankType, buildFindTabHref, normalizePcFindTab, getFindTabSeoTitle } from '@/utils/pcFindNavigation';
+import { normalizePcFindRankType, buildFindTabHref, normalizePcFindTab, getFindTabSeoTitle, PC_FIND_PUBLIC_RANK_TYPES } from '@/utils/pcFindNavigation';
 import { savePcAiNav } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
 import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
@@ -1416,19 +1417,57 @@ export default function PCFindContent() {
     }
   }, [upTradePickIndex]);
 
+  const findBasePath = pathname?.includes('/pc/find') ? '/pc/find' : '/find';
+
+  const goRankType = useCallback(
+    (type) => {
+      setRankActiveType(type);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('rankType', type);
+      router.replace(buildFindTabHref(findBasePath, 'rank', params), { scroll: false });
+    },
+    [findBasePath, router, searchParams],
+  );
+
+  const rankPanelTabItems = useMemo(
+    () =>
+      [
+        { key: 'exchange', label: t('discover.exchangeRank') },
+        { key: 'up', label: t('home.rank.up') },
+        { key: 'down', label: t('home.rank.down') },
+        { key: 'wave', label: t('home.rank.wave') },
+        { key: 'volume', label: t('home.rank.volume') },
+        { key: 'new', label: t('home.rank.new') },
+        { key: 'surge', label: t('home.rank.surge') },
+      ].filter((item) => PC_FIND_PUBLIC_RANK_TYPES.includes(item.key)),
+    [t],
+  );
+
   const tabs = [
     { key: 'market', label: t('discover.tabs.market') },
     ...(SHOW_US_STOCK_TAB ? [{ key: 'usStock', label: t('discover.tabs.usStock') }] : []),
     // { key: 'self', label: t('discover.tabs.self') }, // 隐藏自选tab
     { key: 'rank', label: t('discover.tabs.rank') },
-  ].map((tab) => ({
-    ...tab,
-    label: (
-      <span className={styles.tabLabel} data-text={tab.label}>
-        {tab.label}
-      </span>
-    ),
-  }));
+  ].map((tab) => {
+    const href = buildFindTabHref(findBasePath, tab.key);
+    return {
+      ...tab,
+      label: (
+        <Link
+          href={href}
+          scroll={false}
+          className={styles.tabLabel}
+          data-text={tab.label}
+          onClick={(e) => {
+            e.preventDefault();
+            handleTabChange(tab.key);
+          }}
+        >
+          {tab.label}
+        </Link>
+      ),
+    };
+  });
 
   const renderMarketTablePanel = ({
     includeActions,
@@ -1607,55 +1646,27 @@ export default function PCFindContent() {
           <>
             <div className={styles.rankPanel}>
               <div className={styles.rankPanelTabs}>
-                <button
-                  type="button"
-                  className={`${styles.rankPanelTab} ${rankActiveType === 'exchange' ? styles.rankPanelTabActive : ''}`}
-                  onClick={() => setRankActiveType('exchange')}
-                >
-                  {t('discover.exchangeRank')}
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.rankPanelTab} ${rankActiveType === 'up' ? styles.rankPanelTabActive : ''}`}
-                  onClick={() => setRankActiveType('up')}
-                >
-                  {t('home.rank.up')}
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.rankPanelTab} ${rankActiveType === 'down' ? styles.rankPanelTabActive : ''}`}
-                  onClick={() => setRankActiveType('down')}
-                >
-                  {t('home.rank.down')}
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.rankPanelTab} ${rankActiveType === 'wave' ? styles.rankPanelTabActive : ''}`}
-                  onClick={() => setRankActiveType('wave')}
-                >
-                  {t('home.rank.wave')}
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.rankPanelTab} ${rankActiveType === 'volume' ? styles.rankPanelTabActive : ''}`}
-                  onClick={() => setRankActiveType('volume')}
-                >
-                  {t('home.rank.volume')}
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.rankPanelTab} ${rankActiveType === 'new' ? styles.rankPanelTabActive : ''}`}
-                  onClick={() => setRankActiveType('new')}
-                >
-                  {t('home.rank.new')}
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.rankPanelTab} ${rankActiveType === 'surge' ? styles.rankPanelTabActive : ''}`}
-                  onClick={() => setRankActiveType('surge')}
-                >
-                  {t('home.rank.surge')}
-                </button>
+                {rankPanelTabItems.map((item) => {
+                  const href = buildFindTabHref(findBasePath, 'rank', {
+                    rankType: item.key,
+                  });
+                  const isActive = rankActiveType === item.key;
+                  return (
+                    <Link
+                      key={item.key}
+                      href={href}
+                      scroll={false}
+                      className={`${styles.rankPanelTab} ${isActive ? styles.rankPanelTabActive : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        goRankType(item.key);
+                      }}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </div>
 
               <div className={styles.rankPanelBody}>

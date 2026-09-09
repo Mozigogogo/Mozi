@@ -4,22 +4,37 @@ import {
   buildCommunityJsonLd,
 } from '@/utils/seoConfig';
 import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
-import { getHubSeoCopy, seoLngFromCookieValue } from '@/utils/seoI18n';
+import { getHubSeoCopy, resolveSeoLng, seoLngFromCookieValue } from '@/utils/seoI18n';
+import { buildCommunityTabHref } from '@/utils/communityNavigation';
 import styles from './CommunitySeo.module.css';
 
 /**
  * 服务端可抓取 SEO 块：JSON-LD + 正文摘要（页面主体为 client SPA）
+ * Tab 互链仅 PC；移动端不做 SEO Tab 优化
  */
 export default function CommunitySeo({ variant = 'mobile' }) {
   const isPc = variant === 'pc';
   const path = isPc ? '/pc/community' : '/community';
   const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+  const isZh = resolveSeoLng(lng) === 'zh';
   const { title, description } = getHubSeoCopy('community', lng);
   const { collectionPage, breadcrumb } = buildCommunityJsonLd({
     path,
     name: title,
     description,
   });
+
+  const tabLinks = isPc
+    ? [
+        { href: buildCommunityTabHref(path, 'all'), label: isZh ? '全部' : 'All' },
+        { href: buildCommunityTabHref(path, 'coin'), label: isZh ? '币种' : 'Coins' },
+        {
+          href: buildCommunityTabHref(path, 'discover'),
+          label: isZh ? '发现好币' : 'Discover',
+        },
+        { href: buildCommunityTabHref(path, 'qa'), label: isZh ? '不懂就问' : 'Q&A' },
+      ]
+    : [];
 
   return (
     <>
@@ -42,6 +57,15 @@ export default function CommunitySeo({ variant = 'mobile' }) {
             {BRAND_LEGAL_NAME}（Mozi / 墨子）加密数据智能社区
           </li>
         </ul>
+        {tabLinks.length > 0 ? (
+          <nav className={styles.seoNav} aria-label="community tabs">
+            {tabLinks.map((item) => (
+              <a key={item.href} href={item.href}>
+                {item.label}
+              </a>
+            ))}
+          </nav>
+        ) : null}
       </section>
     </>
   );

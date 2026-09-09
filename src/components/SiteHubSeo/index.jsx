@@ -7,6 +7,8 @@ import {
 } from '@/utils/seoConfig';
 import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
 import { getHubSeoCopy, resolveSeoLng, seoLngFromCookieValue } from '@/utils/seoI18n';
+import { buildFindTabHref } from '@/utils/pcFindNavigation';
+import { buildCommunityTabHref } from '@/utils/communityNavigation';
 import styles from './hubSeo.module.css';
 
 function buildHubPageJsonLdForPath(hub, path, copy, lng) {
@@ -73,6 +75,45 @@ export default function SiteHubSeo({
   const navJsonLd = includeNavSchema ? buildPrimaryNavJsonLd() : null;
   const hubLabel = isZh ? hub.nameZh : hub.nameEn;
 
+  // 仅 PC 路径补充 Tab 互链；移动端不做 SEO Tab 优化
+  const isPcFind = path === '/pc/find' || path.startsWith('/pc/find?');
+  const isPcCommunity =
+    path === '/pc/community' || path.startsWith('/pc/community?');
+  const tabNavLinks = isPcFind
+    ? [
+        { href: buildFindTabHref('/pc/find', 'market'), label: isZh ? '行情' : 'Market' },
+        { href: buildFindTabHref('/pc/find', 'usStock'), label: isZh ? '美股' : 'US Stocks' },
+        { href: buildFindTabHref('/pc/find', 'rank'), label: isZh ? '排行榜' : 'Rankings' },
+        {
+          href: buildFindTabHref('/pc/find', 'rank', { rankType: 'up' }),
+          label: isZh ? '涨幅榜' : 'Gainers',
+        },
+        {
+          href: buildFindTabHref('/pc/find', 'rank', { rankType: 'down' }),
+          label: isZh ? '跌幅榜' : 'Losers',
+        },
+      ]
+    : isPcCommunity
+      ? [
+          {
+            href: buildCommunityTabHref('/pc/community', 'all'),
+            label: isZh ? '全部' : 'All',
+          },
+          {
+            href: buildCommunityTabHref('/pc/community', 'coin'),
+            label: isZh ? '币种' : 'Coins',
+          },
+          {
+            href: buildCommunityTabHref('/pc/community', 'discover'),
+            label: isZh ? '发现好币' : 'Discover',
+          },
+          {
+            href: buildCommunityTabHref('/pc/community', 'qa'),
+            label: isZh ? '不懂就问' : 'Q&A',
+          },
+        ]
+      : [];
+
   return (
     <>
       <script
@@ -106,6 +147,15 @@ export default function SiteHubSeo({
             </a>
           ))}
         </nav>
+        {tabNavLinks.length > 0 ? (
+          <nav className={styles.seoNav} aria-label={`${hubLabel} tabs`}>
+            {tabNavLinks.map((item) => (
+              <a key={item.href} href={item.href}>
+                {item.label}
+              </a>
+            ))}
+          </nav>
+        ) : null}
       </section>
     </>
   );
