@@ -50,9 +50,13 @@ export function pushWithRouteBootLoading(router, href, { replace = false } = {})
   if (nextHref.startsWith('/')) {
     try {
       const pathname = nextHref.split('?')[0] || '/';
-      if (pathname !== '/detail') {
-        const bootPath = pathname === '/ai' || pathname.startsWith('/ai/') ? '/ai' : pathname;
-        markRouteBootLoading(bootPath);
+      // /detail 用页内骨架；/ai 用 AiChatBootShell，均勿盖全屏 Logo（会闪白）
+      const skipBoot =
+        pathname === '/detail' ||
+        pathname === '/ai' ||
+        pathname.startsWith('/ai/');
+      if (!skipBoot) {
+        markRouteBootLoading(pathname);
       }
     } catch (_) {}
   }

@@ -19,7 +19,7 @@ import {
   CaretDownOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { MOZI_SESSION_CHANGED, notifySessionChanged } from '@/utils/sessionEvents';
 import { clearPostLoginSessionFlags } from '@/utils/postLogin';
 import { useTranslation } from 'react-i18next';
@@ -40,7 +40,15 @@ import GeneralPopup from '@/app/user/components/GeneralPopup';
 import { getAgentConversations } from '@/api/ai';
 import { MOZI_AI_CONVERSATIONS_CHANGED } from '@/utils/aiConversationEvents';
 import AiConversationRowMenu from '@/app/ai/AiConversationRowMenu';
-import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
+import AiChatBootShell from '@/app/ai/AiChatBootShell';
+import {
+  AI_NAVIGATION_HIDE_EVENT,
+  AI_NAVIGATION_READY_EVENT,
+  AI_NAVIGATION_SHOW_EVENT,
+  hideAiNavigationShell,
+  peekAiNavigationPending,
+  showAiNavigationShell,
+} from '@/utils/aiNavigation';
 import { request } from '@/utils/request';
 import { EMAIL, Interface } from '@/utils/constants';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
@@ -49,6 +57,7 @@ import { getShareCount } from '@/api/home';
 import { savePcAiFromSearch } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
 import { getPcSearchRoute, validateSearchSymbol } from '@/utils/searchValidate';
+import { useClientSearchParams } from '@/hooks/useClientSearchParams';
 import styles from './index.module.less';
 import AISearchBadge from './AISearchBadge';
 // 预热详情页 CSS：用户在 PC 壳内任意页时已加载，首次进 /detail 不再 FOUC
@@ -234,7 +243,7 @@ export default function PCLayout({ children }) {
   const router = useRouter();
   const { navigateToPcAlarm } = useNavigateToPcAlarm();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const searchParams = useClientSearchParams();
   usePcAmplitude(pathname, searchParams);
   const { formatValue, formatPrice, formatSmallDecimal } = useFormatNumber();
   const { t, i18n } = useTranslation();
@@ -493,7 +502,10 @@ export default function PCLayout({ children }) {
     if (keyword) {
       savePcAiFromSearch(keyword);
     }
-    pushWithRouteBootLoading(router, '/ai');
+    showAiNavigationShell();
+    setAiBootVisible(true);
+    setAiBootOpaque(true);
+    router.push('/ai');
   };
 
   // 内容显示状态 - 用于PC端tab切换
@@ -502,6 +514,9 @@ export default function PCLayout({ children }) {
   const [isMineExpanded, setIsMineExpanded] = useState(false);
   const [isAlertsExpanded, setIsAlertsExpanded] = useState(false);
   const [isAiChatExpanded, setIsAiChatExpanded] = useState(false);
+  const [aiBootVisible, setAiBootVisible] = useState(() => peekAiNavigationPending());
+  const [aiBootOpaque, setAiBootOpaque] = useState(() => peekAiNavigationPending());
+  const aiBootHideTimerRef = useRef(null);
   const [watchlist, setWatchlist] = useState([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [alertsList, setAlertsList] = useState([]);
@@ -511,6 +526,47 @@ export default function PCLayout({ children }) {
   const [aiConversationsVisibleCount, setAiConversationsVisibleCount] = useState(
     AI_CONVERSATIONS_PAGE_SIZE,
   );
+
+  useEffect(() => {
+    const clearHideTimer = () => {
+      if (aiBootHideTimerRef.current) {
+        window.clearTimeout(aiBootHideTimerRef.current);
+        aiBootHideTimerRef.current = null;
+      }
+    };
+
+    const onShow = () => {
+      clearHideTimer();
+      setAiBootVisible(true);
+      setAiBootOpaque(true);
+    };
+    const onHide = () => {
+      // 淡出后再卸掉，避免占位↔真页硬切闪一下
+      setAiBootOpaque(false);
+      clearHideTimer();
+      aiBootHideTimerRef.current = window.setTimeout(() => {
+        setAiBootVisible(false);
+        aiBootHideTimerRef.current = null;
+      }, 160);
+    };
+    window.addEventListener(AI_NAVIGATION_SHOW_EVENT, onShow);
+    window.addEventListener(AI_NAVIGATION_HIDE_EVENT, onHide);
+    window.addEventListener(AI_NAVIGATION_READY_EVENT, onHide);
+    return () => {
+      clearHideTimer();
+      window.removeEventListener(AI_NAVIGATION_SHOW_EVENT, onShow);
+      window.removeEventListener(AI_NAVIGATION_HIDE_EVENT, onHide);
+      window.removeEventListener(AI_NAVIGATION_READY_EVENT, onHide);
+    };
+  }, []);
+
+  useEffect(() => {
+    // 离开 AI 才清占位；进 AI 时不要强制再盖一层（会与真页叠出闪屏）
+    if (pathname === '/ai' || pathname?.startsWith('/ai/')) return;
+    setAiBootVisible(false);
+    setAiBootOpaque(false);
+    hideAiNavigationShell();
+  }, [pathname]);
 
   useEffect(() => {
     setIsMineExpanded(false);
@@ -925,6 +981,17 @@ export default function PCLayout({ children }) {
     if (key === '/community') {
       setActiveContent(null);
       router.push('/pc/community');
+      return;
+    }
+
+    if (key === '/ai') {
+      setActiveContent(null);
+      if (pathname !== '/ai') {
+        showAiNavigationShell();
+        setAiBootVisible(true);
+        setAiBootOpaque(true);
+        router.push('/ai');
+      }
       return;
     }
 
@@ -1482,12 +1549,15 @@ export default function PCLayout({ children }) {
                   }`}
                   onClick={() => {
                     setActiveContent(null);
-                    if (pathname !== '/ai') {
-                      pushWithRouteBootLoading(router, '/ai');
-                      setIsAiChatExpanded(true);
-                    } else {
+                    if (pathname === '/ai') {
                       setIsAiChatExpanded((v) => !v);
+                      return;
                     }
+                    showAiNavigationShell();
+                    setAiBootVisible(true);
+                    setAiBootOpaque(true);
+                    router.push('/ai');
+                    setIsAiChatExpanded(true);
                   }}
                 >
                   <span className={styles.pcWatchlistHeaderLeft}>
@@ -1544,7 +1614,10 @@ export default function PCLayout({ children }) {
                                 className={styles.pcAiChatRowMain}
                                 onClick={() => {
                                   setActiveContent(null);
-                                  pushWithRouteBootLoading(router, `/ai/${conversationId}`);
+                                  showAiNavigationShell();
+                                  setAiBootVisible(true);
+                                  setAiBootOpaque(true);
+                                  router.push(`/ai/${conversationId}`);
                                 }}
                               >
                                 <span className={styles.pcAiChatRowIcon} aria-hidden>
@@ -1673,6 +1746,7 @@ export default function PCLayout({ children }) {
           >
             <div
               className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''} ${isDetailPage ? styles.contentMainDetail : ''} ${isAiRoute ? styles.contentMainAi : ''} ${isSearchPage ? styles.contentMainSearch : ''}`}
+              style={isAiRoute || aiBootVisible ? { position: 'relative' } : undefined}
             >
               {(() => {
                 if (activeContent === '/find') {
@@ -1687,6 +1761,27 @@ export default function PCLayout({ children }) {
                   return children;
                 }
               })()}
+              {aiBootVisible ? (
+                <div
+                  aria-hidden
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 6,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: 0,
+                    overflow: 'hidden',
+                    // 透明：露出与正式 AI 页相同的 homeContent 渐变，避免实色底造成闪白/丢底色
+                    background: 'transparent',
+                    opacity: aiBootOpaque ? 1 : 0,
+                    transition: 'opacity 140ms ease',
+                    pointerEvents: aiBootOpaque ? 'auto' : 'none',
+                  }}
+                >
+                  <AiChatBootShell />
+                </div>
+              ) : null}
             </div>
             {isDetailPage ? <div className={styles.detailFooterSpacer} aria-hidden /> : null}
             

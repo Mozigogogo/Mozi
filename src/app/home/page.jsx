@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import HomeClient from '../HomeClient';
 import SiteHubSeo from '@/components/SiteHubSeo';
+import { isProbablyPcUa } from '@/utils/deviceUa';
 import {
   PRIMARY_SITE_HUBS,
   buildPageMetadata,
@@ -26,14 +27,9 @@ export const metadata = buildPageMetadata({
   ],
 });
 
-function isProbablyMobile(ua = '') {
-  const s = String(ua);
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(s);
-}
-
 export default function AppHomePage() {
   const ua = headers().get('user-agent') || '';
-  const initialIsPC = !isProbablyMobile(ua);
+  const initialIsPC = isProbablyPcUa(ua);
   return (
     <>
       <SiteHubSeo

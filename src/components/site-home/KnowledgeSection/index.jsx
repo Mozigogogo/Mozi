@@ -19,7 +19,11 @@ export default function KnowledgeSection() {
               <br />
               Ask anything, get clarity.
             </p>
-            <AppLink className={`${styles.primaryCta} ${styles.knowledgeCta}`} href="/pc/community?tab=qa">
+            <AppLink
+              className={`${styles.primaryCta} ${styles.knowledgeCta}`}
+              href="/pc/community?tab=qa"
+              style={{ color: '#111827' }}
+            >
               <span>Learn more</span>
               <GetStartedArrow />
             </AppLink>

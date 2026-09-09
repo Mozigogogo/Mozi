@@ -28,13 +28,14 @@ import PerfDebug from "@/components/PerfDebug";
 import TgRootRedirectScript from "@/components/TgRootRedirectScript";
 import TelegramSdkLoader from "@/components/TelegramSdkLoader";
 import TgWcWebviewCheck from "@/components/TgWcWebviewCheck";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import {
   I18N_COOKIE_KEY,
   I18N_SSR_DEFAULT_LNG,
   htmlLangFor,
   normalizeLng,
 } from "@/i18n/languageStorage";
+import { isProbablyPcUa } from "@/utils/deviceUa";
 import {
   BRAND_LEGAL_NAME,
   DEFAULT_DESCRIPTION,
@@ -107,6 +108,7 @@ export default function RootLayout({ children }) {
   const cookieStore = cookies();
   const initialLng =
     normalizeLng(cookieStore.get(I18N_COOKIE_KEY)?.value) || I18N_SSR_DEFAULT_LNG;
+  const ssrIsPC = isProbablyPcUa(headers().get("user-agent") || "");
 
   return (
     <html lang={htmlLangFor(initialLng)} suppressHydrationWarning>
@@ -158,8 +160,12 @@ export default function RootLayout({ children }) {
                       外层 Suspense：PcLayoutGate / useSearchParams 挂起时仍渲染 children。
                       占位壳必须包住 children，禁止空壳闪白。
                     */}
-                    <Suspense fallback={<PcLayoutShellFallback>{children}</PcLayoutShellFallback>}>
-                      <PcLayoutGate>{children}</PcLayoutGate>
+                    <Suspense
+                      fallback={
+                        <PcLayoutShellFallback ssrIsPC={ssrIsPC}>{children}</PcLayoutShellFallback>
+                      }
+                    >
+                      <PcLayoutGate ssrIsPC={ssrIsPC}>{children}</PcLayoutGate>
                     </Suspense>
                   </AntdRegistry>
                 </Web3Provider>

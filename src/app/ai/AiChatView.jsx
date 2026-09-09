@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore } from 'react';
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -24,6 +24,7 @@ import { forceBlurAndResetViewport } from '@/utils/iosViewportFix';
 import { fetchUserDataInfoOnce } from '@/utils/postLogin';
 import { consumePcAiFromSearch, consumePcAiNav } from '@/utils/pcAiFromSearch';
 import { notifyRouteBootReady } from '@/utils/routeBootLoading';
+import { notifyAiViewReady } from '@/utils/aiNavigation';
 import { notifyAiConversationsChanged } from '@/utils/aiConversationEvents';
 import {
   getAgentConversationMessages,
@@ -538,6 +539,20 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 首帧 / 切换会话后关掉 PC 内容区 AI 占位，避免只露壳层渐变底
+  useLayoutEffect(() => {
+    let raf2 = 0;
+    const raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        notifyAiViewReady();
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      if (raf2) window.cancelAnimationFrame(raf2);
+    };
+  }, [routeConversationId]);
 
   useEffect(() => {
     if (!mounted || scanCacheRequestRef.current) return;

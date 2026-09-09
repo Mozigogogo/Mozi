@@ -35,6 +35,45 @@
   box-sizing: border-box;
 }
 
+.siderBrand {
+  height: 36px;
+  margin: 0 4px 16px;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+
+.siderNav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.siderNavItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: #64748b;
+}
+
+.siderNavDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+.siderNavText {
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .content {
   flex: 1;
   min-width: 0;
@@ -55,6 +94,18 @@
   .siderPlaceholder {
     background: #161a1e;
     border-right-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .siderBrand {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .siderNavItem {
+    color: #94a3b8;
+  }
+
+  .siderNavDot {
+    background: rgba(255, 255, 255, 0.12);
   }
 
   .content {

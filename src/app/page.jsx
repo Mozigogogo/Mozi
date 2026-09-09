@@ -130,6 +130,8 @@ export default function SiteHomePage() {
         <FlashSection />
         <AlphaSection />
         <KnowledgeSection />
+        {/* TODO: 临时隐藏官网底部 SEO 文案与多列导航，恢复时取消注释 */}
+        {/*
         <footer className={styles.aboutSeo}>
           <h2 className={styles.aboutSeoTitle}>
             {BRAND_LEGAL_NAME}（Mozi / 墨子）— AI Prediction &amp; Crypto Data Intelligence
@@ -143,13 +145,13 @@ export default function SiteHomePage() {
             {BRAND_LEGAL_NAME}（Mozi / 墨子）是加密货币数据分析平台，提供 AI 行情预测、量化策略助手、智能价格预警、板块轮动、套利雷达与交易社区。
           </p>
 
-          {/* 欧易风格多列页脚：突出 首页 / 发现 / 社区 / AI分析 */}
           <nav className={styles.siteFooterNav} aria-label={`${BRAND_LEGAL_NAME} 站点导航`}>
             {SITE_FOOTER_COLUMNS.map((column, index) => (
               <FooterColumn key={column.title || column.sections?.[0]?.title || index} column={column} />
             ))}
           </nav>
         </footer>
+        */}
       </section>
     </main>
   );

@@ -1,29 +1,10 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import TelegramAutoLogin from '@/components/TelegramAutoLogin';
 import { getMySubscription } from '@/api/vip';
-import { LogoLoading } from '@/components/Loading';
-
-// Dynamic imports to optimize bundle size and performance
-const PCHome = dynamic(() => import('../components/PCHome'), {
-  loading: () => null,
-});
-const MobileHome = dynamic(() => import('../components/MobileHome'), {
-  loading: () => null,
-});
-
-const HOME_SPLASH_SEEN_KEY = 'mozi_home_splash_seen_v1';
-
-function hasSeenHomeSplash() {
-  if (typeof window === 'undefined') return false;
-  try {
-    return sessionStorage.getItem(HOME_SPLASH_SEEN_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
+import PCHome from '../components/PCHome';
+import MobileHome from '../components/MobileHome';
 
 export default function HomeClient({ initialIsPC = false }) {
   // 关键：避免“服务端先猜成 PC → 客户端再纠正成 Mobile”的闪烁/空白
@@ -38,41 +19,6 @@ export default function HomeClient({ initialIsPC = false }) {
   });
   const [didKickoffSubscription, setDidKickoffSubscription] = useState(false);
   const [tgLoginSuccessReceived, setTgLoginSuccessReceived] = useState(false);
-  // 同会话内再次进入 /home（如登录后跳转）不再展示全屏 Logo 遮罩
-  const [homeBootMaskVisible, setHomeBootMaskVisible] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return !hasSeenHomeSplash();
-  });
-  const [pcModuleReady, setPcModuleReady] = useState(false);
-  const [mobileModuleReady, setMobileModuleReady] = useState(false);
-
-  // 预加载首屏模块，避免遮罩提前消失后出现长时间空白
-  useEffect(() => {
-    let cancelled = false;
-    if (typeof window === 'undefined') return;
-    if (isPC) {
-      Promise.all([import('../components/PCHome')])
-        .then(() => {
-          if (!cancelled) setPcModuleReady(true);
-        })
-        .catch(() => {
-          if (!cancelled) setPcModuleReady(true);
-        });
-      return () => {
-        cancelled = true;
-      };
-    }
-    Promise.all([import('../components/MobileHome')])
-      .then(() => {
-        if (!cancelled) setMobileModuleReady(true);
-      })
-      .catch(() => {
-        if (!cancelled) setMobileModuleReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [isPC]);
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
@@ -154,70 +100,10 @@ export default function HomeClient({ initialIsPC = false }) {
       });
   }, [didKickoffSubscription, tgLoginSuccessReceived]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    if (hasSeenHomeSplash()) {
-      setHomeBootMaskVisible(false);
-      return;
-    }
-
-    const MIN_MASK_MS = 250;
-    const FAST_RETURN_KEY = 'mozi_home_fast_return_once_v1';
-    const startTs = Date.now();
-
-    const hideMask = () => {
-      let fastReturn = false;
-      try {
-        fastReturn = sessionStorage.getItem(FAST_RETURN_KEY) === '1';
-        if (fastReturn) {
-          sessionStorage.removeItem(FAST_RETURN_KEY);
-        }
-      } catch (_) {}
-      const elapsed = Date.now() - startTs;
-      const remain = fastReturn ? 0 : Math.max(0, MIN_MASK_MS - elapsed);
-      window.setTimeout(() => {
-        const moduleReady = isPC ? pcModuleReady : mobileModuleReady;
-        if (!moduleReady) return;
-        setHomeBootMaskVisible(false);
-        try {
-          sessionStorage.setItem(HOME_SPLASH_SEEN_KEY, '1');
-        } catch (_) {}
-      }, remain);
-    };
-
-    const rafId = window.requestAnimationFrame(hideMask);
-    return () => window.cancelAnimationFrame(rafId);
-  }, [isPC, pcModuleReady, mobileModuleReady]);
-
-  if (isPC) {
-    return (
-      <>
-        <TelegramAutoLogin />
-        <PCHome />
-        <LogoLoading
-          visible={homeBootMaskVisible}
-          fullscreen
-          mask
-          image="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png"
-          size={72}
-        />
-      </>
-    );
-  }
-
   return (
     <>
       <TelegramAutoLogin />
-      <MobileHome />
-      <LogoLoading
-        visible={homeBootMaskVisible}
-        fullscreen
-        mask
-        image="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png"
-        size={72}
-      />
+      {isPC ? <PCHome /> : <MobileHome />}
     </>
   );
 }
-
