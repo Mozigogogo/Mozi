@@ -1,35 +1,26 @@
-'use client';
-
-import { useState } from 'react';
 import styles from './SectorSection.module.css';
 
-const SECTOR_POSTER_SRC =
-  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction3.svg';
-const SECTOR_GIF_SRC =
-  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/sector.gif';
+const COS_HOME = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/homesite';
+const SECTOR_WEBM_SRC = `${COS_HOME}/sector.webm`;
+const SECTOR_MP4_SRC = `${COS_HOME}/sector.mp4`;
 
 export default function SectorScreenMedia() {
-  const [gifReady, setGifReady] = useState(false);
-
   return (
     <div className={styles.sectorPreview} aria-hidden="true">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={SECTOR_POSTER_SRC}
-        alt=""
-        className={`${styles.sectorPoster} ${gifReady ? styles.sectorPosterHidden : ''}`}
-        loading="eager"
-        decoding="async"
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={SECTOR_GIF_SRC}
-        alt="Mozi sector rotation preview"
-        className={`${styles.sectorPreviewImage} ${gifReady ? styles.sectorPreviewImageReady : ''}`}
-        loading="eager"
-        decoding="async"
-        onLoad={() => setGifReady(true)}
-      />
+      <video
+        className={`${styles.sectorPreviewImage} ${styles.sectorPreviewImageReady}`}
+        width={702}
+        height={401}
+        muted
+        loop
+        playsInline
+        autoPlay
+        preload="auto"
+        aria-label="Mozi sector rotation preview"
+      >
+        <source src={SECTOR_WEBM_SRC} type="video/webm" />
+        <source src={SECTOR_MP4_SRC} type="video/mp4" />
+      </video>
     </div>
   );
 }

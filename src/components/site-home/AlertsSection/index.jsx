@@ -2,8 +2,9 @@ import Image from 'next/image';
 import styles from './AlertsSection.module.css';
 import PromoCopy from '../PromoCopy/index';
 
-const ALERTS_CENTER_GIF_SRC =
-  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/big_order.gif';
+const COS_HOME = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/homesite';
+const ALERTS_CENTER_WEBM_SRC = `${COS_HOME}/big_order.webm`;
+const ALERTS_CENTER_MP4_SRC = `${COS_HOME}/big_order.mp4`;
 
 export default function AlertsSection() {
   return (
@@ -47,14 +48,20 @@ export default function AlertsSection() {
           <div className={styles.centerCol}>
             <div className={styles.centerStage}>
               <div className={styles.alertGifCrop}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={ALERTS_CENTER_GIF_SRC}
-                  alt="Mozi smart alerts preview"
+                <video
                   className={styles.alertCenterGif}
-                  loading="eager"
-                  decoding="async"
-                />
+                  width={594}
+                  height={1280}
+                  muted
+                  loop
+                  playsInline
+                  autoPlay
+                  preload="auto"
+                  aria-label="Mozi smart alerts preview"
+                >
+                  <source src={ALERTS_CENTER_WEBM_SRC} type="video/webm" />
+                  <source src={ALERTS_CENTER_MP4_SRC} type="video/mp4" />
+                </video>
               </div>
 
               <div className={styles.tickerOverlay}>

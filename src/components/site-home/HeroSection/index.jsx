@@ -1,9 +1,14 @@
 import styles from './HeroSection.module.css';
 import PromoCopy from '../PromoCopy/index';
 
+const COS_HOME = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/homesite';
+const HERO_WEBM_SRC = `${COS_HOME}/ai.webm`;
+const HERO_MP4_SRC = `${COS_HOME}/ai.mp4`;
+
 export default function HeroSection() {
   return (
     <div className={styles.stage}>
+      <link rel="preload" as="video" href={HERO_WEBM_SRC} type="video/webm" fetchPriority="high" />
       <div className={styles.heroCols}>
         <div className={styles.leftPane}>
           <PromoCopy
@@ -18,14 +23,20 @@ export default function HeroSection() {
 
         <div className={styles.rightPane}>
           <div className={styles.screenFrame} aria-hidden="true">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/ai.gif"
-              alt="Mozi AI assistant preview"
+            <video
               className={styles.screenImage}
-              loading="eager"
-              decoding="async"
-            />
+              width={702}
+              height={397}
+              muted
+              loop
+              playsInline
+              autoPlay
+              preload="auto"
+              aria-label="Mozi AI assistant preview"
+            >
+              <source src={HERO_WEBM_SRC} type="video/webm" />
+              <source src={HERO_MP4_SRC} type="video/mp4" />
+            </video>
           </div>
 
           <div className={styles.floatCard}>
