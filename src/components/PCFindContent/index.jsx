@@ -319,12 +319,12 @@ export default function PCFindContent() {
   // 客户端同步浏览器标签 title（避免软导航 / PCLayout 换页后 title 丢失）
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
-    const nextTitle = getFindTabSeoTitle(activeTab);
+    const nextTitle = getFindTabSeoTitle(activeTab, i18n.language);
     if (document.title !== nextTitle) {
       document.title = nextTitle;
     }
     return undefined;
-  }, [activeTab]);
+  }, [activeTab, i18n.language]);
 
   const handleBigOrderDetect = useCallback(
     (symbol, e) => {

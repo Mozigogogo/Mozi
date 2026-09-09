@@ -5,7 +5,6 @@ import {
   buildPageMetadata,
   buildPrimaryNavJsonLd,
   DEFAULT_DESCRIPTION,
-  DEFAULT_TITLE,
 } from '@/utils/seoConfig';
 import styles from './site.module.css';
 import HeroSection from '@/components/site-home/HeroSection/index';
@@ -14,14 +13,21 @@ import SectorSection from '@/components/site-home/SectorSection/index';
 import FlashSection from '@/components/site-home/FlashSection/index';
 import AlphaSection from '@/components/site-home/AlphaSection/index';
 import KnowledgeSection from '@/components/site-home/KnowledgeSection/index';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
+import { getHubSeoCopy, seoLngFromCookieValue } from '@/utils/seoI18n';
+import SiteHomeTitleSync from '@/components/site-home/SiteHomeTitleSync';
 
-export const metadata = buildPageMetadata({
-  title: DEFAULT_TITLE,
-  description: DEFAULT_DESCRIPTION,
-  path: '/',
-});
+export async function generateMetadata() {
+  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+  const homeSeo = getHubSeoCopy('home', lng);
+  return buildPageMetadata({
+    title: homeSeo.title,
+    description: homeSeo.description,
+    path: '/',
+  });
+}
 
 function isTelegramServerRequest(ua = '', referer = '') {
   if (/Telegram/i.test(ua)) return true;
@@ -103,6 +109,7 @@ export default function SiteHomePage() {
 
   return (
     <main className={styles.page}>
+      <SiteHomeTitleSync />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}

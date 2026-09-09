@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import SiteHubSeo from '@/components/SiteHubSeo';
 import { buildPageMetadata } from '@/utils/seoConfig';
 import {
@@ -5,14 +6,17 @@ import {
   getFindTabSeoTitle,
   normalizePcFindTab,
 } from '@/utils/pcFindNavigation';
+import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
+import { seoLngFromCookieValue } from '@/utils/seoI18n';
 
 export async function generateMetadata({ searchParams }) {
+  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
   const tab = normalizePcFindTab(searchParams?.tab);
   const path = tab === 'market' ? '/find' : `/find?tab=${encodeURIComponent(tab)}`;
 
   return buildPageMetadata({
-    title: getFindTabSeoTitle(tab),
-    description: getFindTabSeoDescription(tab),
+    title: getFindTabSeoTitle(tab, lng),
+    description: getFindTabSeoDescription(tab, lng),
     path,
     keywords: [
       '数字货币',

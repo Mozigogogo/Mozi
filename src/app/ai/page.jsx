@@ -1,26 +1,28 @@
+import { cookies } from 'next/headers';
 import SiteHubSeo from '@/components/SiteHubSeo';
-import {
-  PRIMARY_SITE_HUBS,
-  buildPageMetadata,
-} from '@/utils/seoConfig';
+import { buildPageMetadata } from '@/utils/seoConfig';
+import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
+import { getHubSeoCopy, seoLngFromCookieValue } from '@/utils/seoI18n';
 
-const aiHub = PRIMARY_SITE_HUBS.find((h) => h.key === 'ai');
-
-export const metadata = buildPageMetadata({
-  title: aiHub.title,
-  description: aiHub.description,
-  path: '/ai',
-  keywords: [
-    'AI分析',
-    'AI Analysis',
-    'AI预测',
-    '量化策略',
-    '自然语言分析',
-    'Mozi',
-    '墨子',
-    'AI Trade Radar',
-  ],
-});
+export async function generateMetadata() {
+  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+  const aiSeo = getHubSeoCopy('ai', lng);
+  return buildPageMetadata({
+    title: aiSeo.title,
+    description: aiSeo.description,
+    path: '/ai',
+    keywords: [
+      'AI分析',
+      'AI Analysis',
+      'AI预测',
+      '量化策略',
+      '自然语言分析',
+      'Mozi',
+      '墨子',
+      'AI Trade Radar',
+    ],
+  });
+}
 
 export default function AiPage() {
   return (

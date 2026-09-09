@@ -36,7 +36,7 @@ export default function PCCommunityContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const QA_CATEGORY_KEY = '不懂就问';
   const DISCOVERY_CATEGORY_KEY = '发现好币';
   const COIN_POST_PAGE_SIZE = 5;
@@ -116,12 +116,12 @@ export default function PCCommunityContent() {
   // 客户端同步浏览器标签 title
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
-    const nextTitle = getCommunityTabSeoTitle(activeCapsuleTab);
+    const nextTitle = getCommunityTabSeoTitle(activeCapsuleTab, i18n.language);
     if (document.title !== nextTitle) {
       document.title = nextTitle;
     }
     return undefined;
-  }, [activeCapsuleTab]);
+  }, [activeCapsuleTab, i18n.language]);
 
   useEffect(() => {
     notifyRouteBootReady();

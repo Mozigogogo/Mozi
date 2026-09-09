@@ -805,12 +805,12 @@ const loadingTimerRef = useRef(null);
   // 客户端同步浏览器标签 title
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
-    const nextTitle = getFindTabSeoTitle(pageActiveKey);
+    const nextTitle = getFindTabSeoTitle(pageActiveKey, i18n.language);
     if (document.title !== nextTitle) {
       document.title = nextTitle;
     }
     return undefined;
-  }, [pageActiveKey]);
+  }, [pageActiveKey, i18n.language]);
 
   // 初始化加载 / 排行榜串行轮询（等上次完成再发，避免堆积）
   useEffect(() => {

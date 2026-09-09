@@ -2794,5 +2794,51 @@
         "longExitA3": "Avoid adding size short-term"
       }
     }
+  },
+  "seo": {
+    "home": {
+      "title": "Professional Bitcoin & Crypto Data Analytics Platform | Bitcoin Price | MoziInnovations",
+      "description": "MoziInnovations (Mozi) crypto markets home: live Bitcoin price, top movers, sector rotation, AI prediction and quant strategy insights."
+    },
+    "find": {
+      "market": {
+        "title": "Crypto Prices, Market Cap & Charts | MoziInnovations",
+        "description": "MoziInnovations (Mozi) Discover: live crypto prices, market cap, gainers/losers, sectors and exchange data to spot market opportunities."
+      },
+      "usStock": {
+        "title": "US Stock Prices & Market Cap | MoziInnovations",
+        "description": "MoziInnovations (Mozi) US stocks: live prices, volume and daily change for listed tickers."
+      },
+      "rank": {
+        "title": "Cryptocurrency Rankings | MoziInnovations",
+        "description": "MoziInnovations (Mozi) crypto rankings: gainers, losers, volatility, volume and more."
+      },
+      "self": {
+        "title": "My Watchlist Quotes | MoziInnovations",
+        "description": "MoziInnovations (Mozi) watchlist: track live quotes for your selected coins."
+      }
+    },
+    "community": {
+      "all": {
+        "title": "Crypto Community, Hot Topics & Market Discussion | MoziInnovations",
+        "description": "MoziInnovations crypto community: browse hot topics and featured posts, discuss BTC/ETH markets, sector rotation and trading ideas."
+      },
+      "coin": {
+        "title": "Coin Discussions & Crypto Community | MoziInnovations",
+        "description": "MoziInnovations coin community: discuss markets and trading ideas by BTC/ETH and other coins."
+      },
+      "discover": {
+        "title": "Discover Coins & Crypto Opportunities | MoziInnovations",
+        "description": "MoziInnovations Discover Coins: community picks, new-coin discussions and market views."
+      },
+      "qa": {
+        "title": "Crypto Q&A Community | MoziInnovations",
+        "description": "MoziInnovations crypto Q&A: ask and discuss markets, strategies and trading questions."
+      }
+    },
+    "ai": {
+      "title": "AI Analysis | MoziInnovations (Mozi)",
+      "description": "MoziInnovations AI Analysis: natural-language insights on crypto markets, sector rotation, arbitrage and quant strategies."
+    }
   }
 }

@@ -40,13 +40,16 @@ export const DEFAULT_DESCRIPTION_ZH =
  * 品牌搜索 sitelinks 优先入口（首页 / 发现 / 社区 / AI 分析）
  * 用稳定 path + 中英文名称，供 JSON-LD、sitemap、页脚内链共用
  */
+/**
+ * 四大枢纽入口。title/description 为中文默认（JSON-LD 等无语言上下文时回退）；
+ * 页面 metadata / 可见 SEO 文案请用 getHubSeoCopy(hubKey, lng)（见 seoI18n + i18n locales seo.*）。
+ */
 export const PRIMARY_SITE_HUBS = [
   {
     key: 'home',
     path: '/home',
     nameZh: '首页',
     nameEn: 'Home',
-    // 参考欧易：左侧平台定位 + 比特币/加密货币词，右侧高意图行情词；末尾带品牌避免再被 template 拼接
     title: `专业的比特币、加密货币数据分析平台 | 比特币行情价格 | MoziInnovations`,
     description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）加密货币行情首页：实时比特币价格、热门币种涨跌、板块轮动、AI 预测与量化策略洞察。`,
   },
@@ -55,7 +58,6 @@ export const PRIMARY_SITE_HUBS = [
     path: '/find',
     nameZh: '发现',
     nameEn: 'Discover',
-    // 参考欧易 Markets：数字货币价格、市值与图表
     title: `数字货币价格、市值与图表 | MoziInnovations`,
     description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）发现页：数字货币实时价格、市值、涨跌榜、板块与交易所数据，以及上新/下线公告，快速定位市场机会。`,
   },
@@ -436,11 +438,13 @@ export const COMMUNITY_KEYWORDS = [
   'market discussion',
 ];
 
+/** @deprecated 请用 getCommunityTabSeoTitle('all', lng) / getHubSeoCopy('community', lng) */
 export const COMMUNITY_TITLE =
   `加密货币社区、热门话题与行情讨论 | MoziInnovations`;
 export const COMMUNITY_DESCRIPTION =
   `${BRAND_LEGAL_NAME}（Mozi / 墨子）加密货币社区：浏览热门话题与精选帖子，讨论 BTC/ETH 行情、板块轮动与交易观点，发现好币与市场机会。Crypto community for market discussion, hot topics and trading insights.`;
 
+/** @deprecated 请用 getCommunityTabSeoTitle('all', lng) */
 export const COMMUNITY_PC_TITLE =
   `加密货币社区、热门话题与行情讨论 | MoziInnovations`;
 export const COMMUNITY_PC_DESCRIPTION =

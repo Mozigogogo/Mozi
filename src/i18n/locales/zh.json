@@ -2792,5 +2792,51 @@
         "longExitA3": "短期不建议加仓"
       }
     }
+  },
+  "seo": {
+    "home": {
+      "title": "专业的比特币、加密货币数据分析平台 | 比特币行情价格 | MoziInnovations",
+      "description": "MoziInnovations（Mozi / 墨子）加密货币行情首页：实时比特币价格、热门币种涨跌、板块轮动、AI 预测与量化策略洞察。"
+    },
+    "find": {
+      "market": {
+        "title": "数字货币价格、市值与图表 | MoziInnovations",
+        "description": "MoziInnovations（Mozi / 墨子）发现页：数字货币实时价格、市值、涨跌榜、板块与交易所数据，以及上新/下线公告，快速定位市场机会。"
+      },
+      "usStock": {
+        "title": "美股行情价格与市值 | MoziInnovations",
+        "description": "MoziInnovations（Mozi / 墨子）美股行情：实时价格、成交额与涨跌幅，快速查看美股标的数据。"
+      },
+      "rank": {
+        "title": "加密货币排行榜 | MoziInnovations",
+        "description": "MoziInnovations（Mozi / 墨子）加密货币排行榜：涨幅、跌幅、波动、成交额等多维榜单。"
+      },
+      "self": {
+        "title": "我的自选行情 | MoziInnovations",
+        "description": "MoziInnovations（Mozi / 墨子）我的自选：查看自选币种实时行情。"
+      }
+    },
+    "community": {
+      "all": {
+        "title": "加密货币社区、热门话题与行情讨论 | MoziInnovations",
+        "description": "MoziInnovations（Mozi / 墨子）加密货币社区：浏览热门话题与精选帖子，讨论 BTC/ETH 行情、板块轮动与交易观点，发现好币与市场机会。"
+      },
+      "coin": {
+        "title": "币种讨论与加密货币社区 | MoziInnovations",
+        "description": "MoziInnovations（Mozi / 墨子）币种社区：按 BTC/ETH 等币种浏览行情讨论与交易观点。"
+      },
+      "discover": {
+        "title": "发现好币与加密货币机会 | MoziInnovations",
+        "description": "MoziInnovations（Mozi / 墨子）发现好币：社区精选机会、新币讨论与市场观点。"
+      },
+      "qa": {
+        "title": "加密货币问答社区 | MoziInnovations",
+        "description": "MoziInnovations（Mozi / 墨子）加密货币问答：不懂就问，交流行情、策略与交易问题。"
+      }
+    },
+    "ai": {
+      "title": "AI分析 | MoziInnovations（Mozi / 墨子）",
+      "description": "MoziInnovations AI 分析：用自然语言解读加密行情、板块轮动、套利机会与量化策略建议。"
+    }
   }
 }

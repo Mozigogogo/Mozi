@@ -1,11 +1,10 @@
+import { cookies } from 'next/headers';
 import {
   BRAND_LEGAL_NAME,
-  COMMUNITY_DESCRIPTION,
-  COMMUNITY_PC_DESCRIPTION,
-  COMMUNITY_PC_TITLE,
-  COMMUNITY_TITLE,
   buildCommunityJsonLd,
 } from '@/utils/seoConfig';
+import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
+import { getHubSeoCopy, seoLngFromCookieValue } from '@/utils/seoI18n';
 import styles from './CommunitySeo.module.css';
 
 /**
@@ -14,8 +13,8 @@ import styles from './CommunitySeo.module.css';
 export default function CommunitySeo({ variant = 'mobile' }) {
   const isPc = variant === 'pc';
   const path = isPc ? '/pc/community' : '/community';
-  const title = isPc ? COMMUNITY_PC_TITLE : COMMUNITY_TITLE;
-  const description = isPc ? COMMUNITY_PC_DESCRIPTION : COMMUNITY_DESCRIPTION;
+  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+  const { title, description } = getHubSeoCopy('community', lng);
   const { collectionPage, breadcrumb } = buildCommunityJsonLd({
     path,
     name: title,

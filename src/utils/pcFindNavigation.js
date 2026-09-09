@@ -1,4 +1,6 @@
 /** 首页实时榜单 tab key → 发现页排行榜子 tab */
+import { getFindTabSeoCopy } from '@/utils/seoI18n';
+
 export const PC_HOME_RANK_TO_FIND_RANK_TYPE = {
   zhangfu: 'up',
   diefu: 'down',
@@ -78,32 +80,11 @@ export function buildFindTabHref(basePath, tab, currentParams = null) {
   return qs ? `${base}?${qs}` : base;
 }
 
-/** 发现页按 Tab 的 SEO title（对齐欧易 Markets 风格） */
-export function getFindTabSeoTitle(tab) {
-  const key = normalizePcFindTab(tab);
-  if (key === 'usStock') {
-    return '美股行情价格与市值 | MoziInnovations';
-  }
-  if (key === 'rank') {
-    return '加密货币排行榜 | MoziInnovations';
-  }
-  if (key === 'self') {
-    return '我的自选行情 | MoziInnovations';
-  }
-  // market 默认
-  return '数字货币价格、市值与图表 | MoziInnovations';
+/** 发现页按 Tab 的 SEO title（中英文见 i18n locales seo.find.*） */
+export function getFindTabSeoTitle(tab, lng) {
+  return getFindTabSeoCopy(normalizePcFindTab(tab), lng).title;
 }
 
-export function getFindTabSeoDescription(tab) {
-  const key = normalizePcFindTab(tab);
-  if (key === 'usStock') {
-    return 'MoziInnovations（Mozi / 墨子）美股行情：实时价格、成交额与涨跌幅，快速查看美股标的数据。';
-  }
-  if (key === 'rank') {
-    return 'MoziInnovations（Mozi / 墨子）加密货币排行榜：涨幅、跌幅、波动、成交额等多维榜单。';
-  }
-  if (key === 'self') {
-    return 'MoziInnovations（Mozi / 墨子）我的自选：查看自选币种实时行情。';
-  }
-  return 'MoziInnovations（Mozi / 墨子）发现页：数字货币实时价格、市值、涨跌榜、板块与交易所数据，以及上新/下线公告，快速定位市场机会。';
+export function getFindTabSeoDescription(tab, lng) {
+  return getFindTabSeoCopy(normalizePcFindTab(tab), lng).description;
 }

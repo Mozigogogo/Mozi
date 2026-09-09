@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import TelegramAutoLogin from '@/components/TelegramAutoLogin';
 import { getMySubscription } from '@/api/vip';
 import PCHome from '../components/PCHome';
 import MobileHome from '../components/MobileHome';
+import { getHubSeoCopy } from '@/utils/seoI18n';
 
 export default function HomeClient({ initialIsPC = false }) {
+  const { i18n } = useTranslation();
   // 关键：避免“服务端先猜成 PC → 客户端再纠正成 Mobile”的闪烁/空白
   // 客户端首帧优先用 matchMedia 计算，减少错误分支渲染时间窗口
   const [isPC, setIsPC] = useState(() => {
@@ -19,6 +22,15 @@ export default function HomeClient({ initialIsPC = false }) {
   });
   const [didKickoffSubscription, setDidKickoffSubscription] = useState(false);
   const [tgLoginSuccessReceived, setTgLoginSuccessReceived] = useState(false);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const nextTitle = getHubSeoCopy('home', i18n.language).title;
+    if (document.title !== nextTitle) {
+      document.title = nextTitle;
+    }
+    return undefined;
+  }, [i18n.language]);
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;

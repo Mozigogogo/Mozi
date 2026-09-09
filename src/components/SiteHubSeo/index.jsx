@@ -1,20 +1,24 @@
+import { cookies } from 'next/headers';
 import {
   BRAND_LEGAL_NAME,
   PRIMARY_SITE_HUBS,
   absoluteUrl,
   buildPrimaryNavJsonLd,
 } from '@/utils/seoConfig';
+import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
+import { getHubSeoCopy, resolveSeoLng, seoLngFromCookieValue } from '@/utils/seoI18n';
 import styles from './hubSeo.module.css';
 
-function buildHubPageJsonLdForPath(hub, path) {
+function buildHubPageJsonLdForPath(hub, path, copy, lng) {
   const url = absoluteUrl(path);
+  const isZh = resolveSeoLng(lng) === 'zh';
   return {
     webPage: {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
       '@id': `${url}#webpage`,
-      name: hub.title,
-      description: hub.description,
+      name: copy.title,
+      description: copy.description,
       url,
       inLanguage: ['zh-CN', 'en'],
       isPartOf: {
@@ -41,7 +45,7 @@ function buildHubPageJsonLdForPath(hub, path) {
         {
           '@type': 'ListItem',
           position: 2,
-          name: hub.nameZh,
+          name: isZh ? hub.nameZh : hub.nameEn,
           item: url,
         },
       ],
@@ -61,9 +65,13 @@ export default function SiteHubSeo({
   const hub = PRIMARY_SITE_HUBS.find((item) => item.key === hubKey);
   if (!hub) return null;
 
+  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+  const isZh = resolveSeoLng(lng) === 'zh';
+  const copy = getHubSeoCopy(hubKey, lng);
   const path = pathOverride || hub.path;
-  const jsonLd = buildHubPageJsonLdForPath(hub, path);
+  const jsonLd = buildHubPageJsonLdForPath(hub, path, copy, lng);
   const navJsonLd = includeNavSchema ? buildPrimaryNavJsonLd() : null;
+  const hubLabel = isZh ? hub.nameZh : hub.nameEn;
 
   return (
     <>
@@ -81,9 +89,9 @@ export default function SiteHubSeo({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(navJsonLd) }}
         />
       ) : null}
-      <section className={styles.seoIntro} aria-label={`${BRAND_LEGAL_NAME} ${hub.nameZh}`}>
-        <h1 className={styles.seoTitle}>{hub.title}</h1>
-        <p className={styles.seoDesc}>{hub.description}</p>
+      <section className={styles.seoIntro} aria-label={`${BRAND_LEGAL_NAME} ${hubLabel}`}>
+        <h1 className={styles.seoTitle}>{copy.title}</h1>
+        <p className={styles.seoDesc}>{copy.description}</p>
         {extraListItems.length > 0 ? (
           <ul className={styles.seoList}>
             {extraListItems.map((text) => (
@@ -94,7 +102,7 @@ export default function SiteHubSeo({
         <nav className={styles.seoNav} aria-label={`${BRAND_LEGAL_NAME} 主要入口`}>
           {PRIMARY_SITE_HUBS.map((item) => (
             <a key={item.key} href={item.path}>
-              {item.nameZh}
+              {isZh ? item.nameZh : item.nameEn}
             </a>
           ))}
         </nav>

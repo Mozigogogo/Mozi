@@ -1,38 +1,39 @@
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import HomeClient from '../HomeClient';
 import SiteHubSeo from '@/components/SiteHubSeo';
 import { isProbablyPcUa } from '@/utils/deviceUa';
-import {
-  PRIMARY_SITE_HUBS,
-  buildPageMetadata,
-} from '@/utils/seoConfig';
+import { buildPageMetadata } from '@/utils/seoConfig';
+import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
+import { getHubSeoCopy, seoLngFromCookieValue } from '@/utils/seoI18n';
 
-const homeHub = PRIMARY_SITE_HUBS.find((h) => h.key === 'home');
-
-export const metadata = buildPageMetadata({
-  title: homeHub.title,
-  description: homeHub.description,
-  path: '/home',
-  keywords: [
-    '比特币',
-    '比特币行情',
-    '比特币价格',
-    '加密货币',
-    '加密货币行情',
-    '加密货币数据分析',
-    'BTC',
-    'ETH',
-    '热门币种',
-    '板块轮动',
-    'AI预测',
-    '量化策略',
-    'MoziInnovations',
-    'Mozi',
-    '墨子',
-    'crypto markets',
-    'bitcoin price',
-  ],
-});
+export async function generateMetadata() {
+  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+  const homeSeo = getHubSeoCopy('home', lng);
+  return buildPageMetadata({
+    title: homeSeo.title,
+    description: homeSeo.description,
+    path: '/home',
+    keywords: [
+      '比特币',
+      '比特币行情',
+      '比特币价格',
+      '加密货币',
+      '加密货币行情',
+      '加密货币数据分析',
+      'BTC',
+      'ETH',
+      '热门币种',
+      '板块轮动',
+      'AI预测',
+      '量化策略',
+      'MoziInnovations',
+      'Mozi',
+      '墨子',
+      'crypto markets',
+      'bitcoin price',
+    ],
+  });
+}
 
 export default function AppHomePage() {
   const ua = headers().get('user-agent') || '';
