@@ -511,6 +511,7 @@ export default function PCLayout({ children }) {
     AI_CONVERSATIONS_PAGE_SIZE,
   );
   const [aiConversationsLoadingMore, setAiConversationsLoadingMore] = useState(false);
+  const aiConversationsListRef = useRef(null);
 
 
 
@@ -581,6 +582,13 @@ export default function PCLayout({ children }) {
     window.setTimeout(() => {
       setAiConversationsVisibleCount((prev) => prev + AI_CONVERSATIONS_PAGE_SIZE);
       setAiConversationsLoadingMore(false);
+      // 高度固定 3 条：加载后滚一点，让用户感知有新内容
+      requestAnimationFrame(() => {
+        const el = aiConversationsListRef.current;
+        if (el) {
+          el.scrollTop = Math.min(el.scrollTop + 40, el.scrollHeight);
+        }
+      });
     }, 220);
   }, [aiConversationsLoadingMore]);
 
@@ -1549,6 +1557,7 @@ export default function PCLayout({ children }) {
                 {isAiChatExpanded && (
                   <div className={styles.pcAiChatSection}>
                     <div
+                      ref={aiConversationsListRef}
                       className={`${styles.pcAiChatBody} ${styles.pcAiChatBodyScrollable}`}
                     >
                       {aiConversationsLoading && aiConversations.length === 0 ? (

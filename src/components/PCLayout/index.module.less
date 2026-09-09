@@ -901,10 +901,12 @@
 }
 
 .pcAiChatBodyScrollable {
-  max-height: calc(5 * @pc-ai-chat-row-height + 4 * @pc-ai-chat-row-gap);
+  /* 可视区域固定约 3 条，加载更多后内部滚动 */
+  max-height: calc(3 * @pc-ai-chat-row-height + 2 * @pc-ai-chat-row-gap);
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .pcAiChatLoadMore {
