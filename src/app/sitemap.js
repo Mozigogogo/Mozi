@@ -10,9 +10,18 @@ import { fetchHotTopicsForSitemap } from '@/utils/fetchTopicDetailServer';
 /** 静态路由 + 帖子/话题列表：小时级刷新 */
 export const revalidate = 3600;
 
+/**
+ * Sitemap XML 里 `&` 必须写成 `&amp;`，否则 Google 报「分析错误」
+ * （如 /pc/find?rankType=up&tab=rank）
+ */
+function toSitemapUrl(pathOrUrl) {
+  const url = pathOrUrl.startsWith('http') ? pathOrUrl : absoluteUrl(pathOrUrl);
+  return String(url).replace(/&/g, '&amp;');
+}
+
 function toStaticEntry(path, { lastModified, changeFrequency, priority }) {
   return {
-    url: absoluteUrl(path),
+    url: toSitemapUrl(path),
     lastModified,
     changeFrequency,
     priority,
@@ -50,7 +59,7 @@ export default async function sitemap() {
       const stamp = post.updatedAt || post.createdAt;
       const modified = stamp ? new Date(String(stamp).replace(' ', 'T')) : lastModified;
       return {
-        url: absoluteUrl(`/commentinfo?id=${encodeURIComponent(String(post.id))}`),
+        url: toSitemapUrl(`/commentinfo?id=${encodeURIComponent(String(post.id))}`),
         lastModified: Number.isNaN(modified.getTime()) ? lastModified : modified,
         changeFrequency: 'daily',
         priority: 0.6,
@@ -67,7 +76,7 @@ export default async function sitemap() {
       const stamp = topic.createdAt;
       const modified = stamp ? new Date(String(stamp).replace(' ', 'T')) : lastModified;
       return {
-        url: absoluteUrl(`/topicinfo?id=${encodeURIComponent(String(topic.id))}`),
+        url: toSitemapUrl(`/topicinfo?id=${encodeURIComponent(String(topic.id))}`),
         lastModified: Number.isNaN(modified.getTime()) ? lastModified : modified,
         changeFrequency: 'daily',
         priority: 0.55,
