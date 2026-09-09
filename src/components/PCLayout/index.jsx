@@ -1036,6 +1036,8 @@ export default function PCLayout({ children }) {
   const isDetailPage = pathname === '/detail';
 
   const isAiRoute = pathname === '/ai' || (pathname && pathname.startsWith('/ai/'));
+  const isSubscribeRoute =
+    pathname === '/subscribe' || (pathname && pathname.startsWith('/subscribe/'));
   const isAlertsRoute =
     pathname === '/pc/alarm' ||
     (pathname && pathname.startsWith('/pc/alarm/')) ||
@@ -1777,13 +1779,13 @@ export default function PCLayout({ children }) {
 
         {/* 右侧 Content */}
           <Content
-          className={`${styles.content} ${!isHelpPage ? styles.homeContent : ''} ${collapsed ? styles.contentCollapsed : ''} ${isDetailPage ? styles.contentDetail : ''} ${isAiRoute ? styles.contentAi : ''}`}
+          className={`${styles.content} ${!isHelpPage ? styles.homeContent : ''} ${collapsed ? styles.contentCollapsed : ''} ${isDetailPage ? styles.contentDetail : ''} ${isAiRoute ? styles.contentAi : ''} ${isSubscribeRoute ? styles.contentSubscribe : ''}`}
         >
           <div
-            className={`${styles.contentWrapper} ${isHelpPage ? styles.contentWrapperHelp : ''} ${isDetailPage ? styles.contentWrapperDetail : ''} ${isAiRoute ? styles.contentWrapperAi : ''} ${isSearchPage ? styles.contentWrapperSearch : ''}`}
+            className={`${styles.contentWrapper} ${isHelpPage ? styles.contentWrapperHelp : ''} ${isDetailPage ? styles.contentWrapperDetail : ''} ${isAiRoute ? styles.contentWrapperAi : ''} ${isSubscribeRoute ? styles.contentWrapperSubscribe : ''} ${isSearchPage ? styles.contentWrapperSearch : ''}`}
           >
             <div
-              className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''} ${isDetailPage ? styles.contentMainDetail : ''} ${isAiRoute ? styles.contentMainAi : ''} ${isSearchPage ? styles.contentMainSearch : ''}`}
+              className={`${styles.contentMain} ${isHelpPage ? styles.contentMainFlush : ''} ${isDetailPage ? styles.contentMainDetail : ''} ${isAiRoute ? styles.contentMainAi : ''} ${isSubscribeRoute ? styles.contentMainSubscribe : ''} ${isSearchPage ? styles.contentMainSearch : ''}`}
               style={isAiRoute ? { position: 'relative' } : undefined}
             >
               {(() => {

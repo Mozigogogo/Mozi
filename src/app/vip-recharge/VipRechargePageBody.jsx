@@ -34,7 +34,8 @@ export default function VipRechargePageBody({
 
   const [benefitsRes, setBenefitsRes] = useState(null);
   const [pricingRes, setPricingRes] = useState(null);
-  const [remoteLoading, setRemoteLoading] = useState(false);
+  // 初始 true：避免首屏先刷本地 mock，接口返回后权益列表变短导致高度塌陷
+  const [remoteLoading, setRemoteLoading] = useState(true);
   const [remoteError, setRemoteError] = useState(null);
   const [mySubscription, setMySubscription] = useState(null);
   const [orderSuccessInfo, setOrderSuccessInfo] = useState(null);
@@ -120,10 +121,13 @@ export default function VipRechargePageBody({
     };
   }, []);
 
-  const planCardsData = useMemo(
-    () => getVipRechargePlans({ benefitsRes, pricingRes }),
-    [benefitsRes, pricingRes]
-  );
+  const planCardsData = useMemo(() => {
+    // 接口未回来前不渲染 mock，避免「先 mock 后真实」高度跳动
+    if (remoteLoading && !benefitsRes && !pricingRes) {
+      return { monthly: [], yearly: [], lifetime: [] };
+    }
+    return getVipRechargePlans({ benefitsRes, pricingRes });
+  }, [benefitsRes, pricingRes, remoteLoading]);
 
   const currentSubInfo = useMemo(() => {
     if (!mySubscription) return null;
@@ -267,7 +271,7 @@ export default function VipRechargePageBody({
         {remoteError && !remoteLoading && <div>{t('vipRecharge.errors.loadSubscriptionData')}</div>}
         <VipRechargePlanCards
           plans={planCardsWithHandlers[activeTab] || []}
-          loading={preparingPurchase}
+          loading={remoteLoading || preparingPurchase}
           fullWidth={fullWidthCards}
           compact={compactCards}
         />

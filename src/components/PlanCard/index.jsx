@@ -273,7 +273,7 @@ const PlanCard = ({
       } ${compact ? styles.planCardCompact : ''}`}
       style={{
         '--accent-color': accentColor,
-        ...(fullWidth ? { maxWidth: 'none' } : {}),
+        ...(fullWidth ? { maxWidth: 'none', height: '100%', minHeight: 0 } : {}),
       }}
     >
       {/* 背景装饰 */}
