@@ -5,8 +5,21 @@ export const ROUTE_BOOT_READY_EVENT = 'mozi-route-boot-ready';
 export const ROUTE_BOOT_LOGO =
   'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/community/loadding.png';
 
+/** 这些路由有页内壳/骨架，勿盖全屏 LogoLoading */
+export function shouldSkipRouteBootLoading(pathname) {
+  const path = String(pathname || '').split('?')[0] || '';
+  if (!path) return true;
+  if (path === '/detail') return true;
+  if (path === '/ai' || path.startsWith('/ai/')) return true;
+  if (path === '/home' || path.startsWith('/home/')) return true;
+  // PC 壳内页：侧栏已在，全屏 Logo 只会白闪
+  if (path === '/pc' || path.startsWith('/pc/')) return true;
+  return false;
+}
+
 export function markRouteBootLoading(pathname) {
   if (typeof window === 'undefined' || !pathname) return;
+  if (shouldSkipRouteBootLoading(pathname)) return;
   try {
     sessionStorage.setItem(ROUTE_BOOT_LOADING_KEY, pathname);
     window.dispatchEvent(new Event(ROUTE_BOOT_START_EVENT));
@@ -42,7 +55,6 @@ export function pathMatchesBootTarget(currentPath, targetPath) {
 
 /**
  * 内部路由跳转前标记 Logo loading，避免首屏白屏等待。
- * /ai 及其子路由统一按 /ai 标记，便于 pathMatchesBootTarget 匹配。
  */
 export function pushWithRouteBootLoading(router, href, { replace = false } = {}) {
   if (!router || href == null) return;
@@ -50,14 +62,7 @@ export function pushWithRouteBootLoading(router, href, { replace = false } = {})
   if (nextHref.startsWith('/')) {
     try {
       const pathname = nextHref.split('?')[0] || '/';
-      // /detail 用页内骨架；/ai 用 AiChatBootShell，均勿盖全屏 Logo（会闪白）
-      const skipBoot =
-        pathname === '/detail' ||
-        pathname === '/ai' ||
-        pathname.startsWith('/ai/');
-      if (!skipBoot) {
-        markRouteBootLoading(pathname);
-      }
+      markRouteBootLoading(pathname);
     } catch (_) {}
   }
   if (replace) router.replace(nextHref);
