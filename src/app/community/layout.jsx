@@ -1,18 +1,24 @@
 import CommunitySeo from '@/components/CommunitySeo';
 import SiteHubSeo from '@/components/SiteHubSeo';
+import { COMMUNITY_KEYWORDS, buildPageMetadata } from '@/utils/seoConfig';
 import {
-  COMMUNITY_DESCRIPTION,
-  COMMUNITY_KEYWORDS,
-  COMMUNITY_TITLE,
-  buildPageMetadata,
-} from '@/utils/seoConfig';
+  getCommunityTabSeoDescription,
+  getCommunityTabSeoTitle,
+  normalizeCommunityTab,
+} from '@/utils/communityNavigation';
 
-export const metadata = buildPageMetadata({
-  title: COMMUNITY_TITLE,
-  description: COMMUNITY_DESCRIPTION,
-  path: '/community',
-  keywords: COMMUNITY_KEYWORDS,
-});
+export async function generateMetadata({ searchParams }) {
+  const tab = normalizeCommunityTab(searchParams?.tab);
+  const path =
+    tab === 'all' ? '/community' : `/community?tab=${encodeURIComponent(tab)}`;
+
+  return buildPageMetadata({
+    title: getCommunityTabSeoTitle(tab),
+    description: getCommunityTabSeoDescription(tab),
+    path,
+    keywords: COMMUNITY_KEYWORDS,
+  });
+}
 
 export default function CommunityLayout({ children }) {
   return (

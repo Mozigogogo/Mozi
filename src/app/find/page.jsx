@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/context/ThemeProvider';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 import { US_STOCK_USE_MOCK, SHOW_US_STOCK_TAB, US_STOCK_DETAIL_ENABLED, getMockUsStockPage, formatUsStockListItem, getUsStockDisplayName } from '@/utils/usStockMockData';
+import { buildFindTabHref, normalizePcFindTab, getFindTabSeoTitle } from '@/utils/pcFindNavigation';
 
 // 过滤交易所名称中的.com，避免文字过长溢出
 const sanitizeExchangeName = (name) => {
@@ -82,7 +83,7 @@ export default function FindPage() {
   const { t, i18n } = useTranslation();
   const { track } = useAmplitude('Find');
   const { isDark } = useTheme();
-  const tabFromUrl = searchParams.get('tab');
+  const tabFromUrl = normalizePcFindTab(searchParams.get('tab'));
   const RANK_LOOPTIME = 5000;
   
   // 状态定义
@@ -768,6 +769,16 @@ const loadingTimerRef = useRef(null);
     }
   }, [tabFromUrl]);
 
+  // 客户端同步浏览器标签 title
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const nextTitle = getFindTabSeoTitle(pageActiveKey);
+    if (document.title !== nextTitle) {
+      document.title = nextTitle;
+    }
+    return undefined;
+  }, [pageActiveKey]);
+
   // 初始化加载 / 排行榜串行轮询（等上次完成再发，避免堆积）
   useEffect(() => {
     if (pageActiveKey === 'self') {
@@ -921,9 +932,11 @@ const loadingTimerRef = useRef(null);
     };
   }, [pageActiveKey, usStockRows.length]);
 
-  // 切换页面标签
+  // 切换页面标签：同步 ?tab= 到路由
   const handlePageTabChange = (key) => {
     setPageActiveKey(key);
+    const href = buildFindTabHref('/find', key, searchParams);
+    router.replace(href, { scroll: false });
   };
 
 

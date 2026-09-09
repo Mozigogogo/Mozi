@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Empty, message } from 'antd';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
@@ -21,15 +21,20 @@ import PostDetailModal from '@/components/PostDetailModal';
 import ShareAiChatModal from '@/components/ShareAiChatModal';
 import { jump2Detail, formatNumber } from '@/utils/core';
 import { dislikePost, undislikePost, followUser, getUserFollowStatus, unfollowUser } from '@/api/community';
+import {
+  buildCommunityTabHref,
+  getCommunityTabSeoTitle,
+  normalizeCommunityTab,
+} from '@/utils/communityNavigation';
+import { notifyRouteBootReady } from '@/utils/routeBootLoading';
 import styles from './index.module.less';
 
 /**
  * PC端社区页面内容组件
  */
-const CAPSULE_TAB_KEYS = new Set(['all', 'coin', 'discover', 'qa']);
-
 export default function PCCommunityContent() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
   const QA_CATEGORY_KEY = '不懂就问';
@@ -64,7 +69,9 @@ export default function PCCommunityContent() {
   const [searchResults, setSearchResults] = useState([]); // 搜索结果
   const [searchLoading, setSearchLoading] = useState(false); // 搜索加载状态
   const [showSearchPanel, setShowSearchPanel] = useState(false); // 是否显示搜索下拉面板
-  const [activeCapsuleTab, setActiveCapsuleTab] = useState('all'); // 顶部胶囊tab，默认全部
+  const [activeCapsuleTab, setActiveCapsuleTab] = useState(() =>
+    normalizeCommunityTab(searchParams.get('tab')),
+  ); // 顶部胶囊tab，默认全部
   const isDiscoveryLikeTab = activeCapsuleTab === 'discover';
   const isCoinStyleTab = activeCapsuleTab === 'coin' || activeCapsuleTab === 'all' || activeCapsuleTab === 'qa';
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -90,7 +97,10 @@ export default function PCCommunityContent() {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (!tab) return;
+    if (!tab) {
+      setActiveCapsuleTab('all');
+      return;
+    }
 
     if (tab === 'hot') {
       setActiveCapsuleTab('coin');
@@ -100,26 +110,35 @@ export default function PCCommunityContent() {
       return;
     }
 
-    if (tab === 'discovery' || tab === 'discover') {
-      setActiveCapsuleTab('discover');
-      return;
-    }
-
-    if (tab === 'question' || tab === 'qa') {
-      setActiveCapsuleTab('qa');
-      return;
-    }
-
-    // 兼容移动端 currency → PC coin
-    if (tab === 'currency') {
-      setActiveCapsuleTab('coin');
-      return;
-    }
-
-    if (CAPSULE_TAB_KEYS.has(tab)) {
-      setActiveCapsuleTab(tab);
-    }
+    setActiveCapsuleTab(normalizeCommunityTab(tab));
   }, [searchParams]);
+
+  // 客户端同步浏览器标签 title
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const nextTitle = getCommunityTabSeoTitle(activeCapsuleTab);
+    if (document.title !== nextTitle) {
+      document.title = nextTitle;
+    }
+    return undefined;
+  }, [activeCapsuleTab]);
+
+  useEffect(() => {
+    notifyRouteBootReady();
+  }, []);
+
+  const handleCapsuleTabChange = useCallback(
+    (key) => {
+      const nextTab = normalizeCommunityTab(key);
+      setActiveCapsuleTab(nextTab);
+      const basePath = pathname?.startsWith('/pc/community')
+        ? '/pc/community'
+        : '/community';
+      const href = buildCommunityTabHref(basePath, nextTab, searchParams);
+      router.replace(href, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
 
   // 详情页「查看更多」等入口：?coin=BTC 选中对应币种
   useEffect(() => {
@@ -1413,7 +1432,7 @@ export default function PCCommunityContent() {
             <PCCapsuleTabs
               items={capsuleTabItems}
               activeKey={activeCapsuleTab}
-              onChange={setActiveCapsuleTab}
+              onChange={handleCapsuleTabChange}
             />
           </div>
           <div className={styles.topMarketTicker}>

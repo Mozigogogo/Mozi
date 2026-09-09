@@ -1,19 +1,9 @@
 import CommunitySeo from '@/components/CommunitySeo';
 import SiteHubSeo from '@/components/SiteHubSeo';
-import {
-  COMMUNITY_KEYWORDS,
-  COMMUNITY_PC_DESCRIPTION,
-  COMMUNITY_PC_TITLE,
-  buildPageMetadata,
-} from '@/utils/seoConfig';
 
-export const metadata = buildPageMetadata({
-  title: COMMUNITY_PC_TITLE,
-  description: COMMUNITY_PC_DESCRIPTION,
-  path: '/pc/community',
-  keywords: COMMUNITY_KEYWORDS,
-});
-
+/**
+ * title 由 page.jsx generateMetadata 提供；客户端切 Tab 另有 document.title 同步
+ */
 export default function PCCommunityLayout({ children }) {
   return (
     <>

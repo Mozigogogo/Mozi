@@ -31,7 +31,7 @@ import PCDailyCard from '../PCDailyCard';
 import ShareAiChatModal from '../ShareAiChatModal';
 import { SkeletonCircle, SkeletonElement } from '@/components/Skeleton';
 import { isEmpty } from 'lodash';
-import { normalizePcFindRankType } from '@/utils/pcFindNavigation';
+import { normalizePcFindRankType, buildFindTabHref, normalizePcFindTab, getFindTabSeoTitle } from '@/utils/pcFindNavigation';
 import { savePcAiNav } from '@/utils/pcAiFromSearch';
 import { jump2Detail } from '@/utils/core';
 import { pushWithRouteBootLoading } from '@/utils/routeBootLoading';
@@ -161,7 +161,9 @@ export default function PCFindContent() {
     return item.priceRange ?? item.usd ?? item.volume_24h ?? item.movers ?? '--';
   }, [formatRankLocalizedMoney]);
   
-  const [activeTab, setActiveTab] = useState('market');
+  const [activeTab, setActiveTab] = useState(() =>
+    normalizePcFindTab(searchParams.get('tab')),
+  );
   const [marketViewMode, setMarketViewMode] = useState('table'); // table | calendar
   const isCalendarViewOpen = activeTab === 'market' && marketViewMode === 'calendar';
 
@@ -298,21 +300,31 @@ export default function PCFindContent() {
     };
   }, [rankActiveType, upTradePickIndex, t, upTradeIntervalsArr]);
 
-  // 支持从首页「实时榜单 → 查看更多」带入 tab / 排行榜类型
+  // 支持从首页「实时榜单 → 查看更多」带入 tab / 排行榜类型；并与 URL 保持同步
   useEffect(() => {
-    const tab = searchParams.get('tab');
+    const tab = normalizePcFindTab(searchParams.get('tab'));
+    if (tab === 'usStock' && !SHOW_US_STOCK_TAB) {
+      setActiveTab('market');
+      return;
+    }
+    setActiveTab(tab);
     if (tab === 'rank') {
-      setActiveTab('rank');
       const rankType = normalizePcFindRankType(searchParams.get('rankType'));
       if (rankType) {
         setRankActiveType(rankType);
       }
-    } else if (tab === 'market') {
-      setActiveTab('market');
-    } else if (tab === 'usStock' && SHOW_US_STOCK_TAB) {
-      setActiveTab('usStock');
     }
   }, [searchParams]);
+
+  // 客户端同步浏览器标签 title（避免软导航 / PCLayout 换页后 title 丢失）
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const nextTitle = getFindTabSeoTitle(activeTab);
+    if (document.title !== nextTitle) {
+      document.title = nextTitle;
+    }
+    return undefined;
+  }, [activeTab]);
 
   const handleBigOrderDetect = useCallback(
     (symbol, e) => {
@@ -1075,18 +1087,23 @@ export default function PCFindContent() {
     loadUpTradeData();
   };
 
-  // Tab切换
+  // Tab切换：同步路由 query，便于 SEO / 分享 / 前进后退
   const handleTabChange = (key) => {
-    setActiveTab(key);
-    if (key !== 'market') {
+    const nextKey = normalizePcFindTab(key);
+    setActiveTab(nextKey);
+    if (nextKey !== 'market') {
       setMarketViewMode('table');
     }
-    if (key === 'market') {
+    if (nextKey === 'market') {
       fetchMarketData();
-    } else if (key === 'self') {
+    } else if (nextKey === 'self') {
       fetchSelfData();
     }
     // 美股 / 排行榜由对应 activeTab effect 统一加载（含 URL 深链、详情返回）
+
+    const basePath = pathname?.startsWith('/pc/find') ? '/pc/find' : '/find';
+    const href = buildFindTabHref(basePath, nextKey, searchParams);
+    router.replace(href, { scroll: false });
   };
 
   const handleTabClick = (key) => {

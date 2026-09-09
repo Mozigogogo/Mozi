@@ -1,27 +1,37 @@
 import SiteHubSeo from '@/components/SiteHubSeo';
+import { buildPageMetadata } from '@/utils/seoConfig';
 import {
-  PRIMARY_SITE_HUBS,
-  buildPageMetadata,
-} from '@/utils/seoConfig';
+  getFindTabSeoDescription,
+  getFindTabSeoTitle,
+  normalizePcFindTab,
+} from '@/utils/pcFindNavigation';
 
-const findHub = PRIMARY_SITE_HUBS.find((h) => h.key === 'find');
+export async function generateMetadata({ searchParams }) {
+  const tab = normalizePcFindTab(searchParams?.tab);
+  const path = tab === 'market' ? '/find' : `/find?tab=${encodeURIComponent(tab)}`;
 
-export const metadata = buildPageMetadata({
-  title: findHub.title,
-  description: findHub.description,
-  path: '/find',
-  keywords: [
-    '发现',
-    'Discover',
-    '涨跌榜',
-    '上新公告',
-    '下线公告',
-    '交易所',
-    '加密货币发现',
-    'Mozi',
-    '墨子',
-  ],
-});
+  return buildPageMetadata({
+    title: getFindTabSeoTitle(tab),
+    description: getFindTabSeoDescription(tab),
+    path,
+    keywords: [
+      '数字货币',
+      '数字货币价格',
+      '加密货币价格',
+      '加密货币市值',
+      '市值',
+      '行情图表',
+      '美股行情',
+      '排行榜',
+      '涨跌榜',
+      'BTC',
+      'ETH',
+      'MoziInnovations',
+      'Mozi',
+      '墨子',
+    ],
+  });
+}
 
 export default function FindLayout({ children }) {
   return (

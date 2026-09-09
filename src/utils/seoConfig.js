@@ -46,24 +46,26 @@ export const PRIMARY_SITE_HUBS = [
     path: '/home',
     nameZh: '首页',
     nameEn: 'Home',
-    title: `首页 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`,
-    description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）行情首页：热门币种、板块轮动、实时榜单与量化策略洞察。`,
+    // 参考欧易：左侧平台定位 + 比特币/加密货币词，右侧高意图行情词；末尾带品牌避免再被 template 拼接
+    title: `专业的比特币、加密货币数据分析平台 | 比特币行情价格 | MoziInnovations`,
+    description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）加密货币行情首页：实时比特币价格、热门币种涨跌、板块轮动、AI 预测与量化策略洞察。`,
   },
   {
     key: 'find',
     path: '/find',
     nameZh: '发现',
     nameEn: 'Discover',
-    title: `发现 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`,
-    description: `${BRAND_LEGAL_NAME} 发现页：加密货币涨跌榜、板块、交易所数据与上新/下线公告，快速定位交易机会。`,
+    // 参考欧易 Markets：数字货币价格、市值与图表
+    title: `数字货币价格、市值与图表 | MoziInnovations`,
+    description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）发现页：数字货币实时价格、市值、涨跌榜、板块与交易所数据，以及上新/下线公告，快速定位市场机会。`,
   },
   {
     key: 'community',
     path: '/community',
     nameZh: '社区',
     nameEn: 'Community',
-    title: `社区 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`,
-    description: `${BRAND_LEGAL_NAME} 加密货币社区：热门话题、精选帖子、BTC/ETH 讨论与发现好币。`,
+    title: `加密货币社区、热门话题与行情讨论 | MoziInnovations`,
+    description: `${BRAND_LEGAL_NAME} 加密货币社区：浏览热门话题与精选帖子，讨论 BTC/ETH 行情、板块轮动与交易观点，发现好币与市场机会。`,
   },
   {
     key: 'ai',
@@ -435,14 +437,14 @@ export const COMMUNITY_KEYWORDS = [
 ];
 
 export const COMMUNITY_TITLE =
-  `加密货币社区 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`;
+  `加密货币社区、热门话题与行情讨论 | MoziInnovations`;
 export const COMMUNITY_DESCRIPTION =
   `${BRAND_LEGAL_NAME}（Mozi / 墨子）加密货币社区：浏览热门话题与精选帖子，讨论 BTC/ETH 行情、板块轮动与交易观点，发现好币与市场机会。Crypto community for market discussion, hot topics and trading insights.`;
 
 export const COMMUNITY_PC_TITLE =
-  `Crypto Community | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`;
+  `加密货币社区、热门话题与行情讨论 | MoziInnovations`;
 export const COMMUNITY_PC_DESCRIPTION =
-  `${BRAND_LEGAL_NAME} desktop crypto community: hot topics, featured posts, BTC/ETH market discussion and trading insights. MoziInnovations（Mozi / 墨子）PC 社区：热门话题、精选帖子与币圈观点交流。`;
+  `${BRAND_LEGAL_NAME}（Mozi / 墨子）PC 加密货币社区：热门话题、精选帖子、BTC/ETH 讨论与发现好币。Desktop crypto community for market discussion, hot topics and trading insights.`;
 
 /**
  * CollectionPage + BreadcrumbList JSON-LD（社区列表页）

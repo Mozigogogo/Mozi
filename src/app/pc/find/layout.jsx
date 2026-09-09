@@ -1,26 +1,9 @@
 import SiteHubSeo from '@/components/SiteHubSeo';
-import {
-  PRIMARY_SITE_HUBS,
-  buildPageMetadata,
-} from '@/utils/seoConfig';
 
-const findHub = PRIMARY_SITE_HUBS.find((h) => h.key === 'find');
-
-export const metadata = buildPageMetadata({
-  title: `发现（PC） | MoziInnovations（Mozi / 墨子）`,
-  description: findHub.description,
-  path: '/pc/find',
-  keywords: [
-    '发现',
-    'Discover',
-    'PC发现',
-    '行情榜单',
-    '公告日历',
-    'Mozi',
-    '墨子',
-  ],
-});
-
+/**
+ * PC 发现页布局壳；title / description 由 page.jsx generateMetadata 提供
+ *（layout 拿不到可靠的 searchParams，且客户端切 Tab 另有 document.title 同步）
+ */
 export default function PCFindLayout({ children }) {
   return (
     <>
