@@ -18,7 +18,6 @@ import Image from 'next/image';
 import { request } from '../../utils/request';
 import { Interface } from '../../utils/constants';
 import { getSectionList } from '@/api/market';
-import { buildSectorDetailHref } from '@/utils/sectorNavigation';
 import { buildPcFindRankHref } from '@/utils/pcFindNavigation';
 import { completeTask } from '@/api/user';
 import { useNavigateToPcAlarm } from '@/hooks/useNavigateToPcAlarm';
@@ -461,7 +460,7 @@ export default function PCHome() {
         const n = parseFloat(String(raw).replace(/%/g, '').replace(/,/g, ''));
         return Number.isFinite(n) ? n : 0;
       };
-      // 保留板块原始字段供跳转 /sectordetail；TreeMap 面积用涨跌幅绝对值
+      // TreeMap 面积用涨跌幅绝对值；悬停面板展示成分币，不跳转详情页
       const processedData = list.map((item) => {
         const change = parseChangePercent(item.priceChange24h);
         return {
@@ -642,7 +641,6 @@ export default function PCHome() {
           <PCSectorTreeMap 
             list={treeMapData} 
             loading={treeMapLoading}
-            onItemClick={(item) => router.push(buildSectorDetailHref(item))}
           />
         </div>
       </div>
