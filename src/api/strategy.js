@@ -386,9 +386,18 @@ export function normalizeStrategyDetail(raw) {
         };
       })
     : [];
-  const pnlHistory = Array.isArray(raw.pnlHistory)
+  const pnlHistoryRaw = Array.isArray(raw.pnlHistory)
     ? raw.pnlHistory.map((n) => num(n)).filter((n) => Number.isFinite(n))
     : [];
+  // 详情「近14日」走势：不足 14 个点时左侧补 0（未运行日），便于 Sparkline 绘制
+  const PNL_HISTORY_DAYS = 14;
+  const pnlHistory =
+    pnlHistoryRaw.length >= PNL_HISTORY_DAYS
+      ? pnlHistoryRaw.slice(-PNL_HISTORY_DAYS)
+      : [
+          ...Array(PNL_HISTORY_DAYS - pnlHistoryRaw.length).fill(0),
+          ...pnlHistoryRaw,
+        ];
   const execHistory = Array.isArray(raw.execHistory)
     ? raw.execHistory.map((row) => ({
         time: msOrNull(row?.time),
