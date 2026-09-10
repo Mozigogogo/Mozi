@@ -11,7 +11,8 @@ export async function generateMetadata() {
     title,
     description,
     path: '/achievement',
-    noIndex: true,
+    // 允许搜索引擎收录（GSC：曾因 meta robots noindex 被排除）
+    noIndex: false,
     keywords: [
       '积分',
       '积分任务',
