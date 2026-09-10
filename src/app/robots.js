@@ -30,7 +30,6 @@ export default function robots() {
           '/mycomments',
           '/addwarn',
           '/wechat-alert',
-          '/pc/alarm',
           '/pc/benefits',
           '/pc/benefitsPage',
           '/vip-recharge',

@@ -15,7 +15,8 @@ export async function generateMetadata({ searchParams }) {
     title,
     description,
     path,
-    noIndex: true,
+    // 允许收录：勿再被 robots.txt disallow + meta noindex 双重屏蔽
+    noIndex: false,
     keywords: [
       '价格预警',
       '价格告警',
