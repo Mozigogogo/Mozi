@@ -723,14 +723,15 @@
   },
   "wizard": {
     "title": "New arbitrage strategy",
-    "subtitle": "All new strategies run a 72h paper period first; live trading starts only after signals are validated.",
-    "steps": ["Select type", "Configure", "Risk controls", "Paper confirm"],
+    "subtitle": "Choose paper or live account when creating a strategy, and size capital to that account’s available balance",
+    "steps": ["Select type", "Configure", "Risk controls", "Confirm"],
     "nav": {
       "nextConfigure": "Next: configure →",
       "nextRisk": "Next: risk controls →",
-      "nextConfirm": "Next: paper confirm →",
+      "nextConfirm": "Next: confirm →",
       "prev": "← Back",
       "launch": "Start paper trading",
+      "launchLive": "Start live trading",
       "launching": "Creating strategy..."
     },
     "step1": {
@@ -774,7 +775,19 @@
       "isolatedDesc": "Risk isolated — one strategy liquidation won't affect others",
       "cross": "Cross",
       "crossDesc": "Higher capital efficiency, but risks are linked",
+      "tradeMode": "Trading mode",
+      "modePaper": "Paper trading",
+      "modePaperDesc": "Uses paper balance — no real orders",
+      "modeLive": "Live trading",
+      "modeLiveDesc": "Uses connected exchange balances — real orders",
       "capital": "Capital (USD)",
+      "paperAvailable": "Paper available ${{amount}} (max)",
+      "liveAvailable": "Live available ${{amount}} (max)",
+      "liveDisconnected": "No live account connected — add an exchange API under API management first",
+      "fundsLoading": "Loading available balance…",
+      "fundsLoadError": "Failed to load available balance",
+      "capitalExceeds": "Capital cannot exceed the selected account’s available balance",
+      "noAvailable": "Insufficient available balance to create a strategy",
       "minProfit": "Min. net profit threshold (skip if below)",
       "capacityHigh": "⚠️ Capital is {{pct}}% of this opportunity's depth — actual slippage may exceed estimate",
       "capacityOk": "Depth ~${{depth}}K; your {{pct}}% share — slippage impact should be small",
@@ -815,8 +828,10 @@
       "custom": { "name": "Custom", "desc": "Tune all parameters manually" }
     },
     "step4": {
-      "paperTitle": "Paper trading period (72 hours)",
-      "paperDesc": "New strategies run on a paper account for 72 hours with no real orders. We validate logic, risk triggers, and return estimates. Only after passing can you switch to live.",
+      "paperTitle": "Paper trading",
+      "paperDesc": ": The strategy will run on paper balance with no real orders — useful to validate logic, risk triggers, and return estimates.",
+      "liveTitle": "Live trading",
+      "liveDesc": ": The strategy will place real orders using your connected exchange balances. Confirm risk settings and capital before launch.",
       "confirmTitle": "Strategy configuration review",
       "confirmSub": "Review carefully — some parameters cannot be changed after launch",
       "summaryTitle": "Configuration summary",
@@ -824,6 +839,7 @@
       "riskTitle": "Risk notice:",
       "riskBody": "Arb strategies are not risk-free. Extreme markets can cause losses. Only deploy capital you can afford to lose.",
       "riskAck": "I have read the risks and configuration above. I understand paper results do not guarantee live performance and accept the associated risk.",
+      "riskAckLive": "I have read the risks and configuration above. I confirm real funds will be used for orders and accept the associated risk.",
       "fields": {
         "type": "Strategy type",
         "asset": "Target asset",
@@ -833,6 +849,8 @@
         "minProfit": "Min. profit threshold",
         "dailyLoss": "Daily loss limit",
         "mode": "Run mode",
+        "modePaper": "Paper trading",
+        "modeLive": "Live trading",
         "modeValue": "72h paper, then live"
       },
       "returns": {
@@ -856,7 +874,8 @@
       "leverage": "Leverage: control larger perp exposure with less margin. Higher leverage = larger margin swings."
     },
     "toast": {
-      "created": "Strategy created! 72-hour paper period started...",
+      "created": "Strategy created! Paper trading started...",
+      "createdLive": "Strategy created! Live trading started...",
       "createFailed": "Failed to create strategy. Please try again.",
       "missingOpportunity": "Please select a target opportunity first"
     }

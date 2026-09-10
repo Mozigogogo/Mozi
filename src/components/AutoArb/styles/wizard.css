@@ -169,6 +169,40 @@
   font-weight: 700;
   color: var(--gold);
 }
+.mozi-autoarb .range-val-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.mozi-autoarb .range-val-prefix {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.mozi-autoarb .range-val-input {
+  width: 7.5rem;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  background: var(--surface);
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  outline: none;
+  transition: border-color var(--ease);
+}
+.mozi-autoarb .range-val-input:focus {
+  border-color: var(--gold);
+}
+.mozi-autoarb .range-val-input::-webkit-outer-spin-button,
+.mozi-autoarb .range-val-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 .mozi-autoarb .range-input {
   width: 100%;
   accent-color: var(--gold);

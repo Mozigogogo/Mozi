@@ -222,7 +222,7 @@ export async function fetchStrategyOpportunities({ type } = {}) {
  *   riskPreset: string;
  *   dailyLossLimit: number;
  *   toggles: Record<string, boolean>;
- *   mode?: 'paper';
+ *   mode?: 'paper' | 'live';
  *   riskAck: boolean;
  *   idempotencyKey?: string;
  * }} payload

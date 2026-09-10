@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   createStrategy,
+  fetchAccountFunds,
   fetchStrategyOpportunities,
   fetchStrategyTypes,
 } from '@/api/strategy';
@@ -14,6 +15,8 @@ import './styles/wizard.css';
 const FALLBACK_TYPE_CODES = ['funding', 'spread', 'basis'];
 const TYPE_ICONS = { funding: '⚡', spread: '🔀', basis: '📐' };
 const TOGGLE_KEYS = ['negFunding', 'basisReduce', 'dayStop', 'marginAlert'];
+const CAPITAL_MIN_DEFAULT = 1;
+const CAPITAL_MAX_FALLBACK = 50000;
 
 function inferStratType(source) {
   if (!source) return 'funding';
@@ -60,6 +63,16 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
   const [leverage, setLeverage] = useState(cloneSource?.leverage ?? 1);
   const [marginMode, setMarginMode] = useState(cloneSource?.marginMode ?? 'isolated');
   const [capital, setCapital] = useState(cloneSource?.capital ?? 10000);
+  const [capitalDraft, setCapitalDraft] = useState(() =>
+    String(cloneSource?.capital ?? 10000),
+  );
+  const [tradeMode, setTradeMode] = useState(() =>
+    cloneSource?.mode === 'live' ? 'live' : 'paper',
+  );
+  const [paperAvailable, setPaperAvailable] = useState(null);
+  const [liveAvailable, setLiveAvailable] = useState(null);
+  const [liveConnected, setLiveConnected] = useState(false);
+  const [fundsLoading, setFundsLoading] = useState(true);
   const [minProfit, setMinProfit] = useState(cloneSource?.minProfitThreshold ?? 0.1);
   const [lossLimit, setLossLimit] = useState(5);
   const [activePreset, setActivePreset] = useState('balanced');
@@ -80,6 +93,34 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
   const [oppsError, setOppsError] = useState('');
 
   const [creating, setCreating] = useState(false);
+
+  const modeAvailable = tradeMode === 'live' ? liveAvailable : paperAvailable;
+
+  const capitalMax = useMemo(() => {
+    if (tradeMode === 'live' && !liveConnected) return 0;
+    if (modeAvailable != null && Number.isFinite(modeAvailable)) {
+      return Math.max(0, Math.floor(modeAvailable));
+    }
+    return CAPITAL_MAX_FALLBACK;
+  }, [tradeMode, liveConnected, modeAvailable]);
+
+  const capitalMin = useMemo(() => {
+    if (capitalMax <= 0) return 0;
+    return Math.min(CAPITAL_MIN_DEFAULT, capitalMax);
+  }, [capitalMax]);
+
+  const capitalStep = 1;
+  const clampCapital = (raw) => {
+    const v = Math.round(Number(raw));
+    if (!Number.isFinite(v)) return capitalMin;
+    return Math.min(capitalMax, Math.max(capitalMin, v));
+  };
+
+  const commitCapital = (raw) => {
+    const next = clampCapital(raw);
+    setCapital(next);
+    setCapitalDraft(String(next));
+  };
 
   const wizardSteps = useMemo(
     () => W('steps', { returnObjects: true }) || [],
@@ -110,10 +151,54 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
       setStratType(inferStratType(cloneSource));
       setLeverage(cloneSource.leverage ?? 1);
       setMarginMode(cloneSource.marginMode ?? 'isolated');
-      setCapital(cloneSource.capital ?? 10000);
+      setTradeMode(cloneSource.mode === 'live' ? 'live' : 'paper');
+      const nextCapital = cloneSource.capital ?? 10000;
+      setCapital(nextCapital);
+      setCapitalDraft(String(nextCapital));
       setMinProfit(cloneSource.minProfitThreshold ?? 0.1);
     }
   }, [cloneSource]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setFundsLoading(true);
+      try {
+        const data = await fetchAccountFunds();
+        if (cancelled) return;
+        const paper = Number(data?.paper?.available);
+        if (Number.isFinite(paper)) setPaperAvailable(paper);
+        const live = Number(data?.live?.available);
+        if (Number.isFinite(live)) setLiveAvailable(live);
+        setLiveConnected(data?.live?.connected === true);
+      } catch (_) {
+        if (!cancelled) {
+          onToast?.(W('step2.fundsLoadError'));
+        }
+      } finally {
+        if (!cancelled) setFundsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (tradeMode === 'live' && !liveConnected) {
+      setCapital(0);
+      return;
+    }
+    if (modeAvailable == null) return;
+    const max = Math.max(0, Math.floor(modeAvailable));
+    const min = max > 0 ? Math.min(CAPITAL_MIN_DEFAULT, max) : 0;
+    setCapital((prev) => Math.min(max, Math.max(min, prev)));
+  }, [modeAvailable, tradeMode, liveConnected]);
+
+  useEffect(() => {
+    setCapitalDraft(String(capital));
+  }, [capital]);
 
   useEffect(() => {
     let cancelled = false;
@@ -238,10 +323,32 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
   const marginModeLabel =
     marginMode === 'isolated' ? W('step2.isolated') : W('step2.cross');
 
+  const availableHint = useMemo(() => {
+    if (fundsLoading) return W('step2.fundsLoading');
+    if (tradeMode === 'live' && !liveConnected) return W('step2.liveDisconnected');
+    if (modeAvailable == null) return W('step2.fundsLoadError');
+    return W(
+      tradeMode === 'live' ? 'step2.liveAvailable' : 'step2.paperAvailable',
+      { amount: Math.floor(modeAvailable).toLocaleString() },
+    );
+  }, [fundsLoading, tradeMode, liveConnected, modeAvailable, t, i18n.language]);
+
   const handleLaunch = async () => {
     if (!riskAck || creating) return;
     if (!selectedOpp?.id) {
       onToast?.(W('toast.missingOpportunity'));
+      return;
+    }
+    if (tradeMode === 'live' && !liveConnected) {
+      onToast?.(W('step2.liveDisconnected'));
+      return;
+    }
+    if (modeAvailable != null && capital > Math.floor(modeAvailable)) {
+      onToast?.(W('step2.capitalExceeds'));
+      return;
+    }
+    if (modeAvailable != null && Math.floor(modeAvailable) <= 0) {
+      onToast?.(W('step2.noAvailable'));
       return;
     }
 
@@ -252,16 +359,18 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
         opportunityId: selectedOpp.id,
         leverage,
         marginMode,
-        capital,
+        capital: clampCapital(capital),
         minProfit,
         riskPreset: activePreset,
         dailyLossLimit: lossLimit,
         toggles,
-        mode: 'paper',
+        mode: tradeMode,
         riskAck: true,
         idempotencyKey: makeIdempotencyKey(),
       });
-      onToast(`🎉 ${W('toast.created')}`);
+      onToast(
+        `🎉 ${W(tradeMode === 'live' ? 'toast.createdLive' : 'toast.created')}`,
+      );
       onNavigate('dashboard');
     } catch (err) {
       const msg =
@@ -398,6 +507,34 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
             <div className="wizard-card">
               <div className="wz-title">{W('step2.title', { type: typeLabel })}</div>
               <div className="wz-sub">{W('step2.sub')}</div>
+
+              <div className="form-group">
+                <div className="form-label">{W('step2.tradeMode')}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <button
+                    type="button"
+                    className={`preset-btn${tradeMode === 'paper' ? ' on' : ''}`}
+                    style={{ padding: 9 }}
+                    onClick={() => setTradeMode('paper')}
+                  >
+                    <div className="preset-name" style={{ fontSize: 12 }}>
+                      {W('step2.modePaper')}
+                    </div>
+                    <div className="preset-desc">{W('step2.modePaperDesc')}</div>
+                  </button>
+                  <button
+                    type="button"
+                    className={`preset-btn${tradeMode === 'live' ? ' on' : ''}`}
+                    style={{ padding: 9 }}
+                    onClick={() => setTradeMode('live')}
+                  >
+                    <div className="preset-name" style={{ fontSize: 12 }}>
+                      {W('step2.modeLive')}
+                    </div>
+                    <div className="preset-desc">{W('step2.modeLiveDesc')}</div>
+                  </button>
+                </div>
+              </div>
 
               <div className="form-label" style={{ marginBottom: 8 }}>
                 {W('step2.pickLabel')}
@@ -540,17 +677,39 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
               <div className="range-row">
                 <div className="range-header">
                   <div className="range-lbl">{W('step2.capital')}</div>
-                  <div className="range-val">${capital.toLocaleString()}</div>
+                  <div className="range-val-wrap">
+                    <span className="range-val-prefix">$</span>
+                    <input
+                      className="range-val-input"
+                      type="text"
+                      inputMode="numeric"
+                      aria-label={W('step2.capital')}
+                      value={capitalDraft}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/[^\d]/g, '');
+                        setCapitalDraft(raw);
+                        if (raw === '') return;
+                        const v = parseInt(raw, 10);
+                        if (!Number.isFinite(v)) return;
+                        setCapital(Math.min(capitalMax, Math.max(0, v)));
+                      }}
+                      onBlur={() =>
+                        commitCapital(capitalDraft === '' ? capitalMin : capitalDraft)
+                      }
+                    />
+                  </div>
                 </div>
                 <input
                   className="range-input"
                   type="range"
-                  min="1000"
-                  max="50000"
-                  step="500"
-                  value={capital}
-                  onChange={(e) => setCapital(parseInt(e.target.value, 10))}
+                  min={capitalMin}
+                  max={Math.max(capitalMin, capitalMax)}
+                  step={capitalStep}
+                  value={Math.min(capital, Math.max(capitalMin, capitalMax))}
+                  disabled={capitalMax <= 0}
+                  onChange={(e) => commitCapital(e.target.value)}
                 />
+                <div className="capacity-note">{availableHint}</div>
                 <div className="capacity-note">{capacityNoteText}</div>
               </div>
 
@@ -610,8 +769,29 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
               <button
                 type="button"
                 className="btn-primary"
-                disabled={!selectedOpp || oppsLoading}
-                onClick={() => setStep(3)}
+                disabled={
+                  !selectedOpp ||
+                  oppsLoading ||
+                  capitalMax <= 0 ||
+                  (modeAvailable != null && capital > capitalMax) ||
+                  (tradeMode === 'live' && !liveConnected)
+                }
+                onClick={() => {
+                  if (tradeMode === 'live' && !liveConnected) {
+                    onToast?.(W('step2.liveDisconnected'));
+                    return;
+                  }
+                  if (modeAvailable != null && Math.floor(modeAvailable) <= 0) {
+                    onToast?.(W('step2.noAvailable'));
+                    return;
+                  }
+                  if (modeAvailable != null && capital > Math.floor(modeAvailable)) {
+                    onToast?.(W('step2.capitalExceeds'));
+                    return;
+                  }
+                  commitCapital(capital);
+                  setStep(3);
+                }}
               >
                 {W('nav.nextRisk')}
               </button>
@@ -732,8 +912,10 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
             <div className="paper-note">
               ⚠️{' '}
               <div>
-                <strong style={{ color: 'var(--gold)' }}>{W('step4.paperTitle')}</strong>{' '}
-                {W('step4.paperDesc')}
+                <strong style={{ color: 'var(--gold)' }}>
+                  {W(tradeMode === 'live' ? 'step4.liveTitle' : 'step4.paperTitle')}
+                </strong>{' '}
+                {W(tradeMode === 'live' ? 'step4.liveDesc' : 'step4.paperDesc')}
               </div>
             </div>
             <div className="wizard-card">
@@ -752,7 +934,12 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                   [W('step4.fields.capital'), `$${capital.toLocaleString()}`],
                   [W('step4.fields.minProfit'), `${minProfit}%`],
                   [W('step4.fields.dailyLoss'), `${lossLimit}%`],
-                  [W('step4.fields.mode'), W('step4.fields.modeValue')],
+                  [
+                    W('step4.fields.mode'),
+                    tradeMode === 'live'
+                      ? W('step4.fields.modeLive')
+                      : W('step4.fields.modePaper'),
+                  ],
                 ].map(([lbl, v]) => (
                   <div className="sim-row" key={lbl}>
                     <div className="sim-l">{lbl}</div>
@@ -821,7 +1008,9 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                   checked={riskAck}
                   onChange={(e) => setRiskAck(e.target.checked)}
                 />
-                <div className="risk-ack-text">{W('step4.riskAck')}</div>
+                <div className="risk-ack-text">
+                  {W(tradeMode === 'live' ? 'step4.riskAckLive' : 'step4.riskAck')}
+                </div>
               </label>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -839,7 +1028,9 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                 disabled={!riskAck || creating || !selectedOpp}
                 onClick={handleLaunch}
               >
-                {creating ? W('nav.launching') : W('nav.launch')}
+                {creating
+                  ? W('nav.launching')
+                  : W(tradeMode === 'live' ? 'nav.launchLive' : 'nav.launch')}
               </button>
             </div>
           </>
