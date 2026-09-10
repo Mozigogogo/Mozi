@@ -77,6 +77,47 @@ function mergeStrategies(prev, incoming) {
 }
 
 /**
+ * 详情推送常缺 capital / riskScore / posSize；normalize 会落成 0。
+ * 同步到列表时只覆盖 payload 里真正带了的字段，避免卡片被清零。
+ */
+function patchListFromDetailPush(prev, raw) {
+  if (!raw || typeof raw !== 'object') return prev;
+  const summary = normalizeStrategySummary(raw);
+  if (!summary?.id) return prev;
+
+  const hasNum = (key) =>
+    raw[key] != null && raw[key] !== '' && Number.isFinite(Number(raw[key]));
+
+  return prev.map((s) => {
+    if (s.id !== summary.id) return s;
+    const next = { ...s };
+    if (raw.status != null && raw.status !== '') next.status = summary.status;
+    if (raw.name != null && String(raw.name).trim()) next.name = summary.name;
+    if (raw.exchange != null && String(raw.exchange).trim()) {
+      next.exchange = summary.exchange;
+    }
+    if (hasNum('pnl')) next.pnl = summary.pnl;
+    if (hasNum('pnlPct') || (hasNum('pnl') && hasNum('capital'))) {
+      next.pnlPct = summary.pnlPct;
+    }
+    if (hasNum('dailyPnl')) next.dailyPnl = summary.dailyPnl;
+    if (hasNum('capital')) {
+      next.capital = summary.capital;
+      if (!hasNum('posSize')) next.posSize = summary.posSize;
+      if (!hasNum('maxCapital')) next.maxCapital = summary.maxCapital;
+    }
+    if (hasNum('riskScore')) next.riskScore = summary.riskScore;
+    if (hasNum('posSize')) next.posSize = summary.posSize;
+    if (hasNum('maxCapital')) next.maxCapital = summary.maxCapital;
+    if (hasNum('leverage')) next.leverage = summary.leverage;
+    if (raw.marginMode != null && String(raw.marginMode).trim()) {
+      next.marginMode = summary.marginMode;
+    }
+    return next;
+  });
+}
+
+/**
  * 策略中心：HTTP 首屏 + MoziWebSocket 实时推送 + 断线 HTTP 轮询兜底
  * @param {{ enabled?: boolean }} options
  */
@@ -214,14 +255,9 @@ export function useStrategyCenter({ enabled = false } = {}) {
       }
       return normalizeStrategyDetail(merged) || merged;
     });
-    // 同步列表中的摘要字段
+    // 同步列表中的摘要字段（仅覆盖详情 payload 中明确带上的字段）
     if (data.id) {
-      const summary = normalizeStrategySummary(data);
-      if (summary) {
-        setStrategies((prev) =>
-          prev.map((s) => (s.id === summary.id ? { ...s, ...summary } : s)),
-        );
-      }
+      setStrategies((prev) => patchListFromDetailPush(prev, data));
     }
   }, []);
 
@@ -395,17 +431,6 @@ export function useStrategyCenter({ enabled = false } = {}) {
     }
   }, [strategies]);
 
-  const closeDetail = useCallback(() => {
-    detailIdRef.current = null;
-    setDetail(null);
-    const ws = wsRef.current;
-    const channelId = detailChannelIdRef.current;
-    if (ws && channelId) {
-      ws.unsubscribe([channelId]).catch(() => {});
-      detailChannelIdRef.current = null;
-    }
-  }, []);
-
   const softRefreshAfterWrite = useCallback(async () => {
     // 写成功后立刻补拉列表/汇总（不等 WS，避免状态滞后）
     try {
@@ -421,6 +446,19 @@ export function useStrategyCenter({ enabled = false } = {}) {
       /* ignore */
     }
   }, []);
+
+  const closeDetail = useCallback(() => {
+    detailIdRef.current = null;
+    setDetail(null);
+    const ws = wsRef.current;
+    const channelId = detailChannelIdRef.current;
+    if (ws && channelId) {
+      ws.unsubscribe([channelId]).catch(() => {});
+      detailChannelIdRef.current = null;
+    }
+    // 关闭详情后补拉列表，防止弹窗期间摘要被不完整推送污染
+    softRefreshAfterWrite();
+  }, [softRefreshAfterWrite]);
 
   const emergencyStopAll = useCallback(async () => {
     const result = await emergencyStopAllStrategies({ confirm: true });

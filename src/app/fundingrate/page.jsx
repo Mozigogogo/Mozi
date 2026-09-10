@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/context/ThemeProvider';
 import { Loading } from '../../components/Loading';
 import { handleOptions } from '../../utils/chartUtils';
+import { useIsPC } from '@/hooks/useIsPC';
 import styles from './page.module.less';
 
 // 将右轴单位从“千”转换为“万”，并控制小数位与去零
@@ -42,7 +43,7 @@ export default function FundingRate() {
   const { t } = useTranslation();
   const { isDark } = useTheme();
   const [activeKey, setActiveKey] = useState('currentRatio');
-  const [isPC, setIsPC] = useState(false);
+  const isPC = useIsPC();
   const [coinList, setCoinList] = useState([]);
   const [cexList, setCexList] = useState([]);
   const [coinSelected, setCoinSelected] = useState('');
@@ -154,15 +155,6 @@ export default function FundingRate() {
   };
 
   // 初始化数据
-  useEffect(() => {
-    const checkDevice = () => {
-      setIsPC(window.innerWidth >= 1024);
-    };
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
-  }, []);
-
   useEffect(() => {
     const fetchInitialData = async () => {
       try {

@@ -14,13 +14,14 @@ import { handleOptions } from '@/utils/chartUtils';
 import { safeBack } from '@/utils/navigation';
 import { isEmpty } from 'lodash';
 import * as echarts from 'echarts';
+import { useIsPC } from '@/hooks/useIsPC';
 import styles from './page.module.less';
 
 const PutCallRatio = () => {
   const router = useRouter();
   const { t } = useTranslation();
   const { isDark } = useTheme();
-  const [isPC, setIsPC] = useState(false);
+  const isPC = useIsPC();
 
   const ratioTabs = useMemo(() => [
     t('pcr.tabs.activeBuySell'),
@@ -46,15 +47,6 @@ const PutCallRatio = () => {
   const chartInstanceRef = useRef(null);
   const chartData = useRef(null);
   const chartContainerRef = useRef(null);
-
-  useEffect(() => {
-    const checkDevice = () => {
-      setIsPC(window.innerWidth >= 1024);
-    };
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
-  }, []);
 
   // 页面加载时初始化数据
   useEffect(() => {

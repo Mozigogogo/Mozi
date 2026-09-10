@@ -11,6 +11,7 @@ import { completeTask } from '@/api/user';
 import NavBar from '../../components/NavBar';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { safeBack } from '@/utils/navigation';
+import { useIsPC } from '@/hooks/useIsPC';
 import styles from './page.module.less';
 
 // 确保接口定义存在
@@ -33,7 +34,7 @@ export default function PostPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPC, setIsPC] = useState(false);
+  const isPC = useIsPC();
   const [title, setTitle] = useState('');
   const [showTitleInput, setShowTitleInput] = useState(false);
   const [content, setContent] = useState('');
@@ -142,16 +143,6 @@ export default function PostPage() {
       setSelectedCoins([{ symbol: symbol, name: symbol }]);
     }
   }, [searchParams]);
-
-  useEffect(() => {
-    const checkIsPC = () => {
-      if (typeof window === 'undefined') return;
-      setIsPC(window.innerWidth >= 1024);
-    };
-    checkIsPC();
-    window.addEventListener('resize', checkIsPC);
-    return () => window.removeEventListener('resize', checkIsPC);
-  }, []);
 
   useEffect(() => {
     if (title && title.trim()) setShowTitleInput(true);

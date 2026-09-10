@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { safeBack } from '@/utils/navigation';
 import { Picker, Toast } from 'antd-mobile';
 import { Select } from 'antd';
-import Layout from '@/components/Layout';
 import NavBar from '@/components/NavBar';
 import { request } from '@/utils/request';
 import { Interface } from '@/utils/constants';
@@ -14,19 +13,20 @@ import { DownOutline } from 'antd-mobile-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/context/ThemeProvider';
 import PCSectorTreeMap from '@/components/PCSectorTreeMap';
+import { useIsPC } from '@/hooks/useIsPC';
 import styles from './page.module.less';
 
 const TradeVol = () => {
   const router = useRouter();
   const { t } = useTranslation();
   const { isDark } = useTheme();
+  const isPC = useIsPC();
   const [cexArr, setCexArr] = useState([]);
   const [cexSelected, setCexSelected] = useState('');
   const [coinArr, setCoinArr] = useState([]);
   const [coinSelected, setCoinSelected] = useState('');
   const [curLoading, setCurLoading] = useState(true);
   const [hisLoading, setHisLoading] = useState(true);
-  const [isPC, setIsPC] = useState(false);
   const [activeTab, setActiveTab] = useState('current'); // 'current' or 'history'
   
   // Custom Legend for Volume (High volume = Red/Hot)
@@ -410,15 +410,6 @@ const TradeVol = () => {
       Toast.show(t('tradevol.noChartData') || '暂无图表数据');
     }
   };
-
-  useEffect(() => {
-    const checkDevice = () => {
-      setIsPC(window.innerWidth >= 1024);
-    };
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
-  }, []);
 
   if (isPC) {
     return (

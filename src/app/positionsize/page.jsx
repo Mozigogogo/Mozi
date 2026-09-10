@@ -13,6 +13,7 @@ import { handleOptions } from '@/utils/chartUtils';
 import { safeBack } from '@/utils/navigation';
 import { useTheme } from '@/context/ThemeProvider';
 import * as echarts from 'echarts';
+import { useIsPC } from '@/hooks/useIsPC';
 import styles from './page.module.less';
 
 const PS_LEGEND_ITEMS = [
@@ -44,7 +45,7 @@ export default function Positionsize() {
   const router = useRouter();
   const { t } = useTranslation();
   const { isDark } = useTheme();
-  const [isPC, setIsPC] = useState(false);
+  const isPC = useIsPC();
   const [cexArr, setCexArr] = useState([]);
   const [cexSelected, setCexSelected] = useState('');
   const [coinArr, setCoinArr] = useState([]);
@@ -63,15 +64,6 @@ export default function Positionsize() {
     cur: null,
     his: null,
   });
-
-  useEffect(() => {
-    const checkDevice = () => {
-      setIsPC(window.innerWidth >= 1024);
-    };
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
-  }, []);
 
   useEffect(() => {
     initData();
