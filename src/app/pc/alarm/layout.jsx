@@ -1,10 +1,13 @@
 import { cookies } from 'next/headers';
 import { buildPageMetadata } from '@/utils/seoConfig';
 import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
-import { getAlarmSeoCopy, seoLngFromCookieValue } from '@/utils/seoI18n';
+import { getAlarmSeoCopy, hasExplicitSeoLng, resolveRequestSeoLng } from '@/utils/seoI18n';
 
 export async function generateMetadata({ searchParams }) {
-  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+  const lng = resolveRequestSeoLng({
+    cookieValue: cookies().get(I18N_COOKIE_KEY)?.value,
+    searchParams,
+  });
   const symbol = String(searchParams?.symbol || '').trim().toUpperCase();
   const { title, description } = getAlarmSeoCopy(symbol || null, lng);
   const path = symbol
@@ -15,6 +18,7 @@ export async function generateMetadata({ searchParams }) {
     title,
     description,
     path,
+    lng,
     // 允许收录：勿再被 robots.txt disallow + meta noindex 双重屏蔽
     noIndex: false,
     keywords: [
@@ -30,6 +34,7 @@ export async function generateMetadata({ searchParams }) {
       '墨子',
       symbol,
     ].filter(Boolean),
+    lngInCanonical: hasExplicitSeoLng(searchParams),
   });
 }
 

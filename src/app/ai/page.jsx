@@ -2,15 +2,19 @@ import { cookies } from 'next/headers';
 import SiteHubSeo from '@/components/SiteHubSeo';
 import { buildPageMetadata } from '@/utils/seoConfig';
 import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
-import { getHubSeoCopy, seoLngFromCookieValue } from '@/utils/seoI18n';
+import { getHubSeoCopy, hasExplicitSeoLng, resolveRequestSeoLng } from '@/utils/seoI18n';
 
-export async function generateMetadata() {
-  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+export async function generateMetadata({ searchParams }) {
+  const lng = resolveRequestSeoLng({
+    cookieValue: cookies().get(I18N_COOKIE_KEY)?.value,
+    searchParams,
+  });
   const aiSeo = getHubSeoCopy('ai', lng);
   return buildPageMetadata({
     title: aiSeo.title,
     description: aiSeo.description,
     path: '/ai',
+    lng,
     keywords: [
       'AI分析',
       'AI Analysis',
@@ -21,6 +25,7 @@ export async function generateMetadata() {
       '墨子',
       'AI Trade Radar',
     ],
+    lngInCanonical: hasExplicitSeoLng(searchParams),
   });
 }
 

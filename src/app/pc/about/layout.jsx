@@ -1,16 +1,20 @@
 import { cookies } from 'next/headers';
 import { buildPageMetadata } from '@/utils/seoConfig';
 import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
-import { getAboutSeoCopy, seoLngFromCookieValue } from '@/utils/seoI18n';
+import { getAboutSeoCopy, hasExplicitSeoLng, resolveRequestSeoLng } from '@/utils/seoI18n';
 
-export async function generateMetadata() {
-  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+export async function generateMetadata({ searchParams }) {
+  const lng = resolveRequestSeoLng({
+    cookieValue: cookies().get(I18N_COOKIE_KEY)?.value,
+    searchParams,
+  });
   const { title, description } = getAboutSeoCopy(lng);
 
   return buildPageMetadata({
     title,
     description,
     path: '/pc/about',
+    lng,
     keywords: [
       '关于我们',
       'About',
@@ -22,6 +26,7 @@ export async function generateMetadata() {
       '量化策略',
       'moziai.xyz',
     ],
+    lngInCanonical: hasExplicitSeoLng(searchParams),
   });
 }
 

@@ -7,6 +7,7 @@ import {
   buildPostJsonLd,
   plainTextExcerpt,
 } from '@/utils/seoConfig';
+import { hasExplicitSeoLng, resolveRequestSeoLng } from '@/utils/seoI18n';
 import CommentInfoClient from './CommentInfoClient';
 
 function resolvePostId(searchParams) {
@@ -14,6 +15,7 @@ function resolvePostId(searchParams) {
 }
 
 export async function generateMetadata({ searchParams }) {
+  const lng = resolveRequestSeoLng({ searchParams });
   const postId = resolvePostId(searchParams);
 
   if (!postId) {
@@ -21,6 +23,8 @@ export async function generateMetadata({ searchParams }) {
       title: `帖子详情 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`,
       description: `${BRAND_LEGAL_NAME} 加密货币社区帖子详情：讨论行情、话题与交易观点。`,
       path: '/commentinfo',
+      lng,
+      lngInCanonical: hasExplicitSeoLng(searchParams),
       keywords: [BRAND_LEGAL_NAME, 'Mozi', '墨子', '加密货币社区', '帖子'],
     });
   }
@@ -31,6 +35,8 @@ export async function generateMetadata({ searchParams }) {
       title: `帖子详情 | ${BRAND_LEGAL_NAME}`,
       description: `${BRAND_LEGAL_NAME} 加密货币社区帖子。`,
       path: `/commentinfo?id=${encodeURIComponent(postId)}`,
+      lng,
+      lngInCanonical: hasExplicitSeoLng(searchParams),
       keywords: [BRAND_LEGAL_NAME, 'Mozi', '墨子', '加密货币社区'],
     });
   }
@@ -42,9 +48,11 @@ export async function generateMetadata({ searchParams }) {
     title: pageTitle,
     description,
     path,
+    lng,
     keywords,
     image: Array.isArray(post.images) && post.images[0] ? post.images[0] : undefined,
     type: 'article',
+    lngInCanonical: hasExplicitSeoLng(searchParams),
   });
 }
 

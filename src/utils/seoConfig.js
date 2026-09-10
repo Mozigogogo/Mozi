@@ -4,6 +4,13 @@
  * 可通过 NEXT_PUBLIC_SITE_URL 覆盖（生产建议设为 https://moziai.xyz）
  */
 
+import {
+  buildSeoLanguageAlternatePaths,
+  resolveSeoLng,
+  stripSeoLng,
+  withSeoLng,
+} from '@/utils/seoI18n';
+
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.SITE_URL ||
@@ -217,17 +224,29 @@ export function absoluteUrl(path = '/') {
 /**
  * 组装可复用的 Next.js metadata
  * @param {object} options
+ * @param {string} [options.lng] 当前页 SEO 语言 zh|en；用于 og:locale 与 hreflang
  */
 export function buildPageMetadata({
   title,
-  description = DEFAULT_DESCRIPTION,
+  description,
   path = '/',
   keywords = DEFAULT_KEYWORDS,
   image = DEFAULT_OG_IMAGE,
   noIndex = false,
   type = 'website',
+  lng,
+  /** 为 true 时 canonical 带 ?lng=（仅当请求 URL 显式含语言参数时传入） */
+  lngInCanonical = false,
 } = {}) {
-  const shortTitle = title || DEFAULT_TITLE;
+  const seoLng = resolveSeoLng(lng);
+  const basePath = stripSeoLng(path);
+  const canonicalPath = lngInCanonical
+    ? withSeoLng(basePath, seoLng)
+    : basePath;
+  const resolvedDescription =
+    description ||
+    (seoLng === 'zh' ? DEFAULT_DESCRIPTION_ZH : DEFAULT_DESCRIPTION);
+  const shortTitle = title || (seoLng === 'zh' ? DEFAULT_TITLE_ZH : DEFAULT_TITLE);
   const alreadyBranded =
     !title ||
     title.includes(SITE_NAME_ZH) ||
@@ -237,15 +256,21 @@ export function buildPageMetadata({
   const pageTitle = alreadyBranded
     ? shortTitle
     : `${shortTitle} | ${SITE_NAME_ZH}`;
-  const url = absoluteUrl(path);
+  const url = absoluteUrl(canonicalPath);
   const keywordList = Array.isArray(keywords)
     ? [...new Set([...keywords, ...BRAND_ALIASES])]
     : DEFAULT_KEYWORDS;
+  const langAlts = buildSeoLanguageAlternatePaths(basePath);
+  const languages = {
+    'zh-CN': absoluteUrl(langAlts['zh-CN']),
+    en: absoluteUrl(langAlts.en),
+    'x-default': absoluteUrl(langAlts['x-default']),
+  };
 
   return {
     // 已含品牌名的标题用 absolute，避免被根 layout template 再拼一次
     title: alreadyBranded ? { absolute: pageTitle } : shortTitle,
-    description,
+    description: resolvedDescription,
     keywords: keywordList,
     applicationName: `${BRAND_LEGAL_NAME} · ${SITE_NAME_EN}`,
     authors: [{ name: BRAND_LEGAL_NAME, url: SITE_URL }],
@@ -253,15 +278,16 @@ export function buildPageMetadata({
     publisher: BRAND_LEGAL_NAME,
     alternates: {
       canonical: url,
+      languages,
     },
     openGraph: {
       type,
-      locale: 'en_US',
-      alternateLocale: ['zh_CN'],
+      locale: seoLng === 'zh' ? 'zh_CN' : 'en_US',
+      alternateLocale: seoLng === 'zh' ? ['en_US'] : ['zh_CN'],
       url,
       siteName: `${BRAND_LEGAL_NAME} · ${SITE_NAME_ZH}`,
       title: pageTitle,
-      description,
+      description: resolvedDescription,
       images: [
         {
           url: image,
@@ -274,7 +300,7 @@ export function buildPageMetadata({
     twitter: {
       card: 'summary_large_image',
       title: pageTitle,
-      description,
+      description: resolvedDescription,
       images: [image],
     },
     robots: noIndex

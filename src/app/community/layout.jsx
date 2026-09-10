@@ -8,10 +8,13 @@ import {
   normalizeCommunityTab,
 } from '@/utils/communityNavigation';
 import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
-import { seoLngFromCookieValue } from '@/utils/seoI18n';
+import { hasExplicitSeoLng, resolveRequestSeoLng } from '@/utils/seoI18n';
 
 export async function generateMetadata({ searchParams }) {
-  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+  const lng = resolveRequestSeoLng({
+    cookieValue: cookies().get(I18N_COOKIE_KEY)?.value,
+    searchParams,
+  });
   const tab = normalizeCommunityTab(searchParams?.tab);
   const path =
     tab === 'all' ? '/community' : `/community?tab=${encodeURIComponent(tab)}`;
@@ -20,7 +23,9 @@ export async function generateMetadata({ searchParams }) {
     title: getCommunityTabSeoTitle(tab, lng),
     description: getCommunityTabSeoDescription(tab, lng),
     path,
+    lng,
     keywords: COMMUNITY_KEYWORDS,
+    lngInCanonical: hasExplicitSeoLng(searchParams),
   });
 }
 

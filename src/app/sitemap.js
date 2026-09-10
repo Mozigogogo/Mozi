@@ -2,6 +2,7 @@ import {
   PUBLIC_SITEMAP_ROUTES,
   absoluteUrl,
 } from '@/utils/seoConfig';
+import { withSeoLng } from '@/utils/seoI18n';
 import { listPcFindTabSitemapPaths } from '@/utils/pcFindNavigation';
 import { listPcCommunityTabSitemapPaths } from '@/utils/communityNavigation';
 import { fetchRecentPostsForSitemap } from '@/utils/fetchPostDetailServer';
@@ -28,42 +29,56 @@ function toStaticEntry(path, { lastModified, changeFrequency, priority }) {
   };
 }
 
+/** 每个公开 path 提交中 + 英两套，便于双语各自收录 */
+function expandBilingualPaths(path) {
+  return [withSeoLng(path, 'zh'), withSeoLng(path, 'en')];
+}
+
 export default async function sitemap() {
   const lastModified = new Date();
 
-  const staticEntries = PUBLIC_SITEMAP_ROUTES.map(({ path, changeFrequency, priority }) =>
-    toStaticEntry(path, { lastModified, changeFrequency, priority })
+  const staticEntries = PUBLIC_SITEMAP_ROUTES.flatMap(
+    ({ path, changeFrequency, priority }) =>
+      expandBilingualPaths(path).map((p) =>
+        toStaticEntry(p, { lastModified, changeFrequency, priority }),
+      ),
   );
 
   // 仅 PC Tab 变体；移动端不做 SEO 收录
-  const pcFindTabEntries = listPcFindTabSitemapPaths().map((path) =>
-    toStaticEntry(path, {
-      lastModified,
-      changeFrequency: 'hourly',
-      priority: 0.82,
-    })
+  const pcFindTabEntries = listPcFindTabSitemapPaths().flatMap((path) =>
+    expandBilingualPaths(path).map((p) =>
+      toStaticEntry(p, {
+        lastModified,
+        changeFrequency: 'hourly',
+        priority: 0.82,
+      }),
+    ),
   );
 
-  const pcCommunityTabEntries = listPcCommunityTabSitemapPaths().map((path) =>
-    toStaticEntry(path, {
-      lastModified,
-      changeFrequency: 'hourly',
-      priority: 0.8,
-    })
+  const pcCommunityTabEntries = listPcCommunityTabSitemapPaths().flatMap(
+    (path) =>
+      expandBilingualPaths(path).map((p) =>
+        toStaticEntry(p, {
+          lastModified,
+          changeFrequency: 'hourly',
+          priority: 0.8,
+        }),
+      ),
   );
 
   let postEntries = [];
   try {
     const posts = await fetchRecentPostsForSitemap({ maxPosts: 500, pageSize: 100 });
-    postEntries = posts.map((post) => {
+    postEntries = posts.flatMap((post) => {
       const stamp = post.updatedAt || post.createdAt;
       const modified = stamp ? new Date(String(stamp).replace(' ', 'T')) : lastModified;
-      return {
-        url: toSitemapUrl(`/commentinfo?id=${encodeURIComponent(String(post.id))}`),
+      const base = `/commentinfo?id=${encodeURIComponent(String(post.id))}`;
+      return expandBilingualPaths(base).map((p) => ({
+        url: toSitemapUrl(p),
         lastModified: Number.isNaN(modified.getTime()) ? lastModified : modified,
         changeFrequency: 'daily',
         priority: 0.6,
-      };
+      }));
     });
   } catch {
     postEntries = [];
@@ -72,15 +87,16 @@ export default async function sitemap() {
   let topicEntries = [];
   try {
     const topics = await fetchHotTopicsForSitemap({ maxTopics: 200, pageSize: 100 });
-    topicEntries = topics.map((topic) => {
+    topicEntries = topics.flatMap((topic) => {
       const stamp = topic.createdAt;
       const modified = stamp ? new Date(String(stamp).replace(' ', 'T')) : lastModified;
-      return {
-        url: toSitemapUrl(`/topicinfo?id=${encodeURIComponent(String(topic.id))}`),
+      const base = `/topicinfo?id=${encodeURIComponent(String(topic.id))}`;
+      return expandBilingualPaths(base).map((p) => ({
+        url: toSitemapUrl(p),
         lastModified: Number.isNaN(modified.getTime()) ? lastModified : modified,
         changeFrequency: 'daily',
         priority: 0.55,
-      };
+      }));
     });
   } catch {
     topicEntries = [];

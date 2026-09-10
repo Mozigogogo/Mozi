@@ -84,7 +84,24 @@ export function middleware(request) {
     return NextResponse.redirect(url, 307);
   }
 
-  const response = NextResponse.next();
+  const requestHeaders = new Headers(request.headers);
+  const lngParam = String(
+    request.nextUrl.searchParams.get('lng') ||
+      request.nextUrl.searchParams.get('lang') ||
+      '',
+  )
+    .trim()
+    .toLowerCase();
+  if (lngParam.startsWith('zh') || lngParam.startsWith('en')) {
+    requestHeaders.set(
+      'x-mozi-seo-lng',
+      lngParam.startsWith('zh') ? 'zh' : 'en',
+    );
+  }
+
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 
   // 删除 X-Frame-Options，允许 iframe 嵌入
   response.headers.delete('X-Frame-Options');

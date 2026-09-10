@@ -1,10 +1,14 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import {
   BRAND_LEGAL_NAME,
   buildCommunityJsonLd,
 } from '@/utils/seoConfig';
 import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
-import { getHubSeoCopy, resolveSeoLng, seoLngFromCookieValue } from '@/utils/seoI18n';
+import {
+  getHubSeoCopy,
+  resolveRequestSeoLng,
+  resolveSeoLng,
+} from '@/utils/seoI18n';
 import { buildCommunityTabHref } from '@/utils/communityNavigation';
 import styles from './CommunitySeo.module.css';
 
@@ -15,7 +19,10 @@ import styles from './CommunitySeo.module.css';
 export default function CommunitySeo({ variant = 'mobile' }) {
   const isPc = variant === 'pc';
   const path = isPc ? '/pc/community' : '/community';
-  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+  const lng = resolveRequestSeoLng({
+    cookieValue:
+      headers().get('x-mozi-seo-lng') || cookies().get(I18N_COOKIE_KEY)?.value,
+  });
   const isZh = resolveSeoLng(lng) === 'zh';
   const { title, description } = getHubSeoCopy('community', lng);
   const { collectionPage, breadcrumb } = buildCommunityJsonLd({

@@ -7,10 +7,13 @@ import {
   normalizePcFindTab,
 } from '@/utils/pcFindNavigation';
 import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
-import { seoLngFromCookieValue } from '@/utils/seoI18n';
+import { hasExplicitSeoLng, resolveRequestSeoLng } from '@/utils/seoI18n';
 
 export async function generateMetadata({ searchParams }) {
-  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+  const lng = resolveRequestSeoLng({
+    cookieValue: cookies().get(I18N_COOKIE_KEY)?.value,
+    searchParams,
+  });
   const tab = normalizePcFindTab(searchParams?.tab);
   const path = tab === 'market' ? '/find' : `/find?tab=${encodeURIComponent(tab)}`;
 
@@ -18,6 +21,7 @@ export async function generateMetadata({ searchParams }) {
     title: getFindTabSeoTitle(tab, lng),
     description: getFindTabSeoDescription(tab, lng),
     path,
+    lng,
     keywords: [
       '数字货币',
       '数字货币价格',
@@ -34,6 +38,7 @@ export async function generateMetadata({ searchParams }) {
       'Mozi',
       '墨子',
     ],
+    lngInCanonical: hasExplicitSeoLng(searchParams),
   });
 }
 

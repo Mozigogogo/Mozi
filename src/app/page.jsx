@@ -16,16 +16,21 @@ import KnowledgeSection from '@/components/site-home/KnowledgeSection/index';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
-import { getHubSeoCopy, seoLngFromCookieValue } from '@/utils/seoI18n';
+import { getHubSeoCopy, hasExplicitSeoLng, resolveRequestSeoLng } from '@/utils/seoI18n';
 import SiteHomeTitleSync from '@/components/site-home/SiteHomeTitleSync';
 
-export async function generateMetadata() {
-  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+export async function generateMetadata({ searchParams }) {
+  const lng = resolveRequestSeoLng({
+    cookieValue: cookies().get(I18N_COOKIE_KEY)?.value,
+    searchParams,
+  });
   const homeSeo = getHubSeoCopy('home', lng);
   return buildPageMetadata({
     title: homeSeo.title,
     description: homeSeo.description,
     path: '/',
+    lng,
+    lngInCanonical: hasExplicitSeoLng(searchParams),
   });
 }
 

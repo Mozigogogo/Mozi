@@ -107,8 +107,11 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   const cookieStore = cookies();
+  const headerLng = normalizeLng(headers().get('x-mozi-seo-lng'));
   const initialLng =
-    normalizeLng(cookieStore.get(I18N_COOKIE_KEY)?.value) || I18N_SSR_DEFAULT_LNG;
+    headerLng ||
+    normalizeLng(cookieStore.get(I18N_COOKIE_KEY)?.value) ||
+    I18N_SSR_DEFAULT_LNG;
   const ssrIsPC = isProbablyPcUa(headers().get("user-agent") || "");
 
   return (

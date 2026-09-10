@@ -7,6 +7,7 @@ import {
   buildTopicJsonLd,
   plainTextExcerpt,
 } from '@/utils/seoConfig';
+import { hasExplicitSeoLng, resolveRequestSeoLng } from '@/utils/seoI18n';
 import TopicInfoClient from './TopicInfoClient';
 
 function resolveTopicId(searchParams) {
@@ -21,6 +22,7 @@ function resolveQueryFallback(searchParams) {
 }
 
 export async function generateMetadata({ searchParams }) {
+  const lng = resolveRequestSeoLng({ searchParams });
   const topicId = resolveTopicId(searchParams);
   const queryFallback = resolveQueryFallback(searchParams);
 
@@ -29,8 +31,10 @@ export async function generateMetadata({ searchParams }) {
       title: `话题详情 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`,
       description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）加密货币社区话题：热门讨论、行情观点与相关帖子。`,
       path: '/topicinfo',
+      lng,
       keywords: [BRAND_LEGAL_NAME, 'Mozi', '墨子', '加密货币社区', '热门话题'],
-    });
+    lngInCanonical: hasExplicitSeoLng(searchParams),
+  });
   }
 
   const topic = await fetchTopicDetailServer(topicId);
@@ -45,7 +49,9 @@ export async function generateMetadata({ searchParams }) {
     title: pageTitle,
     description,
     path,
+    lng,
     keywords,
+    lngInCanonical: hasExplicitSeoLng(searchParams),
   });
 }
 

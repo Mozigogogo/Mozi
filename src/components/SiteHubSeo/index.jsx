@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import {
   BRAND_LEGAL_NAME,
   PRIMARY_SITE_HUBS,
@@ -6,7 +6,11 @@ import {
   buildPrimaryNavJsonLd,
 } from '@/utils/seoConfig';
 import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
-import { getHubSeoCopy, resolveSeoLng, seoLngFromCookieValue } from '@/utils/seoI18n';
+import {
+  getHubSeoCopy,
+  resolveRequestSeoLng,
+  resolveSeoLng,
+} from '@/utils/seoI18n';
 import { buildFindTabHref } from '@/utils/pcFindNavigation';
 import { buildCommunityTabHref } from '@/utils/communityNavigation';
 import styles from './hubSeo.module.css';
@@ -67,7 +71,10 @@ export default function SiteHubSeo({
   const hub = PRIMARY_SITE_HUBS.find((item) => item.key === hubKey);
   if (!hub) return null;
 
-  const lng = seoLngFromCookieValue(cookies().get(I18N_COOKIE_KEY)?.value);
+  const lng = resolveRequestSeoLng({
+    cookieValue:
+      headers().get('x-mozi-seo-lng') || cookies().get(I18N_COOKIE_KEY)?.value,
+  });
   const isZh = resolveSeoLng(lng) === 'zh';
   const copy = getHubSeoCopy(hubKey, lng);
   const path = pathOverride || hub.path;
