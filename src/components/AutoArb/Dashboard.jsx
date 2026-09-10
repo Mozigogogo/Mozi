@@ -1,10 +1,91 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fetchStrategyConfig } from '@/api/strategy';
 import { ActivityText, Donut, Gauge, Modal, Sparkline, Tip } from './charts';
 import './styles/dashboard.css';
+
+const STRAT_LIST_PAGE_SIZE = 5;
+
+function normalizeWheelDelta(e, fallbackLineHeight = 16) {
+  let delta = e.deltaY;
+  if (!delta) return 0;
+  if (e.deltaMode === 1) delta *= fallbackLineHeight;
+  else if (e.deltaMode === 2) delta *= window.innerHeight;
+  return delta;
+}
+
+function scrollPageBy(delta) {
+  const root = document.scrollingElement || document.documentElement;
+  if (root && root.scrollHeight > root.clientHeight + 1) {
+    root.scrollTop += delta;
+    return;
+  }
+  window.scrollBy(0, delta);
+}
+
+/**
+ * 内层滚到顶/底后，继续滚轮带动页面外层滚动。
+ * 用 capture + preventDefault，避免浏览器把滚轮吞在 overflow 容器里。
+ */
+function attachScrollChain(el) {
+  if (!el) return () => {};
+
+  const onWheel = (e) => {
+    // 横向为主时不拦截
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+
+    const delta = normalizeWheelDelta(e);
+    if (!delta) return;
+
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    // 内层本身无需滚动：直接交给页面
+    if (maxScroll <= 1) {
+      e.preventDefault();
+      scrollPageBy(delta);
+      return;
+    }
+
+    const eps = 2;
+    const atTop = el.scrollTop <= eps;
+    const atBottom = el.scrollTop >= maxScroll - eps;
+
+    if ((delta > 0 && atBottom) || (delta < 0 && atTop)) {
+      e.preventDefault();
+      scrollPageBy(delta);
+    }
+  };
+
+  el.addEventListener('wheel', onWheel, { passive: false, capture: true });
+  return () => el.removeEventListener('wheel', onWheel, { capture: true });
+}
+
+function useScrollChainRef() {
+  const nodeRef = useRef(null);
+  const cleanupRef = useRef(null);
+
+  const setRef = useCallback((node) => {
+    if (cleanupRef.current) {
+      cleanupRef.current();
+      cleanupRef.current = null;
+    }
+    nodeRef.current = node;
+    if (node) cleanupRef.current = attachScrollChain(node);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
+      }
+    },
+    [],
+  );
+
+  return [nodeRef, setRef];
+}
 
 const LEG_ROLE_KEYS = {
   spot_long: 'spotLong',
@@ -101,6 +182,81 @@ export default function Dashboard({
   const [savingEdit, setSavingEdit] = useState(false);
   const [savingRisk, setSavingRisk] = useState(false);
   const editFetchRef = useRef(0);
+  const stratColRef = useRef(null);
+  const rightPanelRef = useRef(null);
+  const [stratListRef, setStratListRef] = useScrollChainRef();
+  const [, setRadarFeedRef] = useScrollChainRef();
+  const [, setActivityFeedRef] = useScrollChainRef();
+  const [stratVisibleCount, setStratVisibleCount] = useState(STRAT_LIST_PAGE_SIZE);
+
+  const strategyIdsKey = useMemo(
+    () => (strategies || []).map((s) => s.id).join('|'),
+    [strategies],
+  );
+
+  // 左侧策略列高度与右侧面板（含实时操作日志）底对齐
+  useEffect(() => {
+    const left = stratColRef.current;
+    const right = rightPanelRef.current;
+    if (!left || !right || typeof ResizeObserver === 'undefined') return undefined;
+
+    const syncHeight = () => {
+      const h = Math.ceil(right.getBoundingClientRect().height);
+      if (h > 0) {
+        left.style.height = `${h}px`;
+        left.style.maxHeight = `${h}px`;
+      }
+    };
+
+    syncHeight();
+    const ro = new ResizeObserver(() => {
+      syncHeight();
+    });
+    ro.observe(right);
+    window.addEventListener('resize', syncHeight);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', syncHeight);
+    };
+  }, [loading, strategies, radar, capital, activities, riskSettings]);
+
+  useEffect(() => {
+    setStratVisibleCount(STRAT_LIST_PAGE_SIZE);
+    if (stratListRef.current) stratListRef.current.scrollTop = 0;
+  }, [strategyIdsKey, stratListRef]);
+
+  const visibleStrategies = useMemo(
+    () => (strategies || []).slice(0, stratVisibleCount),
+    [strategies, stratVisibleCount],
+  );
+  const stratHasMore = stratVisibleCount < (strategies || []).length;
+
+  const loadMoreStrategies = useCallback(() => {
+    if (!stratHasMore) return;
+    setStratVisibleCount((n) =>
+      Math.min(n + STRAT_LIST_PAGE_SIZE, (strategies || []).length),
+    );
+  }, [stratHasMore, strategies]);
+
+  const onStratListScroll = useCallback(() => {
+    const el = stratListRef.current;
+    if (!el || !stratHasMore) return;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 56) {
+      loadMoreStrategies();
+    }
+  }, [stratHasMore, loadMoreStrategies]);
+
+  // 右侧很高、首屏装不满时继续灌入，直到出现滚动条或没有更多
+  useEffect(() => {
+    const el = stratListRef.current;
+    if (!el || !stratHasMore) return undefined;
+    const id = window.requestAnimationFrame(() => {
+      if (el.scrollHeight <= el.clientHeight + 8) {
+        loadMoreStrategies();
+      }
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [stratVisibleCount, stratHasMore, loadMoreStrategies, strategyIdsKey]);
 
   useEffect(() => {
     if (bootError) onToast?.(bootError);
@@ -376,50 +532,28 @@ export default function Dashboard({
       </div>
 
       <div className="dash-layout">
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 12,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: 'var(--t2)',
-                textTransform: 'uppercase',
-                letterSpacing: '.07em',
-              }}
-            >
-              {D('strategyList.title')}
-            </div>
+        <div className="strat-col" ref={stratColRef}>
+          <div className="strat-col-hdr">
+            <div className="strat-col-title">{D('strategyList.title')}</div>
             <button
               type="button"
-              style={{
-                padding: '6px 14px',
-                borderRadius: 'var(--rs)',
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: 'pointer',
-                background: 'linear-gradient(135deg,var(--gold),#FBBF24)',
-                color: '#000',
-                border: 'none',
-              }}
+              className="strat-col-new"
               onClick={() => onNavigate('wizard')}
             >
               {D('strategyList.newStrategy')}
             </button>
           </div>
-          <div className="strat-list">
+          <div
+            className="strat-list"
+            ref={setStratListRef}
+            onScroll={onStratListScroll}
+          >
             {!loading && (!strategies || strategies.length === 0) ? (
               <div style={{ fontSize: 13, color: 'var(--t3)', padding: '24px 8px' }}>
-                {D('strategyList.empty', { defaultValue: '暂无策略，点击新建开始' })}
+                {D('strategyList.empty')}
               </div>
             ) : null}
-            {(strategies || []).map((s) => (
+            {visibleStrategies.map((s) => (
               <StratCard
                 key={s.id}
                 s={s}
@@ -433,10 +567,17 @@ export default function Dashboard({
                 onStop={() => stopStrat(s.id)}
               />
             ))}
+            {(strategies || []).length > 0 ? (
+              <div className="strat-list-footer">
+                {stratHasMore
+                  ? D('strategyList.loadingMore')
+                  : D('strategyList.noMore')}
+              </div>
+            ) : null}
           </div>
         </div>
 
-        <div className="right-panel">
+        <div className="right-panel" ref={rightPanelRef}>
           <div className="risk-panel">
             <div className="rp-title">
               {D('riskPanel.title')}
@@ -491,7 +632,8 @@ export default function Dashboard({
                 {D('radar.noRunning')}
               </div>
             ) : (
-              radarItems.map((l) => {
+              <div className="radar-feed" ref={setRadarFeedRef}>
+                {radarItems.map((l) => {
                 const paused = l.status === 'paused';
                 const barColor = paused
                   ? 'var(--t4)'
@@ -556,7 +698,8 @@ export default function Dashboard({
                     </div>
                   </div>
                 );
-              })
+              })}
+              </div>
             )}
           </div>
 
@@ -589,7 +732,7 @@ export default function Dashboard({
               <div className="ap-live" />
               {D('activity.title')}
             </div>
-            <div className="activity-feed">
+            <div className="activity-feed" ref={setActivityFeedRef}>
               {(activities || []).length === 0 ? (
                 <div style={{ fontSize: 11, color: 'var(--t3)', padding: 8 }}>
                   {D('activity.empty', { defaultValue: '暂无活动' })}

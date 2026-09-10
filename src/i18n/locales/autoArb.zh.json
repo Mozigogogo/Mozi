@@ -35,8 +35,7 @@
     "goDashboard": "查看策略中心 →",
     "loading": "加载中…",
     "loadFailed": "加载账户资金失败",
-    "mockBanner": "当前为本地模拟数据（接口未就绪或失败时自动回落），数值仅供 UI 预览。",
-    "footnote": "正式数据来自 GET /autoarb/api/v1/account/funds；接口可用后将自动切换为真实返回。",
+    "footnote": "数据来自 GET /autoarb/api/v1/account/funds。",
     "fields": {
       "equity": "权益",
       "available": "可用",
@@ -300,7 +299,10 @@
     },
     "strategyList": {
       "title": "策略列表",
-      "newStrategy": "+ 新建策略"
+      "newStrategy": "+ 新建策略",
+      "empty": "暂无策略，点击新建开始",
+      "loadingMore": "加载更多…",
+      "noMore": "没有更多了"
     },
     "strategyTypes": {
       "funding": "Funding 套利",
@@ -760,8 +762,7 @@
       "sub": "从当前正在监控的实时机会中选择目标资产——而不是盲选一个资产再祈祷有机会",
       "pickLabel": "选择目标机会（按年化收益排序，实时更新）",
       "loading": "正在加载目标机会...",
-      "loadError": "加载目标机会失败，已回退本地列表",
-      "loadFallback": "当前展示本地机会列表（接口不可用或暂无数据）",
+      "loadError": "加载目标机会失败，请稍后重试",
       "empty": "暂无可用机会，请稍后重试或切换策略类型",
       "depth": "可承载 ${{amount}}K",
       "oppDetail": "<strong>{{pair}}</strong>（{{exchange}}）近7日年化在 <strong class=\"mono\">{{min}}%–{{max}}%</strong> 之间波动，当前 <strong class=\"mono\" style=\"color:var(--accent)\">{{current}}%</strong>。",

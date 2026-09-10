@@ -35,8 +35,7 @@
     "goDashboard": "Open strategies →",
     "loading": "Loading…",
     "loadFailed": "Failed to load account funds",
-    "mockBanner": "Showing local mock data (API unavailable). Numbers are for UI preview only.",
-    "footnote": "Live data comes from GET /autoarb/api/v1/account/funds; the page switches automatically once the API is up.",
+    "footnote": "Data from GET /autoarb/api/v1/account/funds.",
     "fields": {
       "equity": "Equity",
       "available": "Available",
@@ -300,7 +299,10 @@
     },
     "strategyList": {
       "title": "Strategy list",
-      "newStrategy": "+ New strategy"
+      "newStrategy": "+ New strategy",
+      "empty": "No strategies yet. Create one to start.",
+      "loadingMore": "Loading more…",
+      "noMore": "No more strategies"
     },
     "strategyTypes": {
       "funding": "Funding arb",
@@ -760,8 +762,7 @@
       "sub": "Pick a live opportunity we're monitoring — not a random asset and hope.",
       "pickLabel": "Select target opportunity (sorted by APR, live)",
       "loading": "Loading opportunities...",
-      "loadError": "Failed to load opportunities. Showing local fallback.",
-      "loadFallback": "Showing local opportunities (API unavailable or empty).",
+      "loadError": "Failed to load opportunities. Please try again.",
       "empty": "No opportunities yet. Try again later or switch strategy type.",
       "depth": "Capacity ${{amount}}K",
       "oppDetail": "<strong>{{pair}}</strong> ({{exchange}}) 7d APR ranged <strong class=\"mono\">{{min}}%–{{max}}%</strong>, currently <strong class=\"mono\" style=\"color:var(--accent)\">{{current}}%</strong>.",

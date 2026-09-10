@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchAccountFunds, getMockAccountFunds } from '@/api/strategy';
+import { fetchAccountFunds } from '@/api/strategy';
 import './styles/funds.css';
 
 function money(n, currency = 'USD') {
@@ -38,32 +38,35 @@ function Metric({ label, value, sub, valueClass }) {
 
 /**
  * 账户资金：模拟仓 vs 真实账户（导航独立 Tab，在「新建策略」旁）
+ * 数据：GET /autoarb/api/v1/account/funds
  * @param {{
  *   onNavigate: (view: string) => void;
  *   onToast: (msg: string) => void;
  * }} props
  */
-export default function Funds({ onNavigate }) {
+export default function Funds({ onNavigate, onToast }) {
   const { t } = useTranslation();
   const F = (key, opts) => t(`autoArb.funds.${key}`, opts);
 
   const [loading, setLoading] = useState(true);
-  const [usingMock, setUsingMock] = useState(false);
+  const [error, setError] = useState('');
   const [funds, setFunds] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
       const data = await fetchAccountFunds();
       setFunds(data);
-      setUsingMock(Boolean(data?.mock));
-    } catch {
-      setFunds(getMockAccountFunds());
-      setUsingMock(true);
+    } catch (err) {
+      setFunds(null);
+      const msg = err?.message || t('autoArb.funds.loadFailed');
+      setError(msg);
+      onToast?.(msg);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [onToast, t]);
 
   useEffect(() => {
     load();
@@ -95,9 +98,12 @@ export default function Funds({ onNavigate }) {
         </div>
       </div>
 
-      {usingMock ? (
-        <div className="funds-banner funds-banner-warn" role="status">
-          <span>{F('mockBanner')}</span>
+      {error && !loading ? (
+        <div className="funds-banner funds-banner-warn" role="alert">
+          <span>{error}</span>
+          <button type="button" className="funds-link-btn" onClick={load}>
+            {F('retry')}
+          </button>
         </div>
       ) : null}
 
@@ -113,6 +119,8 @@ export default function Funds({ onNavigate }) {
 
           {loading && !paper ? (
             <div className="funds-empty">{F('loading')}</div>
+          ) : error && !paper ? (
+            <div className="funds-empty">{F('loadFailed')}</div>
           ) : (
             <>
               <div className="funds-metrics">
@@ -166,6 +174,8 @@ export default function Funds({ onNavigate }) {
 
           {loading && !live ? (
             <div className="funds-empty">{F('loading')}</div>
+          ) : error && !live ? (
+            <div className="funds-empty">{F('loadFailed')}</div>
           ) : !live?.connected ? (
             <div className="funds-empty-state">
               <div className="funds-empty-icon" aria-hidden="true">

@@ -7,7 +7,7 @@ import {
   fetchStrategyOpportunities,
   fetchStrategyTypes,
 } from '@/api/strategy';
-import { FEE_ASSUMPTIONS, OPPORTUNITIES, RISK_PRESETS } from './data';
+import { FEE_ASSUMPTIONS, RISK_PRESETS } from './data';
 import { Sparkline, Tip } from './charts';
 import './styles/wizard.css';
 
@@ -75,9 +75,9 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
   const [typesLoading, setTypesLoading] = useState(true);
   const [typesFromApi, setTypesFromApi] = useState(false);
 
-  const [oppList, setOppList] = useState(() => OPPORTUNITIES.funding || []);
+  const [oppList, setOppList] = useState([]);
   const [oppsLoading, setOppsLoading] = useState(false);
-  const [oppsFromApi, setOppsFromApi] = useState(false);
+  const [oppsError, setOppsError] = useState('');
 
   const [creating, setCreating] = useState(false);
 
@@ -157,20 +157,18 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
 
     (async () => {
       setOppsLoading(true);
+      setOppsError('');
+      setOppList([]);
+      setSelectedOppId(null);
       try {
         const list = await fetchStrategyOpportunities({ type });
         if (cancelled) return;
-        if (list.length) {
-          setOppList(list);
-          setOppsFromApi(true);
-        } else {
-          setOppList(OPPORTUNITIES[type] || []);
-          setOppsFromApi(false);
-        }
-      } catch (_) {
+        setOppList(list);
+      } catch (err) {
         if (cancelled) return;
-        setOppList(OPPORTUNITIES[type] || []);
-        setOppsFromApi(false);
+        setOppList([]);
+        setOppsError(err?.message || W('step2.loadError'));
+        onToast?.(W('step2.loadError'));
       } finally {
         if (!cancelled) setOppsLoading(false);
       }
@@ -407,8 +405,8 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
               {oppsLoading ? (
                 <div className="wz-load-hint">{W('step2.loading')}</div>
               ) : null}
-              {!oppsFromApi && !oppsLoading ? (
-                <div className="wz-load-hint muted">{W('step2.loadFallback')}</div>
+              {oppsError && !oppsLoading ? (
+                <div className="wz-load-hint muted">{W('step2.loadError')}</div>
               ) : null}
               <div className="opp-picker">
                 {[...oppList]
@@ -444,7 +442,7 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
                     </button>
                   ))}
               </div>
-              {!oppsLoading && oppList.length === 0 ? (
+              {!oppsLoading && !oppsError && oppList.length === 0 ? (
                 <div className="wz-load-hint muted">{W('step2.empty')}</div>
               ) : null}
 

@@ -39,11 +39,60 @@
   gap: 16px;
   align-items: start;
 }
+/* 左侧高度由 JS 同步为右侧高度；列表在固定高度内滚动，卡片不可被压缩 */
+.mozi-autoarb .strat-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.mozi-autoarb .strat-col-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex: 0 0 auto;
+}
+.mozi-autoarb .strat-col-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--t2);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.mozi-autoarb .strat-col-new {
+  padding: 6px 14px;
+  border-radius: var(--rs);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--gold), #fbbf24);
+  color: #000;
+  border: none;
+}
 /* Strategy Cards */
 .mozi-autoarb .strat-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 4px;
+  overscroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.mozi-autoarb .strat-list-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 8px 4px;
+  font-size: 12px;
+  color: var(--t3);
+  flex: 0 0 auto;
 }
 .mozi-autoarb .scard {
   background: var(--card);
@@ -53,6 +102,8 @@
   position: relative;
   overflow: hidden;
   transition: all var(--ease);
+  flex: 0 0 auto;
+  min-height: auto;
 }
 .mozi-autoarb .scard.active::before {
   content: "";

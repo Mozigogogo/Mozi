@@ -843,55 +843,27 @@ export function normalizeAccountFunds(raw) {
     paper,
     live,
     updatedAt: msOrNull(data.updatedAt) || paper.updatedAt || live.updatedAt,
-    mock: Boolean(data.mock),
   };
 }
 
-/** 后端未就绪时的本地演示数据（与策略中心截图量级对齐） */
-export function getMockAccountFunds() {
-  const now = Date.now();
-  return normalizeAccountFunds({
-    mock: true,
-    updatedAt: now,
-    paper: {
-      currency: 'USD',
-      equity: 9863.74,
-      available: 0,
-      occupied: 10000,
-      usagePct: 101.38,
-      unrealizedPnl: -136.26,
-      realizedPnl: 0,
-      updatedAt: now,
-    },
-    live: {
-      connected: false,
-      currency: 'USD',
-      equity: 0,
-      available: 0,
-      occupied: 0,
-      usagePct: 0,
-      exchanges: [],
-      updatedAt: now,
-    },
-  });
-}
-
 /**
- * GET /account/funds — 模拟仓 + 真实账户资金
- * 接口失败时回落本地 mock，便于前端联调 UI。
+ * GET /autoarb/api/v1/account/funds — 模拟仓 + 真实账户资金
+ * 鉴权：走统一 request（JWT）；响应包络 { code, message, data }
+ * 失败直接抛错，不回落本地假数据。
  */
 export async function fetchAccountFunds(params = {}) {
+  let res;
   try {
-    const res = await strategyRequest({
+    res = await strategyRequest({
       url: Interface.STRATEGY_ACCOUNT_FUNDS,
       method: 'GET',
       params: params?.exchangeId ? { exchangeId: params.exchangeId } : undefined,
     });
-    assertOk(res, 'Failed to load account funds');
-    return normalizeAccountFunds(res.data);
-  } catch {
-    return getMockAccountFunds();
+  } catch (err) {
+    throw toApiError(err, 'Failed to load account funds');
   }
+  assertOk(res, 'Failed to load account funds');
+  return normalizeAccountFunds(res.data);
 }
 
 /** 策略中心首屏并行拉取 */
