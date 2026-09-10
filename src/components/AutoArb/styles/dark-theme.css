@@ -1,0 +1,145 @@
+/* ── Dark theme（对齐 ArbitrageRadar / PC 壳）─────────────────────────────── */
+
+:root[data-theme="dark"] .mozi-autoarb {
+  --bg: #161a1e;
+  --surface: #1c1f24;
+  --card: #1c1f24;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-lit: rgba(255, 255, 255, 0.14);
+
+  --accent: #11b787;
+  --accent-dim: rgba(17, 183, 135, 0.16);
+  --gold: #fbbf24;
+  --gold-dim: rgba(251, 191, 36, 0.12);
+  --gold-glow: rgba(251, 191, 36, 0.28);
+  --warn: #fbbf24;
+  --warn-dim: rgba(251, 191, 36, 0.12);
+  --danger: #f87171;
+  --danger-dim: rgba(248, 113, 113, 0.12);
+  --pos: #34d399;
+  --pos-dim: rgba(52, 211, 153, 0.12);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96, 165, 250, 0.12);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167, 139, 250, 0.12);
+
+  --t1: #f3f4f6;
+  --t2: rgba(255, 255, 255, 0.62);
+  --t3: rgba(255, 255, 255, 0.45);
+  --t4: rgba(255, 255, 255, 0.28);
+
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
+
+  background: var(--bg);
+  color: var(--t1);
+}
+
+:root[data-theme="dark"] .mozi-autoarb ::-webkit-scrollbar-track {
+  background: #161a1e;
+}
+
+:root[data-theme="dark"] .mozi-autoarb ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Header / tabs（PC shell） */
+:root[data-theme="dark"] .mozi-autoarb .hdr {
+  background: transparent;
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .mozi-autoarb .hdr-switch-tab {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+:root[data-theme="dark"] .mozi-autoarb .hdr-switch-tab:hover {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .mozi-autoarb .hdr-switch-tab.is-active {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .mozi-autoarb .hdr-switch-tab.is-active::after {
+  background: #34d399;
+}
+
+:root[data-theme="dark"] .mozi-autoarb .nbtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Landing polish */
+:root[data-theme="dark"] .mozi-autoarb .hero-bg {
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 50%,
+    rgba(251, 191, 36, 0.08) 0%,
+    transparent 70%
+  );
+}
+
+:root[data-theme="dark"] .mozi-autoarb .hero-eyebrow {
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+:root[data-theme="dark"] .mozi-autoarb .btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+:root[data-theme="dark"] .mozi-autoarb .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* Cards / panels — soften light-theme box-shadows */
+:root[data-theme="dark"] .mozi-autoarb .api-block,
+:root[data-theme="dark"] .mozi-autoarb .step-card,
+:root[data-theme="dark"] .mozi-autoarb .strat-card,
+:root[data-theme="dark"] .mozi-autoarb .plan-card,
+:root[data-theme="dark"] .mozi-autoarb .sec-item,
+:root[data-theme="dark"] .mozi-autoarb .threat-model,
+:root[data-theme="dark"] .mozi-autoarb .sim-card,
+:root[data-theme="dark"] .mozi-autoarb .risk-panel,
+:root[data-theme="dark"] .mozi-autoarb .activity-panel,
+:root[data-theme="dark"] .mozi-autoarb .capital-panel,
+:root[data-theme="dark"] .mozi-autoarb .scard,
+:root[data-theme="dark"] .mozi-autoarb .ds-card,
+:root[data-theme="dark"] .mozi-autoarb .wizard-card,
+:root[data-theme="dark"] .mozi-autoarb .vault-card,
+:root[data-theme="dark"] .mozi-autoarb .type-opt,
+:root[data-theme="dark"] .mozi-autoarb .confirm-box {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="dark"] .mozi-autoarb .strat-card:hover {
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.12);
+}
+
+:root[data-theme="dark"] .mozi-autoarb .plan-card.featured {
+  box-shadow: 0 0 24px rgba(251, 191, 36, 0.14);
+}
+
+:root[data-theme="dark"] .mozi-autoarb tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="dark"] .mozi-autoarb .emergency-bar {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.28);
+}
+
+:root[data-theme="dark"] .mozi-autoarb .tgl-thumb {
+  background: #f3f4f6;
+}
+
+:root[data-theme="dark"] .mozi-autoarb .toast {
+  background: #1c1f24;
+  color: #f3f4f6;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="dark"] .mozi-autoarb .modal-overlay,
+:root[data-theme="dark"] .mozi-autoarb .confirm-overlay.is-open {
+  background: rgba(0, 0, 0, 0.65);
+}

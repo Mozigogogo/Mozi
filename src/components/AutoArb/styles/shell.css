@@ -33,7 +33,7 @@
   padding: 4px 2px 8px;
   border: none;
   background: transparent;
-  color: #94a3b8;
+  color: var(--t3);
   font-size: 18px;
   font-weight: 600;
   cursor: pointer;
@@ -44,7 +44,7 @@
   color: var(--t1);
 }
 .mozi-autoarb .hdr-switch-tab.is-active {
-  color: #0f172a;
+  color: var(--t1);
   font-weight: 700;
 }
 .mozi-autoarb .hdr-switch-tab.is-active::after {
