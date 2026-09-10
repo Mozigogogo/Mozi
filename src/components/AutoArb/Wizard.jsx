@@ -57,7 +57,7 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
   const [step, setStep] = useState(1);
   const [stratType, setStratType] = useState(() => inferStratType(cloneSource));
   const [selectedOppId, setSelectedOppId] = useState(null);
-  const [leverage, setLeverage] = useState(cloneSource?.leverage ?? 2);
+  const [leverage, setLeverage] = useState(cloneSource?.leverage ?? 1);
   const [marginMode, setMarginMode] = useState(cloneSource?.marginMode ?? 'isolated');
   const [capital, setCapital] = useState(cloneSource?.capital ?? 10000);
   const [minProfit, setMinProfit] = useState(cloneSource?.minProfitThreshold ?? 0.1);
@@ -108,7 +108,7 @@ export default function Wizard({ onNavigate, onToast, cloneSource = null }) {
   useEffect(() => {
     if (cloneSource) {
       setStratType(inferStratType(cloneSource));
-      setLeverage(cloneSource.leverage ?? 2);
+      setLeverage(cloneSource.leverage ?? 1);
       setMarginMode(cloneSource.marginMode ?? 'isolated');
       setCapital(cloneSource.capital ?? 10000);
       setMinProfit(cloneSource.minProfitThreshold ?? 0.1);
