@@ -41,3 +41,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .pnpm-store
+
+# cursor：本地 skill 包忽略；共享给团队的 rules 纳入版本库
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
