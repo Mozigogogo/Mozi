@@ -235,7 +235,7 @@ export function buildPageMetadata({
   noIndex = false,
   type = 'website',
   lng,
-  /** 为 true 时 canonical 带 ?lng=（仅当请求 URL 显式含语言参数时传入） */
+  /** 为 true 时 canonical 带 ?lng=（双语分 URL 收录时使用） */
   lngInCanonical = false,
 } = {}) {
   const seoLng = resolveSeoLng(lng);

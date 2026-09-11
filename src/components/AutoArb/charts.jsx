@@ -159,7 +159,7 @@ export function Donut({
         y={cy - 4}
         textAnchor="middle"
         fontSize="9"
-        fill="#94A3B8"
+        fill="var(--t3)"
       >
         {centerLabel}
       </text>
@@ -169,7 +169,7 @@ export function Donut({
         textAnchor="middle"
         fontSize="12"
         fontWeight="700"
-        fill="#0F172A"
+        fill="var(--t1)"
         fontFamily="JetBrains Mono, monospace"
       >
         {centerValue}

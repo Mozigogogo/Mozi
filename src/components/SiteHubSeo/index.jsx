@@ -10,6 +10,7 @@ import {
   getHubSeoCopy,
   resolveRequestSeoLng,
   resolveSeoLng,
+  withSeoLng,
 } from '@/utils/seoI18n';
 import { buildFindTabHref } from '@/utils/pcFindNavigation';
 import { buildCommunityTabHref } from '@/utils/communityNavigation';
@@ -26,7 +27,7 @@ function buildHubPageJsonLdForPath(hub, path, copy, lng) {
       name: copy.title,
       description: copy.description,
       url,
-      inLanguage: ['zh-CN', 'en'],
+      inLanguage: isZh ? 'zh-CN' : 'en',
       isPartOf: {
         '@type': 'WebSite',
         name: BRAND_LEGAL_NAME,
@@ -61,21 +62,26 @@ function buildHubPageJsonLdForPath(hub, path, copy, lng) {
 
 /**
  * 枢纽页服务端 SEO：JSON-LD + 可抓取 h1/摘要 + 四大入口互链
+ * @param {{ hubKey: string, pathOverride?: string, extraListItems?: string[], includeNavSchema?: boolean, lng?: string }} props
  */
 export default function SiteHubSeo({
   hubKey,
   pathOverride,
   extraListItems = [],
   includeNavSchema = true,
+  lng: lngProp,
 }) {
   const hub = PRIMARY_SITE_HUBS.find((item) => item.key === hubKey);
   if (!hub) return null;
 
-  const lng = resolveRequestSeoLng({
-    cookieValue:
-      headers().get('x-mozi-seo-lng') || cookies().get(I18N_COOKIE_KEY)?.value,
-  });
-  const isZh = resolveSeoLng(lng) === 'zh';
+  const lng = resolveSeoLng(
+    lngProp ||
+      resolveRequestSeoLng({
+        cookieValue:
+          headers().get('x-mozi-seo-lng') || cookies().get(I18N_COOKIE_KEY)?.value,
+      }),
+  );
+  const isZh = lng === 'zh';
   const copy = getHubSeoCopy(hubKey, lng);
   const path = pathOverride || hub.path;
   const jsonLd = buildHubPageJsonLdForPath(hub, path, copy, lng);
@@ -149,10 +155,21 @@ export default function SiteHubSeo({
         ) : null}
         <nav className={styles.seoNav} aria-label={`${BRAND_LEGAL_NAME} 主要入口`}>
           {PRIMARY_SITE_HUBS.map((item) => (
-            <a key={item.key} href={item.path}>
+            <a key={item.key} href={withSeoLng(item.path, lng)}>
               {isZh ? item.nameZh : item.nameEn}
             </a>
           ))}
+        </nav>
+        <nav
+          className={styles.seoNav}
+          aria-label={isZh ? '语言版本' : 'Language versions'}
+        >
+          <a href={withSeoLng(hub.path, 'zh')} hrefLang="zh-CN">
+            中文
+          </a>
+          <a href={withSeoLng(hub.path, 'en')} hrefLang="en">
+            English
+          </a>
         </nav>
         {tabNavLinks.length > 0 ? (
           <nav className={styles.seoNav} aria-label={`${hubLabel} tabs`}>

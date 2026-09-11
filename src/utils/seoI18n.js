@@ -9,13 +9,13 @@
  */
 import zh from '@/i18n/locales/zh.json';
 import en from '@/i18n/locales/en.json';
-import { I18N_SSR_DEFAULT_LNG, normalizeLng } from '@/i18n/languageStorage';
+import { normalizeLng } from '@/i18n/languageStorage';
 
 /** URL 查询参数：搜索引擎与分享链接用，优先于 cookie */
 export const SEO_LNG_QUERY = 'lng';
 
-/** SEO 无 cookie、无 ?lng= 时的回退（与产品 SSR 默认一致） */
-export const I18N_SEO_DEFAULT_LNG = I18N_SSR_DEFAULT_LNG;
+/** SEO 无 cookie、无 ?lng= 时的回退：中文优先（国内搜索收录） */
+export const I18N_SEO_DEFAULT_LNG = 'zh';
 
 export function resolveSeoLng(lng) {
   return normalizeLng(lng) || I18N_SEO_DEFAULT_LNG;
@@ -112,7 +112,8 @@ export function buildSeoLanguageAlternatePaths(path) {
   return {
     'zh-CN': withSeoLng(basePath, 'zh'),
     en: withSeoLng(basePath, 'en'),
-    'x-default': basePath || '/',
+    // x-default 指向英文主版本
+    'x-default': withSeoLng(basePath, 'en'),
   };
 }
 
