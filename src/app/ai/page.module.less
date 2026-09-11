@@ -1860,8 +1860,8 @@
   }
 }
 
-:global([data-theme='dark']) {
-  .robotPage {
+.robotPage {
+  :global([data-theme='dark']) & {
     background-color: #161a1e;
     background-image: none;
 
@@ -2067,13 +2067,14 @@
       background: #161a1e;
       background-image: none;
     }
-  }
+    }
+}
 
-  .historyMenuBtn {
+:global([data-theme='dark']) .historyMenuBtn {
     color: #fff;
   }
 
-  .newChatBtn {
+:global([data-theme='dark']) .newChatBtn {
     background: #1c1f24;
     border-color: rgba(255, 255, 255, 0.12);
     color: #f3f4f6;
@@ -2085,15 +2086,15 @@
     }
   }
 
-  .emptyTitle {
+:global([data-theme='dark']) .emptyTitle {
     color: #f3f4f6;
   }
 
-  .emptySubtitle {
+:global([data-theme='dark']) .emptySubtitle {
     color: rgba(255, 255, 255, 0.45);
   }
 
-  .emptyGridBtn {
+:global([data-theme='dark']) .emptyGridBtn {
     background: #1c1f24;
     border-color: rgba(255, 255, 255, 0.08);
     box-shadow: none;
@@ -2103,16 +2104,16 @@
     }
   }
 
-  .emptyBtnText {
+:global([data-theme='dark']) .emptyBtnText {
     color: #f3f4f6;
   }
 
-  .emptyAllItemBtn {
+:global([data-theme='dark']) .emptyAllItemBtn {
     background: #1c1f24;
     border-color: rgba(255, 255, 255, 0.08);
   }
 
-  .modelSelectDropdown {
+:global([data-theme='dark']) .modelSelectDropdown {
     :global {
       .ant-select-item-option-active {
         background-color: rgba(255, 255, 255, 0.08) !important;
@@ -2125,19 +2126,18 @@
     }
   }
 
-  .loadingOverlay {
+:global([data-theme='dark']) .loadingOverlay {
     background: #161a1e;
     background-image: none;
   }
 
-  .loadingText {
+:global([data-theme='dark']) .loadingText {
     color: rgba(255, 255, 255, 0.55);
   }
 
-  .loadingHistory .loadingText {
+:global([data-theme='dark']) .loadingHistory .loadingText {
     color: rgba(255, 255, 255, 0.45);
   }
-}
 
 .newChatBtn {
   display: inline-flex;
