@@ -12,20 +12,20 @@
   max-width: 100%;
 }
 
-/* 配置双列：限制整体宽度并居中，大屏上两卡不会离得过开 */
-.page:not(.pageHistory) {
+/* 旧双列配置布局的限宽（历史/其它模式若仍用双列时生效；配置两步串行见 .pageConfig） */
+.page:not(.pageHistory):not(.pageConfig) {
   max-width: 1280px;
   margin-left: auto;
   margin-right: auto;
 }
 
-/* 两步串行：与页签左对齐，拉满可用宽度与高度 */
-.pageConfig {
+/* 两步串行：单列拉满可用宽度，不被双列媒体查询挤成「半宽+右侧空白」 */
+.page.pageConfig {
   grid-template-columns: 1fr;
-  max-width: 1280px;
+  max-width: 100%;
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  margin-left: 0;
+  margin-right: 0;
   /* 顶栏 64 + contentMain 上内边距 24 + 底栏占位 64 */
   min-height: calc(100vh - 152PX);
   height: calc(100vh - 152PX);
@@ -35,6 +35,8 @@
 .pageConfig .mainPanel {
   height: 100%;
   min-height: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .pageConfig .sidePanelStep,
@@ -44,6 +46,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
+  max-width: 100%;
 }
 
 .pageHistory {
@@ -57,6 +61,7 @@
   gap: 8PX;
   margin: 0;
   flex-shrink: 0;
+  align-self: flex-start;
 }
 
 .breadcrumbItem {
@@ -103,9 +108,10 @@
 
 .topBar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16PX;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10PX;
   width: 100%;
   margin-bottom: 8PX;
   flex-shrink: 0;
@@ -116,7 +122,7 @@
   align-items: center;
   gap: 8PX;
   margin-bottom: 0;
-  align-self: center;
+  align-self: flex-start;
   width: fit-content;
   background: #ffffff;
   border-radius: 999PX;
@@ -965,7 +971,7 @@
 }
 
 @media (max-width: 800px) {
-  .pageConfig {
+  .page.pageConfig {
     max-width: 100%;
   }
 
@@ -1366,7 +1372,7 @@
 
 /* 大屏：主列吃满剩余宽度；侧栏固定舒适宽度，避免超宽屏主卡过宽、侧栏过窄比例失调 */
 @media (min-width: 1600px) {
-  .page:not(.pageHistory) {
+  .page:not(.pageHistory):not(.pageConfig) {
     grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
     column-gap: 16px;
   }
@@ -1374,13 +1380,20 @@
 
 /* 超宽屏：整页略加宽；历史记录区居中限宽 */
 @media (min-width: 1920px) {
-  .page:not(.pageHistory) {
+  .page:not(.pageHistory):not(.pageConfig) {
     max-width: min(1760px, calc(100vw - 48px));
     margin-left: auto;
     margin-right: auto;
     padding: 0 clamp(16px, 3vw, 72px) 0 clamp(16px, 2.5vw, 96px);
     grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
     column-gap: 20px;
+  }
+
+  .page.pageConfig {
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    grid-template-columns: 1fr;
   }
 
   .pageHistory {
@@ -1397,17 +1410,28 @@
 
 /* 中等屏：略收窄侧栏 */
 @media (max-width: 1440px) {
-  .page:not(.pageHistory) {
+  .page:not(.pageHistory):not(.pageConfig) {
     grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
     column-gap: 12px;
+  }
+
+  .page.pageConfig {
+    grid-template-columns: 1fr;
+    max-width: 100%;
   }
 }
 
 /* 窄屏 / 平板：上下堆叠，侧栏占满行，输入区不再被压扁 */
 @media (max-width: 1024px) {
-  .page:not(.pageHistory) {
+  .page:not(.pageHistory):not(.pageConfig) {
     grid-template-columns: 1fr;
     gap: 16px;
+    padding: 0 clamp(12px, 4vw, 32px);
+  }
+
+  .page.pageConfig {
+    grid-template-columns: 1fr;
+    max-width: 100%;
     padding: 0 clamp(12px, 4vw, 32px);
   }
 

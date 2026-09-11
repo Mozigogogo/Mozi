@@ -13,27 +13,18 @@ const SECURITY_META = [
 const EDGE_CATS = ['exec', 'risk', 'ops'];
 
 /**
- * @param {{ onNavigate: (view: string) => void; onToast: (msg: string) => void }} props
+ * @param {{ onNavigate: (view: string) => void; onToast?: (msg: string) => void }} props
  */
-export default function Landing({ onNavigate, onToast }) {
+export default function Landing({ onNavigate }) {
   const { t } = useTranslation();
   const L = (key, opts) => t(`autoArb.landing.${key}`, opts);
 
   const steps = L('howItWorks.steps', { returnObjects: true }) || [];
   const securityItems = L('security.items', { returnObjects: true }) || [];
   const threatModel = L('security.threatModel', { returnObjects: true }) || [];
-  const plans = L('pricing.plans', { returnObjects: true }) || [];
-  const bizItems = L('pricing.bizNote.items', { returnObjects: true }) || [];
   const edgeItems = L('edgeCases.items', { returnObjects: true }) || {};
   const edgeCategories = L('edgeCases.categories', { returnObjects: true }) || {};
   const statLabels = L('strategies.statLabels', { returnObjects: true }) || {};
-
-  const planActions = [
-    () => onToast(t('autoArb.toast.freeSignup')),
-    () => onNavigate('wizard'),
-    () => onToast(t('autoArb.toast.contactPro')),
-    () => onToast(t('autoArb.toast.contactBiz')),
-  ];
 
   return (
     <div className="view">
@@ -254,35 +245,6 @@ export default function Landing({ onNavigate, onToast }) {
       </div>
 
       <div className="section">
-        <div className="sec-eyebrow">{L('pricing.eyebrow')}</div>
-        <div className="sec-title">{L('pricing.title')}</div>
-        <div className="sec-sub">{L('pricing.sub')}</div>
-        <div className="pricing-grid">
-          {plans.map((plan, i) => (
-            <PlanCard
-              key={plan.name}
-              name={plan.name}
-              price={plan.price}
-              perMonth={L('pricing.perMonth')}
-              sub={plan.sub}
-              btn={plan.btn}
-              featured={i === 1}
-              features={plan.features}
-              onBtn={planActions[i]}
-            />
-          ))}
-        </div>
-        <div className="biz-note">
-          <div className="biz-t">💡 {L('pricing.bizNote.title')}</div>
-          {bizItems.map((line) => (
-            <div className="biz-li" key={line}>
-              {line}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="section">
         <div className="sec-eyebrow">{L('edgeCases.eyebrow')}</div>
         <div className="sec-title">{L('edgeCases.title')}</div>
         <div className="edge-grid">
@@ -296,35 +258,6 @@ export default function Landing({ onNavigate, onToast }) {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function PlanCard({ name, price, perMonth, sub, btn, features, featured, onBtn }) {
-  return (
-    <div className={`plan-card${featured ? ' featured' : ''}`}>
-      <div className="plan-name">{name}</div>
-      <div className="plan-price">
-        {price}
-        <span>{perMonth}</span>
-      </div>
-      <div className="plan-sub">{sub}</div>
-      <button type="button" className="plan-btn" onClick={onBtn}>
-        {btn}
-      </button>
-      {features.map((f) =>
-        f.included ? (
-          <div className="plan-feature" key={f.text}>
-            <span className="pf-ico">✓</span>
-            {f.text}
-          </div>
-        ) : (
-          <div className="plan-feature" key={f.text}>
-            <span className="pf-ico x">×</span>
-            {f.text}
-          </div>
-        ),
-      )}
     </div>
   );
 }
