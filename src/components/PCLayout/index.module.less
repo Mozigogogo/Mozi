@@ -704,21 +704,49 @@
 
 /* 与标题「我的自选」文字左缘对齐（.pcWatchlistHeader margin 须与 antd Menu item 一致，否则此处需连带微调） */
 @pcWatchlist-text-align-inset: 16px;
-/* 单行约高（padding + 双行字号）；与 .pcWatchlistRow gap 一致，用于「最多展示 5 条，其余内部滚动」 */
+/* 单行约高（padding + 双行字号）；与 .pcWatchlistRow gap 一致，用于「最多展示 3 条，其余内部滚动」（与「我的问答」一致） */
 @pc-watchlist-row-approx: 56px;
 @pc-watchlist-row-gap: 2px;
+@pc-watchlist-visible-rows: 3;
+
+/* 与「我的问答」一致：溢出时可滚动，并显示细滚动条 */
+.pcSidebarListScroll() {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.28) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.22);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.35);
+  }
+}
 
 .pcWatchlistBody {
   display: flex;
   flex-direction: column;
   gap: @pc-watchlist-row-gap;
   padding: 0 4px 4px @pcWatchlist-text-align-inset;
-  max-height: calc(5 * @pc-watchlist-row-approx + 4 * @pc-watchlist-row-gap);
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  max-height: calc(
+    @pc-watchlist-visible-rows * @pc-watchlist-row-approx + (@pc-watchlist-visible-rows - 1) *
+      @pc-watchlist-row-gap
+  );
   min-height: 0;
   min-width: 0;
+  .pcSidebarListScroll();
 }
 
 .pcAlertBody {
@@ -726,12 +754,13 @@
   display: flex;
   flex-direction: column;
   gap: @pc-watchlist-row-gap;
-  max-height: calc(5 * @pc-watchlist-row-approx + 4 * @pc-watchlist-row-gap);
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  max-height: calc(
+    @pc-watchlist-visible-rows * @pc-watchlist-row-approx + (@pc-watchlist-visible-rows - 1) *
+      @pc-watchlist-row-gap
+  );
   min-height: 0;
   min-width: 0;
+  .pcSidebarListScroll();
 }
 
 .pcAlertEntry {
@@ -923,10 +952,7 @@
 .pcAiChatBodyScrollable {
   /* 可视区域固定约 3 条，加载更多后内部滚动 */
   max-height: calc(3 * @pc-ai-chat-row-height + 2 * @pc-ai-chat-row-gap);
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
+  .pcSidebarListScroll();
 }
 
 .pcAiChatLoadMore {
@@ -1392,8 +1418,12 @@
     padding-bottom: 64PX;
   }
 
-  .pcWatchlistBody {
-    max-height: calc(4 * @pc-watchlist-row-approx + 3 * @pc-watchlist-row-gap);
+  .pcWatchlistBody,
+  .pcAlertBody {
+    max-height: calc(
+      @pc-watchlist-visible-rows * @pc-watchlist-row-approx + (@pc-watchlist-visible-rows - 1) *
+        @pc-watchlist-row-gap
+    );
   }
 }
 
@@ -1520,6 +1550,20 @@
 }
 
 :global([data-theme='dark']) {
+  .pcWatchlistBody,
+  .pcAlertBody,
+  .pcAiChatBodyScrollable {
+    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.42);
+    }
+  }
+
   .header {
     background: #161a1e;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
