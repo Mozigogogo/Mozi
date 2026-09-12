@@ -18,11 +18,19 @@ const likeIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/i
 const likeActiveIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community/like-active.png';
 const publishIcon = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/image/community/publish.png';
 
+function isSearchCrawler() {
+  if (typeof navigator === 'undefined') return false;
+  return /Googlebot|Bingbot|Baiduspider|DuckDuckBot|YandexBot|Slurp|facebookexternalhit|Twitterbot|LinkedInBot|Applebot|Bytespider|PetalBot|Sogou|YisouSpider/i.test(
+    navigator.userAgent || ''
+  );
+}
+
 export default function TopicInfoClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
   const [topicId, setTopicId] = useState(null);
+  const [redirectingToPc, setRedirectingToPc] = useState(false);
   const [detail, setDetail] = useState({
     id: 1,
     title: '话题标题',
@@ -41,7 +49,28 @@ export default function TopicInfoClient() {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
 
+  // PC 宽屏跳到 /pc/community?topicId=；爬虫保留本页供抓取（canonical 已指向 PC）
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const id = searchParams.get('topicId') || searchParams.get('id');
+    if (!id) return;
+    if (isSearchCrawler()) return;
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+      setRedirectingToPc(true);
+      const params = new URLSearchParams();
+      params.set('topicId', String(id));
+      const title = searchParams.get('title');
+      const description = searchParams.get('description');
+      if (title) params.set('title', title);
+      if (description) params.set('description', description);
+      const lng = searchParams.get('lng') || searchParams.get('lang');
+      if (lng) params.set('lng', lng);
+      router.replace(`/pc/community?${params.toString()}`);
+    }
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    if (redirectingToPc) return;
     // 获取路由参数中的话题ID和其他信息
     const id = searchParams.get('topicId') || searchParams.get('id');
     const title = searchParams.get('title');
@@ -64,7 +93,7 @@ export default function TopicInfoClient() {
       // 获取当前用户ID
       getCurrentUserId();
     }
-  }, [searchParams]);
+  }, [searchParams, redirectingToPc]);
 
   // 获取当前用户ID
   const getCurrentUserId = () => {

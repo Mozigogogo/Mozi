@@ -30,11 +30,11 @@ export async function generateMetadata({ searchParams }) {
     return buildPageMetadata({
       title: `话题详情 | ${BRAND_LEGAL_NAME}（Mozi / 墨子）`,
       description: `${BRAND_LEGAL_NAME}（Mozi / 墨子）加密货币社区话题：热门讨论、行情观点与相关帖子。`,
-      path: '/topicinfo',
+      path: '/pc/community',
       lng,
       keywords: [BRAND_LEGAL_NAME, 'Mozi', '墨子', '加密货币社区', '热门话题'],
-    lngInCanonical: hasExplicitSeoLng(searchParams),
-  });
+      lngInCanonical: hasExplicitSeoLng(searchParams),
+    });
   }
 
   const topic = await fetchTopicDetailServer(topicId);

@@ -37,6 +37,12 @@ export function buildCommunityTabHref(basePath, tab, currentParams = null) {
     params.set('tab', nextTab);
   }
 
+  // 切 Tab 时清掉帖子/话题详情深链，避免弹窗随 searchParams 反复打开
+  params.delete('topicId');
+  params.delete('title');
+  params.delete('description');
+  params.delete('postId');
+
   const qs = params.toString();
   return qs ? `${base}?${qs}` : base;
 }

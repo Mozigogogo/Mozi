@@ -90,7 +90,7 @@ export default async function sitemap() {
     topicEntries = topics.flatMap((topic) => {
       const stamp = topic.createdAt;
       const modified = stamp ? new Date(String(stamp).replace(' ', 'T')) : lastModified;
-      const base = `/topicinfo?id=${encodeURIComponent(String(topic.id))}`;
+      const base = `/pc/community?topicId=${encodeURIComponent(String(topic.id))}`;
       return expandBilingualPaths(base).map((p) => ({
         url: toSitemapUrl(p),
         lastModified: Number.isNaN(modified.getTime()) ? lastModified : modified,

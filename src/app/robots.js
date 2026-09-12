@@ -33,6 +33,7 @@ export default function robots() {
           '/pc/benefits',
           '/pc/benefitsPage',
           '/vip-recharge',
+          '/me',
         ],
       },
     ],

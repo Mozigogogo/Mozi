@@ -95,6 +95,8 @@ export default function PCCommunityContent() {
   const coinPostsPageRef = useRef(1);
   const leftScrollAreaRef = useRef(null);
   const hotTopicsPanelRef = useRef(null);
+  const openedTopicIdRef = useRef('');
+  const openedPostIdRef = useRef('');
   // 用 ref 防重入：首屏 hotTopicsLoading 为 true（避免空态闪烁），不能再用 state 做守卫，否则首次请求会被直接 return
   const hotTopicsLoadingRef = useRef(false);
 
@@ -134,6 +136,13 @@ export default function PCCommunityContent() {
     (key) => {
       const nextTab = normalizeCommunityTab(key);
       setActiveCapsuleTab(nextTab);
+      setDetailModalOpen(false);
+      setDetailModalComments([]);
+      setDetailModalNews([]);
+      setDetailModalVariant('post');
+      setDetailModalLoading(false);
+      openedTopicIdRef.current = '';
+      openedPostIdRef.current = '';
       const basePath = pathname?.startsWith('/pc/community')
         ? '/pc/community'
         : '/community';
@@ -1238,10 +1247,64 @@ export default function PCCommunityContent() {
   // PC 分享链接 /commentinfo?id= 会重定向到 /pc/community?postId=
   useEffect(() => {
     const postId = searchParams.get('postId');
-    if (!postId) return;
+    if (!postId) {
+      openedPostIdRef.current = '';
+      return;
+    }
+    if (openedPostIdRef.current === postId) return;
+    openedPostIdRef.current = postId;
     goToPostDetail(postId);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅随 URL postId 打开一次详情
   }, [searchParams]);
+
+  // PC 话题深链 /pc/community?topicId= → 打开话题详情弹窗
+  useEffect(() => {
+    const topicId = searchParams.get('topicId');
+    if (!topicId) {
+      openedTopicIdRef.current = '';
+      return;
+    }
+    if (openedTopicIdRef.current === topicId) return;
+    openedTopicIdRef.current = topicId;
+    const title = searchParams.get('title');
+    const description = searchParams.get('description');
+    openTopicInDetailModal(topicId, title, description);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅随 URL topicId 打开一次详情
+  }, [searchParams]);
+
+  const clearDetailDeepLinkFromUrl = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const hadDetail =
+      params.has('topicId') ||
+      params.has('postId') ||
+      params.has('title') ||
+      params.has('description');
+    if (!hadDetail) return;
+    params.delete('topicId');
+    params.delete('title');
+    params.delete('description');
+    params.delete('postId');
+    openedTopicIdRef.current = '';
+    openedPostIdRef.current = '';
+    const basePath = pathname?.startsWith('/pc/community')
+      ? '/pc/community'
+      : '/community';
+    const qs = params.toString();
+    router.replace(qs ? `${basePath}?${qs}` : basePath, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  const navigateToTopicDetail = (topicId, name, description = null) => {
+    const id = String(topicId || '').trim();
+    if (!id) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('topicId', id);
+    if (name) params.set('title', String(name));
+    else params.delete('title');
+    if (description) params.set('description', String(description));
+    else params.delete('description');
+    params.delete('postId');
+    router.push(`/pc/community?${params.toString()}`);
+  };
 
   // PC: 话题榜单点击也复用同一套详情弹窗（PostDetailModal），只替换数据源
   const openTopicInDetailModal = async (topicId, name, description = null) => {
@@ -1513,7 +1576,7 @@ export default function PCCommunityContent() {
                         onLikeClick={(postId) => toggleLike(null, postId)}
                         onShareClick={handleShare}
                         onTagClick={(tagName) => jump2Detail(tagName)}
-                        onTopicClick={(topicId, topicName) => router.push(`/topicinfo?id=${topicId}&title=${topicName}`)}
+                        onTopicClick={navigateToTopicDetail}
                         isLiked={post.isLiked || likedPosts[post.id]}
                         formatTimeAgo={formatTimeAgo}
                         isPC={true}
@@ -1580,7 +1643,7 @@ export default function PCCommunityContent() {
               loading={hotTopicsLoading}
               allLoaded={false}
               pullRefresh={false}
-              onTopicClick={openTopicInDetailModal}
+              onTopicClick={navigateToTopicDetail}
               onCreateTopic={goToPostPage}
               nov1Icon={nov1Icon}
               nov2Icon={nov2Icon}
@@ -1605,6 +1668,7 @@ export default function PCCommunityContent() {
           setDetailModalVariant('post');
           setDetailModalLoading(false);
           setDetailFollowSubmitting(false);
+          clearDetailDeepLinkFromUrl();
         }}
         post={detailModalPost || {}}
         comments={detailModalComments}
@@ -1633,7 +1697,7 @@ export default function PCCommunityContent() {
         brandLabel=""
         shareUrl={
           shareModalPost?.topicId
-            ? `https://moziai.xyz/topicinfo?id=${encodeURIComponent(String(shareModalPost.topicId))}`
+            ? `https://moziai.xyz/pc/community?topicId=${encodeURIComponent(String(shareModalPost.topicId))}`
             : shareModalPost?.id
             ? `https://moziai.xyz/commentinfo?id=${encodeURIComponent(String(shareModalPost.id))}`
             : ''

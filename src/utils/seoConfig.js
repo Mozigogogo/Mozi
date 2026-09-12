@@ -671,9 +671,10 @@ export function buildPostJsonLd(post, postId) {
  */
 export function buildTopicJsonLd(topic, topicId, queryFallback = {}) {
   const id = String(topicId || topic?.id || '').trim();
+  // PC 深链为收录 canonical；移动端 /topicinfo 仅作体验页并让渡 canonical
   const path = id
-    ? `/topicinfo?id=${encodeURIComponent(id)}`
-    : '/topicinfo';
+    ? `/pc/community?topicId=${encodeURIComponent(id)}`
+    : '/pc/community';
   const url = absoluteUrl(path);
 
   const rawName =
@@ -766,7 +767,7 @@ export function buildTopicJsonLd(topic, topicId, queryFallback = {}) {
         '@type': 'ListItem',
         position: 2,
         name: 'Community',
-        item: absoluteUrl('/community'),
+        item: absoluteUrl('/pc/community'),
       },
       {
         '@type': 'ListItem',
@@ -808,6 +809,5 @@ export const PUBLIC_SITEMAP_ROUTES = [
   { path: '/achievement', changeFrequency: 'weekly', priority: 0.5 },
   { path: '/pc/about', changeFrequency: 'monthly', priority: 0.5 },
   { path: '/pc/help', changeFrequency: 'monthly', priority: 0.45 },
-  { path: '/me', changeFrequency: 'monthly', priority: 0.4 },
   { path: '/subscribe', changeFrequency: 'weekly', priority: 0.4 },
 ];
