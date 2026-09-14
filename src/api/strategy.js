@@ -356,6 +356,8 @@ export function normalizeStrategySummary(raw) {
     ),
     dailyLossLimit:
       raw.dailyLossLimit != null ? num(raw.dailyLossLimit) : undefined,
+    takeProfitPercent:
+      raw.takeProfitPercent != null ? num(raw.takeProfitPercent) : undefined,
     mode: String(raw.mode || 'paper').toLowerCase(),
     startDate: msOrNull(raw.startDate),
     paperEndsAt: msOrNull(raw.paperEndsAt),
@@ -681,6 +683,7 @@ export function normalizeStrategyConfig(raw) {
       0.1,
     ),
     dailyLossLimit: num(raw.dailyLossLimit, 5),
+    takeProfitPercent: num(raw.takeProfitPercent, 10),
     riskPreset:
       raw.riskPreset != null ? String(raw.riskPreset).trim() : undefined,
     toggles:
@@ -701,6 +704,10 @@ export function normalizeStrategyConfig(raw) {
       dailyLossLimit:
         typeof editableRaw.dailyLossLimit === 'boolean'
           ? editableRaw.dailyLossLimit
+          : true,
+      takeProfitPercent:
+        typeof editableRaw.takeProfitPercent === 'boolean'
+          ? editableRaw.takeProfitPercent
           : true,
     },
     updatedAt: msOrNull(raw.updatedAt),
@@ -730,6 +737,9 @@ export async function updateStrategyParams(id, payload) {
   if (payload?.minProfit != null) body.minProfit = Number(payload.minProfit);
   if (payload?.dailyLossLimit != null) {
     body.dailyLossLimit = Number(payload.dailyLossLimit);
+  }
+  if (payload?.takeProfitPercent != null) {
+    body.takeProfitPercent = Number(payload.takeProfitPercent);
   }
   let res;
   try {

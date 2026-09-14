@@ -471,6 +471,7 @@
       "lockedWhileRunning": "运行中锁定",
       "minProfitThreshold": "最低净利润阈值",
       "dailyLossLimit": "日最大亏损限额",
+      "takeProfitPercent": "止盈百分比",
       "effectiveNextCycle": "修改将在下一执行周期生效，不会打断当前持仓"
     },
     "stress": {

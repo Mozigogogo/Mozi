@@ -178,6 +178,7 @@ export default function Dashboard({
   const [editConfig, setEditConfig] = useState(null);
   const [editMinProfit, setEditMinProfit] = useState(0.1);
   const [editLoss, setEditLoss] = useState(5);
+  const [editTakeProfit, setEditTakeProfit] = useState(10);
   const [loadingEdit, setLoadingEdit] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [savingRisk, setSavingRisk] = useState(false);
@@ -276,6 +277,7 @@ export default function Dashboard({
     marginMode: editStrat?.status !== 'running',
     minProfit: true,
     dailyLossLimit: true,
+    takeProfitPercent: true,
   };
   const detailStrat = detail;
 
@@ -378,6 +380,7 @@ export default function Dashboard({
     setEditConfig(null);
     setEditMinProfit(s.minProfitThreshold ?? 0.1);
     setEditLoss(s.dailyLossLimit ?? 5);
+    setEditTakeProfit(s.takeProfitPercent ?? 10);
     setLoadingEdit(true);
     try {
       const config = await fetchStrategyConfig(id);
@@ -385,6 +388,7 @@ export default function Dashboard({
       setEditConfig(config);
       setEditMinProfit(config.minProfit);
       setEditLoss(config.dailyLossLimit);
+      setEditTakeProfit(config.takeProfitPercent);
     } catch (err) {
       if (editFetchRef.current !== reqId) return;
       onToast(err?.message || D('toast.loadConfigFailed', { defaultValue: '加载策略配置失败' }));
@@ -398,6 +402,7 @@ export default function Dashboard({
     const payload = {};
     if (editEditable.minProfit) payload.minProfit = editMinProfit;
     if (editEditable.dailyLossLimit) payload.dailyLossLimit = editLoss;
+    if (editEditable.takeProfitPercent) payload.takeProfitPercent = editTakeProfit;
     if (!Object.keys(payload).length) {
       closeEdit();
       return;
@@ -951,7 +956,9 @@ export default function Dashboard({
               disabled={
                 savingEdit ||
                 loadingEdit ||
-                (!editEditable.minProfit && !editEditable.dailyLossLimit)
+                (!editEditable.minProfit &&
+                  !editEditable.dailyLossLimit &&
+                  !editEditable.takeProfitPercent)
               }
             >
               {D('edit.save')}
@@ -1040,6 +1047,31 @@ export default function Dashboard({
                 disabled={!editEditable.dailyLossLimit || loadingEdit}
                 onChange={(e) =>
                   setEditLoss(parseFloat(parseFloat(e.target.value).toFixed(1)))
+                }
+              />
+            </div>
+            <div className="range-row">
+              <div className="range-header">
+                <div className="range-lbl">
+                  {D('edit.takeProfitPercent')}
+                  {!editEditable.takeProfitPercent ? (
+                    <span className="locked-badge" style={{ marginLeft: 6 }}>
+                      {D('edit.lockedWhileRunning')}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="range-val">{editTakeProfit}%</div>
+              </div>
+              <input
+                className="range-input"
+                type="range"
+                min="1"
+                max="50"
+                step="1"
+                value={editTakeProfit}
+                disabled={!editEditable.takeProfitPercent || loadingEdit}
+                onChange={(e) =>
+                  setEditTakeProfit(parseFloat(parseFloat(e.target.value).toFixed(0)))
                 }
               />
             </div>

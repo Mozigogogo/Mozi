@@ -471,6 +471,7 @@
       "lockedWhileRunning": "Locked while running",
       "minProfitThreshold": "Min. net profit threshold",
       "dailyLossLimit": "Max daily loss limit",
+      "takeProfitPercent": "Take-profit percent",
       "effectiveNextCycle": "Changes take effect next cycle — current positions unaffected"
     },
     "stress": {
