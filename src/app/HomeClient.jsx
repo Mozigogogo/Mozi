@@ -6,7 +6,7 @@ import TelegramAutoLogin from '@/components/TelegramAutoLogin';
 import { getMySubscription } from '@/api/vip';
 import PCHome from '../components/PCHome';
 import MobileHome from '../components/MobileHome';
-import { getHubSeoCopy, seoLngFromSearchParams, resolveSeoLng } from '@/utils/seoI18n';
+import { getHubSeoCopy, seoLngFromSearchParams, resolveEntrySeoLng } from '@/utils/seoI18n';
 
 export default function HomeClient({ initialIsPC = false }) {
   const { i18n } = useTranslation();
@@ -25,14 +25,16 @@ export default function HomeClient({ initialIsPC = false }) {
 
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
-    // 跟随 ?lng=：zh / en 各用对应 title；无参数时默认中文
+    // 跟随 ?lng=：zh / en 各用对应 title；无参数时默认英文（与 /、/home SEO 一致）
     let queryLng = null;
     try {
       queryLng = seoLngFromSearchParams(new URLSearchParams(window.location.search));
     } catch {
       queryLng = null;
     }
-    const titleLng = resolveSeoLng(queryLng || 'zh');
+    const titleLng = resolveEntrySeoLng(
+      queryLng ? { lng: queryLng } : undefined,
+    );
     const nextTitle = getHubSeoCopy('home', titleLng).title;
     if (document.title !== nextTitle) {
       document.title = nextTitle;

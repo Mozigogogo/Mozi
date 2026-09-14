@@ -13,24 +13,31 @@ import SectorSection from '@/components/site-home/SectorSection/index';
 import FlashSection from '@/components/site-home/FlashSection/index';
 import AlphaSection from '@/components/site-home/AlphaSection/index';
 import KnowledgeSection from '@/components/site-home/KnowledgeSection/index';
-import { cookies, headers } from 'next/headers';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
-import { getHubSeoCopy, hasExplicitSeoLng, resolveRequestSeoLng } from '@/utils/seoI18n';
+import {
+  getHubSeoCopy,
+  resolveEntrySeoLng,
+  withSeoLng,
+} from '@/utils/seoI18n';
 import SiteHomeTitleSync from '@/components/site-home/SiteHomeTitleSync';
+import SiteHubSeo from '@/components/SiteHubSeo';
 
+/**
+ * `/` 双语 SEO（与 /home 对齐）：
+ * - 英文（默认）：/ 与 /?lng=en → canonical /?lng=en
+ * - 中文：/?lng=zh
+ * 不读 cookie，避免中英挤成同一 canonical。
+ */
 export async function generateMetadata({ searchParams }) {
-  const lng = resolveRequestSeoLng({
-    cookieValue: cookies().get(I18N_COOKIE_KEY)?.value,
-    searchParams,
-  });
+  const lng = resolveEntrySeoLng(searchParams);
   const homeSeo = getHubSeoCopy('home', lng);
   return buildPageMetadata({
     title: homeSeo.title,
     description: homeSeo.description,
-    path: '/',
+    path: withSeoLng('/', lng),
     lng,
-    lngInCanonical: hasExplicitSeoLng(searchParams),
+    lngInCanonical: true,
   });
 }
 
@@ -103,10 +110,12 @@ const { organization: organizationJsonLd, website: websiteJsonLd } =
   });
 const primaryNavJsonLd = buildPrimaryNavJsonLd();
 
-export default function SiteHomePage() {
+export default function SiteHomePage({ searchParams }) {
   const headerList = headers();
   const ua = headerList.get('user-agent') || '';
   const referer = headerList.get('referer') || '';
+  const hubLng = resolveEntrySeoLng(searchParams);
+  const isZh = hubLng === 'zh';
 
   if (isTelegramServerRequest(ua, referer)) {
     redirect('/home');
@@ -114,6 +123,26 @@ export default function SiteHomePage() {
 
   return (
     <main className={styles.page}>
+      <SiteHubSeo
+        hubKey="home"
+        lng={hubLng}
+        pathOverride={withSeoLng('/', hubLng)}
+        extraListItems={
+          isZh
+            ? [
+                '热门币种与实时涨跌榜',
+                '板块轮动与市场分布',
+                'AI 预测与量化策略助手入口',
+                '套利雷达与智能价格预警',
+              ]
+            : [
+                'Top coins and live gainers / losers',
+                'Sector rotation and market distribution',
+                'AI prediction and quant strategy assistant',
+                'Arbitrage radar and smart price alerts',
+              ]
+        }
+      />
       <SiteHomeTitleSync />
       <script
         type="application/ld+json"

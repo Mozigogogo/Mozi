@@ -17,8 +17,22 @@ export const SEO_LNG_QUERY = 'lng';
 /** SEO 无 cookie、无 ?lng= 时的回退：中文优先（国内搜索收录） */
 export const I18N_SEO_DEFAULT_LNG = 'zh';
 
+/** `/` 与 `/home` 入口页：无 ?lng= 时默认英文，且始终双语分 URL */
+export const I18N_ENTRY_SEO_DEFAULT_LNG = 'en';
+
 export function resolveSeoLng(lng) {
   return normalizeLng(lng) || I18N_SEO_DEFAULT_LNG;
+}
+
+/**
+ * 营销落地 `/` 与应用首页 `/home` 的 SEO 语言：
+ * 只看 ?lng=，无参数时固定英文（不读 cookie，避免两套挤成一套）
+ */
+export function resolveEntrySeoLng(searchParams) {
+  return (
+    normalizeLng(seoLngFromSearchParams(searchParams)) ||
+    I18N_ENTRY_SEO_DEFAULT_LNG
+  );
 }
 
 /** 服务端：从 cookie 值解析 SEO 语言 */

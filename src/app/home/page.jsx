@@ -5,8 +5,7 @@ import { isProbablyPcUa } from '@/utils/deviceUa';
 import { buildPageMetadata } from '@/utils/seoConfig';
 import {
   getHubSeoCopy,
-  resolveSeoLng,
-  seoLngFromSearchParams,
+  resolveEntrySeoLng,
   withSeoLng,
 } from '@/utils/seoI18n';
 
@@ -32,16 +31,12 @@ const HOME_KEYWORDS = [
 
 /**
  * /home 双语 SEO：
- * - 中文：/home?lng=zh（无 lng 时也按中文出，canonical 归到 ?lng=zh）
- * - 英文：/home?lng=en
- * sitemap + hreflang 同时声明两套，便于中英文各自收录。
+ * - 英文（默认）：/home 与 /home?lng=en → canonical /home?lng=en
+ * - 中文：/home?lng=zh
+ * sitemap + hreflang 同时声明两套。
  */
-function resolveHomeSeoLng(searchParams) {
-  return resolveSeoLng(seoLngFromSearchParams(searchParams) || 'zh');
-}
-
 export async function generateMetadata({ searchParams }) {
-  const lng = resolveHomeSeoLng(searchParams);
+  const lng = resolveEntrySeoLng(searchParams);
   const homeSeo = getHubSeoCopy('home', lng);
   return buildPageMetadata({
     title: homeSeo.title,
@@ -49,7 +44,6 @@ export async function generateMetadata({ searchParams }) {
     path: withSeoLng('/home', lng),
     lng,
     keywords: HOME_KEYWORDS,
-    // 中英各有独立 canonical，避免挤成单一语言
     lngInCanonical: true,
   });
 }
@@ -57,7 +51,7 @@ export async function generateMetadata({ searchParams }) {
 export default function AppHomePage({ searchParams }) {
   const ua = headers().get('user-agent') || '';
   const initialIsPC = isProbablyPcUa(ua);
-  const hubLng = resolveHomeSeoLng(searchParams);
+  const hubLng = resolveEntrySeoLng(searchParams);
   const isZh = hubLng === 'zh';
 
   return (
