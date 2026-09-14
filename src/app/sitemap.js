@@ -69,16 +69,17 @@ export default async function sitemap() {
   let postEntries = [];
   try {
     const posts = await fetchRecentPostsForSitemap({ maxPosts: 500, pageSize: 100 });
-    postEntries = posts.flatMap((post) => {
+    postEntries = posts.map((post) => {
       const stamp = post.updatedAt || post.createdAt;
       const modified = stamp ? new Date(String(stamp).replace(' ', 'T')) : lastModified;
-      const base = `/commentinfo?id=${encodeURIComponent(String(post.id))}`;
-      return expandBilingualPaths(base).map((p) => ({
-        url: toSitemapUrl(p),
+      // UGC 帖子不拆中英 URL，避免同一正文挂两套 lng 导致 GSC 语言不符
+      const path = `/commentinfo?id=${encodeURIComponent(String(post.id))}`;
+      return {
+        url: toSitemapUrl(path),
         lastModified: Number.isNaN(modified.getTime()) ? lastModified : modified,
         changeFrequency: 'daily',
         priority: 0.6,
-      }));
+      };
     });
   } catch {
     postEntries = [];

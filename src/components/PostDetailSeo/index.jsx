@@ -47,7 +47,7 @@ export default function PostDetailSeo({ post, postId }) {
           <p className={styles.seoTopics}>话题：{topics.map((n) => `#${n}`).join(' ')}</p>
         ) : null}
         <p className={styles.seoBrand}>
-          {BRAND_LEGAL_NAME}（Mozi / 墨子）加密货币社区帖子
+          {BRAND_LEGAL_NAME}（Mozi / 墨子）
         </p>
       </article>
     </>

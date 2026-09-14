@@ -237,6 +237,11 @@ export function buildPageMetadata({
   lng,
   /** 为 true 时 canonical 带 ?lng=（双语分 URL 收录时使用） */
   lngInCanonical = false,
+  /**
+   * 为 false 时不输出 hreflang（UGC 帖子/话题等正文语言由用户决定，
+   * 强行挂 zh/en 兄弟链会导致 GSC 语言与标题不符）
+   */
+  hreflang = true,
 } = {}) {
   const seoLng = resolveSeoLng(lng);
   const basePath = stripSeoLng(path);
@@ -260,12 +265,18 @@ export function buildPageMetadata({
   const keywordList = Array.isArray(keywords)
     ? [...new Set([...keywords, ...BRAND_ALIASES])]
     : DEFAULT_KEYWORDS;
-  const langAlts = buildSeoLanguageAlternatePaths(basePath);
-  const languages = {
-    'zh-CN': absoluteUrl(langAlts['zh-CN']),
-    en: absoluteUrl(langAlts.en),
-    'x-default': absoluteUrl(langAlts['x-default']),
+
+  const alternates = {
+    canonical: url,
   };
+  if (hreflang !== false) {
+    const langAlts = buildSeoLanguageAlternatePaths(basePath);
+    alternates.languages = {
+      'zh-CN': absoluteUrl(langAlts['zh-CN']),
+      en: absoluteUrl(langAlts.en),
+      'x-default': absoluteUrl(langAlts['x-default']),
+    };
+  }
 
   return {
     // 已含品牌名的标题用 absolute，避免被根 layout template 再拼一次
@@ -276,10 +287,7 @@ export function buildPageMetadata({
     authors: [{ name: BRAND_LEGAL_NAME, url: SITE_URL }],
     creator: BRAND_LEGAL_NAME,
     publisher: BRAND_LEGAL_NAME,
-    alternates: {
-      canonical: url,
-      languages,
-    },
+    alternates,
     openGraph: {
       type,
       locale: seoLng === 'zh' ? 'zh_CN' : 'en_US',
@@ -601,6 +609,14 @@ export function resolveSchemaDates(entity = {}) {
 }
 
 /**
+ * 粗判正文语言（UGC）：含汉字 → zh-CN，否则 en
+ */
+export function guessContentInLanguage(...texts) {
+  const joined = texts.map((t) => String(t || '')).join(' ');
+  return /[\u4e00-\u9fff]/.test(joined) ? 'zh-CN' : 'en';
+}
+
+/**
  * 帖子详情 DiscussionForumPosting + BreadcrumbList
  */
 export function buildPostJsonLd(post, postId) {
@@ -618,10 +634,22 @@ export function buildPostJsonLd(post, postId) {
   const authorName =
     String(post?.nickName || post?.user?.nickname || post?.user?.nickName || '').trim() ||
     BRAND_LEGAL_NAME;
+  const authorId = String(
+    post?.userId ||
+      post?.authorId ||
+      post?.user?.userId ||
+      post?.user?.id ||
+      '',
+  ).trim();
+  // GSC：author.url 为论坛结构化数据推荐字段
+  const authorUrl = authorId
+    ? absoluteUrl(`/user/${encodeURIComponent(authorId)}`)
+    : SITE_URL;
 
   // DiscussionForumPosting 必填 datePublished；兼容 createTime 等多字段
   const { datePublished, dateModified } = resolveSchemaDates(post || {});
   const forumType = datePublished ? 'DiscussionForumPosting' : 'WebPage';
+  const inLanguage = guessContentInLanguage(title, body, description);
 
   const keywords = [
     BRAND_LEGAL_NAME,
@@ -643,11 +671,12 @@ export function buildPostJsonLd(post, postId) {
     articleBody: body || description,
     url,
     mainEntityOfPage: url,
-    inLanguage: ['zh-CN', 'en'],
+    inLanguage,
     keywords: keywords.join(', '),
     author: {
       '@type': 'Person',
       name: authorName,
+      url: authorUrl,
     },
     publisher: {
       '@type': 'Organization',
@@ -709,7 +738,7 @@ export function buildPostJsonLd(post, postId) {
     ],
   };
 
-  return { article, breadcrumb, title, description, path, keywords };
+  return { article, breadcrumb, title, description, path, keywords, inLanguage };
 }
 
 /**
