@@ -549,6 +549,58 @@ export function plainTextExcerpt(input, maxLen = 160) {
 }
 
 /**
+ * 归一化为 Schema.org / Google 可接受的 ISO-8601 日期时间
+ * 兼容 createdAt / createTime、空格分隔、秒/毫秒时间戳
+ * @returns {string|null}
+ */
+export function toSchemaDateTime(value) {
+  if (value == null || value === '') return null;
+
+  if (typeof value === 'number' || /^\d{10,13}$/.test(String(value).trim())) {
+    const raw = Number(value);
+    if (!Number.isFinite(raw)) return null;
+    const ms = String(Math.trunc(raw)).length <= 10 ? raw * 1000 : raw;
+    const d = new Date(ms);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
+  const s = String(value).trim();
+  if (!s) return null;
+
+  const normalized = s.includes('T') ? s : s.replace(' ', 'T');
+  const parsed = new Date(normalized);
+  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
+
+  // 仅日期 YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const d = new Date(`${s}T00:00:00Z`);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
+  return null;
+}
+
+/** 从帖子/话题对象解析发布与修改时间（多字段兜底） */
+export function resolveSchemaDates(entity = {}) {
+  const published =
+    toSchemaDateTime(entity.createdAt) ||
+    toSchemaDateTime(entity.createTime) ||
+    toSchemaDateTime(entity.publishTime) ||
+    toSchemaDateTime(entity.publishedAt) ||
+    toSchemaDateTime(entity.gmtCreate) ||
+    toSchemaDateTime(entity.ctime);
+
+  const modified =
+    toSchemaDateTime(entity.updatedAt) ||
+    toSchemaDateTime(entity.updateTime) ||
+    toSchemaDateTime(entity.gmtModified) ||
+    toSchemaDateTime(entity.mtime) ||
+    published;
+
+  return { datePublished: published, dateModified: modified || published };
+}
+
+/**
  * 帖子详情 DiscussionForumPosting + BreadcrumbList
  */
 export function buildPostJsonLd(post, postId) {
@@ -567,16 +619,9 @@ export function buildPostJsonLd(post, postId) {
     String(post?.nickName || post?.user?.nickname || post?.user?.nickName || '').trim() ||
     BRAND_LEGAL_NAME;
 
-  const datePublished = post?.createdAt
-    ? String(post.createdAt).includes('T')
-      ? String(post.createdAt)
-      : `${String(post.createdAt).replace(' ', 'T')}`
-    : undefined;
-  const dateModified = post?.updatedAt
-    ? String(post.updatedAt).includes('T')
-      ? String(post.updatedAt)
-      : String(post.updatedAt)
-    : datePublished;
+  // DiscussionForumPosting 必填 datePublished；兼容 createTime 等多字段
+  const { datePublished, dateModified } = resolveSchemaDates(post || {});
+  const forumType = datePublished ? 'DiscussionForumPosting' : 'WebPage';
 
   const keywords = [
     BRAND_LEGAL_NAME,
@@ -590,7 +635,7 @@ export function buildPostJsonLd(post, postId) {
 
   const article = {
     '@context': 'https://schema.org',
-    '@type': 'DiscussionForumPosting',
+    '@type': forumType,
     '@id': `${url}#post`,
     headline: title,
     name: title,
@@ -600,8 +645,6 @@ export function buildPostJsonLd(post, postId) {
     mainEntityOfPage: url,
     inLanguage: ['zh-CN', 'en'],
     keywords: keywords.join(', '),
-    datePublished,
-    dateModified,
     author: {
       '@type': 'Person',
       name: authorName,
@@ -630,6 +673,12 @@ export function buildPostJsonLd(post, postId) {
         : null,
     ].filter(Boolean),
   };
+
+  // 仅在有合法日期时写入，满足论坛富结果对 datePublished 的要求
+  if (datePublished) {
+    article.datePublished = datePublished;
+    article.dateModified = dateModified || datePublished;
+  }
 
   if (Array.isArray(post?.images) && post.images[0]) {
     article.image = post.images[0];
@@ -701,11 +750,12 @@ export function buildTopicJsonLd(topic, topicId, queryFallback = {}) {
     plainTextExcerpt(name, 40),
   ].filter(Boolean);
 
-  const datePublished = topic?.createdAt
-    ? String(topic.createdAt).includes('T')
-      ? String(topic.createdAt)
-      : String(topic.createdAt).replace(' ', 'T')
-    : undefined;
+  const datePublished =
+    toSchemaDateTime(topic?.createdAt) ||
+    toSchemaDateTime(topic?.createTime) ||
+    toSchemaDateTime(topic?.publishTime) ||
+    toSchemaDateTime(topic?.updatedAt) ||
+    toSchemaDateTime(topic?.updateTime);
 
   const collectionPage = {
     '@context': 'https://schema.org',
@@ -718,7 +768,6 @@ export function buildTopicJsonLd(topic, topicId, queryFallback = {}) {
     mainEntityOfPage: url,
     inLanguage: ['zh-CN', 'en'],
     keywords: keywords.join(', '),
-    datePublished,
     about: {
       '@type': 'Thing',
       name: plainTextExcerpt(name, 80),
@@ -752,6 +801,10 @@ export function buildTopicJsonLd(topic, topicId, queryFallback = {}) {
         : null,
     ].filter(Boolean),
   };
+
+  if (datePublished) {
+    collectionPage.datePublished = datePublished;
+  }
 
   const breadcrumb = {
     '@context': 'https://schema.org',

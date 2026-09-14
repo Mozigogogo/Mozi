@@ -13,11 +13,14 @@ export default function PostDetailSeo({ post, postId }) {
 
   const { article, breadcrumb, title, description } = buildPostJsonLd(post || {}, postId);
   const author =
-    String(post?.nickName || '').trim() || BRAND_LEGAL_NAME;
+    String(post?.nickName || post?.user?.nickname || post?.user?.nickName || '').trim() ||
+    BRAND_LEGAL_NAME;
   const body = plainTextExcerpt(post?.content, 4000);
   const topics = Array.isArray(post?.topics)
     ? post.topics.map((t) => t?.name).filter(Boolean)
     : [];
+  const publishedLabel =
+    post?.createdAt || post?.createTime || post?.publishTime || post?.updatedAt || '';
 
   return (
     <>
@@ -34,7 +37,7 @@ export default function PostDetailSeo({ post, postId }) {
           <h1 className={styles.seoTitle}>{title}</h1>
           <p className={styles.seoMeta}>
             {author}
-            {post?.createdAt ? ` · ${String(post.createdAt).replace('T', ' ')}` : ''}
+            {publishedLabel ? ` · ${String(publishedLabel).replace('T', ' ')}` : ''}
             {post?.category ? ` · ${post.category}` : ''}
           </p>
         </header>
