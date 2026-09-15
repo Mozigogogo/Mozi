@@ -12,7 +12,7 @@ export default function AchievementOneTimeTasks({ tasks, onTaskClick, verifyingT
   return (
     <section className={styles.card}>
       <div className={styles.header}>
-        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_alert.svg" alt="starter reward" className={styles.starIcon} />
+        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_alert.svg" alt={t('points.imageAlts.starterHeader')} className={styles.starIcon} />
         <h3 className={styles.title}>
           {t('pointsDetail.newbieTasks', { defaultValue: 'Starter Quest Reward' })}
         </h3>
@@ -30,7 +30,7 @@ export default function AchievementOneTimeTasks({ tasks, onTaskClick, verifyingT
             <div key={task.id} className={styles.row}>
               <div className={styles.left}>
                 <div className={styles.iconWrap}>
-                  <img src={task.icon} alt={task.title} className={styles.taskIcon} />
+                  <img src={task.icon} alt={t('points.imageAlts.taskIcon', { title: task.title || 'task' })} className={styles.taskIcon} />
                 </div>
                 <div className={styles.info}>
                   <div className={styles.taskTitle}>{task.title}</div>

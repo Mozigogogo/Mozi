@@ -1970,7 +1970,7 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                             <img
                               className={styles.emptyBtnSvg}
                               src={iconSvgs[idx % iconSvgs.length]}
-                              alt=""
+                              alt={t('robot.suggestIconAlt')}
                             />
                           </span>
                           <span className={styles.emptyBtnText}>{getBtnLabel(q)}</span>
@@ -2106,25 +2106,25 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                           type="button"
                           className={styles.actionBtn}
                           onClick={() => handleCopyMessage(msg.content)}
-                          aria-label="copy"
+                          aria-label={t('robot.copyAlt')}
                         >
-                          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/copy.svg" alt="" aria-hidden />
+                          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/copy.svg" alt={t('robot.copyAlt')} />
                         </button>
                         <button
                           type="button"
                           className={styles.actionBtn}
                           onClick={handleRegenerate}
-                          aria-label="regenerate"
+                          aria-label={t('robot.regenerateAlt')}
                         >
-                          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/reload.svg" alt="" aria-hidden />
+                          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/reload.svg" alt={t('robot.reloadAlt')} />
                         </button>
                         <button
                           type="button"
                           className={styles.actionBtn}
                           onClick={() => openShareModalForMessage(msg.id)}
-                          aria-label="share"
+                          aria-label={t('robot.shareAlt')}
                         >
-                          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/share.svg" alt="" aria-hidden />
+                          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/share.svg" alt={t('robot.shareAlt')} />
                         </button>
                       </div>
                     )}
@@ -2336,11 +2336,10 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                 <span className={`${styles.pointsTag} ${totalPoints === 0 ? styles.pointsTagWarning : ''}`}>
                   <Image
                     src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/point.svg"
-                    alt=""
+                    alt={t('robot.pointsAlt')}
                     width={12}
                     height={12}
                     className={`${styles.pointsIcon} ${totalPoints === 0 ? styles.pointsIconWarning : ''}`}
-                    aria-hidden
                   />
                   {totalPoints} {t('robot.pointsUnit')}
                 </span>
@@ -2348,16 +2347,15 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                   <button
                     type="button"
                     className={`${styles.micBtn} ${listening ? styles.micBtnActive : ''}`}
-                    aria-label="microphone"
+                    aria-label={t('robot.micAlt')}
                     onClick={handleToggleMic}
                   >
                     <Image
                       src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/micro_phone.svg"
-                      alt=""
+                      alt={t('robot.micAlt')}
                       width={16}
                       height={16}
                       className={styles.micIcon}
-                      aria-hidden
                     />
                   </button>
                 )}
@@ -2382,11 +2380,10 @@ export default function AiChatView({ isPC: propIsPC = false, routeConversationId
                   >
                     <Image
                       src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/ai_robot/send.svg"
-                      alt=""
+                      alt={t('robot.sendAlt')}
                       width={18}
                       height={18}
                       className={styles.sendIcon}
-                      aria-hidden
                     />
                   </button>
                 )}

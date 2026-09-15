@@ -552,7 +552,7 @@ function AchievementContent() {
 
           <div className={styles.scoreCard}>
             <div className={styles.scoreValue}>
-              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" alt="coin" className={styles.coinIcon} />
+              <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" alt={t('points.imageAlts.coin')} className={styles.coinIcon} />
               <span>{formatPoints(inviteData.totalPoints || 0)}</span>
             </div>
             <button
@@ -565,7 +565,7 @@ function AchievementContent() {
           </div>
 
           <div className={styles.heroDecor}>
-            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/ip.png" alt="mozi mascot" className={styles.ipImage} />
+            <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/ip.png" alt={t('points.imageAlts.mascot')} className={styles.ipImage} />
           </div>
         </div>
 

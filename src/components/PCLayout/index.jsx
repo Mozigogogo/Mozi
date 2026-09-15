@@ -776,7 +776,7 @@ export default function PCLayout({ children }) {
             src={`${CDN_PUBLIC_PREFIX}/icons/pc/Achievement.png`}
             activeSrc={`${CDN_PUBLIC_PREFIX}/icons/pc/Achievement_actived.png`}
             itemKey="/achievement"
-            alt="achievements"
+            alt={t('pcLayout.menu.myAchievementsAlt')}
             activeContent={activeContent}
           />
         ),
@@ -807,7 +807,7 @@ export default function PCLayout({ children }) {
           src={AI_CHAT_ICON}
           activeSrc={AI_CHAT_ICON}
           itemKey="/ai"
-          alt="myqa"
+          alt={t('pcLayout.menu.myQAAlt')}
         />
       ),
       label: t('pcLayout.menu.myQA'),

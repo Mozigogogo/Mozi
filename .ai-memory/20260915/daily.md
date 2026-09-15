@@ -46,3 +46,9 @@
 - **决策**: community.imageAlts 统一 MoziInnovations + 社区讨论/发现好币/热门话题语义
 - **验证**: i18n JSON parse OK
 
+## [13:50] - [SEO]: 我的问答(/ai)与我的成就(/achievement)图片 alt
+
+- **文件**: PCLayout, AiChatView, achievement/* cards, page.jsx, robot/points/pcLayout i18n
+- **决策**: 侧栏图标与页内图片统一 MoziInnovations + AI问答/积分成就语义；去掉空 alt/aria-hidden 遮挡
+- **验证**: i18n JSON parse OK
+

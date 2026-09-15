@@ -11,7 +11,7 @@ export default function AchievementDailyTasks({ tasks, onTaskClick, loading = fa
   return (
     <section className={styles.card}>
       <div className={styles.header}>
-        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/task_daily.svg" alt="daily task" className={styles.headerIcon} />
+        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/task_daily.svg" alt={t('points.imageAlts.dailyHeader')} className={styles.headerIcon} />
         <h3 className={styles.title}>
           {t('pointsDetail.dailyTasks', { defaultValue: 'Daily Quest Reward' })}
         </h3>
@@ -32,7 +32,7 @@ export default function AchievementDailyTasks({ tasks, onTaskClick, loading = fa
             return (
               <div key={task.id} className={styles.row}>
                 <div className={styles.iconWrap}>
-                  <img src={task.icon} alt={task.title} className={styles.taskIcon} />
+                  <img src={task.icon} alt={t('points.imageAlts.taskIcon', { title: task.title || 'task' })} className={styles.taskIcon} />
                 </div>
 
                 <div className={styles.taskInfo}>

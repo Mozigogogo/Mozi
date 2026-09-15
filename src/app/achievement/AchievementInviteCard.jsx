@@ -25,20 +25,20 @@ export default function AchievementInviteCard({ pointsData, copyToClipboard, onA
   return (
     <section className={styles.card}>
       <div className={styles.header}>
-        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/invite_icon.svg" alt="invite" className={styles.headerIcon} />
+        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/invite_icon.svg" alt={t('points.imageAlts.inviteHeader')} className={styles.headerIcon} />
         <h3 className={styles.title}>{t('pointsDetail.inviteRewards')}</h3>
       </div>
 
       <div className={styles.rewardRow}>
         <div className={styles.rewardItem}>
-          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/invite_register.png" alt="register" className={styles.rewardIcon} />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/invite_register.png" alt={t('points.imageAlts.inviteRegister')} className={styles.rewardIcon} />
           <div className={styles.rewardText}>
             <div className={styles.rewardName}>{t('pointsDetail.inviteRegister')}</div>
             <div className={styles.rewardValue}>{t('pointsDetail.inviteRegisterReward', { defaultValue: '+250' })}</div>
           </div>
         </div>
         <div className={styles.rewardItem}>
-          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/invite_pay.png" alt="pay" className={styles.rewardIcon} />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/invite_pay.png" alt={t('points.imageAlts.invitePay')} className={styles.rewardIcon} />
           <div className={styles.rewardText}>
             <div className={styles.rewardName}>{t('pointsDetail.invitePay')}</div>
             <div className={styles.rewardValue}>{t('pointsDetail.invitePayReward', { defaultValue: '+3000' })}</div>
@@ -52,7 +52,7 @@ export default function AchievementInviteCard({ pointsData, copyToClipboard, onA
           {inviteLinkFallback}
         </div>
         <button type="button" className={styles.copyBtn} onClick={() => copyToClipboard(inviteLinkFallback)}>
-          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/copy.svg" alt="copy" />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/copy.svg" alt={t('points.imageAlts.copy')} />
         </button>
       </div>
 
@@ -64,7 +64,7 @@ export default function AchievementInviteCard({ pointsData, copyToClipboard, onA
           className={styles.copyBtn}
           onClick={() => copyToClipboard(pointsData.inviteCode || 'MOZI888')}
         >
-          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/copy.svg" alt="copy" />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/copy.svg" alt={t('points.imageAlts.copy')} />
         </button>
       </div>
 

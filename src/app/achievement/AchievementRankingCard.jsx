@@ -102,7 +102,7 @@ export default function AchievementRankingCard({ onInviteClick, style, noTopMarg
     <section className={`${styles.card} ${noTopMargin ? styles.noTopMargin : ''}`} style={style}>
       <div className={styles.header}>
         <div className={styles.titleWrap}>
-          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pool_status_logo.svg" alt="" className={styles.titleIcon} />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pool_status_logo.svg" alt={t('points.imageAlts.poolLogo')} className={styles.titleIcon} />
           <h3 className={styles.title}>{t('pointsDetail.rankingListTitle', { defaultValue: 'Ranking List' })}</h3>
           <span className={styles.titleUnderline} />
         </div>
@@ -130,14 +130,14 @@ export default function AchievementRankingCard({ onInviteClick, style, noTopMarg
             {top3Display.map((item) => (
               <div key={item.id || item.rank} className={`${styles.top3Item} ${item.rank === 1 ? styles.top1Item : ''}`}>
                 <div className={`${styles.avatarWrap} ${item.rank === 1 ? styles.top1AvatarWrap : ''}`}>
-                  <img src={crownByRank[item.rank]} alt="" className={styles.crown} />
+                  <img src={crownByRank[item.rank]} alt={t('points.imageAlts.rankCrown', { rank: item.rank })} className={styles.crown} />
                   <div className={`${styles.avatar} ${item.rank === 1 ? styles.top1Avatar : ''}`} style={{ background: item.color }}>
                     {item.name.slice(0, 1)}
                   </div>
                 </div>
                 <div className={`${styles.name} ${item.rank === 1 ? styles.top1Name : ''}`}>{item.name}</div>
                 <div className={`${styles.score} ${item.rank === 1 ? styles.top1Score : styles.topSideScore}`}>
-                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" alt="" className={styles.scoreCoinIcon} />
+                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" alt={t('points.imageAlts.coin')} className={styles.scoreCoinIcon} />
                   <span>{item.score}</span>
                 </div>
               </div>
@@ -154,7 +154,7 @@ export default function AchievementRankingCard({ onInviteClick, style, noTopMarg
                   <span className={styles.rowName}>{item.name}</span>
                 </div>
                 <span className={styles.rowScore}>
-                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" alt="" className={styles.rowScoreCoinIcon} />
+                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/point/new_coin.svg" alt={t('points.imageAlts.coin')} className={styles.rowScoreCoinIcon} />
                   <span>{item.score}</span>
                 </span>
               </div>
@@ -164,7 +164,7 @@ export default function AchievementRankingCard({ onInviteClick, style, noTopMarg
       )}
 
       <button type="button" className={styles.inviteBtn} onClick={onInviteClick}>
-        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/share.svg" alt="" className={styles.inviteIcon} />
+        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/share.svg" alt={t('points.imageAlts.shareInvite')} className={styles.inviteIcon} />
         {t('pointsDetail.inviteChallenge')}
       </button>
     </section>
