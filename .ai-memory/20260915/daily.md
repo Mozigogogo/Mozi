@@ -10,3 +10,9 @@
 - **决策**: BalanceHero / 紧急条 / 首卡「占用」全部改读 `live.occupied|equity|available`，去掉 paper 与 overview.totalCapital 兜底；文案改为「真实仓占用」
 - **验证**: 代码路径确认无 paper 回落；i18n 键已替换
 
+## [11:16] - [功能调整]: 资金展示按 live.connected 切换真实仓/模拟仓
+
+- **文件**: `Dashboard.jsx`, `autoArb.zh.json`, `autoArb.en.json`
+- **决策**: 先拉 account/funds；`live.connected===true` 展示真实仓，否则模拟仓；加载中不回落 paper 防闪烁；文案随 mode 切换
+- **验证**: i18n JSON parse OK；与 Funds/Wizard 的 connected 判定一致
+

@@ -310,30 +310,81 @@ export default function Dashboard({
   };
 
   const running = overview?.runningCount ?? strategies?.filter((s) => s.status === 'running').length ?? 0;
-  const liveFunds = accountFunds?.live;
-  // 顶部仓位展示只读真实仓 occupied，不再混用 overview 模拟仓 totalCapital
-  const totalCapital = Number(liveFunds?.occupied) || 0;
   const totalPnl = overview?.totalPnl ?? 0;
   const totalDailyPnl = overview?.todayPnl ?? 0;
   const totalReturnPct = overview?.totalReturnPct ?? 0;
   const riskScore = overview?.riskScore ?? 0;
   const execSuccessRate = overview?.execSuccessRate ?? 0;
 
-  const balanceHeroProps = useMemo(() => {
+  // 先读真实仓；未绑定交易所 API（live.connected !== true）时回落模拟仓
+  const fundsView = useMemo(() => {
     const live = accountFunds?.live;
-    const liveExchanges = (live?.exchanges || []).filter((ex) => ex?.connected);
+    const paper = accountFunds?.paper;
+
+    // 资金接口未返回前不回落模拟仓，避免闪烁
+    if (!accountFunds) {
+      return {
+        mode: 'pending',
+        totalCapital: 0,
+        balanceHero: {
+          total: 0,
+          available: 0,
+          deployed: 0,
+          byExchange: [],
+          label: D('balanceHero.labelLive'),
+        },
+      };
+    }
+
+    const liveConnected = live?.connected === true;
+
+    if (liveConnected) {
+      const liveExchanges = (live?.exchanges || []).filter((ex) => ex?.connected);
+      return {
+        mode: 'live',
+        totalCapital: Number(live?.occupied) || 0,
+        balanceHero: {
+          total: Number(live?.equity) || 0,
+          available: Number(live?.available) || 0,
+          deployed: Number(live?.occupied) || 0,
+          byExchange: liveExchanges.map((ex) => ({
+            name: ex.exchangeName,
+            total: Number(ex.equity) || 0,
+          })),
+          label: D('balanceHero.labelLive'),
+        },
+      };
+    }
 
     return {
-      total: Number(live?.equity) || 0,
-      available: Number(live?.available) || 0,
-      deployed: Number(live?.occupied) || 0,
-      byExchange: liveExchanges.map((ex) => ({
-        name: ex.exchangeName,
-        total: Number(ex.equity) || 0,
-      })),
-      label: D('balanceHero.labelLive'),
+      mode: 'paper',
+      totalCapital:
+        Number(paper?.occupied) || Number(overview?.totalCapital) || 0,
+      balanceHero: {
+        total: Number(paper?.equity) || Number(overview?.totalCapital) || 0,
+        available: Number(paper?.available) || 0,
+        deployed: Number(paper?.occupied) || Number(overview?.totalCapital) || 0,
+        byExchange: [
+          {
+            name: D('balanceHero.paperChip'),
+            total: Number(paper?.equity) || Number(overview?.totalCapital) || 0,
+          },
+        ],
+        label: D('balanceHero.labelPaper'),
+      },
     };
-  }, [accountFunds, i18n.language]);
+  }, [accountFunds, overview?.totalCapital, i18n.language]);
+
+  const totalCapital = fundsView.totalCapital;
+  const balanceHeroProps = fundsView.balanceHero;
+  const capitalLabel =
+    fundsView.mode === 'paper'
+      ? D('emergencyBar.totalPositionPaper')
+      : D('emergencyBar.totalPositionLive');
+  const statsCapitalLabel =
+    fundsView.mode === 'paper'
+      ? D('stats.totalCapitalPaper')
+      : D('stats.totalCapitalLive');
 
   const radarItems = useMemo(() => {
     if (Array.isArray(radar) && radar.length) return radar;
@@ -500,7 +551,7 @@ export default function Dashboard({
         <div className="eb-text">
           ⚡{' '}
           <strong>{D('emergencyBar.runningCount', { count: running })}</strong> ·{' '}
-          {D('emergencyBar.totalPosition')} ${Number(totalCapital).toLocaleString()} ·{' '}
+          {capitalLabel} ${Number(totalCapital).toLocaleString()} ·{' '}
           {D('emergencyBar.todayPnl')}{' '}
           <strong
             style={{
@@ -531,7 +582,7 @@ export default function Dashboard({
 
       <div className="dash-stats">
         <div className="ds-card">
-          <div className="ds-lbl">💼 {D('stats.totalCapital')}</div>
+          <div className="ds-lbl">💼 {statsCapitalLabel}</div>
           <div className="ds-val" style={{ color: 'var(--t1)' }}>
             ${Number(totalCapital).toLocaleString()}
           </div>

@@ -280,7 +280,9 @@
   "dashboard": {
     "emergencyBar": {
       "runningCount": "{{count}} strategies running",
-      "totalPosition": "Live occupied",
+      "totalPosition": "Position occupied",
+      "totalPositionLive": "Live occupied",
+      "totalPositionPaper": "Paper occupied",
       "todayPnl": "Today's net P&L",
       "stopAll": "Emergency stop all"
     },
@@ -292,7 +294,9 @@
       "paperChip": "Paper"
     },
     "stats": {
-      "totalCapital": "Live occupied",
+      "totalCapital": "Position occupied",
+      "totalCapitalLive": "Live occupied",
+      "totalCapitalPaper": "Paper occupied",
       "activeStrategies": "Across {{count}} active strategies",
       "cumulativePnl": "Cumulative net P&L",
       "totalReturn": "{{pct}}% total return",
