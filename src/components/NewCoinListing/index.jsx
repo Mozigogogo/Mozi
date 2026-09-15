@@ -566,8 +566,10 @@ const NewCoinListing = ({
                     <img
                       className={styles.eventIcon}
                       src={item.iconUrl}
-                      alt=""
-                      aria-hidden
+                      alt={t('discover.imageAlts.newListingCoin', {
+                        symbol: item.symbol || 'crypto',
+                        exchange: item.exchange || 'exchange',
+                      })}
                       onError={(e) => {
                         e.currentTarget.onerror = null;
                         e.currentTarget.src = FALLBACK_ICON;
@@ -641,7 +643,13 @@ const NewCoinListing = ({
               return (
                 <div className={`${styles.coinItem} ${isLast ? styles.last : ''}`} key={coin.id || index}>
                   <div className={styles.coinInfo}>
-                    <img className={styles.exchangeIcon} src={exchangeIcon} alt={exchangeName} />
+                    <img
+                      className={styles.exchangeIcon}
+                      src={exchangeIcon}
+                      alt={t('discover.imageAlts.exchangeLogo', {
+                        exchange: exchangeName || 'crypto',
+                      })}
+                    />
                     <span className={styles.exchangeName}>{exchangeName}</span>
                     <span className={styles.listingTime}>{listingTime}</span>
                   </div>

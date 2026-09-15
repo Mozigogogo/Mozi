@@ -405,6 +405,26 @@
     },
     "loadFinished": "All loaded",
     "robotMessage": "Want to hear my analysis of the market?",
+    "imageAlts": {
+      "topRankHeader": "MoziInnovations Discover crypto rankings — live Top 3 market leaders",
+      "topRankBadge": "MoziInnovations Discover crypto ranking badge Top {{rank}}",
+      "shareRank": "Share MoziInnovations crypto rankings",
+      "commentRank": "Discuss MoziInnovations crypto rankings in community",
+      "marketCapIcon": "MoziInnovations total crypto market capitalization overview",
+      "volumeIcon": "MoziInnovations 24h crypto trading volume overview",
+      "smartMonitorIcon": "MoziInnovations smart crypto price alerts and market monitoring",
+      "calendarIcon": "MoziInnovations crypto listing and delisting announcement calendar",
+      "trendUp": "MoziInnovations crypto market metric rising",
+      "trendDown": "MoziInnovations crypto market metric falling",
+      "dailyArrow": "Open MoziInnovations crypto daily economic calendar",
+      "dailyDecor": "MoziInnovations Daily crypto market calendar decoration",
+      "newListingCoin": "MoziInnovations new crypto listing {{symbol}} on {{exchange}}",
+      "exchangeLogo": "MoziInnovations Discover {{exchange}} crypto exchange ranking",
+      "rankCoin": "MoziInnovations {{symbol}} cryptocurrency on {{board}} live ranking #{{rank}}",
+      "rankCoinTop": "MoziInnovations {{symbol}} cryptocurrency Top {{rank}} on {{board}} leaderboard",
+      "addFavorite": "Add {{symbol}} to MoziInnovations crypto watchlist",
+      "addMonitor": "Set MoziInnovations smart price alert for {{symbol}}"
+    },
     "pullToRefresh": {
       "pulling": "Pull to refresh",
       "canRelease": "Release to refresh",
@@ -809,6 +829,23 @@
       "topicDescriptionPlaceholder": "Enter topic description (optional, max 60 characters)"
     },
     "noCoinFound": "No coins found",
+    "imageAlts": {
+      "userAvatar": "MoziInnovations community member {{name}}",
+      "postImage": "MoziInnovations crypto community post image{{index}}{{title}}",
+      "postCover": "MoziInnovations crypto community post cover{{title}}",
+      "share": "Share MoziInnovations crypto community post",
+      "comment": "Comment on MoziInnovations crypto community discussion",
+      "like": "Like MoziInnovations crypto community post",
+      "dislike": "Dislike MoziInnovations Discover Coins recommendation",
+      "discoverBadge": "MoziInnovations Discover Coins — community crypto opportunity picks",
+      "coinNameIcon": "MoziInnovations Discover Coins recommended token name",
+      "sectorIcon": "MoziInnovations Discover Coins crypto sector tag",
+      "reasonIcon": "MoziInnovations Discover Coins recommendation reason",
+      "hotTopicRank": "MoziInnovations hot crypto topic ranking #{{rank}}",
+      "hotHeat": "MoziInnovations crypto community topic heat score",
+      "currentUserAvatar": "MoziInnovations community current user avatar",
+      "commentAvatar": "MoziInnovations community comment by {{name}}"
+    },
     "coinInfo": {
       "coinName": "Coin Name: ",
       "votingQuestion": "What's your view on {{coin}} today?",
@@ -1889,6 +1926,11 @@
       "price": "Price Alerts at Your Fingertips",
       "priceSub": "Real-time Comparison Buy Low Sell High"
     },
+    "bannerAlts": {
+      "aiRadar": "MoziInnovations AI Trade Radar — crypto AI analyzing news, open interest, long/short depth and win rate",
+      "flashNews": "MoziInnovations Flash News — zero-noise real-time global crypto market signals",
+      "smartAlerts": "MoziInnovations Smart Alerts — phone and email alerts that catch crypto whale moves instantly"
+    },
     "features": {
       "multiSource": "Multi-Source Comparison",
       "multiSourceSub": "MULTI-SOURCE RATIO",
@@ -1903,24 +1945,34 @@
       "title": "Derivatives Zone",
       "longShort": "Long/Short",
       "longShortSub": "Long/Short",
+      "longShortAlt": "MoziInnovations crypto long/short ratio analytics for futures traders",
       "openInterest": "Open Interest",
       "openInterestSub": "Open Interest",
+      "openInterestAlt": "MoziInnovations crypto open interest and position size analytics",
       "fundingRate": "Funding Rate",
       "fundingRateSub": "Funding Rate",
+      "fundingRateAlt": "MoziInnovations crypto perpetual funding rate analytics",
       "volume": "Volume",
-      "volumeSub": "Volume"
+      "volumeSub": "Volume",
+      "volumeAlt": "MoziInnovations crypto derivatives trading volume analytics"
     },
     "arbitrage": {
       "title": "Arbitrage Zone",
       "funding": "Funding Arb",
       "fundingSuffix": "Arb",
+      "fundingAlt": "MoziInnovations funding rate arbitrage radar for crypto markets",
       "spread": "Spot Spread",
+      "spreadAlt": "MoziInnovations spot spread arbitrage across crypto exchanges",
       "basis": "Basis Arb",
-      "oi": "OI Anomaly"
+      "basisAlt": "MoziInnovations basis arbitrage between spot and futures crypto markets",
+      "oi": "OI Anomaly",
+      "oiAlt": "MoziInnovations open interest anomaly scanner for crypto trading"
     },
     "sectorMap": {
       "title": "Sector Selection",
-      "viewMore": "View More"
+      "viewMore": "View More",
+      "communityAlt": "MoziInnovations crypto sector community discussion",
+      "shareAlt": "Share MoziInnovations crypto sector heatmap"
     },
     "ranks": {
       "title": "Live Rankings",
@@ -1941,7 +1993,8 @@
       "low24h": "24h Low",
       "volume24h": "24h Volume",
       "favorite": "Favorite",
-      "monitor": "Monitor"
+      "monitor": "Monitor",
+      "monitorAlt": "MoziInnovations smart price alert for {{symbol}}"
     }
   },
   "pcAbout": {

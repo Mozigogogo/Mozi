@@ -38,6 +38,7 @@ export default function CoinSymbolIcon({
   url,
   size = 24,
   className = '',
+  alt,
 }) {
   const [failed, setFailed] = useState(false);
   const color = useMemo(() => colorForSymbol(symbol), [symbol]);
@@ -53,13 +54,16 @@ export default function CoinSymbolIcon({
     size <= 32 ? 11 :
     size <= 48 ? 16 :
     Math.max(18, Math.round(size * 0.28));
+  const resolvedAlt =
+    alt ||
+    (symbol ? `MoziInnovations ${symbol} cryptocurrency` : 'MoziInnovations cryptocurrency');
 
   if (showImg) {
     return (
       <img
         className={`${styles.icon} ${className}`.trim()}
         src={src}
-        alt={symbol || ''}
+        alt={resolvedAlt}
         style={{ width: size, height: size }}
         onError={() => setFailed(true)}
       />

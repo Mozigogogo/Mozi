@@ -352,7 +352,18 @@ const PCMarketOverview = memo(({
                   <div className={styles.cardHeader}>
                     <div className={styles.cardTitleGroup}>
                       <div className={styles.cardIcon}>
-                        <img src={card.icon} alt={card.title} />
+                        <img
+                          src={card.icon}
+                          alt={
+                            card.id === 'total-market-cap'
+                              ? t('discover.imageAlts.marketCapIcon')
+                              : card.id === 'volume'
+                                ? t('discover.imageAlts.volumeIcon')
+                                : card.id === 'smart-order'
+                                  ? t('discover.imageAlts.smartMonitorIcon')
+                                  : t('discover.imageAlts.calendarIcon')
+                          }
+                        />
                       </div>
                       <span className={styles.cardTitle}>{card.title}</span>
                     </div>
@@ -373,7 +384,11 @@ const PCMarketOverview = memo(({
                 <div className={`${styles.cardChange} ${card.change.isPositive ? styles.positive : styles.negative}`}>
                   <img
                     src={card.change.isPositive ? UpIcon : DownIcon}
-                    alt="trend"
+                    alt={
+                      card.change.isPositive
+                        ? t('discover.imageAlts.trendUp')
+                        : t('discover.imageAlts.trendDown')
+                    }
                     className={styles.changeIcon}
                   />
                   <span>{card.change.value}</span>
@@ -384,7 +399,18 @@ const PCMarketOverview = memo(({
                 <div className={styles.cardHeader}>
                   <div className={styles.cardTitleGroup}>
                     <div className={styles.cardIcon}>
-                      <img src={card.icon} alt={card.title} />
+                      <img
+                        src={card.icon}
+                        alt={
+                          card.id === 'total-market-cap'
+                            ? t('discover.imageAlts.marketCapIcon')
+                            : card.id === 'volume'
+                              ? t('discover.imageAlts.volumeIcon')
+                              : card.id === 'smart-order'
+                                ? t('discover.imageAlts.smartMonitorIcon')
+                                : t('discover.imageAlts.calendarIcon')
+                        }
+                      />
                     </div>
                     <span className={styles.cardTitle}>{card.title}</span>
                   </div>

@@ -157,7 +157,7 @@ export default function PCDailyCard({
       <div className={styles.contentArea}>
         <div className={styles.cardHeader}>
           <div className={styles.cardTitle}>Daily</div>
-          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/daily/right.svg" className={styles.cardArrow} alt=">" />
+          <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/daily/right.svg" className={styles.cardArrow} alt={t('discover.imageAlts.dailyArrow')} />
         </div>
 
         <div
@@ -190,8 +190,8 @@ export default function PCDailyCard({
           )}
         </div>
 
-        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/daily/split.png" className={styles.splitImage} alt="" />
-        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/daily/verctor.png" className={styles.vectorImage} alt="" />
+        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/daily/split.png" className={styles.splitImage} alt={t('discover.imageAlts.dailyDecor')} />
+        <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/daily/verctor.png" className={styles.vectorImage} alt={t('discover.imageAlts.dailyDecor')} />
 
         {showNoteCard ? (
           <div className={`${styles.noteCard} ${isShortList ? styles.noteCardShort : ''}`}>

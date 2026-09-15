@@ -39,11 +39,20 @@ const PCSectorTreeMap = dynamic(() => import('../PCSectorTreeMap'), {
 // CDN 图片前缀
 const CDN_PREFIX = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets';
 
-// Banner 图片
+// Banner：AI Trade Radar / Flash News / Smart Alerts
 const HOME_BANNERS = [
-  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner1_pc_en.png',
-  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner2_pc_en.png',
-  'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner3_pc_en.png',
+  {
+    src: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner1_pc_en.png',
+    altKey: 'pcHome.bannerAlts.aiRadar',
+  },
+  {
+    src: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner2_pc_en.png',
+    altKey: 'pcHome.bannerAlts.flashNews',
+  },
+  {
+    src: 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/banner3_pc_en.png',
+    altKey: 'pcHome.bannerAlts.smartAlerts',
+  },
 ];
 
 // 合约专区图标
@@ -125,28 +134,32 @@ export default function PCHome() {
       key: 'longShort',
       icon: derivativeIcons.bullBear, 
       title: t('pcHome.derivatives.longShort'), 
-      subtitle: t('pcHome.derivatives.longShortSub'), 
+      subtitle: t('pcHome.derivatives.longShortSub'),
+      alt: t('pcHome.derivatives.longShortAlt'),
       path: '/putcallratio' 
     },
     { 
       key: 'openInterest',
       icon: derivativeIcons.inventory, 
       title: t('pcHome.derivatives.openInterest'), 
-      subtitle: t('pcHome.derivatives.openInterestSub'), 
+      subtitle: t('pcHome.derivatives.openInterestSub'),
+      alt: t('pcHome.derivatives.openInterestAlt'),
       path: '/positionsize' 
     },
     { 
       key: 'fundingRate',
       icon: derivativeIcons.fundingRate, 
       title: t('pcHome.derivatives.fundingRate'), 
-      subtitle: t('pcHome.derivatives.fundingRateSub'), 
+      subtitle: t('pcHome.derivatives.fundingRateSub'),
+      alt: t('pcHome.derivatives.fundingRateAlt'),
       path: '/fundingrate' 
     },
     { 
       key: 'volume',
       icon: derivativeIcons.volume, 
       title: t('pcHome.derivatives.volume'), 
-      subtitle: t('pcHome.derivatives.volumeSub'), 
+      subtitle: t('pcHome.derivatives.volumeSub'),
+      alt: t('pcHome.derivatives.volumeAlt'),
       path: '/tradevol' 
     },
   ], [t]);
@@ -163,28 +176,28 @@ export default function PCHome() {
             {t('pcHome.arbitrage.fundingSuffix')}
           </>
         ),
-        alt: t('pcHome.arbitrage.funding'),
+        alt: t('pcHome.arbitrage.fundingAlt'),
         path: '/arbitrage?tab=funding',
       },
       {
         key: 'spread',
         icon: arbitrageIcons.spread,
         title: t('pcHome.arbitrage.spread'),
-        alt: t('pcHome.arbitrage.spread'),
+        alt: t('pcHome.arbitrage.spreadAlt'),
         path: '/arbitrage?tab=spread',
       },
       {
         key: 'basis',
         icon: arbitrageIcons.basis,
         title: t('pcHome.arbitrage.basis'),
-        alt: t('pcHome.arbitrage.basis'),
+        alt: t('pcHome.arbitrage.basisAlt'),
         path: '/arbitrage?tab=basis',
       },
       {
         key: 'oi',
         icon: arbitrageIcons.oi,
         title: t('pcHome.arbitrage.oi'),
-        alt: t('pcHome.arbitrage.oi'),
+        alt: t('pcHome.arbitrage.oiAlt'),
         path: '/arbitrage?tab=oi',
       },
     ],
@@ -352,7 +365,9 @@ export default function PCHome() {
         <img
           src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/monitor-bell.svg"
           className={styles.actionIcon}
-          alt="monitor"
+          alt={t('pcHome.table.monitorAlt', {
+            symbol: record?.symbol || record?.key || 'crypto',
+          })}
           role="button"
           tabIndex={0}
           style={{ width: 18, height: 18, cursor: 'pointer' }}
@@ -530,7 +545,7 @@ export default function PCHome() {
           </div>
         )}
         <div className={styles.carousel3d} style={{ display: bannerLoading ? 'none' : 'flex' }}>
-          {HOME_BANNERS.map((url, idx) => {
+          {HOME_BANNERS.map((banner, idx) => {
             const position = (idx - activeBanner + HOME_BANNERS.length) % HOME_BANNERS.length;
             let posClass = '';
             if (position === 0) posClass = styles.active;
@@ -539,10 +554,10 @@ export default function PCHome() {
             else posClass = styles.hidden;
             
             return (
-              <div key={idx} className={`${styles.carouselItem} ${posClass}`} onClick={() => setActiveBanner(idx)}>
+              <div key={banner.src} className={`${styles.carouselItem} ${posClass}`} onClick={() => setActiveBanner(idx)}>
                 <img 
-                  src={url} 
-                  alt={`banner-${idx}`} 
+                  src={banner.src} 
+                  alt={t(banner.altKey)}
                   onLoad={() => {
                     // 当第一张图片加载完成时，取消loading状态
                     if (idx === 0) setBannerLoading(false);

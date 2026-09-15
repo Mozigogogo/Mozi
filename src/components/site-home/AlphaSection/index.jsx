@@ -15,12 +15,12 @@ export default function AlphaSection() {
         />
       </div>
 
-      <div className={styles.alphaBottom} aria-hidden="true">
+      <div className={styles.alphaBottom}>
         <div className={styles.alphaPhoneWrap}>
           <div className={styles.alphaPhone}>
             <Image
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction5_1.svg"
-              alt=""
+              alt="MoziInnovations Alpha Scanner finding high-potential crypto tokens before the pump"
               fill
               className={styles.alphaPhoneImage}
               unoptimized
@@ -28,11 +28,10 @@ export default function AlphaSection() {
             />
           </div>
 
-          {/* 让这三个资产以手机容器为定位参照 */}
           <div className={`${styles.alphaAsset} ${styles.alphaScoreLeft}`}>
             <Image
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction5_2.svg"
-              alt=""
+              alt="MoziInnovations Alpha score card ranking crypto gem opportunities"
               fill
               className={styles.alphaAssetImage}
               unoptimized
@@ -42,7 +41,7 @@ export default function AlphaSection() {
           <div className={`${styles.alphaAsset} ${styles.alphaScoreRight}`}>
             <Image
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction5_3.svg"
-              alt=""
+              alt="MoziInnovations Alpha Scanner crypto token opportunity score"
               fill
               className={styles.alphaAssetImage}
               unoptimized
@@ -52,7 +51,7 @@ export default function AlphaSection() {
           <div className={`${styles.alphaAsset} ${styles.alphaScoreBottom}`}>
             <Image
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction5_4.svg"
-              alt=""
+              alt="MoziInnovations Alpha Scanner quant insights for crypto discovery"
               fill
               className={styles.alphaAssetImage}
               unoptimized

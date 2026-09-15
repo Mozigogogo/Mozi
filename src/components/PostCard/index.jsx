@@ -154,7 +154,9 @@ function PostCard({
         <div className={styles.avatarCol}>
           <img
             src={post.avatar || '/default-avatar.png'}
-            alt="avatar"
+            alt={t('community.imageAlts.userAvatar', {
+              name: post.username || 'user',
+            })}
             className={styles.avatar}
             onClick={(e) => {
               e.stopPropagation();
@@ -236,7 +238,15 @@ function PostCard({
             {post.images && post.images.length > 0 && (
               <div className={styles.postImages}>
                 {post.images.map((image, index) => (
-                  <img key={index} src={image} alt="post" className={styles.postImage} />
+                  <img
+                    key={index}
+                    src={image}
+                    alt={t('community.imageAlts.postImage', {
+                      index: index + 1,
+                      title: post.title ? `: ${post.title}` : '',
+                    })}
+                    className={styles.postImage}
+                  />
                 ))}
               </div>
             )}
@@ -267,10 +277,10 @@ function PostCard({
                 onShareClick?.(post);
               }}
             >
-              <img className={styles.actionIconImg} src={shareIcon} alt="share" />
+              <img className={styles.actionIconImg} src={shareIcon} alt={t('community.imageAlts.share')} />
             </div>
             <div className={styles.postAction}>
-              <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
+              <img className={styles.actionIconImg} src={commentIcon} alt={t('community.imageAlts.comment')} />
               <span>{post.commentCount || 0}</span>
             </div>
             <div
@@ -283,7 +293,7 @@ function PostCard({
               <img
                 className={styles.actionIconImg}
                 src={isLiked ? likeActiveIcon : likeIcon}
-                alt="like"
+                alt={t('community.imageAlts.like')}
               />
               <span>{post.likeCount || 0}</span>
             </div>

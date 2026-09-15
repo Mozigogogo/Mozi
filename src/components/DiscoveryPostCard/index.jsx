@@ -154,13 +154,15 @@ export default function DiscoveryPostCard({
       onClick={() => onPostClick?.(post.id)}
     >
       {/* 右上角装饰图标 */}
-      <img src={findBestCoinIcon} className={styles.findBestCoinBg} alt="" />
+      <img src={findBestCoinIcon} className={styles.findBestCoinBg} alt={t('community.imageAlts.discoverBadge')} />
 
       <div className={styles.postLayout}>
         <div className={styles.avatarCol}>
           <img
             src={post.avatar || '/default-avatar.png'}
-            alt="avatar"
+            alt={t('community.imageAlts.userAvatar', {
+              name: post.username || 'user',
+            })}
             className={styles.discoveryAvatar}
             onClick={(e) => {
               e.stopPropagation();
@@ -230,7 +232,7 @@ export default function DiscoveryPostCard({
           ) : (
             <div className={styles.coinInfoSection}>
               <div className={styles.coinInfoRow}>
-                <img className={styles.coinInfoIconImg} src={integralIcon} alt="" />
+                <img className={styles.coinInfoIconImg} src={integralIcon} alt={t('community.imageAlts.coinNameIcon')} />
                 <span className={styles.coinInfoLabel}>{t('community.coinInfo.coinName')}</span>
                 <span className={styles.coinInfoValue}>
                   {post.tags && post.tags.length > 0 ? post.tags[0].name : 'N/A'}
@@ -238,13 +240,13 @@ export default function DiscoveryPostCard({
               </div>
 
               <div className={styles.coinInfoRow}>
-                <img className={styles.coinInfoIconImg} src={plateIcon} alt="" />
+                <img className={styles.coinInfoIconImg} src={plateIcon} alt={t('community.imageAlts.sectorIcon')} />
                 <span className={styles.coinInfoLabel}>{t('community.coinInfo.sector')}</span>
                 <span className={styles.coinInfoValue}>{post.sector || 'DeFi'}</span>
               </div>
 
               <div className={styles.coinInfoRow}>
-                <img className={styles.coinInfoIconImg} src={reasonIcon} alt="" />
+                <img className={styles.coinInfoIconImg} src={reasonIcon} alt={t('community.imageAlts.reasonIcon')} />
             <span className={styles.coinInfoLabel}>{t('post.recommendReason')}：</span>
             <ExpandableText
               text={post.content || ''}
@@ -269,7 +271,7 @@ export default function DiscoveryPostCard({
               <img
                 className={`${styles.discoveryActionIcon} ${isPC ? styles.pcIcon : ''}`}
                 src={isLiked ? messagesLikeActiveIcon : messagesLikeNoActivedIcon}
-                alt="like"
+                alt={t('community.imageAlts.like')}
               />
               <span className={styles.actionCount}>{post.likeCount || 0}</span>
             </button>
@@ -285,7 +287,7 @@ export default function DiscoveryPostCard({
                 <img
                   className={`${styles.discoveryActionIcon} ${styles.dislikeIcon} ${isPC ? styles.pcIcon : ''}`}
                   src={isDisliked ? messagesLikeActiveIcon : messagesLikeNoActivedIcon}
-                  alt="dislike"
+                  alt={t('community.imageAlts.dislike')}
                 />
                 <span className={styles.actionCount}>{post.dislikeCount || 0}</span>
               </button>
@@ -298,11 +300,11 @@ export default function DiscoveryPostCard({
                 onShareClick?.(post);
               }}
             >
-              <img className={`${styles.discoveryActionIcon} ${isPC ? styles.pcIcon : ''}`} src={messagesShareIcon} alt="share" />
+              <img className={`${styles.discoveryActionIcon} ${isPC ? styles.pcIcon : ''}`} src={messagesShareIcon} alt={t('community.imageAlts.share')} />
             </button>
 
             <button className={`${styles.discoveryActionBtn} ${styles.commentBtn}`}>
-              <img className={`${styles.discoveryActionIcon} ${isPC ? styles.pcIcon : ''}`} src={messagesCommentIcon} alt="comment" />
+              <img className={`${styles.discoveryActionIcon} ${isPC ? styles.pcIcon : ''}`} src={messagesCommentIcon} alt={t('community.imageAlts.comment')} />
               <span className={styles.actionCount}>{post.commentCount || 0}</span>
             </button>
           </div>

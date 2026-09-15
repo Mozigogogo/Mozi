@@ -75,11 +75,23 @@ export default function HotTopicList({
           {/* 排名 */}
           <div className={`${styles.topicRank} ${index < 3 ? styles.medalRank : ''}`}>
             {(page - 1) * pageSize + index === 0 ? (
-              <img className={styles.rankMedal} src={nov1Icon} alt="第1名" />
+              <img
+                className={styles.rankMedal}
+                src={nov1Icon}
+                alt={t('community.imageAlts.hotTopicRank', { rank: 1 })}
+              />
             ) : (page - 1) * pageSize + index === 1 ? (
-              <img className={styles.rankMedal} src={nov2Icon} alt="第2名" />
+              <img
+                className={styles.rankMedal}
+                src={nov2Icon}
+                alt={t('community.imageAlts.hotTopicRank', { rank: 2 })}
+              />
             ) : (page - 1) * pageSize + index === 2 ? (
-              <img className={styles.rankMedal} src={nov3Icon} alt="第3名" />
+              <img
+                className={styles.rankMedal}
+                src={nov3Icon}
+                alt={t('community.imageAlts.hotTopicRank', { rank: 3 })}
+              />
             ) : (
               (page - 1) * pageSize + index + 1
             )}
@@ -96,7 +108,7 @@ export default function HotTopicList({
           {/* 右侧信息 */}
           <div className={styles.topicRightInfo}>
             <div className={styles.heatText}>
-              <img className={styles.heatIcon} src={hotIcon} alt="热度" />
+              <img className={styles.heatIcon} src={hotIcon} alt={t('community.imageAlts.hotHeat')} />
               <span className={styles.heatValue}>{getTopicHeat(topic)}</span>
             </div>
             <span className={styles.timeText}>

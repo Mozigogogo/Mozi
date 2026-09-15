@@ -146,7 +146,7 @@ export default function TopicHotList({ isPC = false }) {
         <div className={styles.topicCards}>
           <div className={styles.topicCard}>
             <div className={styles.topicRank}>
-              <img src={rankMedals[0]} className={styles.rankMedal} alt="rank-1" />
+              <img src={rankMedals[0]} className={styles.rankMedal} alt={t('community.imageAlts.hotTopicRank', { rank: 1 })} />
             </div>
             <div className={styles.topicTitle}>{t('home.noTopics')}</div>
             <div className={styles.topicDesc}>{t('user.comingSoon')}</div>
@@ -171,7 +171,7 @@ export default function TopicHotList({ isPC = false }) {
             >
               <div className={styles.topicRank}>
                 {index < 3 ? (
-                  <img src={rankMedals[index]} className={styles.rankMedal} alt={`rank-${index + 1}`} />
+                  <img src={rankMedals[index]} className={styles.rankMedal} alt={t('community.imageAlts.hotTopicRank', { rank: index + 1 })} />
                 ) : (
                   <span className={styles.rankNum}>{String(index + 1).padStart(2, '0')}</span>
                 )}

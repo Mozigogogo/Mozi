@@ -135,7 +135,7 @@ const MoziCard = ({
           {data.map((item, index) => (
             <div key={index} className={styles.gridRow} onClick={() => onItemClick && onItemClick(item)}>
               <div className={styles.gridCol}>
-                <img src={item.url} alt={item.exchange} className={styles.exchangeIcon} />
+                <img src={item.url} alt={`MoziInnovations ${item.exchange || 'crypto'} exchange ranking`} className={styles.exchangeIcon} />
                 <span>{item.exchange}</span>
               </div>
               <div className={`${styles.gridCol} ${styles.textRight}`}>{item.usd}</div>

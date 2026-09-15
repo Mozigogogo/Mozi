@@ -16,7 +16,7 @@ export default function FlashSection() {
         <div className={styles.flashPhoneLeft}>
           <Image
             src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction4_1.svg"
-            alt="flash news left preview"
+            alt="MoziInnovations Flash News — real-time crypto market headlines and signal feed"
             fill
             className={styles.flashPhoneImage}
             unoptimized
@@ -27,7 +27,7 @@ export default function FlashSection() {
           <div className={`${styles.flashClusterAsset} ${styles.flashClusterAssetLeft}`}>
             <Image
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction4_3.svg"
-              alt=""
+              alt="MoziInnovations Flash News topic tags for crypto market signals"
               fill
               className={styles.flashClusterAssetImage}
               unoptimized
@@ -37,7 +37,7 @@ export default function FlashSection() {
           <div className={styles.flashPhone}>
             <Image
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction4_2.svg"
-              alt="flash news right preview"
+              alt="MoziInnovations mobile Flash News for global crypto updates"
               fill
               className={styles.flashPhoneImage}
               unoptimized
@@ -47,7 +47,7 @@ export default function FlashSection() {
           <div className={`${styles.flashClusterAsset} ${styles.flashClusterAssetRight}`}>
             <Image
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction4_4.svg"
-              alt=""
+              alt="MoziInnovations Flash News crypto event cards and market highlights"
               fill
               className={styles.flashClusterAssetImage}
               unoptimized

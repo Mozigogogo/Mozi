@@ -202,7 +202,7 @@ export default function PCCalendarCard({
           <img
             className={styles.icon}
             src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/calendar.svg"
-            alt="calendar"
+            alt={t('discover.imageAlts.calendarIcon')}
           />
           <div>
             <div className={styles.title}>{t('calendar.title')}</div>

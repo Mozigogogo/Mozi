@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SpinLoading } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 
 const CDN_ICON = 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/assets/icon/community';
@@ -16,13 +17,17 @@ function formatTime(value) {
   return String(value);
 }
 
-function ListRows({ items, emptyText }) {
+function ListRows({ items, emptyText, avatarAltFn }) {
   if (!items?.length) {
     return <div className={styles.emptyComments}>{emptyText}</div>;
   }
   return items.map((item) => (
     <div key={item.id} className={styles.commentItem}>
-      <img className={styles.commentAvatar} src={item.avatar || '/default-avatar.png'} alt="avatar" />
+      <img
+        className={styles.commentAvatar}
+        src={item.avatar || '/default-avatar.png'}
+        alt={avatarAltFn?.(item.username) || `MoziInnovations community comment by ${item.username || 'user'}`}
+      />
       <div className={styles.commentBody}>
         <div className={styles.commentMeta}>
           <span className={styles.commentUser}>{item.username || '示例用户'}</span>
@@ -49,6 +54,7 @@ export default function PostDetailModal({
   onShare,
   onSubmitComment,
 }) {
+  const { t } = useTranslation();
   const [currentUserAvatar, setCurrentUserAvatar] = useState(DEFAULT_AVATAR);
   const [commentValue, setCommentValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -167,11 +173,23 @@ export default function PostDetailModal({
     <div className={styles.overlay} role="dialog" aria-modal="true">
       <div className={styles.modal}>
         <div className={styles.leftPane}>
-          <img className={styles.cover} src={coverImage} alt="post cover" />
+          <img
+            className={styles.cover}
+            src={coverImage}
+            alt={t('community.imageAlts.postCover', {
+              title: title ? `: ${title}` : '',
+            })}
+          />
           {!isTopic && (
             <div className={styles.leftFooter}>
               <div className={styles.authorInfo}>
-                <img className={styles.avatar} src={authorAvatar} alt="avatar" />
+                <img
+                  className={styles.avatar}
+                  src={authorAvatar}
+                  alt={t('community.imageAlts.userAvatar', {
+                    name: authorName || 'user',
+                  })}
+                />
                 <div>
                   <div className={styles.authorName}>{authorName}</div>
                   <div className={styles.authorTime}>{formatTime(timeText)}</div>
@@ -238,9 +256,21 @@ export default function PostDetailModal({
               </div>
               <div className={styles.commentList}>
                 {showNewsTab ? (
-                  <ListRows items={newsItems} emptyText="暂无新闻资讯" />
+                  <ListRows
+                    items={newsItems}
+                    emptyText="暂无新闻资讯"
+                    avatarAltFn={(name) =>
+                      t('community.imageAlts.commentAvatar', { name: name || 'user' })
+                    }
+                  />
                 ) : (
-                  <ListRows items={comments} emptyText="暂无评论" />
+                  <ListRows
+                    items={comments}
+                    emptyText="暂无评论"
+                    avatarAltFn={(name) =>
+                      t('community.imageAlts.commentAvatar', { name: name || 'user' })
+                    }
+                  />
                 )}
               </div>
 
@@ -253,7 +283,7 @@ export default function PostDetailModal({
                   <img
                     className={`${styles.actionIconImg} ${isLiked ? styles.actionIconActive : ''}`}
                     src={isLiked ? likeActiveIcon : likeIcon}
-                    alt="like"
+                    alt={t('community.imageAlts.like')}
                     onError={(e) => {
                       if (e.currentTarget.src.includes('like-active')) {
                         e.currentTarget.src = likeIcon;
@@ -264,7 +294,7 @@ export default function PostDetailModal({
                 </button>
                 {!showNewsTab ? (
                   <button type="button" className={styles.actionBtn} onClick={handleCommentClick}>
-                    <img className={styles.actionIconImg} src={commentIcon} alt="comment" />
+                    <img className={styles.actionIconImg} src={commentIcon} alt={t('community.imageAlts.comment')} />
                     <span>{displayCommentCount}</span>
                   </button>
                 ) : null}
@@ -273,7 +303,7 @@ export default function PostDetailModal({
                   className={`${styles.actionBtn} ${styles.shareBtn}`}
                   onClick={() => onShare?.(post)}
                 >
-                  <img className={styles.actionIconImg} src={shareIcon} alt="share" />
+                  <img className={styles.actionIconImg} src={shareIcon} alt={t('community.imageAlts.share')} />
                   <span>{shareCount}</span>
                 </button>
               </div>
@@ -283,7 +313,7 @@ export default function PostDetailModal({
                   <img
                     className={styles.inputAvatar}
                     src={resolvedCurrentUserAvatar}
-                    alt="current user avatar"
+                    alt={t('community.imageAlts.currentUserAvatar')}
                     onError={(e) => {
                       e.currentTarget.src = DEFAULT_AVATAR;
                     }}

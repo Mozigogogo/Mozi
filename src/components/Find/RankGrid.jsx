@@ -1,17 +1,20 @@
 'use client';
 
 import { Grid, List } from 'antd-mobile';
+import { useTranslation } from 'react-i18next';
 import CoinSymbolIcon from '@/components/CoinSymbolIcon';
 import styles from './RankGrid.module.less';
 
 const ROW_HEIGHT_PX = 44; // 近似单行高度，用于空状态最小高度计算
 
-export const RankGrid = ({ length, colName, gridContent, callback, minRows, isPC = false }) => {
+export const RankGrid = ({ length, colName, gridContent, callback, minRows, isPC = false, boardLabel }) => {
+  const { t } = useTranslation();
   const hasData = Array.isArray(gridContent) && gridContent.length > 0;
   const firstItem = hasData ? gridContent[0] : {};
   const containerStyle = minRows ? { minHeight: `${minRows * ROW_HEIGHT_PX}px` } : undefined;
   const headSymbol = firstItem.symbol || firstItem.exchange || firstItem.name || firstItem.title || firstItem.key || '';
   const rowIconSize = isPC ? 23 : 18;
+  const board = boardLabel || t('discover.tabs.rank');
 
   return (
     <div className={`${styles.rankGridContainer} ${isPC ? styles.pcRankGridContainer : ''}`} style={containerStyle}>
@@ -22,6 +25,11 @@ export const RankGrid = ({ length, colName, gridContent, callback, minRows, isPC
             url={firstItem.img || firstItem.url}
             size={70}
             className={`${styles.firstPic} ${isPC ? styles.pcFirstPic : ''}`}
+            alt={t('discover.imageAlts.rankCoinTop', {
+              symbol: headSymbol || 'crypto',
+              rank: 1,
+              board,
+            })}
           />
           <span>{firstItem.exchange || firstItem.name || firstItem.title || firstItem.symbol || firstItem.key || ''}</span>
         </div>
@@ -82,6 +90,11 @@ export const RankGrid = ({ length, colName, gridContent, callback, minRows, isPC
                                 url={gridCon.img || gridCon.url}
                                 size={rowIconSize}
                                 className={styles.gridIcon}
+                                alt={t('discover.imageAlts.rankCoin', {
+                                  symbol: gridCon.symbol || 'crypto',
+                                  rank: index + 1,
+                                  board,
+                                })}
                               />
                               <span>{gridCon.symbol}</span>
                             </div>
@@ -111,6 +124,11 @@ export const RankGrid = ({ length, colName, gridContent, callback, minRows, isPC
                                     url={gridCon.img || gridCon.url}
                                     size={rowIconSize}
                                     className={styles.gridIcon}
+                                    alt={t('discover.imageAlts.rankCoin', {
+                                      symbol: gridCon.symbol || 'crypto',
+                                      rank: index + 1,
+                                      board,
+                                    })}
                                   />
                                   {gridCon.symbol}
                                 </div>

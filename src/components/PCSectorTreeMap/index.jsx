@@ -672,8 +672,8 @@ const PCSectorTreeMap = ({
                   </span>
                 </div>
                 <div className={styles.tooltipTopActions}>
-                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_sector/group.svg" alt="" />
-                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_sector/share.svg" alt="" />
+                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_sector/group.svg" alt={t('pcHome.sectorMap.communityAlt')} />
+                  <img src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_sector/share.svg" alt={t('pcHome.sectorMap.shareAlt')} />
                 </div>
               </div>
               <div className={styles.tooltipSectorStats}>
@@ -770,7 +770,7 @@ const PCSectorTreeMap = ({
                       >
                         <img
                           src={coin.isLiked ? 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/like_actived.svg' : 'https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_detail/like_no_actived.svg'}
-                          alt=""
+                          alt={t('pcHome.table.favorite')}
                           className={styles.tooltipActionIcon}
                         />
                       </span>
@@ -789,7 +789,7 @@ const PCSectorTreeMap = ({
                       >
                         <img
                           src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/new_home/monitor-bell.svg"
-                          alt=""
+                          alt={t('pcHome.table.monitorAlt', { symbol: coin.symbol || 'crypto' })}
                           className={styles.tooltipActionIconBell}
                         />
                       </span>

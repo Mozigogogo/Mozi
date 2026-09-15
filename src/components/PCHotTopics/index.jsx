@@ -216,7 +216,7 @@ const PCHotTopics = () => {
                 {isTop3 ? (
                   <img 
                     src={`https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/new_home/hot_top${rank}.svg`} 
-                    alt={`Rank ${rank}`} 
+                    alt={t('community.imageAlts.hotTopicRank', { rank })} 
                     className={styles.rankIcon}
                   />
                 ) : (

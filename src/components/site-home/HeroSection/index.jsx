@@ -22,7 +22,7 @@ export default function HeroSection() {
         </div>
 
         <div className={styles.rightPane}>
-          <div className={styles.screenFrame} aria-hidden="true">
+          <div className={styles.screenFrame}>
             <video
               className={styles.screenImage}
               width={702}
@@ -32,7 +32,7 @@ export default function HeroSection() {
               playsInline
               autoPlay
               preload="auto"
-              aria-label="Mozi AI assistant preview"
+              aria-label="MoziInnovations AI Trade Radar — crypto AI assistant analyzing Bitcoin news, open interest and win rate"
             >
               <source src={HERO_WEBM_SRC} type="video/webm" />
               <source src={HERO_MP4_SRC} type="video/mp4" />

@@ -405,6 +405,26 @@
     },
     "loadFinished": "已全部加载完毕",
     "robotMessage": "想听听我对行情的分析吗？",
+    "imageAlts": {
+      "topRankHeader": "MoziInnovations 发现页加密货币排行榜——实时 Top 3 行情龙头",
+      "topRankBadge": "MoziInnovations 发现页加密货币排行榜 Top {{rank}} 徽章",
+      "shareRank": "分享 MoziInnovations 加密货币排行榜",
+      "commentRank": "在社区讨论 MoziInnovations 加密货币排行榜",
+      "marketCapIcon": "MoziInnovations 加密货币总市值概览",
+      "volumeIcon": "MoziInnovations 加密货币 24 小时成交量概览",
+      "smartMonitorIcon": "MoziInnovations 智能加密货币价格预警与盯盘",
+      "calendarIcon": "MoziInnovations 加密货币上新与下架公告日历",
+      "trendUp": "MoziInnovations 加密市场指标上涨",
+      "trendDown": "MoziInnovations 加密市场指标下跌",
+      "dailyArrow": "打开 MoziInnovations 加密货币每日经济日历",
+      "dailyDecor": "MoziInnovations Daily 加密市场日历装饰图",
+      "newListingCoin": "MoziInnovations 新币上线 {{symbol}}（{{exchange}}）",
+      "exchangeLogo": "MoziInnovations 发现页 {{exchange}} 加密货币交易所排名",
+      "rankCoin": "MoziInnovations {{symbol}} 加密货币在{{board}}实时排行榜第 {{rank}} 名",
+      "rankCoinTop": "MoziInnovations {{symbol}} 加密货币位列{{board}} Top {{rank}}",
+      "addFavorite": "将 {{symbol}} 加入 MoziInnovations 加密货币自选",
+      "addMonitor": "为 {{symbol}} 设置 MoziInnovations 智能价格预警"
+    },
     "pullToRefresh": {
       "pulling": "下拉刷新",
       "canRelease": "释放立即刷新",
@@ -809,6 +829,23 @@
       "topicDescriptionPlaceholder": "请输入话题简介（选填，最多60字）"
     },
     "noCoinFound": "未找到相关币种",
+    "imageAlts": {
+      "userAvatar": "MoziInnovations 社区用户 {{name}}",
+      "postImage": "MoziInnovations 加密货币社区帖子图片{{index}}{{title}}",
+      "postCover": "MoziInnovations 加密货币社区帖子封面{{title}}",
+      "share": "分享 MoziInnovations 加密货币社区帖子",
+      "comment": "评论 MoziInnovations 加密货币社区讨论",
+      "like": "点赞 MoziInnovations 加密货币社区帖子",
+      "dislike": "点踩 MoziInnovations 发现好币推荐",
+      "discoverBadge": "MoziInnovations 发现好币——社区加密货币机会推荐",
+      "coinNameIcon": "MoziInnovations 发现好币推荐币种名称",
+      "sectorIcon": "MoziInnovations 发现好币所属加密板块",
+      "reasonIcon": "MoziInnovations 发现好币推荐理由",
+      "hotTopicRank": "MoziInnovations 加密货币热门话题排行第 {{rank}} 名",
+      "hotHeat": "MoziInnovations 加密货币社区话题热度",
+      "currentUserAvatar": "MoziInnovations 社区当前用户头像",
+      "commentAvatar": "MoziInnovations 社区评论用户 {{name}}"
+    },
     "coinInfo": {
       "coinName": "币种名称：",
       "votingQuestion": "您对今天的{{coin}}有何看法?",
@@ -1887,6 +1924,11 @@
       "price": "价格波动 一键提醒",
       "priceSub": "实时比价 买在最低 卖在最高"
     },
+    "bannerAlts": {
+      "aiRadar": "MoziInnovations AI Trade Radar——加密货币 AI 分析新闻、持仓量、多空深度与胜率",
+      "flashNews": "MoziInnovations Flash News——零噪音实时全球加密货币行情快讯与信号",
+      "smartAlerts": "MoziInnovations Smart Alerts——电话与邮件预警，即时捕捉加密货币巨鲸动向"
+    },
     "features": {
       "multiSource": "多源比价",
       "multiSourceSub": "MULTI-SOURCE RATIO",
@@ -1901,24 +1943,34 @@
       "title": "合约专区",
       "longShort": "多空比",
       "longShortSub": "Long/Short Ratio",
+      "longShortAlt": "MoziInnovations 加密货币合约多空比数据分析",
       "openInterest": "持仓量",
       "openInterestSub": "Open Interest",
+      "openInterestAlt": "MoziInnovations 加密货币持仓量与仓位数据分析",
       "fundingRate": "资金费率",
       "fundingRateSub": "Funding Rate",
+      "fundingRateAlt": "MoziInnovations 加密货币永续合约资金费率分析",
       "volume": "成交额",
-      "volumeSub": "Trading Volume"
+      "volumeSub": "Trading Volume",
+      "volumeAlt": "MoziInnovations 加密货币合约成交额数据分析"
     },
     "arbitrage": {
       "title": "套利专区",
       "funding": "Funding 套利",
       "fundingSuffix": "套利",
+      "fundingAlt": "MoziInnovations 加密货币资金费率套利雷达",
       "spread": "现货价差",
+      "spreadAlt": "MoziInnovations 跨交易所现货价差套利",
       "basis": "基差套利",
-      "oi": "OI 异动"
+      "basisAlt": "MoziInnovations 现货与合约基差套利分析",
+      "oi": "OI 异动",
+      "oiAlt": "MoziInnovations 加密货币持仓量异动扫描"
     },
     "sectorMap": {
       "title": "板块选币",
-      "viewMore": "查看更多"
+      "viewMore": "查看更多",
+      "communityAlt": "MoziInnovations 加密货币板块社区讨论",
+      "shareAlt": "分享 MoziInnovations 加密货币板块热力图"
     },
     "ranks": {
       "title": "实时榜单",
@@ -1939,7 +1991,8 @@
       "low24h": "24h最低",
       "volume24h": "24h成交额",
       "favorite": "加自选",
-      "monitor": "加监控"
+      "monitor": "加监控",
+      "monitorAlt": "MoziInnovations {{symbol}} 智能价格预警"
     }
   },
   "pcAbout": {

@@ -1443,6 +1443,20 @@ export default function PCFindContent() {
     [t],
   );
 
+  const getRankBoardLabel = useCallback(
+    (type = rankActiveType) => {
+      if (type === 'exchange') return t('discover.exchangeRank');
+      if (type === 'up') return t('home.rank.up');
+      if (type === 'down') return t('home.rank.down');
+      if (type === 'wave') return t('home.rank.wave');
+      if (type === 'volume') return t('home.rank.volume');
+      if (type === 'new') return t('home.rank.new');
+      if (type === 'surge') return t('home.rank.surge');
+      return t('discover.tabs.rank');
+    },
+    [rankActiveType, t],
+  );
+
   const tabs = [
     { key: 'market', label: t('discover.tabs.market') },
     ...(SHOW_US_STOCK_TAB ? [{ key: 'usStock', label: t('discover.tabs.usStock') }] : []),
@@ -1711,7 +1725,7 @@ export default function PCFindContent() {
                         <div className={styles.rankTopInfo}>
                           <img
                             src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/top.svg"
-                            alt="top rank"
+                            alt={t('discover.imageAlts.topRankHeader')}
                             className={styles.rankTopInfoIcon}
                           />
                           <div className={styles.rankTopInfoText}>
@@ -1776,7 +1790,7 @@ export default function PCFindContent() {
                                 aria-label={t('common.share', { defaultValue: '分享' })}
                                 onClick={() => setRankShareOpen(true)}
                               >
-                                <img src={RANK_SHARE_ICON} alt="" className={styles.rankToolbarIcon} />
+                                <img src={RANK_SHARE_ICON} alt={t('discover.imageAlts.shareRank')} className={styles.rankToolbarIcon} />
                               </button>
                               <button
                                 type="button"
@@ -1796,7 +1810,7 @@ export default function PCFindContent() {
                                   }
                                 }}
                               >
-                                <img src={RANK_COMMENT_ICON} alt="" className={styles.rankToolbarIcon} />
+                                <img src={RANK_COMMENT_ICON} alt={t('discover.imageAlts.commentRank')} className={styles.rankToolbarIcon} />
                               </button>
                             </div>
                           </div>
@@ -1858,12 +1872,17 @@ export default function PCFindContent() {
                                 url={item.url || item.img}
                                 size={28}
                                 className={styles.rankTopCardIcon}
+                                alt={t('discover.imageAlts.rankCoinTop', {
+                                  symbol: item.symbol || 'crypto',
+                                  rank: item.rankNo || '',
+                                  board: getRankBoardLabel(),
+                                })}
                               />
                               <div className={styles.rankTopCardSymbol}>{item.symbol}</div>
                               <div className={styles.rankTopCardRank}>
                                 <img
                                   src={`https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/icons/pc/top${item.rankNo}.svg`}
-                                  alt={`top ${item.rankNo}`}
+                                  alt={t('discover.imageAlts.topRankBadge', { rank: item.rankNo })}
                                   className={styles.rankTopCardRankIcon}
                                   onError={(e) => { e.currentTarget.style.display = 'none'; }}
                                 />
@@ -1904,12 +1923,24 @@ export default function PCFindContent() {
                               </div>
                             </div>
                             <div className={styles.rankTopCardActions}>
-                              <button type="button" className={styles.rankMiniBtn}>
-                                <HeartOutlined />
+                              <button
+                                type="button"
+                                className={styles.rankMiniBtn}
+                                aria-label={t('discover.imageAlts.addFavorite', {
+                                  symbol: item.symbol || 'crypto',
+                                })}
+                              >
+                                <HeartOutlined aria-hidden />
                                 <span>{t('home.columns.addFavorites')}</span>
                               </button>
-                              <button type="button" className={styles.rankMiniBtn}>
-                                <BellOutlined />
+                              <button
+                                type="button"
+                                className={styles.rankMiniBtn}
+                                aria-label={t('discover.imageAlts.addMonitor', {
+                                  symbol: item.symbol || 'crypto',
+                                })}
+                              >
+                                <BellOutlined aria-hidden />
                                 <span>{t('home.columns.addMonitor')}</span>
                               </button>
                             </div>
@@ -1991,6 +2022,11 @@ export default function PCFindContent() {
                                 url={row.url || row.img}
                                 size={22}
                                 className={styles.rankCoinIcon}
+                                alt={t('discover.imageAlts.rankCoin', {
+                                  symbol: row.symbol || 'crypto',
+                                  rank: ridx + 1,
+                                  board: getRankBoardLabel(),
+                                })}
                               />
                               <span className={styles.rankCoinSymbol}>{row.symbol}</span>
                             </div>
@@ -2024,8 +2060,24 @@ export default function PCFindContent() {
                             </div>
                             {rankActiveType !== 'exchange' && (
                               <>
-                                <div className={styles.rankColCenter}><HeartOutlined /></div>
-                                <div className={styles.rankColCenter}><BellOutlined /></div>
+                                <div
+                                  className={styles.rankColCenter}
+                                  role="img"
+                                  aria-label={t('discover.imageAlts.addFavorite', {
+                                    symbol: row.symbol || 'crypto',
+                                  })}
+                                >
+                                  <HeartOutlined aria-hidden />
+                                </div>
+                                <div
+                                  className={styles.rankColCenter}
+                                  role="img"
+                                  aria-label={t('discover.imageAlts.addMonitor', {
+                                    symbol: row.symbol || 'crypto',
+                                  })}
+                                >
+                                  <BellOutlined aria-hidden />
+                                </div>
                               </>
                             )}
                           </div>

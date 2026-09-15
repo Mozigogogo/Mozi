@@ -31,26 +31,25 @@ export default function KnowledgeSection() {
         </div>
 
         <div className={styles.knowledgeRightPane}>
-          <div className={styles.knowledgePhoneWrap} aria-hidden="true">
+          <div className={styles.knowledgePhoneWrap}>
             <Image
               src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction6_2.svg"
-              alt=""
+              alt="MoziInnovations Knowledge Hub — crypto Q&A and trading education interface"
               fill
               className={styles.knowledgePhoneImage}
               unoptimized
               sizes="(max-width: 1024px) 90vw, 42vw"
             />
-            
           </div>
         </div>
-        <div className={styles.knowledgeOverlay} aria-hidden="true">
-              <Image
-                src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction6_3.png"
-                alt=""
-                fill
-                className={styles.knowledgeOverlayImage}
-                sizes="(max-width: 1024px) 70vw, 36vw"
-              />
+        <div className={styles.knowledgeOverlay}>
+          <Image
+            src="https://image-1317406749.cos.ap-shanghai.myqcloud.com/mozi_public/images/pc/introduction6_3.png"
+            alt="MoziInnovations Knowledge Hub answering crypto trading and market questions with AI"
+            fill
+            className={styles.knowledgeOverlayImage}
+            sizes="(max-width: 1024px) 70vw, 36vw"
+          />
         </div>
       </div>
     </section>
