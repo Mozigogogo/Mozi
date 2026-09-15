@@ -72,8 +72,8 @@ export default async function sitemap() {
     postEntries = posts.map((post) => {
       const stamp = post.updatedAt || post.createdAt;
       const modified = stamp ? new Date(String(stamp).replace(' ', 'T')) : lastModified;
-      // UGC 帖子不拆中英 URL，避免同一正文挂两套 lng 导致 GSC 语言不符
-      const path = `/commentinfo?id=${encodeURIComponent(String(post.id))}`;
+      // 收录 PC 社区帖子深链；移动端 /commentinfo 已 robots disallow + noindex
+      const path = `/pc/community?postId=${encodeURIComponent(String(post.id))}`;
       return {
         url: toSitemapUrl(path),
         lastModified: Number.isNaN(modified.getTime()) ? lastModified : modified,

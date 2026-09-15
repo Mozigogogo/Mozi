@@ -34,6 +34,8 @@ export default function robots() {
           '/pc/benefitsPage',
           '/vip-recharge',
           '/me',
+          '/commentinfo',
+          '/commentinfo/',
         ],
       },
     ],

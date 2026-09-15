@@ -11,17 +11,17 @@ import { resolveRequestSeoLng } from '@/utils/seoI18n';
 import CommentInfoClient from './CommentInfoClient';
 
 function resolvePostId(searchParams) {
-  return String(searchParams?.id || '').trim();
+  return String(searchParams?.id || searchParams?.postId || '').trim();
 }
 
 /**
- * 帖子为 UGC：正文语言由作者决定，不按 ?lng= 拆成中英两套。
- * canonical 固定 /commentinfo?id=，且不输出 hreflang，避免 GSC 语言与标题不符。
+ * 移动端帖子详情：不收录。
+ * canonical / JSON-LD 一律指向 PC `/pc/community?postId=`，与 sitemap、robots 一致。
  */
 export async function generateMetadata({ searchParams }) {
   const lng = resolveRequestSeoLng({ searchParams });
   const postId = resolvePostId(searchParams);
-  const ugcMeta = { lngInCanonical: false, hreflang: false };
+  const ugcMeta = { lngInCanonical: false, hreflang: false, noIndex: true };
 
   if (!postId) {
     return buildPageMetadata({
@@ -33,7 +33,7 @@ export async function generateMetadata({ searchParams }) {
         lng === 'en'
           ? `${BRAND_LEGAL_NAME} community post: market discussion, topics and trading views.`
           : `${BRAND_LEGAL_NAME} 加密货币社区帖子详情：讨论行情、话题与交易观点。`,
-      path: '/commentinfo',
+      path: '/pc/community',
       lng,
       keywords: [BRAND_LEGAL_NAME, 'Mozi', '墨子', '加密货币社区', '帖子'],
       ...ugcMeta,
@@ -41,7 +41,7 @@ export async function generateMetadata({ searchParams }) {
   }
 
   const post = await fetchPostDetailServer(postId);
-  const path = `/commentinfo?id=${encodeURIComponent(postId)}`;
+  const path = `/pc/community?postId=${encodeURIComponent(postId)}`;
 
   if (!post) {
     return buildPageMetadata({

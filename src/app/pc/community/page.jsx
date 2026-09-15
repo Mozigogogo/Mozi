@@ -1,11 +1,14 @@
 import { Suspense } from 'react';
 import { cookies } from 'next/headers';
 import PCCommunityContent from '@/components/PCCommunityContent';
+import PostDetailSeo from '@/components/PostDetailSeo';
 import TopicDetailSeo from '@/components/TopicDetailSeo';
+import { fetchPostDetailServer } from '@/utils/fetchPostDetailServer';
 import { fetchTopicDetailServer } from '@/utils/fetchTopicDetailServer';
 import {
   BRAND_LEGAL_NAME,
   buildPageMetadata,
+  buildPostJsonLd,
   buildTopicJsonLd,
   COMMUNITY_KEYWORDS,
   plainTextExcerpt,
@@ -19,7 +22,11 @@ import { I18N_COOKIE_KEY } from '@/i18n/languageStorage';
 import { hasExplicitSeoLng, resolveRequestSeoLng } from '@/utils/seoI18n';
 
 function resolveTopicId(searchParams) {
-  return String(searchParams?.topicId || searchParams?.id || '').trim();
+  return String(searchParams?.topicId || '').trim();
+}
+
+function resolvePostId(searchParams) {
+  return String(searchParams?.postId || '').trim();
 }
 
 function resolveQueryFallback(searchParams) {
@@ -35,7 +42,26 @@ export async function generateMetadata({ searchParams }) {
     searchParams,
   });
   const topicId = resolveTopicId(searchParams);
+  const postId = resolvePostId(searchParams);
   const queryFallback = resolveQueryFallback(searchParams);
+
+  // 帖子深链优先于话题（与弹窗打开帖子详情一致）
+  if (postId) {
+    const post = await fetchPostDetailServer(postId);
+    const { title, description, path, keywords } = buildPostJsonLd(post || {}, postId);
+    const pageTitle = `${plainTextExcerpt(title, 70)} | ${BRAND_LEGAL_NAME}`;
+    return buildPageMetadata({
+      title: pageTitle,
+      description,
+      path,
+      lng,
+      keywords,
+      image: Array.isArray(post?.images) && post.images[0] ? post.images[0] : undefined,
+      type: 'article',
+      lngInCanonical: false,
+      hreflang: false,
+    });
+  }
 
   if (topicId) {
     const topic = await fetchTopicDetailServer(topicId);
@@ -74,12 +100,15 @@ export async function generateMetadata({ searchParams }) {
 
 export default async function PCCommunityPage({ searchParams }) {
   const topicId = resolveTopicId(searchParams);
+  const postId = resolvePostId(searchParams);
   const queryFallback = resolveQueryFallback(searchParams);
   const topic = topicId ? await fetchTopicDetailServer(topicId) : null;
+  const post = postId ? await fetchPostDetailServer(postId) : null;
 
   return (
     <>
-      {topicId ? (
+      {postId ? <PostDetailSeo post={post} postId={postId} /> : null}
+      {!postId && topicId ? (
         <TopicDetailSeo
           topic={topic}
           topicId={topicId}

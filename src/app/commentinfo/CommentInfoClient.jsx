@@ -761,7 +761,7 @@ export default function CommentInfoClient() {
   // 初始化数据
   useEffect(() => {
     // PC 宽屏打开评论页会被 vw 放大变形，跳到 PC 社区并弹出详情
-    // 搜索引擎爬虫不跳转，保留 /commentinfo 可抓取正文与 canonical
+    // 爬虫：本页 noindex + robots 禁抓；收录以 /pc/community?postId= 为准
     if (typeof window === 'undefined' || !commentId) return;
     if (isSearchCrawler()) return;
     if (window.matchMedia('(min-width: 1024px)').matches) {

@@ -621,7 +621,10 @@ export function guessContentInLanguage(...texts) {
  */
 export function buildPostJsonLd(post, postId) {
   const id = String(postId || post?.id || '').trim();
-  const path = id ? `/commentinfo?id=${encodeURIComponent(id)}` : '/commentinfo';
+  // PC 深链为收录 canonical；移动端 /commentinfo 仅作体验页并让渡 canonical
+  const path = id
+    ? `/pc/community?postId=${encodeURIComponent(id)}`
+    : '/pc/community';
   const url = absoluteUrl(path);
   const title =
     plainTextExcerpt(post?.title, 110) ||

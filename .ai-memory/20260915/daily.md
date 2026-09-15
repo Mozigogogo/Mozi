@@ -52,3 +52,9 @@
 - **决策**: 侧栏图标与页内图片统一 MoziInnovations + AI问答/积分成就语义；去掉空 alt/aria-hidden 遮挡
 - **验证**: i18n JSON parse OK
 
+## [19:40] - [SEO]: 帖子详情禁抓 /commentinfo，收录改 /pc/community?postId=
+
+- **文件**: robots.js disallow commentinfo；sitemap/buildPostJsonLd/pc community metadata；commentinfo noIndex + canonical 指向 PC
+- **决策**: 与 topic→PC 同思路，但用户要求移动端帖子页不允许抓取
+- **验证**: 对照 buildTopicJsonLd / topicinfo 模式改完
+
