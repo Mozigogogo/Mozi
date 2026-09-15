@@ -40,7 +40,6 @@ export default function robots() {
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
-    // Host 只需主机名，不要带 https://
-    host: 'moziai.xyz',
+    // 不写 Host：Host 仅为 Yandex 指令，Googlebot 会忽略并在 GSC 报黄
   };
 }
