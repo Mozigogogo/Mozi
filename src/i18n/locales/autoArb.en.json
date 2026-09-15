@@ -284,6 +284,13 @@
       "todayPnl": "Today's net P&L",
       "stopAll": "Emergency stop all"
     },
+    "balanceHero": {
+      "labelLive": "Total balance (across connected exchanges)",
+      "labelPaper": "Total balance (paper account)",
+      "deployed": "Deployed",
+      "available": "Available",
+      "paperChip": "Paper"
+    },
     "stats": {
       "totalCapital": "Paper occupied",
       "activeStrategies": "Across {{count}} active strategies",

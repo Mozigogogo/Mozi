@@ -284,6 +284,13 @@
       "todayPnl": "今日净收益",
       "stopAll": "紧急停止全部"
     },
+    "balanceHero": {
+      "labelLive": "账户总余额（跨已连接交易所）",
+      "labelPaper": "账户总余额（模拟仓）",
+      "deployed": "已部署",
+      "available": "可用",
+      "paperChip": "模拟仓"
+    },
     "stats": {
       "totalCapital": "模拟仓占用",
       "activeStrategies": "跨 {{count}} 个活跃策略",

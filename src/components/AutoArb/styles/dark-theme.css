@@ -128,6 +128,20 @@
   border-color: rgba(248, 113, 113, 0.28);
 }
 
+:root[data-theme="dark"] .mozi-autoarb .balance-hero {
+  background: var(--card);
+  border-color: var(--border);
+}
+
+:root[data-theme="dark"] .mozi-autoarb .bh-bar {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="dark"] .mozi-autoarb .bh-ex-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border);
+}
+
 :root[data-theme="dark"] .mozi-autoarb .tgl-thumb {
   background: #f3f4f6;
 }

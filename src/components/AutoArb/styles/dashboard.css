@@ -1,4 +1,89 @@
 /* ── 4. Dashboard ─────────────────────────────────────────────────────────── */
+/* 账户总余额（对齐原型 balance-hero） */
+.mozi-autoarb .balance-hero {
+  background: linear-gradient(135deg, var(--card), var(--surface));
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.mozi-autoarb .balance-hero.is-loading {
+  opacity: 0.72;
+}
+.mozi-autoarb .bh-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.mozi-autoarb .bh-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.mozi-autoarb .bh-value {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--t1);
+}
+.mozi-autoarb .bh-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--t2);
+}
+.mozi-autoarb .bh-legend b {
+  font-family: var(--mono);
+}
+.mozi-autoarb .bh-bar {
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  background: var(--border);
+  margin-bottom: 14px;
+}
+.mozi-autoarb .bh-bar-deployed {
+  height: 100%;
+  background: var(--gold, #f59e0b);
+  min-width: 0;
+  transition: width 0.35s ease;
+}
+.mozi-autoarb .bh-bar-available {
+  height: 100%;
+  background: var(--pos);
+  min-width: 0;
+  transition: width 0.35s ease;
+}
+.mozi-autoarb .bh-exchanges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mozi-autoarb .bh-ex-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--t2);
+}
+.mozi-autoarb .bh-ex-chip b {
+  font-family: var(--mono);
+  color: var(--t1);
+}
+
 .mozi-autoarb .dash-stats {
   display: grid;
   grid-template-columns: repeat(5, 1fr);

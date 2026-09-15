@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchStrategyConfig } from '@/api/strategy';
+import { fetchAccountFunds, fetchStrategyConfig } from '@/api/strategy';
+import BalanceHero from './BalanceHero';
 import { ActivityText, Donut, Gauge, Modal, Sparkline, Tip } from './charts';
 import './styles/dashboard.css';
 
@@ -189,11 +190,31 @@ export default function Dashboard({
   const [, setRadarFeedRef] = useScrollChainRef();
   const [, setActivityFeedRef] = useScrollChainRef();
   const [stratVisibleCount, setStratVisibleCount] = useState(STRAT_LIST_PAGE_SIZE);
+  const [fundsLoading, setFundsLoading] = useState(true);
+  const [accountFunds, setAccountFunds] = useState(null);
 
   const strategyIdsKey = useMemo(
     () => (strategies || []).map((s) => s.id).join('|'),
     [strategies],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    setFundsLoading(true);
+    fetchAccountFunds()
+      .then((data) => {
+        if (!cancelled) setAccountFunds(data);
+      })
+      .catch(() => {
+        if (!cancelled) setAccountFunds(null);
+      })
+      .finally(() => {
+        if (!cancelled) setFundsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // 左侧策略列高度与右侧面板（含实时操作日志）底对齐
   useEffect(() => {
@@ -295,6 +316,47 @@ export default function Dashboard({
   const totalReturnPct = overview?.totalReturnPct ?? 0;
   const riskScore = overview?.riskScore ?? 0;
   const execSuccessRate = overview?.execSuccessRate ?? 0;
+
+  const balanceHeroProps = useMemo(() => {
+    const paper = accountFunds?.paper;
+    const live = accountFunds?.live;
+    const liveExchanges = (live?.exchanges || []).filter((ex) => ex?.connected !== false);
+    const useLive = Boolean(live?.connected && liveExchanges.length);
+
+    if (useLive) {
+      return {
+        total: live.equity,
+        available: live.available,
+        deployed: live.occupied,
+        byExchange: liveExchanges.map((ex) => ({
+          name: ex.exchangeName,
+          total: ex.equity,
+        })),
+        label: D('balanceHero.labelLive'),
+      };
+    }
+
+    if (paper) {
+      return {
+        total: paper.equity,
+        available: paper.available,
+        deployed: paper.occupied,
+        byExchange: [{ name: D('balanceHero.paperChip'), total: paper.equity }],
+        label: D('balanceHero.labelPaper'),
+      };
+    }
+
+    // funds 失败时用 overview 仓位占用兜底
+    return {
+      total: totalCapital,
+      available: 0,
+      deployed: totalCapital,
+      byExchange: totalCapital
+        ? [{ name: D('balanceHero.paperChip'), total: totalCapital }]
+        : [],
+      label: D('balanceHero.labelPaper'),
+    };
+  }, [accountFunds, totalCapital, i18n.language]);
 
   const radarItems = useMemo(() => {
     if (Array.isArray(radar) && radar.length) return radar;
@@ -478,6 +540,17 @@ export default function Dashboard({
           🛑 {D('emergencyBar.stopAll')}
         </button>
       </div>
+
+      <BalanceHero
+        loading={fundsLoading}
+        total={balanceHeroProps.total}
+        available={balanceHeroProps.available}
+        deployed={balanceHeroProps.deployed}
+        byExchange={balanceHeroProps.byExchange}
+        label={balanceHeroProps.label}
+        deployedLabel={D('balanceHero.deployed')}
+        availableLabel={D('balanceHero.available')}
+      />
 
       <div className="dash-stats">
         <div className="ds-card">
