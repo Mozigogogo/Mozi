@@ -280,7 +280,7 @@
   "dashboard": {
     "emergencyBar": {
       "runningCount": "{{count}} 个策略运行中",
-      "totalPosition": "模拟仓占用",
+      "totalPosition": "真实仓占用",
       "todayPnl": "今日净收益",
       "stopAll": "紧急停止全部"
     },
@@ -292,7 +292,7 @@
       "paperChip": "模拟仓"
     },
     "stats": {
-      "totalCapital": "模拟仓占用",
+      "totalCapital": "真实仓占用",
       "activeStrategies": "跨 {{count}} 个活跃策略",
       "cumulativePnl": "累计净收益",
       "totalReturn": "{{pct}}% 总回报",

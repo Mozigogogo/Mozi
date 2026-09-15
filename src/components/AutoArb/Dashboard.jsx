@@ -310,7 +310,9 @@ export default function Dashboard({
   };
 
   const running = overview?.runningCount ?? strategies?.filter((s) => s.status === 'running').length ?? 0;
-  const totalCapital = overview?.totalCapital ?? 0;
+  const liveFunds = accountFunds?.live;
+  // 顶部仓位展示只读真实仓 occupied，不再混用 overview 模拟仓 totalCapital
+  const totalCapital = Number(liveFunds?.occupied) || 0;
   const totalPnl = overview?.totalPnl ?? 0;
   const totalDailyPnl = overview?.todayPnl ?? 0;
   const totalReturnPct = overview?.totalReturnPct ?? 0;
@@ -318,45 +320,20 @@ export default function Dashboard({
   const execSuccessRate = overview?.execSuccessRate ?? 0;
 
   const balanceHeroProps = useMemo(() => {
-    const paper = accountFunds?.paper;
     const live = accountFunds?.live;
-    const liveExchanges = (live?.exchanges || []).filter((ex) => ex?.connected !== false);
-    const useLive = Boolean(live?.connected && liveExchanges.length);
+    const liveExchanges = (live?.exchanges || []).filter((ex) => ex?.connected);
 
-    if (useLive) {
-      return {
-        total: live.equity,
-        available: live.available,
-        deployed: live.occupied,
-        byExchange: liveExchanges.map((ex) => ({
-          name: ex.exchangeName,
-          total: ex.equity,
-        })),
-        label: D('balanceHero.labelLive'),
-      };
-    }
-
-    if (paper) {
-      return {
-        total: paper.equity,
-        available: paper.available,
-        deployed: paper.occupied,
-        byExchange: [{ name: D('balanceHero.paperChip'), total: paper.equity }],
-        label: D('balanceHero.labelPaper'),
-      };
-    }
-
-    // funds 失败时用 overview 仓位占用兜底
     return {
-      total: totalCapital,
-      available: 0,
-      deployed: totalCapital,
-      byExchange: totalCapital
-        ? [{ name: D('balanceHero.paperChip'), total: totalCapital }]
-        : [],
-      label: D('balanceHero.labelPaper'),
+      total: Number(live?.equity) || 0,
+      available: Number(live?.available) || 0,
+      deployed: Number(live?.occupied) || 0,
+      byExchange: liveExchanges.map((ex) => ({
+        name: ex.exchangeName,
+        total: Number(ex.equity) || 0,
+      })),
+      label: D('balanceHero.labelLive'),
     };
-  }, [accountFunds, totalCapital, i18n.language]);
+  }, [accountFunds, i18n.language]);
 
   const radarItems = useMemo(() => {
     if (Array.isArray(radar) && radar.length) return radar;
